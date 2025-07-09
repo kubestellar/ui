@@ -17,6 +17,7 @@ import (
 	"github.com/kubestellar/ui/backend/models"
 	config "github.com/kubestellar/ui/backend/postgresql"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
+	"github.com/kubestellar/ui/backend/pkg/plugins"
 	"github.com/kubestellar/ui/backend/routes"
 	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
@@ -105,6 +106,18 @@ func main() {
 
 	// Setup authentication routes
 	routes.SetupRoutes(router)
+
+	// Initialize plugin system
+	logger.Info("Initializing plugin system...")
+	pluginManager := plugins.NewPluginManager(router)
+	pluginRegistry := plugins.NewPluginRegistry("./plugins", pluginManager)
+	
+	// Start plugin discovery and loading
+	if err := initializePlugins(pluginRegistry, logger); err != nil {
+		logger.Error("Failed to initialize plugins", zap.Error(err))
+	} else {
+		logger.Info("Plugin system initialized successfully")
+	}
 
 	// Add webhook endpoint (you may want to protect this with auth too)
 	router.POST("/api/webhook", api.GitHubWebhookHandler)
@@ -391,6 +404,51 @@ func debugCheckAdminUser() error {
 		zap.String("username", username),
 		zap.String("password_hash", password),
 		zap.Bool("is_admin", isAdmin))
+
+	return nil
+}
+
+// initializePlugins initializes the plugin system and loads available plugins
+func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) error {
+	// Discover available plugins
+	pluginInfos, err := registry.DiscoverPlugins()
+	if err != nil {
+		return fmt.Errorf("failed to discover plugins: %v", err)
+	}
+
+	logger.Info("Discovered plugins", zap.Int("count", len(pluginInfos)))
+
+	// Load each discovered plugin
+	for _, pluginInfo := range pluginInfos {
+		logger.Info("Loading plugin", 
+			zap.String("name", pluginInfo.Name),
+			zap.String("version", pluginInfo.Version),
+			zap.String("status", pluginInfo.Status))
+
+		if pluginInfo.Status == "error" {
+			logger.Error("Plugin has errors", 
+				zap.String("name", pluginInfo.Name),
+				zap.String("error", pluginInfo.Error))
+			continue
+		}
+
+		// Load the plugin
+		if err := registry.LoadPlugin(pluginInfo.Name); err != nil {
+			logger.Error("Failed to load plugin", 
+				zap.String("name", pluginInfo.Name),
+				zap.Error(err))
+			continue
+		}
+
+		logger.Info("Successfully loaded plugin", zap.String("name", pluginInfo.Name))
+	}
+
+	// Start plugin watcher for hot reloading
+	if err := registry.StartWatching(); err != nil {
+		logger.Error("Failed to start plugin watcher", zap.Error(err))
+	} else {
+		logger.Info("Plugin watcher started")
+	}
 
 	return nil
 }

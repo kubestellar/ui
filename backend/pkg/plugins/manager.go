@@ -7,6 +7,7 @@ package plugins
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -39,9 +40,13 @@ type Plugin struct {
 
 // PluginManifest defines the plugin.yml schema for plugin configuration.
 type PluginManifest struct {
-	Name    string        `yaml:"name"`    // Unique name of the plugin (used to identify .wasm file)
-	Routes  []PluginRoute `yaml:"routes"`  // HTTP API routes the plugin exposes
-	Backend bool          `yaml:"backend"` // Whether plugin requires backend API exposure
+	Name        string        `yaml:"name"`        // Unique name of the plugin (used to identify .wasm file)
+	Version     string        `yaml:"version"`     // Plugin version
+	Author      string        `yaml:"author"`      // Plugin author
+	Description string        `yaml:"description"` // Plugin description
+	Routes      []PluginRoute `yaml:"routes"`      // HTTP API routes the plugin exposes
+	Backend     bool          `yaml:"backend"`     // Whether plugin requires backend API exposure
+	Permissions []string      `yaml:"permissions"` // Required permissions
 }
 
 // PluginRoute describes a single HTTP route exposed by a plugin.
@@ -54,7 +59,10 @@ type PluginRoute struct {
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
 func NewPluginManager(router *gin.Engine) *PluginManager {
 	ctx := context.Background()
-	runtime := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfigInterpreter())
+	
+	// Configure runtime with WASI support
+	config := wazero.NewRuntimeConfigInterpreter()
+	runtime := wazero.NewRuntimeWithConfig(ctx, config)
 
 	pm := &PluginManager{
 		runtime: runtime,
@@ -97,7 +105,10 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		return err
 	}
 
-	instance, err := pm.runtime.InstantiateModule(pm.ctx, compiledModule, wazero.NewModuleConfig())
+	// Create module config
+	moduleConfig := wazero.NewModuleConfig().WithName(manifest.Name)
+
+	instance, err := pm.runtime.InstantiateModule(pm.ctx, compiledModule, moduleConfig)
 	if err != nil {
 		return err
 	}
@@ -155,7 +166,50 @@ func (pm *PluginManager) createPluginHandler(plugin *Plugin, handlerName string)
 
 // callPluginFunction invokes a WASM function by name, passing it serialized input.
 func (pm *PluginManager) callPluginFunction(plugin *Plugin, functionName string, input []byte) ([]byte, error) {
-	return []byte(`{"msg":"called ` + functionName + `"}`), nil // Placeholder
+	// Get the exported function from the WASM module
+	function := plugin.Instance.ExportedFunction(functionName)
+	if function == nil {
+		return nil, fmt.Errorf("function '%s' not found in plugin", functionName)
+	}
+
+	// Allocate memory for input data
+	inputPtr, err := pm.allocateMemory(plugin.Instance, len(input))
+	if err != nil {
+		return nil, fmt.Errorf("failed to allocate memory for input: %v", err)
+	}
+
+	// Write input data to WASM memory
+	memory := plugin.Instance.Memory()
+	if !memory.Write(inputPtr, input) {
+		return nil, fmt.Errorf("failed to write input data to WASM memory")
+	}
+
+	// Call the WASM function
+	results, err := function.Call(pm.ctx, uint64(inputPtr), uint64(len(input)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to call WASM function: %v", err)
+	}
+
+	// Check if we got a result
+	if len(results) == 0 {
+		return []byte("{}"), nil
+	}
+
+	// Extract result pointer and length
+	resultPtr := uint32(results[0] >> 32)
+	resultLen := uint32(results[0] & 0xFFFFFFFF)
+
+	// Read result from WASM memory
+	if resultPtr == 0 || resultLen == 0 {
+		return []byte("{}"), nil
+	}
+
+	resultData, ok := memory.Read(resultPtr, resultLen)
+	if !ok {
+		return nil, fmt.Errorf("failed to read result from WASM memory")
+	}
+
+	return resultData, nil
 }
 
 // GetPluginList returns all registered plugins.
