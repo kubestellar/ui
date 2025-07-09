@@ -2,10 +2,11 @@ import { memo } from 'react';
 import { FiMoreVertical } from 'react-icons/fi';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ResourceItem } from '../TreeViewComponent';
-import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
-import useLabelHighlightStore from '../../stores/labelHighlightStore'; // Import the label highlight store
+import useTheme from '../../stores/themeStore';
+import useLabelHighlightStore from '../../stores/labelHighlightStore';
+import useZoomStore from '../../stores/zoomStore';
 import { Tooltip, Chip, Box } from '@mui/material';
-import { useTranslation } from 'react-i18next'; // Add this import
+import { useTranslation } from 'react-i18next';
 
 interface NodeLabelProps {
   label: string;
@@ -20,22 +21,22 @@ interface NodeLabelProps {
 
 export const NodeLabel = memo<NodeLabelProps>(
   ({ label, icon, dynamicText, timeAgo, onClick, onMenuClick, resourceData }) => {
-    const { t } = useTranslation(); // Add translation hook
-    const theme = useTheme(state => state.theme); // Get the current theme
+    const { t } = useTranslation();
+    const theme = useTheme(state => state.theme);
+    const { currentZoom, getScaledIconSize, getScaledFontSize } = useZoomStore();
 
-    // Get highlighted labels state from the store
     const { highlightedLabels, setHighlightedLabels, clearHighlightedLabels } =
       useLabelHighlightStore();
 
-    // Extract labels from resourceData if available
     const labels = resourceData?.metadata?.labels || {};
     const hasLabels = Object.keys(labels).length > 0;
 
-    // Check if this node's labels match the highlighted label
     const hasHighlightedLabel =
       highlightedLabels && labels[highlightedLabels.key] === highlightedLabels.value;
 
-    // Create label tooltip content
+    const iconSize = getScaledIconSize(currentZoom);
+    const fontSize = getScaledFontSize(currentZoom);
+
     const labelTooltipContent = hasLabels ? (
       <Box
         sx={{
@@ -102,11 +103,9 @@ export const NodeLabel = memo<NodeLabelProps>(
                 }
               }}
               onMouseEnter={() => {
-                // Set highlighting on hover
                 setHighlightedLabels({ key, value: value as string });
               }}
               onMouseLeave={() => {
-                // Clear highlighting when mouse leaves
                 clearHighlightedLabels();
               }}
             />
@@ -145,10 +144,10 @@ export const NodeLabel = memo<NodeLabelProps>(
         <div
           style={{
             position: 'relative',
-            margin: '-8px -12px', // Increased negative margin for better coverage
-            padding: '2px 12px', // Matching padding to maintain content position
-            borderRadius: '4px', // Increased border radius to match node shape
-            border: hasLabels ? `1px solid ${theme === 'dark' ? '#3f51b5' : '#3f51b5'}` : 'none', // Increased border width and using a more prominent blue
+            margin: '-8px -12px',
+            padding: '2px 12px',
+            borderRadius: '4px',
+            border: hasLabels ? `1px solid ${theme === 'dark' ? '#3f51b5' : '#3f51b5'}` : 'none',
             boxShadow: hasHighlightedLabel
               ? `0 0 0 2px ${theme === 'dark' ? '#00e676' : '#00c853'}`
               : 'none',
@@ -158,7 +157,7 @@ export const NodeLabel = memo<NodeLabelProps>(
                 : 'rgba(0, 200, 83, 0.1)'
               : 'transparent',
             transition: 'all 0.1s ease',
-            width: 'calc(100% + 24px)', // Ensure width coverage with the negative margins
+            width: 'calc(100% + 24px)',
           }}
         >
           <div
@@ -170,22 +169,22 @@ export const NodeLabel = memo<NodeLabelProps>(
             }}
             onClick={onClick}
           >
-            <div style={{ display: 'flex', alignItems: 'center', marginLeft: '-5px' }}>
-              {/* Left: Fixed width icon + dynamicText */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '-5px' }}>
               <div
                 style={{
-                  width: '80px', // enough space for longest icon + label
+                  width: '80px',
                   minWidth: '80px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
                 }}
               >
-                <img src={icon} alt={label} width="18" height="18" />
+                <img src={icon} alt={label} width={iconSize} height={iconSize} />
                 <span
                   style={{
                     color: 'gray',
                     fontWeight: 500,
+                    fontSize: `${fontSize}px`,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -195,7 +194,6 @@ export const NodeLabel = memo<NodeLabelProps>(
                 </span>
               </div>
 
-              {/* Right: Object name - always vertically centered */}
               <div
                 style={{
                   display: 'flex',
@@ -203,17 +201,16 @@ export const NodeLabel = memo<NodeLabelProps>(
                   justifyContent: 'center',
                 }}
               >
-                <div>{label}</div>
-                {/* Extra row for optional icons or actions */}
+                <div style={{ fontSize: `${fontSize}px` }}>{label}</div>
                 <div style={{ display: 'flex', gap: '1px' }}>
-                  {/* (Optional) check/heart icons etc. */}
+                  {/* Placeholder for future icons/actions */}
                 </div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <FiMoreVertical
                 style={{
-                  fontSize: '11px',
+                  fontSize: `${Math.max(11, fontSize * 1.8)}px`,
                   color: '#34aadc',
                   marginRight: '-10px',
                   cursor: 'pointer',
@@ -227,13 +224,13 @@ export const NodeLabel = memo<NodeLabelProps>(
                   position: 'absolute',
                   bottom: '-6px',
                   right: '-10px',
-                  fontSize: '5px',
+                  fontSize: `${Math.max(5, fontSize * 0.8)}px`,
                   color: theme === 'dark' ? '#fff' : '#495763',
                   backgroundColor: theme === 'dark' ? '#333333' : '#ccd6dd',
                   padding: '0 2px',
                   border: '1px solid #8fa4b1',
                   borderRadius: '3px',
-                  zIndex: 10, // Ensure the time indicator shows above other elements
+                  zIndex: 10,
                 }}
               >
                 {timeAgo}

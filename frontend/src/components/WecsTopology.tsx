@@ -45,11 +45,13 @@ import { isEqual } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
+import useZoomStore from '../stores/zoomStore';
 import WecsDetailsPanel from './WecsDetailsPanel';
 import { FlowCanvas } from './Wds_Topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
 import FullScreenToggle from './ui/FullScreenToggle';
 import { api } from '../lib/api';
+import useEdgeTypeStore from '../stores/edgeTypeStore';
 
 // Updated Interfaces
 export interface NodeData {
@@ -191,13 +193,7 @@ interface ContextMenuState {
   nodeType: string | null;
 }
 
-const nodeStyle: React.CSSProperties = {
-  padding: '2px 12px',
-  fontSize: '6px',
-  border: 'none',
-  width: '146px',
-  height: '30px',
-};
+// Node styling is now handled dynamically through the zoom store
 
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
@@ -263,13 +259,15 @@ const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
   direction = 'LR',
-  prevNodes: React.MutableRefObject<CustomNode[]>
+  prevNodes: React.MutableRefObject<CustomNode[]>,
+  currentZoom: number
 ) => {
-  const NODE_WIDTH = 146;
-  const NODE_HEIGHT = 30;
-  const NODE_SEP = 22;
-  const RANK_SEP = 60;
-  const CHILD_SPACING = NODE_HEIGHT + 30;
+  const scaleFactor = Math.max(0.5, Math.min(2.0, currentZoom));
+  const NODE_WIDTH = 146 * scaleFactor;
+  const NODE_HEIGHT = 30 * scaleFactor;
+  const NODE_SEP = 22 * scaleFactor;
+  const RANK_SEP = 60 * scaleFactor;
+  const CHILD_SPACING = NODE_HEIGHT + 30 * scaleFactor;
 
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
@@ -306,8 +304,8 @@ const getLayoutedElements = (
       ? {
           ...node,
           position: {
-            x: dagreNode.x - NODE_WIDTH / 2 + 50,
-            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
+            x: dagreNode.x - NODE_WIDTH / 2 + 50 * scaleFactor,
+            y: dagreNode.y - NODE_HEIGHT / 2 + 50 * scaleFactor,
           },
         }
       : node;
@@ -528,6 +526,8 @@ const getLayoutedElements = (
 const WecsTreeview = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
+  const { currentZoom, getScaledNodeStyle } = useZoomStore();
+  const { edgeType } = useEdgeTypeStore();
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -556,17 +556,18 @@ const WecsTreeview = () => {
     renderStartTime.current = performance.now();
   }, []);
 
-  // Add effect to update node styles when theme changes
+  // Add effect to update node styles when theme or zoom changes
   useEffect(() => {
     if (nodes.length > 0) {
-      // Create a new array with updated node styles for the current theme
       setNodes(currentNodes => {
         return currentNodes.map(node => {
-          // Update style with the current theme
           return {
             ...node,
             style: {
-              ...node.style,
+              ...getScaledNodeStyle(currentZoom),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               backgroundColor: theme === 'dark' ? '#333' : '#fff',
               color: theme === 'dark' ? '#fff' : '#000',
               transition: 'all 0.2s ease-in-out',
@@ -604,7 +605,7 @@ const WecsTreeview = () => {
         });
       });
     }
-  }, [theme, nodes.length]);
+  }, [theme, nodes.length, currentZoom, getScaledNodeStyle]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -768,11 +769,10 @@ const WecsTreeview = () => {
           },
           position: { x: 0, y: 0 },
           style: {
-            ...nodeStyle,
+            ...getScaledNodeStyle(currentZoom),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '2px 12px',
             backgroundColor: theme === 'dark' ? '#333' : '#fff',
             color: theme === 'dark' ? '#fff' : '#000',
             transition: 'all 0.2s ease-in-out',
@@ -781,10 +781,12 @@ const WecsTreeview = () => {
           targetPosition: Position.Left,
         } as CustomNode);
 
-      // If node is cached, ensure its style is updated for the current theme
       if (cachedNode) {
         node.style = {
-          ...node.style,
+          ...getScaledNodeStyle(currentZoom),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           backgroundColor: theme === 'dark' ? '#333' : '#fff',
           color: theme === 'dark' ? '#fff' : '#000',
           transition: 'all 0.2s ease-in-out',
@@ -803,7 +805,7 @@ const WecsTreeview = () => {
             id: edgeId,
             source: parent,
             target: id,
-            type: 'step',
+            type: edgeType,
             animated: true,
             style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
             markerEnd: {
@@ -824,12 +826,13 @@ const WecsTreeview = () => {
             ...cachedEdge,
             style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
             markerEnd,
+            type: edgeType,
           };
           newEdges.push(updatedEdge);
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, currentZoom, getScaledNodeStyle, edgeType]
   );
 
   const transformDataToTree = useCallback(
@@ -1244,7 +1247,8 @@ const WecsTreeview = () => {
         newNodes,
         newEdges,
         'LR',
-        prevNodes
+        prevNodes,
+        currentZoom
       );
       ReactDOM.unstable_batchedUpdates(() => {
         if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
@@ -1254,7 +1258,7 @@ const WecsTreeview = () => {
       prevNodes.current = layoutedNodes;
       setIsTransforming(false);
     },
-    [createNode, nodes, edges, fetchAllClusterTimestamps]
+    [createNode, nodes, edges, fetchAllClusterTimestamps, currentZoom, edgeType]
   );
 
   useEffect(() => {
