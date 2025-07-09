@@ -25,7 +25,8 @@ export const NodeLabel = memo<NodeLabelProps>(
     const theme = useTheme(state => state.theme);
     const { currentZoom, getScaledIconSize, getScaledFontSize } = useZoomStore();
 
-    const { highlightedLabels, setHighlightedLabels, clearHighlightedLabels } = useLabelHighlightStore();
+    const { highlightedLabels, setHighlightedLabels, clearHighlightedLabels } =
+      useLabelHighlightStore();
 
     const labels = resourceData?.metadata?.labels || {};
     const hasLabels = Object.keys(labels).length > 0;
