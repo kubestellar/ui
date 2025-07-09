@@ -51,6 +51,7 @@ import { FlowCanvas } from './Wds_Topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
 import FullScreenToggle from './ui/FullScreenToggle';
 import { api } from '../lib/api';
+import useEdgeTypeStore from '../stores/edgeTypeStore';
 
 // Updated Interfaces
 export interface NodeData {
@@ -526,6 +527,7 @@ const WecsTreeview = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const { currentZoom, getScaledNodeStyle } = useZoomStore();
+  const { edgeType } = useEdgeTypeStore();
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -803,7 +805,7 @@ const WecsTreeview = () => {
             id: edgeId,
             source: parent,
             target: id,
-            type: 'step',
+            type: edgeType,
             animated: true,
             style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
             markerEnd: {
@@ -824,12 +826,13 @@ const WecsTreeview = () => {
             ...cachedEdge,
             style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
             markerEnd,
+            type: edgeType,
           };
           newEdges.push(updatedEdge);
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, currentZoom, getScaledNodeStyle]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, currentZoom, getScaledNodeStyle, edgeType]
   );
 
   const transformDataToTree = useCallback(
@@ -1255,7 +1258,7 @@ const WecsTreeview = () => {
       prevNodes.current = layoutedNodes;
       setIsTransforming(false);
     },
-    [createNode, nodes, edges, fetchAllClusterTimestamps, currentZoom]
+    [createNode, nodes, edges, fetchAllClusterTimestamps, currentZoom, edgeType]
   );
 
   useEffect(() => {

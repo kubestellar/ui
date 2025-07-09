@@ -4,6 +4,7 @@ import { NodeLabel } from '../Wds_Topology/NodeLabel';
 import useTheme from '../../stores/themeStore';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import useZoomStore from '../../stores/zoomStore';
+import useEdgeTypeStore from '../../stores/edgeTypeStore';
 import { CustomNode, ResourceItem, CustomEdge } from './types';
 import ConfigMap from '../../assets/k8s_resources_logo/cm.svg';
 import ClusterRoleBinding from '../../assets/k8s_resources_logo/crb.svg';
@@ -255,6 +256,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
   const { currentZoom, getScaledNodeStyle } = useZoomStore();
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeIdCounter = useRef<number>(0);
+  const { edgeType } = useEdgeTypeStore();
 
   const createNode = useCallback(
     (
@@ -402,7 +404,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           id: edgeId,
           source: parent,
           target: id,
-          type: 'bezier',
+          type: edgeType,
           animated: true,
           style: { stroke: theme === 'dark' ? '#777' : '#a3a3a3', strokeDasharray: '2,2' },
           markerEnd: {
@@ -421,6 +423,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
       onMenuOpen,
       currentZoom,
       getScaledNodeStyle,
+      edgeType,
     ]
   );
 

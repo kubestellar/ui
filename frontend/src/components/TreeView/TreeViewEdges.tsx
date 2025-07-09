@@ -1,19 +1,21 @@
 import { useCallback } from 'react';
 import { MarkerType } from 'reactflow';
 import { CustomEdge } from './types';
+import useEdgeTypeStore from '../../stores/edgeTypeStore';
 
 interface TreeViewEdgesProps {
   theme: 'light' | 'dark';
 }
 
 export const useTreeViewEdges = ({ theme }: TreeViewEdgesProps) => {
+  const { edgeType } = useEdgeTypeStore();
   const createEdge = useCallback(
     (source: string, target: string, edgeId: string, animated: boolean = true): CustomEdge => {
       return {
         id: edgeId,
         source,
         target,
-        type: 'bezier',
+        type: edgeType,
         animated,
         style: {
           stroke: theme === 'dark' ? '#777' : '#a3a3a3',
@@ -25,7 +27,7 @@ export const useTreeViewEdges = ({ theme }: TreeViewEdgesProps) => {
         },
       };
     },
-    [theme]
+    [theme, edgeType]
   );
 
   const updateEdgeStyles = useCallback(

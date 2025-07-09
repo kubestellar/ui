@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import ReactFlow, { Background, BackgroundVariant, PanOnScrollMode, useReactFlow } from 'reactflow';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import useZoomStore from '../../stores/zoomStore';
+import useEdgeTypeStore from '../../stores/edgeTypeStore';
 import { CustomEdge, CustomNode } from '../TreeViewComponent';
 
 interface FlowCanvasProps {
@@ -24,6 +25,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const initializedRef = useRef(false);
   const lastTouchDistance = useRef<number | null>(null);
   const reactFlowContainerRef = useRef<HTMLDivElement>(null);
+  const { edgeType } = useEdgeTypeStore();
 
   /**
    * Calculates the boundaries of all nodes in the flow to determine positioning and scaling.
@@ -180,7 +182,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           borderRadius: '4px',
         }}
         onWheel={handleWheel}
-        defaultEdgeOptions={{ type: 'bezier' }}
+        defaultEdgeOptions={{ type: edgeType }}
       >
         <Background
           variant={BackgroundVariant.Dots}

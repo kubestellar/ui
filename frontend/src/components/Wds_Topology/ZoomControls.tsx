@@ -1,9 +1,19 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, Menu, MenuItem, Tooltip } from '@mui/material';
+import {
+  Box,
+  Button,
+  Typography,
+  Menu,
+  MenuItem,
+  Tooltip,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { useReactFlow } from 'reactflow';
 import { useTranslation } from 'react-i18next';
 import useZoomStore, { zoomPresets } from '../../stores/zoomStore';
+import useEdgeTypeStore from '../../stores/edgeTypeStore';
 
 interface ZoomControlsProps {
   theme: string;
@@ -21,6 +31,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
 
     const { setZoom } = useZoomStore();
+    const { edgeType, setEdgeType } = useEdgeTypeStore();
 
     const snapToStep = useCallback((zoom: number) => {
       const step = 10;
@@ -127,6 +138,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
           background: theme === 'dark' ? '#333' : '#fff',
           padding: '4px',
           boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+          alignItems: 'center',
         }}
       >
         <Button
@@ -275,6 +287,24 @@ export const ZoomControls = memo<ZoomControlsProps>(
             </MenuItem>
           ))}
         </Menu>
+        <Tooltip title="Edge Style">
+          <ToggleButtonGroup
+            value={edgeType}
+            exclusive
+            onChange={(_, value) => value && setEdgeType(value)}
+            size="small"
+            color="primary"
+            aria-label="Edge Type"
+            sx={{ ml: 2 }}
+          >
+            <ToggleButton value="bezier" aria-label="Curvy">
+              Curvy
+            </ToggleButton>
+            <ToggleButton value="step" aria-label="Square">
+              Square
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Tooltip>
       </Box>
     );
   }
