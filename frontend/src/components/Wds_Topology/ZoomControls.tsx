@@ -6,8 +6,6 @@ import {
   Menu,
   MenuItem,
   Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
 } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { useReactFlow } from 'reactflow';
@@ -288,22 +286,24 @@ export const ZoomControls = memo<ZoomControlsProps>(
           ))}
         </Menu>
         <Tooltip title="Edge Style">
-          <ToggleButtonGroup
-            value={edgeType}
-            exclusive
-            onChange={(_, value) => value && setEdgeType(value)}
-            size="small"
-            color="primary"
-            aria-label="Edge Type"
-            sx={{ ml: 2 }}
+          <Button
+            variant="text"
+            onClick={() => setEdgeType(edgeType === 'bezier' ? 'step' : 'bezier')}
+            sx={{ ml: 2, minWidth: '36px', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            aria-label={edgeType === 'bezier' ? 'Curvy lines' : 'Square lines'}
           >
-            <ToggleButton value="bezier" aria-label="Curvy">
-              Curvy
-            </ToggleButton>
-            <ToggleButton value="step" aria-label="Square">
-              Square
-            </ToggleButton>
-          </ToggleButtonGroup>
+            {edgeType === 'bezier' ? (
+              // Circle icon for curvy lines
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="7" stroke={theme === 'dark' ? '#fff' : '#1976d2'} strokeWidth="2.5" fill="none" />
+              </svg>
+            ) : (
+              // Box icon for square lines
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="4" width="14" height="14" rx="2" stroke={theme === 'dark' ? '#fff' : '#1976d2'} strokeWidth="2.5" fill="none" />
+              </svg>
+            )}
+          </Button>
         </Tooltip>
       </Box>
     );
