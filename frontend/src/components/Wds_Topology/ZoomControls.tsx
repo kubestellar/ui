@@ -144,7 +144,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={onToggleCollapse}
-          title={t('wdsTopology.zoomControls.groupByResource')}
+          title={t('wecsTopology.zoomControls.groupByResource')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             backgroundColor: isCollapsed ? (theme === 'dark' ? '#555' : '#e3f2fd') : 'transparent',
@@ -160,7 +160,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={onExpandAll}
-          title={t('wdsTopology.zoomControls.expandAll')}
+          title={t('wecsTopology.zoomControls.expandAll')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {
@@ -175,7 +175,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={onCollapseAll}
-          title={t('wdsTopology.zoomControls.collapseAll')}
+          title={t('wecsTopology.zoomControls.collapseAll')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {
@@ -190,7 +190,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={handleZoomIn}
-          title={t('wdsTopology.zoomControls.zoomIn')}
+          title={t('wecsTopology.zoomControls.zoomIn')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {
@@ -205,7 +205,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={handleZoomOut}
-          title={t('wdsTopology.zoomControls.zoomOut')}
+          title={t('wecsTopology.zoomControls.zoomOut')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {

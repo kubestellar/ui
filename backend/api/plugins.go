@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 // In-memory storage for plugin system state
 var (
 	// Map to store disabled plugin instances so they can be re-enabled
-	disabledPlugins      = make(map[string]plugin.Plugin)
+	disabledPlugins      = make(map[int]plugin.Plugin)
 	disabledPluginsMutex = sync.RWMutex{}
 
 	// Plugin system configuration
@@ -38,7 +39,7 @@ var (
 
 // PluginDetails represents the detailed information of a plugin
 type PluginDetails struct {
-	ID          string    `json:"id"`
+	ID          int       `json:"id"`
 	Name        string    `json:"name"`
 	Version     string    `json:"version"`
 	Enabled     bool      `json:"enabled"`
@@ -72,7 +73,7 @@ type PluginSystemConfig struct {
 
 // PluginFeedback represents user feedback for a plugin
 type PluginFeedback struct {
-	PluginID  string    `json:"pluginId" binding:"required"`
+	PluginID  int       `json:"pluginId" binding:"required"`
 	Rating    float32   `json:"rating" binding:"required,min=0,max=5"`
 	Comments  string    `json:"comments"`
 	UserID    string    `json:"userId,omitempty"`
@@ -90,7 +91,7 @@ func ListPluginsHandler(c *gin.Context) {
 	enabledPlugins := getRegisteredPlugins()
 	for _, p := range enabledPlugins {
 		pluginsList = append(pluginsList, PluginDetails{
-			ID:      p.Name(),
+			ID:      p.ID(),
 			Name:    p.Name(),
 			Version: p.Version(),
 			Enabled: true,
@@ -103,7 +104,7 @@ func ListPluginsHandler(c *gin.Context) {
 	disabledPluginsMutex.RLock()
 	for _, p := range disabledPlugins {
 		pluginsList = append(pluginsList, PluginDetails{
-			ID:      p.Name(),
+			ID:      p.ID(),
 			Name:    p.Name(),
 			Version: p.Version(),
 			Enabled: false,
@@ -121,10 +122,11 @@ func ListPluginsHandler(c *gin.Context) {
 
 // GetPluginDetailsHandler returns details about a specific plugin
 func GetPluginDetailsHandler(c *gin.Context) {
-	pluginID := c.Param("id")
-	if pluginID == "" {
+	pluginIDParam := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDParam)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Plugin ID is required",
+			"error": "Incorrect pluginID",
 		})
 		return
 	}
@@ -133,7 +135,7 @@ func GetPluginDetailsHandler(c *gin.Context) {
 	plugin := findPluginByID(pluginID)
 	if plugin != nil {
 		details := PluginDetails{
-			ID:      plugin.Name(),
+			ID:      plugin.ID(),
 			Name:    plugin.Name(),
 			Version: plugin.Version(),
 			Enabled: true,
@@ -151,7 +153,7 @@ func GetPluginDetailsHandler(c *gin.Context) {
 
 	if exists {
 		details := PluginDetails{
-			ID:      disabledPlugin.Name(),
+			ID:      disabledPlugin.ID(),
 			Name:    disabledPlugin.Name(),
 			Version: disabledPlugin.Version(),
 			Enabled: false,
@@ -170,6 +172,7 @@ func GetPluginDetailsHandler(c *gin.Context) {
 // InstallPluginHandler installs a new plugin
 func InstallPluginHandler(c *gin.Context) {
 	var req struct {
+		ID      int    `json:"id" binding:"required"`
 		Name    string `json:"name" binding:"required"`
 		Version string `json:"version"`
 		Source  string `json:"source" binding:"required"` // URL or local path
@@ -195,7 +198,7 @@ func InstallPluginHandler(c *gin.Context) {
 		zap.String("source", req.Source))
 
 	// Simulate installation failure if the plugin already exists
-	if findPluginByID(req.Name) != nil {
+	if findPluginByID(req.ID) != nil {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": "Plugin already installed",
 		})
@@ -212,15 +215,16 @@ func InstallPluginHandler(c *gin.Context) {
 
 // UninstallPluginHandler uninstalls a plugin
 func UninstallPluginHandler(c *gin.Context) {
-	pluginID := c.Param("id")
-	if pluginID == "" {
+	pluginIDParam := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDParam)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Plugin ID is required",
+			"error": "Incorrect pluginID",
 		})
 		return
 	}
 
-	// Check if plugin exists (enabled or disabled)
+	// Check enabled plugins first
 	plugin := findPluginByID(pluginID)
 	var found bool = plugin != nil
 
@@ -240,7 +244,7 @@ func UninstallPluginHandler(c *gin.Context) {
 	// If plugin is currently enabled, deregister it
 	if plugin != nil {
 		plugins.Pm.Deregister(plugin)
-		log.LogInfo("Deregistered plugin from manager", zap.String("id", pluginID))
+		log.LogInfo("Deregistered plugin from manager", zap.String("id", strconv.Itoa(pluginID)))
 	}
 
 	// Remove from disabled plugins storage if it exists there
@@ -248,7 +252,7 @@ func UninstallPluginHandler(c *gin.Context) {
 	delete(disabledPlugins, pluginID)
 	disabledPluginsMutex.Unlock()
 
-	log.LogInfo("Plugin uninstalled successfully", zap.String("id", pluginID))
+	log.LogInfo("Plugin uninstalled successfully", zap.String("id", strconv.Itoa(pluginID)))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin uninstalled successfully",
@@ -259,14 +263,16 @@ func UninstallPluginHandler(c *gin.Context) {
 
 // ReloadPluginHandler reloads a plugin
 func ReloadPluginHandler(c *gin.Context) {
-	pluginID := c.Param("id")
-	if pluginID == "" {
+	pluginIDParam := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDParam)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Plugin ID is required",
+			"error": "Incorrect pluginID",
 		})
 		return
 	}
 
+	// Check enabled plugins first
 	plugin := findPluginByID(pluginID)
 	if plugin == nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -279,7 +285,7 @@ func ReloadPluginHandler(c *gin.Context) {
 	plugins.Pm.Deregister(plugin)
 	plugins.Pm.Register(plugin)
 
-	log.LogInfo("Plugin reloaded successfully", zap.String("id", pluginID))
+	log.LogInfo("Plugin reloaded successfully", zap.String("id", strconv.Itoa(pluginID)))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin reloaded successfully",
@@ -290,15 +296,16 @@ func ReloadPluginHandler(c *gin.Context) {
 
 // EnablePluginHandler enables a plugin
 func EnablePluginHandler(c *gin.Context) {
-	pluginID := c.Param("id")
-	if pluginID == "" {
+	pluginIDParam := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDParam)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Plugin ID is required",
+			"error": "Incorrect pluginID",
 		})
 		return
 	}
 
-	// Check if plugin is already enabled
+	// Check enabled plugins first
 	plugin := findPluginByID(pluginID)
 	if plugin != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -327,7 +334,7 @@ func EnablePluginHandler(c *gin.Context) {
 	// Register with plugin manager
 	plugins.Pm.Register(disabledPlugin)
 
-	log.LogInfo("Plugin enabled successfully", zap.String("id", pluginID))
+	log.LogInfo("Plugin enabled successfully", zap.String("id", strconv.Itoa(pluginID)))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin enabled successfully",
@@ -338,14 +345,16 @@ func EnablePluginHandler(c *gin.Context) {
 
 // DisablePluginHandler disables a plugin
 func DisablePluginHandler(c *gin.Context) {
-	pluginID := c.Param("id")
-	if pluginID == "" {
+	pluginIDParam := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDParam)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Plugin ID is required",
+			"error": "Incorrect pluginID",
 		})
 		return
 	}
 
+	// Check enabled plugins first
 	plugin := findPluginByID(pluginID)
 	if plugin == nil {
 		// Check if already disabled
@@ -375,7 +384,7 @@ func DisablePluginHandler(c *gin.Context) {
 	disabledPlugins[pluginID] = plugin
 	disabledPluginsMutex.Unlock()
 
-	log.LogInfo("Plugin disabled successfully", zap.String("id", pluginID))
+	log.LogInfo("Plugin disabled successfully", zap.String("id", strconv.Itoa(pluginID)))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin disabled successfully",
@@ -386,10 +395,11 @@ func DisablePluginHandler(c *gin.Context) {
 
 // GetPluginStatusHandler returns the status of a plugin
 func GetPluginStatusHandler(c *gin.Context) {
-	pluginID := c.Param("id")
-	if pluginID == "" {
+	pluginIDParam := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDParam)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Plugin ID is required",
+			"error": "Incorrect pluginID",
 		})
 		return
 	}
@@ -520,6 +530,7 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid feedback data: " + err.Error(),
 		})
+		log.LogError("Invalid feedback data", zap.String("error", err.Error()))
 		return
 	}
 
@@ -537,6 +548,7 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Plugin not found",
 		})
+		log.LogError("Plugin not found")
 		return
 	}
 
@@ -549,7 +561,7 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 	feedbackMutex.Unlock()
 
 	log.LogInfo("Plugin feedback submitted",
-		zap.String("pluginId", feedback.PluginID),
+		zap.String("pluginId", strconv.Itoa(feedback.PluginID)),
 		zap.Float32("rating", feedback.Rating))
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -595,9 +607,9 @@ func getRegisteredPlugins() []plugin.Plugin {
 }
 
 // findPluginByID finds a plugin by its ID in the enabled plugins
-func findPluginByID(id string) plugin.Plugin {
+func findPluginByID(id int) plugin.Plugin {
 	for _, p := range getRegisteredPlugins() {
-		if p.Name() == id {
+		if p.ID() == id {
 			return p
 		}
 	}

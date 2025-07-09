@@ -42,6 +42,7 @@ help:
 	@echo "  make migrate-up           - Apply all pending database migrations"
 	@echo "  make migrate-down         - Rollback last N database migrations"
 	@echo "  make migrate-force        - Force a specific migration version (e.g., when tables already exist)"
+	@echo "  make migrate-version      - Show the current version of the migration"
 
 # ==============================================================================
 # Development Commands
@@ -170,3 +171,6 @@ migrate-down:
 migrate-force:
 	@read -p "Enter the version to force: " VERSION; \
 	migrate -path=${MIGRATION_PATH} -database "${DB_URL}" force $${VERSION}
+
+migrate-version:
+	@migrate -path=${MIGRATION_PATH} -database "${DB_URL}" version

@@ -4,6 +4,8 @@ import "github.com/gin-gonic/gin"
 
 // plugin interface defines methods that a KS plugin must implement
 type Plugin interface {
+	// ID of the plugin
+	ID() int
 	// name of the plugin
 	Name() string
 	// version of your plugin

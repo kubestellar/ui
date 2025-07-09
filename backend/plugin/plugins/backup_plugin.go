@@ -18,6 +18,7 @@ import (
 )
 
 var (
+	pluginID      = 1
 	pluginName    = "backup-plugin"
 	pluginVersion = "0.0.1"
 )
@@ -25,6 +26,10 @@ var (
 type backupPlugin struct {
 	storageType string
 	c           *kubernetes.Clientset
+}
+
+func (p backupPlugin) ID() int {
+	return pluginID
 }
 
 func (p backupPlugin) Name() string {

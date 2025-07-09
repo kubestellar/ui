@@ -18,8 +18,8 @@ export class PluginAPI {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getPluginDetails(pluginName: string): Promise<any> {
-    const response = await api.get(`${this.baseURL}/${pluginName}`);
+  async getPluginDetails(pluginID: number): Promise<any> {
+    const response = await api.get(`${this.baseURL}/${pluginID}`);
     return response.data;
   }
 
@@ -35,37 +35,37 @@ export class PluginAPI {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async uninstallPlugin(pluginName: string): Promise<any> {
-    const response = await api.delete(`${this.baseURL}/${pluginName}`);
+  async uninstallPlugin(pluginID: number): Promise<any> {
+    const response = await api.delete(`${this.baseURL}/${pluginID}`);
     return response.data;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async enablePlugin(pluginName: string): Promise<any> {
-    const response = await api.post(`${this.baseURL}/${pluginName}/enable`);
+  async enablePlugin(pluginID: number): Promise<any> {
+    const response = await api.post(`${this.baseURL}/${pluginID}/enable`);
     return response.data;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async disablePlugin(pluginName: string): Promise<any> {
-    const response = await api.post(`${this.baseURL}/${pluginName}/disable`);
+  async disablePlugin(pluginID: number): Promise<any> {
+    const response = await api.post(`${this.baseURL}/${pluginID}/disable`);
     return response.data;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async reloadPlugin(pluginName: string): Promise<any> {
-    const response = await api.post(`${this.baseURL}/${pluginName}/reload`);
+  async reloadPlugin(pluginID: number): Promise<any> {
+    const response = await api.post(`${this.baseURL}/${pluginID}/reload`);
     return response.data;
   }
 
-  async getPluginStatus(pluginName: string): Promise<PluginStatus> {
-    const response = await api.get<PluginStatus>(`${this.baseURL}/${pluginName}/status`);
+  async getPluginStatus(pluginID: number): Promise<PluginStatus> {
+    const response = await api.get<PluginStatus>(`${this.baseURL}/${pluginID}/status`);
     return response.data;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async callPluginFunction(pluginName: string, functionPath: string, data?: any): Promise<any> {
-    const response = await api.post(`${this.baseURL}/${pluginName}${functionPath}`, data || {});
+  async callPluginFunction(pluginID: number, functionPath: string, data?: any): Promise<any> {
+    const response = await api.post(`${this.baseURL}/${pluginID}${functionPath}`, data || {});
     return response.data;
   }
 
@@ -94,12 +94,12 @@ export class PluginAPI {
   }
 
   // Helper method to build plugin-specific URLs
-  getPluginURL(pluginName: string, path: string = ''): string {
-    return `${this.baseURL}/${pluginName}${path}`;
+  getPluginURL(pluginID: number, path: string = ''): string {
+    return `${this.baseURL}/${pluginID}${path}`;
   }
 
   // Helper method to get plugin asset URLs
-  getPluginAssetURL(pluginName: string, assetPath: string): string {
-    return `${this.baseURL}/${pluginName}/assets${assetPath}`;
+  getPluginAssetURL(pluginID: number, assetPath: string): string {
+    return `${this.baseURL}/${pluginID}/assets${assetPath}`;
   }
 }
