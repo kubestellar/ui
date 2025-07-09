@@ -15,9 +15,9 @@ import (
 	"github.com/joho/godotenv" // Add this import
 	"github.com/kubestellar/ui/backend/api"
 	"github.com/kubestellar/ui/backend/models"
+	"github.com/kubestellar/ui/backend/pkg/plugins"
 	config "github.com/kubestellar/ui/backend/postgresql"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
-	"github.com/kubestellar/ui/backend/pkg/plugins"
 	"github.com/kubestellar/ui/backend/routes"
 	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
@@ -111,7 +111,7 @@ func main() {
 	logger.Info("Initializing plugin system...")
 	pluginManager := plugins.NewPluginManager(router)
 	pluginRegistry := plugins.NewPluginRegistry("./plugins", pluginManager)
-	
+
 	// Start plugin discovery and loading
 	if err := initializePlugins(pluginRegistry, logger); err != nil {
 		logger.Error("Failed to initialize plugins", zap.Error(err))
@@ -420,13 +420,13 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 
 	// Load each discovered plugin
 	for _, pluginInfo := range pluginInfos {
-		logger.Info("Loading plugin", 
+		logger.Info("Loading plugin",
 			zap.String("name", pluginInfo.Name),
 			zap.String("version", pluginInfo.Version),
 			zap.String("status", pluginInfo.Status))
 
 		if pluginInfo.Status == "error" {
-			logger.Error("Plugin has errors", 
+			logger.Error("Plugin has errors",
 				zap.String("name", pluginInfo.Name),
 				zap.String("error", pluginInfo.Error))
 			continue
@@ -434,7 +434,7 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 
 		// Load the plugin
 		if err := registry.LoadPlugin(pluginInfo.Name); err != nil {
-			logger.Error("Failed to load plugin", 
+			logger.Error("Failed to load plugin",
 				zap.String("name", pluginInfo.Name),
 				zap.Error(err))
 			continue

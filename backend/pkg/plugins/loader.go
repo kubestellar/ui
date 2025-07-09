@@ -137,7 +137,7 @@ func (pl *PluginLoader) ValidatePlugin(pluginPath string) (*PluginValidationResu
 // loadManifest loads and parses the plugin manifest
 func (pl *PluginLoader) loadManifest(pluginPath string) (*PluginManifest, error) {
 	manifestPath := filepath.Join(pluginPath, "plugin.yml")
-	
+
 	// Check if manifest exists
 	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("manifest file not found: %s", manifestPath)
@@ -354,7 +354,7 @@ func (pl *PluginLoader) isValidVersion(version string) bool {
 
 	// Simple version validation - allow alphanumeric, dots, and hyphens
 	for _, char := range version {
-		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
+		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
 			(char >= '0' && char <= '9') || char == '.' || char == '-') {
 			return false
 		}
@@ -369,7 +369,7 @@ func (pl *PluginLoader) extractArchive(archivePath string) (string, error) {
 	// 1. Detect archive type (tar.gz, zip, etc.)
 	// 2. Extract to temporary directory
 	// 3. Return the path to the extracted directory
-	
+
 	// For now, just return the archive path as-is
 	return archivePath, nil
-} 
+}

@@ -226,7 +226,7 @@ func (pm *PluginManager) getPluginNameFromModule(m api.Module) string {
 	// Find the plugin by module instance
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
-	
+
 	for name, plugin := range pm.plugins {
 		if plugin.Instance == m {
 			return name

@@ -112,7 +112,7 @@ func (ab *APIBridge) MakeRequest(ctx context.Context, req *APIRequest) (*APIResp
 // MakeKubernetesRequest makes a request to the Kubernetes API
 func (ab *APIBridge) MakeKubernetesRequest(ctx context.Context, method, path string, body []byte) (*APIResponse, error) {
 	url := fmt.Sprintf("%s%s", ab.baseURL, path)
-	
+
 	req := &APIRequest{
 		Method:  method,
 		URL:     url,
@@ -129,7 +129,7 @@ func (ab *APIBridge) MakeKubernetesRequest(ctx context.Context, method, path str
 // MakeInternalRequest makes a request to internal KubeStellar APIs
 func (ab *APIBridge) MakeInternalRequest(ctx context.Context, method, path string, body []byte) (*APIResponse, error) {
 	url := fmt.Sprintf("http://localhost:4000%s", path)
-	
+
 	req := &APIRequest{
 		Method:  method,
 		URL:     url,
@@ -203,4 +203,4 @@ func (ab *APIBridge) DeserializeResponse(data []byte) (*APIResponse, error) {
 		return nil, err
 	}
 	return &resp, nil
-} 
+}

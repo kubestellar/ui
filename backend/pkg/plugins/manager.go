@@ -59,7 +59,7 @@ type PluginRoute struct {
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
 func NewPluginManager(router *gin.Engine) *PluginManager {
 	ctx := context.Background()
-	
+
 	// Configure runtime with WASI support
 	config := wazero.NewRuntimeConfigInterpreter()
 	runtime := wazero.NewRuntimeWithConfig(ctx, config)

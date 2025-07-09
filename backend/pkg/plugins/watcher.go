@@ -195,7 +195,7 @@ func isPluginFile(filePath string) bool {
 func (pw *PluginWatcher) getPluginNameFromPath(filePath string) string {
 	// Get the directory name containing the file
 	dir := filepath.Dir(filePath)
-	
+
 	// Check if this is a subdirectory of the plugins directory
 	pluginsDir := pw.registry.GetPluginsDirectory()
 	if !isSubdirectory(dir, pluginsDir) {
@@ -218,7 +218,7 @@ func isSubdirectory(sub, parent string) bool {
 // isPluginComplete checks if a plugin has all required files
 func (pw *PluginWatcher) isPluginComplete(pluginName string) bool {
 	pluginPath := filepath.Join(pw.registry.GetPluginsDirectory(), pluginName)
-	
+
 	// Check for manifest file
 	manifestPath := filepath.Join(pluginPath, "plugin.yml")
 	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
@@ -232,4 +232,4 @@ func (pw *PluginWatcher) isPluginComplete(pluginName string) bool {
 	}
 
 	return true
-} 
+}

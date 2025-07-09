@@ -147,7 +147,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 func (pr *PluginRegistry) LoadPlugin(name string) error {
 	// Find the plugin directory
 	pluginPath := filepath.Join(pr.pluginsDirectory, name)
-	
+
 	// Check if directory exists
 	if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
 		return fmt.Errorf("plugin directory not found: %s", pluginPath)
@@ -196,4 +196,4 @@ func (pr *PluginRegistry) StopWatching() error {
 // GetPluginsDirectory returns the plugins directory path
 func (pr *PluginRegistry) GetPluginsDirectory() string {
 	return pr.pluginsDirectory
-} 
+}
