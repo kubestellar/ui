@@ -1,5 +1,5 @@
 matrix:
-  - name: Markdown
+  - name: Markdown and JSON
     aspell:
       lang: en
     dictionary:
@@ -15,5 +15,6 @@ matrix:
             - pre
     sources:
       - '**/*.md'
+      - '**/*.json'
     default_encoding: utf-8
 
