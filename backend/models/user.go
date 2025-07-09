@@ -160,6 +160,38 @@ func UpdateUserPassword(userID int, newPassword string) error {
 	return err
 }
 
+// UpdateUserUsername updates a user's username
+func UpdateUserUsername(userID int, newUsername string) error {
+	// Check if the new username already exists
+	var existingID int
+	err := database.DB.QueryRow("SELECT id FROM users WHERE username = $1", newUsername).Scan(&existingID)
+	if err == nil {
+		// Username exists
+		if existingID != userID {
+			return fmt.Errorf("username already exists")
+		}
+		// Same user, no change needed
+		return nil
+	} else if err != sql.ErrNoRows {
+		// Database error
+		return fmt.Errorf("failed to check username: %v", err)
+	}
+
+	// Username doesn't exist, safe to update
+	query := `UPDATE users SET username = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	result, err := database.DB.Exec(query, newUsername, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update username: %v", err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
+}
+
 // DeleteUser deletes a user and their permissions
 func DeleteUser(username string) error {
 	// Start a transaction to ensure both user and permissions are deleted atomically

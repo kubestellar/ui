@@ -188,14 +188,15 @@ const UserManagement = () => {
         });
       }
 
-      // Update user details
+      // Update user details including username
       await UserService.updateUser(currentUser.username, {
+        username: username, // Send the new username
         password: password || undefined, // Only send password if it's changed
         is_admin: isUserAdmin,
       });
 
       // Update permissions separately
-      await UserService.updateUserPermissions(currentUser.username, finalPermissions);
+      await UserService.updateUserPermissions(username, finalPermissions); // Use new username for permissions
 
       // Reset form and show success message
       resetForm();
