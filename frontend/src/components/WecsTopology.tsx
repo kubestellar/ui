@@ -1335,6 +1335,12 @@ const WecsTreeview = () => {
                 isDeploymentOrJobPod,
               });
               break;
+            case 'Delete':
+              if (window.confirm(`Are you sure you want to delete "${nodeName}" (${nodeType})?`)) {
+                  setNodes(prev => prev.filter(n => n.id !== node.id));
+                  setEdges(prev => prev.filter(e => e.source !== node.id && e.target !== node.id));
+              }
+              break;
             case 'Edit':
               setSelectedNode({
                 namespace: namespace || 'default',
@@ -1669,7 +1675,23 @@ const WecsTreeview = () => {
               >
                 {t('wecsTopology.contextMenu.details')}
               </MenuItem>
-
+              
+              {contextMenu.nodeType &&
+               contextMenu.nodeType !== 'cluster' &&
+               contextMenu.nodeType !== 'namespace' && (
+              <MenuItem
+                onClick={() => handleMenuAction('Delete')}
+                  sx={{
+                    color: theme === 'dark' ? '#DEE6EB' : '#000000',
+                    '&:hover': {
+                      backgroundColor:
+                        theme === 'dark' ? 'rgba(255, 107, 107, 0.08)' : 'rgba(211, 47, 47, 0.04)',
+                    },
+                  }}
+                >
+                  {t('wecsTopology.contextMenu.delete') || 'Delete'}
+              </MenuItem>
+              )}
               <MenuItem
                 onClick={() => handleMenuAction('Edit')}
                 sx={{
