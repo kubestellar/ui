@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/backend/auth"
 	"github.com/kubestellar/ui/backend/middleware"
 	"github.com/kubestellar/ui/backend/models"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
@@ -599,21 +598,26 @@ func DeleteUserHandler(c *gin.Context) {
 	// Prevent deleting the last admin user
 	if username == "admin" {
 		users, err := models.ListAllUsers()
-		if err == nil {
-			adminCount := 0
-			for _, user := range users {
-				if user.IsAdmin {
-					adminCount++
-				}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to check admin users",
+				"details": err.Error(),
+			})
+			return
+		}
+		adminCount := 0
+		for _, user := range users {
+			if user.IsAdmin {
+				adminCount++
 			}
-			if adminCount <= 1 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete the last admin user"})
-				return
-			}
+		}
+		if adminCount <= 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete the last admin user"})
+			return
 		}
 	}
 
-	err := auth.RemoveUser(username)
+	err := models.DeleteUser(username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to delete user",

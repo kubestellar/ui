@@ -218,6 +218,7 @@ const UserManagement = () => {
 
     try {
       setIsDeleting(true);
+      setFormError(''); // Clear any previous errors
       await UserService.deleteUser(currentUser.username);
 
       // Reset form and show success message
