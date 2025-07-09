@@ -61,10 +61,10 @@ RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
     echo 'export NGINX_HOST=${NGINX_HOST:-localhost}' >> /docker-entrypoint.sh && \
     echo '# Check if config is already mounted (from ConfigMap)' >> /docker-entrypoint.sh && \
     echo 'if [ ! -f /etc/nginx/conf.d/default.conf ] || [ ! -s /etc/nginx/conf.d/default.conf ]; then' >> /docker-entrypoint.sh && \
-    echo '  echo "[INFO] Generating nginx config from template..."' >> /docker-entrypoint.sh && \
+    echo '  echo "Generating nginx config from template..."' >> /docker-entrypoint.sh && \
     echo '  envsubst "\$NGINX_HOST \$BACKEND_URL" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.sh && \
     echo 'else' >> /docker-entrypoint.sh && \
-    echo '  echo "[INFO] Using existing nginx config (from ConfigMap)"' >> /docker-entrypoint.sh && \
+    echo '  echo "Using existing nginx config (from ConfigMap)"' >> /docker-entrypoint.sh && \
     echo 'fi' >> /docker-entrypoint.sh && \
     echo 'exec "$@"' >> /docker-entrypoint.sh && \
     chmod +x /docker-entrypoint.sh
