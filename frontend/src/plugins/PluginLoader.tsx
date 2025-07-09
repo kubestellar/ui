@@ -9,14 +9,14 @@ import {
 import { PluginAPI } from './PluginAPI';
 
 interface PluginContextType {
-  plugins: Map<string, PluginInstance>;
+  plugins: Map<number, PluginInstance>;
   loadedPlugins: PluginManifest[];
   loadPlugin: (manifest: PluginManifest) => Promise<void>;
-  unloadPlugin: (pluginName: string) => Promise<void>;
+  unloadPlugin: (pluginID: number) => Promise<void>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getPluginWidget: (pluginName: string, widgetName: string) => React.ComponentType<any> | null;
+  getPluginWidget: (pluginID: number, widgetName: string) => React.ComponentType<any> | null;
   getPluginNavigation: () => PluginNavigationItem[];
-  isPluginLoaded: (pluginName: string) => boolean;
+  isPluginLoaded: (pluginID: number) => boolean;
   loadAvailablePlugins: () => Promise<void>;
 }
 
@@ -37,17 +37,17 @@ interface PluginProviderProps {
 // This component provides plugin functionality and exports both context and utilities
 
 export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
-  const [plugins, setPlugins] = useState<Map<string, PluginInstance>>(new Map());
+  const [plugins, setPlugins] = useState<Map<number, PluginInstance>>(new Map());
   const [loadedPlugins, setLoadedPlugins] = useState<PluginManifest[]>([]);
   const [pluginAPI] = useState(() => new PluginAPI());
 
-  const loadPluginAssets = useCallback(async (assets: PluginAssetConfig[], pluginName: string) => {
+  const loadPluginAssets = useCallback(async (assets: PluginAssetConfig[], pluginID: number) => {
     for (const asset of assets) {
       try {
         if (asset.type === 'css') {
-          await loadCSS(asset.path, pluginName);
+          await loadCSS(asset.path, pluginID);
         } else if (asset.type === 'js') {
-          await loadJS(asset.path, pluginName);
+          await loadJS(asset.path, pluginID);
         }
       } catch (error) {
         console.error(`Failed to load asset ${asset.path}:`, error);
@@ -61,7 +61,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
         console.log(`Loading plugin: ${manifest.name}`);
 
         // Check if plugin is already loaded
-        if (plugins.has(manifest.name)) {
+        if (plugins.has(manifest.id)) {
           console.warn(`Plugin ${manifest.name} is already loaded`);
           return;
         }
@@ -86,11 +86,11 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
 
         // Load plugin assets (CSS, JS)
         if (manifest.frontend.assets) {
-          await loadPluginAssets(manifest.frontend.assets, manifest.name);
+          await loadPluginAssets(manifest.frontend.assets, manifest.id);
         }
 
         // Update plugins map
-        setPlugins(prev => new Map(prev).set(manifest.name, pluginInstance));
+        setPlugins(prev => new Map(prev).set(manifest.id, pluginInstance));
 
         console.log(`Plugin ${manifest.name} loaded successfully`);
       } catch (error) {
@@ -118,27 +118,27 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   }, [pluginAPI, loadPlugin]);
 
   const unloadPlugin = useCallback(
-    async (pluginName: string) => {
+    async (pluginID: number) => {
       try {
-        const plugin = plugins.get(pluginName);
+        const plugin = plugins.get(pluginID);
         if (!plugin) {
-          console.warn(`Plugin ${pluginName} is not loaded`);
+          console.warn(`Plugin ${pluginID} is not loaded`);
           return;
         }
 
         // Remove plugin assets
-        removePluginAssets(pluginName);
+        removePluginAssets(pluginID);
 
         // Update plugins map
         setPlugins(prev => {
           const newMap = new Map(prev);
-          newMap.delete(pluginName);
+          newMap.delete(pluginID);
           return newMap;
         });
 
-        console.log(`Plugin ${pluginName} unloaded successfully`);
+        console.log(`Plugin ${pluginID} unloaded successfully`);
       } catch (error) {
-        console.error(`Failed to unload plugin ${pluginName}:`, error);
+        console.error(`Failed to unload plugin ${pluginID}:`, error);
         throw error;
       }
     },
@@ -170,54 +170,54 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     }
   };
 
-  const loadCSS = (path: string, pluginName: string): Promise<void> => {
+  const loadCSS = (path: string, pluginID: number): Promise<void> => {
     return new Promise((resolve, reject) => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = `/api/plugins/${pluginName}/assets${path}`;
-      link.id = `plugin-css-${pluginName}`;
+      link.href = `/api/plugins/${pluginID}/assets${path}`;
+      link.id = `plugin-css-${pluginID}`;
       link.onload = () => resolve();
       link.onerror = () => reject(new Error(`Failed to load CSS: ${path}`));
       document.head.appendChild(link);
     });
   };
 
-  const loadJS = (path: string, pluginName: string): Promise<void> => {
+  const loadJS = (path: string, pluginID: number): Promise<void> => {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = `/api/plugins/${pluginName}/assets${path}`;
-      script.id = `plugin-js-${pluginName}`;
+      script.src = `/api/plugins/${pluginID}/assets${path}`;
+      script.id = `plugin-js-${pluginID}`;
       script.onload = () => resolve();
       script.onerror = () => reject(new Error(`Failed to load JS: ${path}`));
       document.head.appendChild(script);
     });
   };
 
-  const removePluginAssets = (pluginName: string) => {
+  const removePluginAssets = (pluginID: number) => {
     // Remove CSS
-    const cssElement = document.getElementById(`plugin-css-${pluginName}`);
+    const cssElement = document.getElementById(`plugin-css-${pluginID}`);
     if (cssElement) {
       cssElement.remove();
     }
 
     // Remove JS
-    const jsElement = document.getElementById(`plugin-js-${pluginName}`);
+    const jsElement = document.getElementById(`plugin-js-${pluginID}`);
     if (jsElement) {
       jsElement.remove();
     }
   };
 
   const getPluginWidget = useCallback(
-    (pluginName: string, widgetName: string) => {
-      const plugin = plugins.get(pluginName);
+    (pluginID: number, widgetName: string) => {
+      const plugin = plugins.get(pluginID);
       if (!plugin) {
-        console.warn(`Plugin ${pluginName} not found`);
+        console.warn(`Plugin ${pluginID} not found`);
         return null;
       }
 
       const widget = plugin.widgets.get(widgetName);
       if (!widget) {
-        console.warn(`Widget ${widgetName} not found in plugin ${pluginName}`);
+        console.warn(`Widget ${widgetName} not found in plugin ${pluginID}`);
         return null;
       }
 
@@ -239,8 +239,8 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   }, [plugins]);
 
   const isPluginLoaded = useCallback(
-    (pluginName: string) => {
-      return plugins.has(pluginName);
+    (pluginID: number) => {
+      return plugins.has(pluginID);
     },
     [plugins]
   );
