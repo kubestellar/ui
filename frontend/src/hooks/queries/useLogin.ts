@@ -76,20 +76,33 @@ export const useLogin = () => {
     },
     onError: error => {
       toast.dismiss('auth-loading');
-      console.error(t('auth.login.error'), error);
+
+      // Don't log the raw error to console to avoid showing technical details
+      // console.error(t('auth.login.error'), error);
 
       let errorMessage = t('auth.login.invalidCredentials');
 
       if (axios.isAxiosError(error)) {
-        errorMessage =
-          error.response?.data?.error ||
-          error.response?.data?.message ||
-          t('auth.login.authFailed');
+        // Handle different types of authentication errors
+        if (error.response?.status === 401) {
+          errorMessage = t('auth.login.invalidCredentials');
+        } else if (error.response?.status === 400) {
+          errorMessage = error.response?.data?.error || t('auth.login.invalidRequest');
+        } else if (error.response?.status && error.response.status >= 500) {
+          errorMessage = t('auth.login.serverError');
+        } else {
+          errorMessage =
+            error.response?.data?.error ||
+            error.response?.data?.message ||
+            t('auth.login.authFailed');
+        }
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        // For non-axios errors, use a generic message instead of the raw error
+        errorMessage = t('auth.login.authFailed');
       }
 
-      toast.error(errorMessage);
+      // Use a consistent toast ID to prevent duplicates
+      toast.error(errorMessage, { id: 'login-error' });
     },
   });
 };
