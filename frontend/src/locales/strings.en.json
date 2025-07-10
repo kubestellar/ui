@@ -1719,9 +1719,11 @@
       "success": "Login successful",
       "error": "Login error:",
       "successWithUser": "Login successful for user: {{username}}. Redirecting to {{path}}",
-      "invalidCredentials": "Invalid credentials",
+      "invalidCredentials": "Invalid username or password. Please try again.",
       "authFailed": "Authentication failed. Please check your credentials.",
-      "noToken": "No token received from server"
+      "noToken": "No token received from server",
+      "invalidRequest": "Invalid request. Please check your input and try again.",
+      "serverError": "Server error. Please try again later."
     }
   },
   "kubestellarData": {
