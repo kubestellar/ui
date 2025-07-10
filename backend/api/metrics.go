@@ -12,6 +12,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/kubestellar/ui/backend/k8s"
 )
 
 // MetricsConfig holds configuration for metrics API
@@ -323,6 +325,61 @@ func SetupMetricsRoutes(router *gin.Engine, logger *zap.Logger) {
 		zap.String("raw_metrics", "/metrics"),
 		zap.String("json_metrics", "/api/v1/metrics"),
 		zap.String("raw_api", "/api/v1/metrics/raw"))
+}
+
+// GetPodHealthMetrics returns the percentage of healthy pods across all namespaces
+func GetPodHealthMetrics(c *gin.Context) {
+	clientset, _, err := k8s.GetClientSet()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Kubernetes client", "details": err.Error()})
+		return
+	}
+
+	nsList, err := clientset.CoreV1().Namespaces().List(c, metav1.ListOptions{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list namespaces", "details": err.Error()})
+		return
+	}
+
+	totalPods := 0
+	healthyPods := 0
+
+	for _, ns := range nsList.Items {
+		// Skip system namespaces
+		// if ns.Name == "kube-system" || ns.Name == "kube-public" || ns.Name == "kube-node-lease" {
+		// 	continue
+		// }
+		podList, err := clientset.CoreV1().Pods(ns.Name).List(c, metav1.ListOptions{})
+		if err != nil {
+			continue 
+		}
+		totalPods += len(podList.Items)
+		for _, pod := range podList.Items {
+			if pod.Status.Phase == "Running" {
+				allReady := true
+				for _, cs := range pod.Status.ContainerStatuses {
+					if !cs.Ready {
+						allReady = false
+						break
+					}
+				}
+				if allReady {
+					healthyPods++
+				}
+			}
+		}
+	}
+
+	healthPercent := 0.0
+	if totalPods > 0 {
+		healthPercent = float64(healthyPods) / float64(totalPods) * 100
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"totalPods":     totalPods,
+		"healthyPods":   healthyPods,
+		"healthPercent": healthPercent,
+	})
 }
 
 // Usage examples:
