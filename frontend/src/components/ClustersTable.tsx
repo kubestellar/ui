@@ -2063,36 +2063,41 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               />
             )}
 
-            {filterByLabel.length > 0 && filterByLabel.map((labelFilter, index) => (
-              <Chip
-                key={`${labelFilter.key}-${labelFilter.value}-${index}`}
-                label={`${t('clusters.labels.label')}: ${labelFilter.key}=${labelFilter.value}`}
-                size="medium"
-                onDelete={() => {
-                  setFilterByLabel(prev => prev.filter((_, i) => i !== index));
-                  toast.success(`Label filter removed: ${labelFilter.key}=${labelFilter.value}`, { duration: 2000 });
-                }}
-                sx={{
-                  backgroundColor: isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
-                  color: colors.primary,
-                  fontWeight: 500,
-                  '& .MuiChip-deleteIcon': {
-                    color: colors.primary,
-                    '&:hover': { color: colors.primaryDark },
-                  },
-                  borderRadius: '8px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
+            {filterByLabel.length > 0 &&
+              filterByLabel.map((labelFilter, index) => (
+                <Chip
+                  key={`${labelFilter.key}-${labelFilter.value}-${index}`}
+                  label={`${t('clusters.labels.label')}: ${labelFilter.key}=${labelFilter.value}`}
+                  size="medium"
+                  onDelete={() => {
+                    setFilterByLabel(prev => prev.filter((_, i) => i !== index));
+                    toast.success(`Label filter removed: ${labelFilter.key}=${labelFilter.value}`, {
+                      duration: 2000,
+                    });
+                  }}
+                  sx={{
                     backgroundColor: isDark
-                      ? 'rgba(47, 134, 255, 0.2)'
-                      : 'rgba(47, 134, 255, 0.15)',
-                    boxShadow: '0 2px 4px rgba(47, 134, 255, 0.2)',
-                  },
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              />
-            ))}
+                      ? 'rgba(47, 134, 255, 0.15)'
+                      : 'rgba(47, 134, 255, 0.1)',
+                    color: colors.primary,
+                    fontWeight: 500,
+                    '& .MuiChip-deleteIcon': {
+                      color: colors.primary,
+                      '&:hover': { color: colors.primaryDark },
+                    },
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: isDark
+                        ? 'rgba(47, 134, 255, 0.2)'
+                        : 'rgba(47, 134, 255, 0.15)',
+                      boxShadow: '0 2px 4px rgba(47, 134, 255, 0.2)',
+                    },
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                />
+              ))}
 
             <Box sx={{ flexGrow: 1 }} />
 
@@ -2260,17 +2265,20 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                     <span
                                       onClick={() => handleFilterByLabel(key, value)}
                                       style={{
-                                        backgroundColor:
-                                          filterByLabel.some(item => item.key === key && item.value === value)
-                                            ? isDark
-                                              ? 'rgba(47, 134, 255, 0.3)'
-                                              : 'rgba(47, 134, 255, 0.15)'
-                                            : isDark
-                                              ? 'rgba(47, 134, 255, 0.15)'
-                                              : 'rgba(47, 134, 255, 0.08)',
+                                        backgroundColor: filterByLabel.some(
+                                          item => item.key === key && item.value === value
+                                        )
+                                          ? isDark
+                                            ? 'rgba(47, 134, 255, 0.3)'
+                                            : 'rgba(47, 134, 255, 0.15)'
+                                          : isDark
+                                            ? 'rgba(47, 134, 255, 0.15)'
+                                            : 'rgba(47, 134, 255, 0.08)',
                                         color: colors.primary,
                                         border: `1px solid ${
-                                          filterByLabel.some(item => item.key === key && item.value === value)
+                                          filterByLabel.some(
+                                            item => item.key === key && item.value === value
+                                          )
                                             ? colors.primary
                                             : isDark
                                               ? 'rgba(47, 134, 255, 0.4)'
