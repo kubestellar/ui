@@ -8,6 +8,15 @@ export interface User {
   updated_at?: string;
 }
 
+// Filter options for users
+export interface UserFilter {
+  role: 'all' | 'admin' | 'user' | null;
+  permission: string | null;
+  permissionLevel: 'read' | 'write' | null;
+  sortBy: 'username' | 'role' | 'created' | null;
+  sortDirection: 'asc' | 'desc';
+}
+
 // Permission component type
 export interface PermissionComponent {
   id: string;
