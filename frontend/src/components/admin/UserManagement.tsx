@@ -156,10 +156,11 @@ const UserManagement = () => {
             return a.username.localeCompare(b.username) * direction;
           case 'role':
             return (a.is_admin === b.is_admin ? 0 : a.is_admin ? -1 : 1) * direction;
-          case 'created':
+          case 'created': {
             const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
             const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
             return (dateA - dateB) * direction;
+          }
           default:
             return 0;
         }
@@ -340,7 +341,7 @@ const UserManagement = () => {
     setShowFilters(prev => !prev);
   };
 
-  const handleFilterChange = (filterKey: keyof UserFilter, value: any) => {
+  const handleFilterChange = (filterKey: keyof UserFilter, value: string | null) => {
     if (filterKey === 'permission' && !value) {
       // If clearing the permission filter, also clear the permission level filter
       setFilters(prev => ({
