@@ -19,7 +19,7 @@ const queryCache = new QueryCache({
         toast.error('Authentication required. Please log in again.');
       } else if (status === 403) {
         toast.error("Access denied. You don't have permission for this action.");
-      } else if (status >= 500) {
+      } else if (status && status >= 500) {
         toast.error('Server error. Please try again later.');
       } else {
         toast.error('An error occurred while fetching data');
@@ -50,7 +50,7 @@ const mutationCache = new MutationCache({
         toast.error('Authentication required. Please log in again.');
       } else if (status === 403) {
         toast.error("Access denied. You don't have permission for this action.");
-      } else if (status >= 500) {
+      } else if (status && status >= 500) {
         toast.error('Server error. Please try again later.');
       } else {
         toast.error('An error occurred while updating data');
