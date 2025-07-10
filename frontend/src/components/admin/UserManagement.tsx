@@ -4,7 +4,15 @@ import useTheme from '../../stores/themeStore';
 import getThemeStyles from '../../lib/theme-utils';
 import { useAdminCheck } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { FiUsers, FiUserPlus, FiSearch, FiFilter, FiRefreshCw, FiX, FiChevronDown } from 'react-icons/fi';
+import {
+  FiUsers,
+  FiUserPlus,
+  FiSearch,
+  FiFilter,
+  FiRefreshCw,
+  FiX,
+  FiChevronDown,
+} from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
@@ -26,13 +34,13 @@ const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Filter states
   const [roleFilter, setRoleFilter] = useState<string>('all'); // 'all', 'admin', 'user'
   const [permissionFilter, setPermissionFilter] = useState<string>('all'); // 'all', specific permission
   const [permissionLevelFilter, setPermissionLevelFilter] = useState<string>('all'); // 'all', 'read', 'write'
   const [showFilters, setShowFilters] = useState(false);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -102,14 +110,15 @@ const UserManagement = () => {
       const lowerSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(user => {
         const matchesUsername = user.username.toLowerCase().includes(lowerSearchTerm);
-        const matchesRole = (user.is_admin && t('admin.users.roles.admin').toLowerCase().includes(lowerSearchTerm)) ||
-                           (!user.is_admin && t('admin.users.roles.user').toLowerCase().includes(lowerSearchTerm));
+        const matchesRole =
+          (user.is_admin && t('admin.users.roles.admin').toLowerCase().includes(lowerSearchTerm)) ||
+          (!user.is_admin && t('admin.users.roles.user').toLowerCase().includes(lowerSearchTerm));
         const matchesPermissions = Object.keys(user.permissions || {}).some(
           key =>
             key.toLowerCase().includes(lowerSearchTerm) ||
             user.permissions[key].toLowerCase().includes(lowerSearchTerm)
         );
-        
+
         return matchesUsername || matchesRole || matchesPermissions;
       });
     }
@@ -140,7 +149,7 @@ const UserManagement = () => {
     }
 
     setFilteredUsers(filtered);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, users, roleFilter, permissionFilter, permissionLevelFilter]);
 
   // Clear all filters
@@ -152,15 +161,18 @@ const UserManagement = () => {
   };
 
   // Check if any filters are active
-  const hasActiveFilters = searchTerm !== '' || roleFilter !== 'all' || 
-                          permissionFilter !== 'all' || permissionLevelFilter !== 'all';
+  const hasActiveFilters =
+    searchTerm !== '' ||
+    roleFilter !== 'all' ||
+    permissionFilter !== 'all' ||
+    permissionLevelFilter !== 'all';
 
   // Count active filters
   const activeFilterCount = [
     searchTerm !== '',
     roleFilter !== 'all',
     permissionFilter !== 'all',
-    permissionLevelFilter !== 'all'
+    permissionLevelFilter !== 'all',
   ].filter(Boolean).length;
 
   const refreshUsers = async () => {
@@ -380,9 +392,9 @@ const UserManagement = () => {
                 {t('admin.users.title')}
               </h1>
               <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                {t('admin.users.stats.usersShown', { 
-                  filtered: filteredUsers.length, 
-                  count: users.length 
+                {t('admin.users.stats.usersShown', {
+                  filtered: filteredUsers.length,
+                  count: users.length,
                 })}{' '}
                 {hasActiveFilters && t('admin.users.stats.shown')}
               </p>
@@ -444,27 +456,33 @@ const UserManagement = () => {
                 whileTap={{ scale: 0.98 }}
                 className="relative flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 transition-all duration-200"
                 style={{
-                  borderColor: showFilters 
-                    ? themeStyles.colors.brand.primary 
-                    : isDark ? 'rgba(75, 85, 99, 0.5)' : 'rgba(226, 232, 240, 0.8)',
-                  color: showFilters 
-                    ? themeStyles.colors.brand.primary 
+                  borderColor: showFilters
+                    ? themeStyles.colors.brand.primary
+                    : isDark
+                      ? 'rgba(75, 85, 99, 0.5)'
+                      : 'rgba(226, 232, 240, 0.8)',
+                  color: showFilters
+                    ? themeStyles.colors.brand.primary
                     : themeStyles.colors.text.secondary,
                   background: showFilters
-                    ? isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'
-                    : isDark ? 'rgba(31, 41, 55, 0.4)' : 'rgba(249, 250, 251, 0.8)',
+                    ? isDark
+                      ? 'rgba(59, 130, 246, 0.1)'
+                      : 'rgba(59, 130, 246, 0.05)'
+                    : isDark
+                      ? 'rgba(31, 41, 55, 0.4)'
+                      : 'rgba(249, 250, 251, 0.8)',
                 }}
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <FiFilter size={16} />
                 <span>{t('admin.users.filters.title')}</span>
                 {activeFilterCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white">
                     {activeFilterCount}
                   </span>
                 )}
-                <FiChevronDown 
-                  size={14} 
+                <FiChevronDown
+                  size={14}
                   className={`transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`}
                 />
               </motion.button>
@@ -504,7 +522,10 @@ const UserManagement = () => {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {/* Role Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                    <label
+                      className="text-sm font-medium"
+                      style={{ color: themeStyles.colors.text.primary }}
+                    >
                       {t('admin.users.filters.role.label')}
                     </label>
                     <select
@@ -525,7 +546,10 @@ const UserManagement = () => {
 
                   {/* Permission Component Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                    <label
+                      className="text-sm font-medium"
+                      style={{ color: themeStyles.colors.text.primary }}
+                    >
                       {t('admin.users.filters.permission.label')}
                     </label>
                     <select
@@ -549,7 +573,10 @@ const UserManagement = () => {
 
                   {/* Permission Level Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                    <label
+                      className="text-sm font-medium"
+                      style={{ color: themeStyles.colors.text.primary }}
+                    >
                       {t('admin.users.filters.accessLevel.label')}
                     </label>
                     <select
@@ -601,8 +628,8 @@ const UserManagement = () => {
               {searchTerm && (
                 <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                   {t('admin.users.search.label')} "{searchTerm}"
-                  <FiX 
-                    size={14} 
+                  <FiX
+                    size={14}
                     className="cursor-pointer transition-colors hover:text-blue-600 dark:hover:text-blue-100"
                     onClick={() => setSearchTerm('')}
                   />
@@ -610,9 +637,12 @@ const UserManagement = () => {
               )}
               {roleFilter !== 'all' && (
                 <span className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
-                  {t('admin.users.filters.role.filter')} {roleFilter === 'admin' ? t('admin.users.roles.administrator') : t('admin.users.roles.regularUser')}
-                  <FiX 
-                    size={14} 
+                  {t('admin.users.filters.role.filter')}{' '}
+                  {roleFilter === 'admin'
+                    ? t('admin.users.roles.administrator')
+                    : t('admin.users.roles.regularUser')}
+                  <FiX
+                    size={14}
                     className="cursor-pointer transition-colors hover:text-green-600 dark:hover:text-green-100"
                     onClick={() => setRoleFilter('all')}
                   />
@@ -620,9 +650,10 @@ const UserManagement = () => {
               )}
               {permissionFilter !== 'all' && (
                 <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-3 py-1 text-sm text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                  {t('admin.users.filters.permission.filter')} {permissionComponents.find(p => p.id === permissionFilter)?.name}
-                  <FiX 
-                    size={14} 
+                  {t('admin.users.filters.permission.filter')}{' '}
+                  {permissionComponents.find(p => p.id === permissionFilter)?.name}
+                  <FiX
+                    size={14}
                     className="cursor-pointer transition-colors hover:text-purple-600 dark:hover:text-purple-100"
                     onClick={() => setPermissionFilter('all')}
                   />
@@ -630,9 +661,12 @@ const UserManagement = () => {
               )}
               {permissionLevelFilter !== 'all' && (
                 <span className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-sm text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-                  {t('admin.users.filters.accessLevel.filter')} {permissionLevelFilter === 'read' ? t('admin.users.permissions.levels.readOnly') : t('admin.users.permissions.levels.readWrite')}
-                  <FiX 
-                    size={14} 
+                  {t('admin.users.filters.accessLevel.filter')}{' '}
+                  {permissionLevelFilter === 'read'
+                    ? t('admin.users.permissions.levels.readOnly')
+                    : t('admin.users.permissions.levels.readWrite')}
+                  <FiX
+                    size={14}
                     className="cursor-pointer transition-colors hover:text-orange-600 dark:hover:text-orange-100"
                     onClick={() => setPermissionLevelFilter('all')}
                   />
