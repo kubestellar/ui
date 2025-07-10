@@ -16,8 +16,8 @@
     "passwordsMatch": "Le password corrispondono!"
   },
   "commandPalette": {
-    "ariaLabel": "Apri la palette dei comandi",
-    "title": "Palette dei comandi (Ctrl+K)",
+    "ariaLabel": "Apri la tavolozza dei comandi",
+    "title": "Tavolozza dei comandi (Ctrl+K)",
     "badge": "K",
     "searchPlaceholder": "Cerca comandi...",
     "noCommandsFound": "Nessun comando trovato. Prova un altro termine di ricerca.",
@@ -44,41 +44,154 @@
         "description": "Vai alla dashboard"
       },
       "plugin": {
-        "title": "Gestore Plugin",
+        "title": "Gestore plugin",
         "description": "Gestisci e monitora i plugin KubeStellar"
       },
       "clusters": {
-        "title": "Cluster Remoti",
+        "title": "Cluster remoti",
         "description": "Gestisci i cluster Kubernetes"
       },
       "workloads": {
-        "title": "Workloads",
-        "description": "Gestisci i workloads tra i cluster"
+        "title": "Carichi di lavoro",
+        "description": "Gestisci i carichi di lavoro tra cluster"
       },
       "bindingPolicies": {
-        "title": "Policy di binding",
-        "description": "Configura le policy di binding"
+        "title": "Politiche di binding",
+        "description": "Configura le politiche di binding"
       },
       "userManagement": {
-        "title": "Gestione Utenti",
-        "description": "Gestisci gli utenti di sistema e i permessi"
+        "title": "Gestione utenti",
+        "description": "Gestisci gli utenti del sistema e i permessi"
       },
       "wdsTreeview": {
         "title": "Vista ad albero WDS",
-        "description": "Visualizza la distribuzione dei workloads"
+        "description": "Visualizza la distribuzione dei carichi di lavoro"
       },
       "wecsTreeview": {
         "title": "Vista ad albero WECS",
-        "description": "Visualizza la struttura dei workloads distribuiti"
+        "description": "Visualizza la struttura dei carichi di lavoro distribuiti"
       },
       "documentation": {
         "title": "Apri documentazione",
-        "description": "Avvia la documentazione di KubeStellar"
+        "description": "Avvia la documentazione KubeStellar"
       },
       "logout": {
-        "title": "Disconnetti",
+        "title": "Logout",
         "description": "Esci dal tuo account",
-        "infoMessage": "Disconnessione avvenuta con successo."
+        "infoMessage": "Sei stato disconnesso con successo."
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Gestione utenti",
+      "subtitle": "Utenti del sistema",
+      "noUsers": "Nessun utente trovato",
+      "noUsersDescription": "Non ci sono ancora utenti nel sistema. Clicca su \"Aggiungi utente\" per creare il tuo primo utente.",
+      "noPermissions": "Nessun permesso assegnato",
+      "stats": {
+        "usersShown": "{{filtered}} su {{count}} utenti",
+        "user": "utente",
+        "users": "utenti",
+        "shown": "mostrati"
+      },
+      "search": {
+        "placeholder": "Cerca per nome utente, ruolo o permessi...",
+        "label": "Ricerca:"
+      },
+      "filters": {
+        "title": "Filtri",
+        "toggle": "Filtri",
+        "clear": "Cancella tutti i filtri",
+        "active": "{{count}} filtro/i attivo/i",
+        "filter": "Filtro",
+        "filters": "Filtri",
+        "role": {
+          "label": "Filtra per ruolo",
+          "all": "Tutti i ruoli",
+          "admin": "Amministratore",
+          "user": "Utente standard",
+          "filter": "Ruolo:"
+        },
+        "permission": {
+          "label": "Filtra per permesso",
+          "all": "Tutti i permessi",
+          "filter": "Permesso:"
+        },
+        "accessLevel": {
+          "label": "Filtra per livello di accesso",
+          "all": "Tutti i livelli di accesso",
+          "read": "Solo lettura",
+          "write": "Lettura e scrittura",
+          "filter": "Accesso:"
+        }
+      },
+      "actions": {
+        "addUser": "Aggiungi utente",
+        "editUser": "Modifica utente",
+        "add": "Aggiungi utente",
+        "update": "Aggiorna utente",
+        "delete": "Elimina utente",
+        "edit": "Modifica",
+        "deleteUser": "Elimina utente"
+      },
+      "table": {
+        "username": "Nome utente",
+        "role": "Ruolo",
+        "permissions": "Permessi",
+        "actions": "Azioni"
+      },
+      "roles": {
+        "admin": "Amministratore",
+        "user": "Utente",
+        "administrator": "Amministratore",
+        "regularUser": "Utente standard"
+      },
+      "permissions": {
+        "users": "Utenti",
+        "resources": "Risorse",
+        "system": "Sistema",
+        "dashboard": "Dashboard",
+        "levels": {
+          "read": "Lettura",
+          "write": "Scrittura",
+          "none": "Nessuno",
+          "readOnly": "Solo lettura",
+          "readWrite": "Lettura e scrittura"
+        }
+      },
+      "form": {
+        "username": "Nome utente",
+        "usernamePlaceholder": "Inserisci il nome utente",
+        "password": "Password",
+        "passwordPlaceholder": "Inserisci la password",
+        "passwordOptional": "Password (opzionale)",
+        "passwordOptionalPlaceholder": "Inserisci una nuova password o lascia vuoto",
+        "confirmPassword": "Conferma password",
+        "confirmPasswordPlaceholder": "Conferma la password",
+        "isAdmin": "Accesso amministratore",
+        "permissions": "Permessi dei componenti",
+        "cancel": "Annulla",
+        "optional": "opzionale"
+      },
+      "delete": {
+        "title": "Elimina utente",
+        "confirmTitle": "Conferma eliminazione",
+        "confirmMessage": "Sei sicuro di voler eliminare l'utente \"{{username}}\"? Questa azione non può essere annullata.",
+        "confirm": "Elimina utente"
+      },
+      "errors": {
+        "fetchFailed": "Impossibile recuperare gli utenti",
+        "missingFields": "Compila tutti i campi obbligatori",
+        "passwordMismatch": "Le password non corrispondono",
+        "addFailed": "Impossibile aggiungere l'utente",
+        "updateFailed": "Impossibile aggiornare l'utente",
+        "deleteFailed": "Impossibile eliminare l'utente"
+      },
+      "success": {
+        "userAdded": "Utente aggiunto con successo",
+        "userUpdated": "Utente aggiornato con successo",
+        "userDeleted": "Utente eliminato con successo"
       }
     }
   },
@@ -91,84 +204,23 @@
     },
     "items": {
       "home": "Home",
-      "remoteClusters": "Cluster Remoti",
-      "stagedWorkloads": "Workload Preparati",
-      "bindingPolicies": "Policy di Binding",
-      "deployedWorkloads": "Workload Distribuiti",
-      "pluginManager": "Gestore Plugin",
-      "userManagement": "Gestione Utenti"
+      "remoteClusters": "Cluster remoti",
+      "stagedWorkloads": "Carichi di lavoro preparati",
+      "bindingPolicies": "Politiche di binding",
+      "deployedWorkloads": "Carichi di lavoro distribuiti",
+      "pluginManager": "Gestore plugin",
+      "userManagement": "Gestione utenti"
     }
   },
-  "admin": {
-    "users": {
-      "title": "Gestione Utenti",
-      "subtitle": "Utenti di Sistema",
-      "noUsers": "Nessun Utente Trovato",
-      "noUsersDescription": "Non ci sono ancora utenti nel sistema. Clicca su 'Aggiungi Utente' per creare il tuo primo utente.",
-      "noPermissions": "Nessuna autorizzazione assegnata",
-      "actions": {
-        "addUser": "Aggiungi Utente",
-        "editUser": "Modifica Utente",
-        "add": "Aggiungi Utente",
-        "update": "Aggiorna Utente",
-        "delete": "Elimina Utente",
-        "edit": "Modifica",
-        "deleteUser": "Elimina Utente"
-      },
-      "table": {
-        "username": "Nome Utente",
-        "role": "Ruolo",
-        "permissions": "Autorizzazioni",
-        "actions": "Azioni"
-      },
-      "roles": {
-        "admin": "Amministratore",
-        "user": "Utente"
-      },
-      "permissions": {
-        "users": "Utenti",
-        "resources": "Risorse",
-        "system": "Sistema",
-        "dashboard": "Dashboard",
-        "levels": {
-          "read": "Lettura",
-          "write": "Scrittura",
-          "none": "Nessuna"
-        }
-      },
-      "form": {
-        "username": "Nome Utente",
-        "usernamePlaceholder": "Inserisci nome utente",
-        "password": "Password",
-        "passwordPlaceholder": "Inserisci password",
-        "passwordOptional": "Password (opzionale)",
-        "passwordOptionalPlaceholder": "Inserisci nuova password o lascia vuoto",
-        "confirmPassword": "Conferma Password",
-        "confirmPasswordPlaceholder": "Conferma password",
-        "isAdmin": "Accesso Amministratore",
-        "permissions": "Autorizzazioni Componenti",
-        "cancel": "Annulla",
-        "optional": "opzionale"
-      },
-      "delete": {
-        "title": "Elimina Utente",
-        "confirmTitle": "Conferma Eliminazione",
-        "confirmMessage": "Sei sicuro di voler eliminare l'utente \"{{username}}\"? Questa azione non può essere annullata.",
-        "confirm": "Elimina Utente"
-      },
-      "errors": {
-        "fetchFailed": "Impossibile recuperare gli utenti",
-        "missingFields": "Si prega di compilare tutti i campi obbligatori",
-        "passwordMismatch": "Le password non corrispondono",
-        "addFailed": "Impossibile aggiungere l'utente",
-        "updateFailed": "Impossibile aggiornare l'utente",
-        "deleteFailed": "Impossibile eliminare l'utente"
-      },
-      "success": {
-        "userAdded": "Utente aggiunto con successo",
-        "userUpdated": "Utente aggiornato con successo",
-        "userDeleted": "Utente eliminato con successo"
-      }
-    }
+  "common": {
+    "loading": "Caricamento",
+    "refresh": "Aggiorna",
+    "filters": "Filtri",
+    "apply": "Applica",
+    "of": "di",
+    "fitView": "Adatta vista",
+    "clearSearch": "Cancella ricerca",
+    "clearFilters": "Cancella filtri",
+    "clear": "Cancella"
   }
 }

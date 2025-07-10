@@ -104,9 +104,48 @@
         "permissions": "Berechtigungen",
         "actions": "Aktionen"
       },
+      "stats": {
+        "usersShown": "{{filtered}} von {{count}} Benutzern",
+        "user": "Benutzer",
+        "users": "Benutzer",
+        "shown": "angezeigt"
+      },
+      "search": {
+        "placeholder": "Nach Benutzername, Rolle oder Berechtigungen suchen...",
+        "label": "Suche:"
+      },
+      "filters": {
+        "title": "Filter",
+        "toggle": "Filter",
+        "clear": "Alle Filter löschen",
+        "active": "{{count}} Filter aktiv",
+        "filter": "Filter",
+        "filters": "Filter",
+        "role": {
+          "label": "Nach Rolle filtern",
+          "all": "Alle Rollen",
+          "admin": "Administrator",
+          "user": "Standard-Benutzer",
+          "filter": "Rolle:"
+        },
+        "permission": {
+          "label": "Nach Berechtigung filtern",
+          "all": "Alle Berechtigungen",
+          "filter": "Berechtigung:"
+        },
+        "accessLevel": {
+          "label": "Nach Zugriffslevel filtern",
+          "all": "Alle Zugriffslevel",
+          "read": "Nur lesen",
+          "write": "Lesen und schreiben",
+          "filter": "Zugriff:"
+        }
+      },
       "roles": {
         "admin": "Administrator",
-        "user": "Benutzer"
+        "user": "Benutzer",
+        "administrator": "Administrator",
+        "regularUser": "Standard-Benutzer"
       },
       "permissions": {
         "users": "Benutzer",
@@ -116,7 +155,9 @@
         "levels": {
           "read": "Lesen",
           "write": "Schreiben",
-          "none": "Keine"
+          "none": "Keine",
+          "readOnly": "Nur lesen",
+          "readWrite": "Lesen und schreiben"
         }
       },
       "form": {
@@ -170,5 +211,16 @@
       "pluginManager": "Plugin-Manager",
       "userManagement": "Benutzerverwaltung"
     }
+  },
+  "common": {
+    "fitView": "Ansicht anpassen",
+    "filters": "Filter",
+    "clearSearch": "Suche löschen",
+    "clearFilters": "Filter löschen",
+    "clear": "Löschen",
+    "apply": "Anwenden",
+    "of": "von",
+    "loading": "Wird geladen",
+    "refresh": "Aktualisieren"
   }
 }

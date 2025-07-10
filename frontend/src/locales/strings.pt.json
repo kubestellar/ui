@@ -22,9 +22,48 @@
         "permissions": "Permissões",
         "actions": "Ações"
       },
+      "stats": {
+        "usersShown": "{{count}} usuários no total, {{filtered}} exibidos",
+        "user": "usuário",
+        "users": "usuários",
+        "shown": "exibidos"
+      },
+      "search": {
+        "placeholder": "Pesquisar por nome, função ou permissões...",
+        "label": "Pesquisar:"
+      },
+      "filters": {
+        "title": "Filtros",
+        "toggle": "Filtros",
+        "clear": "Limpar todos os filtros",
+        "active": "{{count}} filtro(s) ativo(s)",
+        "filter": "Filtro",
+        "filters": "Filtros",
+        "role": {
+          "label": "Filtrar por função",
+          "all": "Todas as funções",
+          "admin": "Administrador",
+          "user": "Usuário comum",
+          "filter": "Função:"
+        },
+        "permission": {
+          "label": "Filtrar por permissão",
+          "all": "Todas as permissões",
+          "filter": "Permissão:"
+        },
+        "accessLevel": {
+          "label": "Filtrar por nível de acesso",
+          "all": "Todos os níveis de acesso",
+          "read": "Somente leitura",
+          "write": "Leitura e escrita",
+          "filter": "Acesso:"
+        }
+      },
       "roles": {
         "admin": "Administrador",
-        "user": "Usuário"
+        "user": "Usuário",
+        "administrator": "Administrador",
+        "regularUser": "Usuário comum"
       },
       "permissions": {
         "users": "Usuários",
@@ -34,7 +73,9 @@
         "levels": {
           "read": "Leitura",
           "write": "Escrita",
-          "none": "Nenhuma"
+          "none": "Nenhuma",
+          "readOnly": "Somente leitura",
+          "readWrite": "Leitura e escrita"
         }
       },
       "form": {
@@ -170,5 +211,11 @@
       "pluginManager": "Gerenciador de Plugins",
       "userManagement": "Gerenciamento de Usuários"
     }
+  },
+  "common": {
+    "filters": "Filtros",
+    "apply": "Aplicar",
+    "loading": "Carregando",
+    "refresh": "Atualizar"
   }
 }

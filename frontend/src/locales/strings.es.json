@@ -60,9 +60,11 @@
     "sync": "Sincronizar",
     "clearAll": "Limpiar Todo",
     "fitView": "Ajustar Vista",
-    "clearSearch": "Limpiar Búsqueda",
-    "clearFilters": "Limpiar Filtros",
-    "clear": "Limpiar",
+    "filters": "Filtros",
+    "clearSearch": "Borrar búsqueda",
+    "clearFilters": "Borrar filtros",
+    "clear": "Borrar",
+    "apply": "Aplicar",
     "of": "de",
     "items": "elemento{{count, plural, one {} other {s}}}",
     "filteredFrom": "filtrado de"
@@ -2117,22 +2119,22 @@
   },
   "admin": {
     "users": {
-      "title": "Gestión de Usuarios",
-      "subtitle": "Usuarios del Sistema",
+      "title": "Gestión de usuarios",
+      "subtitle": "Usuarios del sistema",
       "noUsers": "No se encontraron usuarios",
-      "noUsersDescription": "Aún no hay usuarios en el sistema. Haga clic en 'Agregar Usuario' para crear su primer usuario.",
-      "noPermissions": "Sin permisos asignados",
+      "noUsersDescription": "Aún no hay usuarios en el sistema. Haz clic en 'Añadir usuario' para crear tu primer usuario.",
+      "noPermissions": "No se asignaron permisos",
       "actions": {
-        "addUser": "Agregar Usuario",
-        "editUser": "Editar Usuario",
-        "add": "Agregar Usuario",
-        "update": "Actualizar Usuario",
-        "delete": "Eliminar Usuario",
+        "addUser": "Añadir usuario",
+        "editUser": "Editar usuario",
+        "add": "Añadir usuario",
+        "update": "Actualizar usuario",
+        "delete": "Eliminar usuario",
         "edit": "Editar",
-        "deleteUser": "Eliminar Usuario"
+        "deleteUser": "Eliminar usuario"
       },
       "table": {
-        "username": "Nombre de Usuario",
+        "username": "Nombre de usuario",
         "role": "Rol",
         "permissions": "Permisos",
         "actions": "Acciones"
@@ -2145,7 +2147,7 @@
         "users": "Usuarios",
         "resources": "Recursos",
         "system": "Sistema",
-        "dashboard": "Panel de Control",
+        "dashboard": "Panel",
         "levels": {
           "read": "Lectura",
           "write": "Escritura",
@@ -2153,37 +2155,37 @@
         }
       },
       "form": {
-        "username": "Nombre de Usuario",
-        "usernamePlaceholder": "Ingrese nombre de usuario",
+        "username": "Nombre de usuario",
+        "usernamePlaceholder": "Ingrese el nombre de usuario",
         "password": "Contraseña",
-        "passwordPlaceholder": "Ingrese contraseña",
+        "passwordPlaceholder": "Ingrese la contraseña",
         "passwordOptional": "Contraseña (opcional)",
-        "passwordOptionalPlaceholder": "Ingrese nueva contraseña o deje en blanco",
-        "confirmPassword": "Confirmar Contraseña",
-        "confirmPasswordPlaceholder": "Confirme contraseña",
-        "isAdmin": "Acceso de Administrador",
-        "permissions": "Permisos de Componentes",
+        "passwordOptionalPlaceholder": "Ingrese una nueva contraseña o deje en blanco",
+        "confirmPassword": "Confirmar contraseña",
+        "confirmPasswordPlaceholder": "Confirme la contraseña",
+        "isAdmin": "Acceso de administrador",
+        "permissions": "Permisos de componentes",
         "cancel": "Cancelar",
         "optional": "opcional"
       },
       "delete": {
-        "title": "Eliminar Usuario",
-        "confirmTitle": "Confirmar Eliminación",
-        "confirmMessage": "¿Está seguro de que desea eliminar el usuario \"{{username}}\"? Esta acción no se puede deshacer.",
-        "confirm": "Eliminar Usuario"
+        "title": "Eliminar usuario",
+        "confirmTitle": "Confirmar eliminación",
+        "confirmMessage": "¿Está seguro de que desea eliminar al usuario \"{{username}}\"? Esta acción no se puede deshacer.",
+        "confirm": "Eliminar usuario"
       },
       "errors": {
-        "fetchFailed": "Error al obtener usuarios",
-        "missingFields": "Por favor complete todos los campos requeridos",
+        "fetchFailed": "No se pudieron obtener los usuarios",
+        "missingFields": "Por favor, complete todos los campos obligatorios",
         "passwordMismatch": "Las contraseñas no coinciden",
-        "addFailed": "Error al agregar usuario",
-        "updateFailed": "Error al actualizar usuario",
-        "deleteFailed": "Error al eliminar usuario"
+        "addFailed": "No se pudo añadir el usuario",
+        "updateFailed": "No se pudo actualizar el usuario",
+        "deleteFailed": "No se pudo eliminar el usuario"
       },
       "success": {
-        "userAdded": "Usuario agregado correctamente",
-        "userUpdated": "Usuario actualizado correctamente",
-        "userDeleted": "Usuario eliminado correctamente"
+        "userAdded": "Usuario añadido con éxito",
+        "userUpdated": "Usuario actualizado con éxito",
+        "userDeleted": "Usuario eliminado con éxito"
       }
     }
   }

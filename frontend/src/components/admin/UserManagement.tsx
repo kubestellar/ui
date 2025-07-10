@@ -4,7 +4,7 @@ import useTheme from '../../stores/themeStore';
 import getThemeStyles from '../../lib/theme-utils';
 import { useAdminCheck } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { FiUsers, FiUserPlus, FiSearch, FiFilter, FiRefreshCw, FiX } from 'react-icons/fi';
+import { FiUsers, FiUserPlus, FiSearch, FiFilter, FiRefreshCw, FiX, FiChevronDown } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
@@ -26,6 +26,13 @@ const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Filter states
+  const [roleFilter, setRoleFilter] = useState<string>('all'); // 'all', 'admin', 'user'
+  const [permissionFilter, setPermissionFilter] = useState<string>('all'); // 'all', specific permission
+  const [permissionLevelFilter, setPermissionLevelFilter] = useState<string>('all'); // 'all', 'read', 'write'
+  const [showFilters, setShowFilters] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -86,34 +93,80 @@ const UserManagement = () => {
     }
   }, [isAdmin, fetchUsers]);
 
-  // Filter users based on search term
+  // Enhanced filter logic
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredUsers(users);
-    } else {
+    let filtered = [...users];
+
+    // Search filter
+    if (searchTerm.trim() !== '') {
       const lowerSearchTerm = searchTerm.toLowerCase();
-      setFilteredUsers(
-        users.filter(
-          user =>
-            user.username.toLowerCase().includes(lowerSearchTerm) ||
-            (user.is_admin && 'admin'.includes(lowerSearchTerm)) ||
-            (!user.is_admin && 'user'.includes(lowerSearchTerm)) ||
-            Object.keys(user.permissions || {}).some(
-              key =>
-                key.toLowerCase().includes(lowerSearchTerm) ||
-                user.permissions[key].toLowerCase().includes(lowerSearchTerm)
-            )
-        )
-      );
+      filtered = filtered.filter(user => {
+        const matchesUsername = user.username.toLowerCase().includes(lowerSearchTerm);
+        const matchesRole = (user.is_admin && t('admin.users.roles.admin').toLowerCase().includes(lowerSearchTerm)) ||
+                           (!user.is_admin && t('admin.users.roles.user').toLowerCase().includes(lowerSearchTerm));
+        const matchesPermissions = Object.keys(user.permissions || {}).some(
+          key =>
+            key.toLowerCase().includes(lowerSearchTerm) ||
+            user.permissions[key].toLowerCase().includes(lowerSearchTerm)
+        );
+        
+        return matchesUsername || matchesRole || matchesPermissions;
+      });
     }
-  }, [searchTerm, users]);
+
+    // Role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => {
+        if (roleFilter === 'admin') return user.is_admin;
+        if (roleFilter === 'user') return !user.is_admin;
+        return true;
+      });
+    }
+
+    // Permission component filter
+    if (permissionFilter !== 'all') {
+      filtered = filtered.filter(user => {
+        const userPermissions = user.permissions || {};
+        return Object.keys(userPermissions).includes(permissionFilter);
+      });
+    }
+
+    // Permission level filter
+    if (permissionLevelFilter !== 'all') {
+      filtered = filtered.filter(user => {
+        const userPermissions = user.permissions || {};
+        return Object.values(userPermissions).includes(permissionLevelFilter);
+      });
+    }
+
+    setFilteredUsers(filtered);
+  }, [searchTerm, users, roleFilter, permissionFilter, permissionLevelFilter]);
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('all');
+    setPermissionFilter('all');
+    setPermissionLevelFilter('all');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = searchTerm !== '' || roleFilter !== 'all' || 
+                          permissionFilter !== 'all' || permissionLevelFilter !== 'all';
+
+  // Count active filters
+  const activeFilterCount = [
+    searchTerm !== '',
+    roleFilter !== 'all',
+    permissionFilter !== 'all',
+    permissionLevelFilter !== 'all'
+  ].filter(Boolean).length;
 
   const refreshUsers = async () => {
     setIsRefreshing(true);
     try {
       const fetchedUsers = await UserService.fetchUsers();
       setUsers(fetchedUsers);
-      setFilteredUsers(searchTerm.trim() === '' ? fetchedUsers : filteredUsers);
     } catch (error) {
       console.error('Error refreshing users:', error);
       toast.error(t('admin.users.errors.fetchFailed'));
@@ -326,14 +379,37 @@ const UserManagement = () => {
                 {t('admin.users.title')}
               </h1>
               <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'}{' '}
-                {searchTerm && 'found'}
+                {t('admin.users.stats.usersShown', { 
+                  filtered: filteredUsers.length, 
+                  count: users.length 
+                })}{' '}
+                {hasActiveFilters && t('admin.users.stats.shown')}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-all duration-200"
+            style={{
+              background: isDark
+                ? 'linear-gradient(to bottom right, #3b82f6, #2563eb)'
+                : 'linear-gradient(to bottom right, #3b82f6, #1d4ed8)',
+              boxShadow: `0 4px 12px ${isDark ? 'rgba(37, 99, 235, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+            }}
+            onClick={openAddModal}
+          >
+            <FiUserPlus size={18} />
+            <span>{t('admin.users.actions.addUser')}</span>
+          </motion.button>
+        </div>
+
+        {/* Enhanced Search and Filter Section */}
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            {/* Search Bar */}
+            <div className="relative flex-1">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <FiSearch size={16} style={{ color: themeStyles.colors.text.tertiary }} />
               </div>
@@ -341,7 +417,7 @@ const UserManagement = () => {
                 type="text"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Search users..."
+                placeholder={t('admin.users.search.placeholder')}
                 className="w-full rounded-lg border px-4 py-2.5 pl-10 pr-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                 style={{
                   background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(255, 255, 255, 0.8)',
@@ -360,38 +436,209 @@ const UserManagement = () => {
               )}
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center justify-center gap-1.5 rounded-lg border px-4 py-2.5 transition-all duration-200"
-              style={{
-                borderColor: isDark ? 'rgba(75, 85, 99, 0.5)' : 'rgba(226, 232, 240, 0.8)',
-                color: themeStyles.colors.text.secondary,
-                background: isDark ? 'rgba(31, 41, 55, 0.4)' : 'rgba(249, 250, 251, 0.8)',
-              }}
-              onClick={refreshUsers}
-              disabled={isRefreshing}
-            >
-              <FiRefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-              <span>{t('common.refresh')}</span>
-            </motion.button>
+            {/* Filter Toggle Button */}
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 transition-all duration-200"
+                style={{
+                  borderColor: showFilters 
+                    ? themeStyles.colors.brand.primary 
+                    : isDark ? 'rgba(75, 85, 99, 0.5)' : 'rgba(226, 232, 240, 0.8)',
+                  color: showFilters 
+                    ? themeStyles.colors.brand.primary 
+                    : themeStyles.colors.text.secondary,
+                  background: showFilters
+                    ? isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'
+                    : isDark ? 'rgba(31, 41, 55, 0.4)' : 'rgba(249, 250, 251, 0.8)',
+                }}
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <FiFilter size={16} />
+                <span>{t('admin.users.filters.title')}</span>
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-medium text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+                <FiChevronDown 
+                  size={14} 
+                  className={`transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`}
+                />
+              </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-all duration-200"
-              style={{
-                background: isDark
-                  ? 'linear-gradient(to bottom right, #3b82f6, #2563eb)'
-                  : 'linear-gradient(to bottom right, #3b82f6, #1d4ed8)',
-                boxShadow: `0 4px 12px ${isDark ? 'rgba(37, 99, 235, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
-              }}
-              onClick={openAddModal}
-            >
-              <FiUserPlus size={18} />
-              <span>{t('admin.users.actions.addUser')}</span>
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center justify-center gap-1.5 rounded-lg border px-4 py-2.5 transition-all duration-200"
+                style={{
+                  borderColor: isDark ? 'rgba(75, 85, 99, 0.5)' : 'rgba(226, 232, 240, 0.8)',
+                  color: themeStyles.colors.text.secondary,
+                  background: isDark ? 'rgba(31, 41, 55, 0.4)' : 'rgba(249, 250, 251, 0.8)',
+                }}
+                onClick={refreshUsers}
+                disabled={isRefreshing}
+              >
+                <FiRefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+                <span>{t('common.refresh')}</span>
+              </motion.button>
+            </div>
           </div>
+
+          {/* Filter Options */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden rounded-lg border p-4"
+                style={{
+                  borderColor: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(226, 232, 240, 0.8)',
+                  background: isDark ? 'rgba(31, 41, 55, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {/* Role Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                      {t('admin.users.filters.role.label')}
+                    </label>
+                    <select
+                      value={roleFilter}
+                      onChange={e => setRoleFilter(e.target.value)}
+                      className="w-full rounded-lg border px-3 py-2 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                      style={{
+                        background: isDark ? 'rgba(17, 24, 39, 0.5)' : 'rgba(255, 255, 255, 0.9)',
+                        borderColor: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(226, 232, 240, 0.8)',
+                        color: themeStyles.colors.text.primary,
+                      }}
+                    >
+                      <option value="all">{t('admin.users.filters.role.all')}</option>
+                      <option value="admin">{t('admin.users.filters.role.admin')}</option>
+                      <option value="user">{t('admin.users.filters.role.user')}</option>
+                    </select>
+                  </div>
+
+                  {/* Permission Component Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                      {t('admin.users.filters.permission.label')}
+                    </label>
+                    <select
+                      value={permissionFilter}
+                      onChange={e => setPermissionFilter(e.target.value)}
+                      className="w-full rounded-lg border px-3 py-2 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                      style={{
+                        background: isDark ? 'rgba(17, 24, 39, 0.5)' : 'rgba(255, 255, 255, 0.9)',
+                        borderColor: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(226, 232, 240, 0.8)',
+                        color: themeStyles.colors.text.primary,
+                      }}
+                    >
+                      <option value="all">{t('admin.users.filters.permission.all')}</option>
+                      {permissionComponents.map(component => (
+                        <option key={component.id} value={component.id}>
+                          {component.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Permission Level Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                      {t('admin.users.filters.accessLevel.label')}
+                    </label>
+                    <select
+                      value={permissionLevelFilter}
+                      onChange={e => setPermissionLevelFilter(e.target.value)}
+                      className="w-full rounded-lg border px-3 py-2 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                      style={{
+                        background: isDark ? 'rgba(17, 24, 39, 0.5)' : 'rgba(255, 255, 255, 0.9)',
+                        borderColor: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(226, 232, 240, 0.8)',
+                        color: themeStyles.colors.text.primary,
+                      }}
+                    >
+                      <option value="all">{t('admin.users.filters.accessLevel.all')}</option>
+                      <option value="read">{t('admin.users.filters.accessLevel.read')}</option>
+                      <option value="write">{t('admin.users.filters.accessLevel.write')}</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Clear Filters Button */}
+                {hasActiveFilters && (
+                  <div className="mt-4 flex justify-end">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all duration-200"
+                      style={{
+                        color: themeStyles.colors.text.secondary,
+                        background: isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.3)',
+                      }}
+                      onClick={clearFilters}
+                    >
+                      <FiX size={14} />
+                      {t('admin.users.filters.clear')}
+                    </motion.button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-wrap gap-2"
+            >
+              {searchTerm && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  {t('admin.users.search.label')} "{searchTerm}"
+                  <FiX 
+                    size={14} 
+                    className="cursor-pointer transition-colors hover:text-blue-600 dark:hover:text-blue-100"
+                    onClick={() => setSearchTerm('')}
+                  />
+                </span>
+              )}
+              {roleFilter !== 'all' && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
+                  {t('admin.users.filters.role.filter')} {roleFilter === 'admin' ? t('admin.users.roles.administrator') : t('admin.users.roles.regularUser')}
+                  <FiX 
+                    size={14} 
+                    className="cursor-pointer transition-colors hover:text-green-600 dark:hover:text-green-100"
+                    onClick={() => setRoleFilter('all')}
+                  />
+                </span>
+              )}
+              {permissionFilter !== 'all' && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-3 py-1 text-sm text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                  {t('admin.users.filters.permission.filter')} {permissionComponents.find(p => p.id === permissionFilter)?.name}
+                  <FiX 
+                    size={14} 
+                    className="cursor-pointer transition-colors hover:text-purple-600 dark:hover:text-purple-100"
+                    onClick={() => setPermissionFilter('all')}
+                  />
+                </span>
+              )}
+              {permissionLevelFilter !== 'all' && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-sm text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                  {t('admin.users.filters.accessLevel.filter')} {permissionLevelFilter === 'read' ? t('admin.users.permissions.levels.readOnly') : t('admin.users.permissions.levels.readWrite')}
+                  <FiX 
+                    size={14} 
+                    className="cursor-pointer transition-colors hover:text-orange-600 dark:hover:text-orange-100"
+                    onClick={() => setPermissionLevelFilter('all')}
+                  />
+                </span>
+              )}
+            </motion.div>
+          )}
         </div>
 
         {/* Success message */}
@@ -428,10 +675,12 @@ const UserManagement = () => {
               >
                 {t('admin.users.subtitle')}
               </h2>
-              {searchTerm && (
+              {hasActiveFilters && (
                 <div className="flex items-center gap-2 rounded-full bg-blue-500 bg-opacity-10 px-3 py-1 text-xs">
                   <FiFilter size={12} className="text-blue-500" />
-                  <span className="text-blue-500">Filtering: "{searchTerm}"</span>
+                  <span className="text-blue-500">
+                    {t('admin.users.filters.active', { count: activeFilterCount })}
+                  </span>
                 </div>
               )}
             </div>
