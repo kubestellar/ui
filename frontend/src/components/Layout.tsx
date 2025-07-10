@@ -139,7 +139,7 @@ export function Layout() {
             <div className="mb-3 flex justify-end">
               <motion.button
                 onClick={toggleSidebar}
-                className="rounded-lg border-2 p-2 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95"
+                className={`rounded-lg border-2 p-2 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${isSidebarCollapsed ? "mr-2": ""}`}
                 style={{
                   background: isDark
                     ? 'linear-gradient(to bottom right, #3b82f6, #2563eb)'
