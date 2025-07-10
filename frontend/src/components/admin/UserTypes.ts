@@ -41,7 +41,7 @@ export interface UserFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: () => void;
-  formError: string;
+  formError?: string;
   username: string;
   setUsername: (username: string) => void;
   password: string;

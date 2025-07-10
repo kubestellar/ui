@@ -4,17 +4,9 @@ import useTheme from '../../stores/themeStore';
 import getThemeStyles from '../../lib/theme-utils';
 import { useAdminCheck } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import {
-  FiUsers,
-  FiUserPlus,
-  FiCheckCircle,
-  FiSearch,
-  FiFilter,
-  FiRefreshCw,
-  FiX,
-  FiAlertCircle,
-} from 'react-icons/fi';
+import { FiUsers, FiUserPlus, FiSearch, FiFilter, FiRefreshCw, FiX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 
 // Import modular components and types
 import { User, PermissionComponent, PermissionLevel } from './UserTypes';
@@ -40,8 +32,6 @@ const UserManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [formError, setFormError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Form states
@@ -74,7 +64,7 @@ const UserManagement = () => {
       setFilteredUsers(fetchedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
-      setFormError(t('admin.users.errors.fetchFailed'));
+      toast.error(t('admin.users.errors.fetchFailed'));
       setUsers([]); // Set to empty array on error
       setFilteredUsers([]);
     } finally {
@@ -126,7 +116,7 @@ const UserManagement = () => {
       setFilteredUsers(searchTerm.trim() === '' ? fetchedUsers : filteredUsers);
     } catch (error) {
       console.error('Error refreshing users:', error);
-      setFormError(t('admin.users.errors.fetchFailed'));
+      toast.error(t('admin.users.errors.fetchFailed'));
     } finally {
       setIsRefreshing(false);
     }
@@ -134,12 +124,12 @@ const UserManagement = () => {
 
   const handleAddUser = async () => {
     if (!username || (!passwordOptional && !password)) {
-      setFormError(t('admin.users.errors.missingFields'));
+      toast.error(t('admin.users.errors.missingFields'));
       return;
     }
 
     if (password && password !== confirmPassword) {
-      setFormError(t('admin.users.errors.passwordMismatch'));
+      toast.error(t('admin.users.errors.passwordMismatch'));
       return;
     }
 
@@ -157,25 +147,22 @@ const UserManagement = () => {
       // Reset form and show success message
       resetForm();
       setShowAddModal(false);
-      setSuccessMessage(t('admin.users.success.userAdded'));
+      toast.success(t('admin.users.success.userAdded'));
       fetchUsers();
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Error adding user:', error);
-      setFormError(t('admin.users.errors.addFailed'));
+      toast.error(t('admin.users.errors.addFailed'));
     }
   };
 
   const handleEditUser = async () => {
     if (!currentUser || !username) {
-      setFormError(t('admin.users.errors.missingFields'));
+      toast.error(t('admin.users.errors.missingFields'));
       return;
     }
 
     if (password && password !== confirmPassword) {
-      setFormError(t('admin.users.errors.passwordMismatch'));
+      toast.error(t('admin.users.errors.passwordMismatch'));
       return;
     }
 
@@ -201,14 +188,11 @@ const UserManagement = () => {
       // Reset form and show success message
       resetForm();
       setShowEditModal(false);
-      setSuccessMessage(t('admin.users.success.userUpdated'));
+      toast.success(t('admin.users.success.userUpdated'));
       fetchUsers();
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Error updating user:', error);
-      setFormError(t('admin.users.errors.updateFailed'));
+      toast.error(t('admin.users.errors.updateFailed'));
     }
   };
 
@@ -219,25 +203,21 @@ const UserManagement = () => {
 
     try {
       setIsDeleting(true);
-      setFormError(''); // Clear any previous errors
       await UserService.deleteUser(currentUser.username);
 
       // Reset form and show success message
       setShowDeleteModal(false);
       setCurrentUser(null);
-      setSuccessMessage(t('admin.users.success.userDeleted'));
+      toast.success(t('admin.users.success.userDeleted'));
 
       // Update the users list by removing the deleted user
       setUsers(prevUsers => prevUsers.filter(user => user.username !== currentUser.username));
       setFilteredUsers(prevUsers =>
         prevUsers.filter(user => user.username !== currentUser.username)
       );
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Error deleting user:', error);
-      setFormError(t('admin.users.errors.deleteFailed'));
+      toast.error(t('admin.users.errors.deleteFailed'));
     } finally {
       setIsDeleting(false);
     }
@@ -255,13 +235,11 @@ const UserManagement = () => {
     setUserPermissions(user.permissions || {});
     setPassword('');
     setConfirmPassword('');
-    setFormError('');
     setShowEditModal(true);
   };
 
   const openDeleteModal = (user: User) => {
     setCurrentUser(user);
-    setFormError('');
     setShowDeleteModal(true);
   };
 
@@ -271,7 +249,6 @@ const UserManagement = () => {
     setConfirmPassword('');
     setIsUserAdmin(false);
     setUserPermissions({});
-    setFormError('');
     setCurrentUser(null);
   };
 
@@ -418,51 +395,10 @@ const UserManagement = () => {
         </div>
 
         {/* Success message */}
-        <AnimatePresence>
-          {successMessage && (
-            <motion.div
-              className="flex items-center gap-2.5 rounded-lg border px-5 py-3"
-              style={{
-                background: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)',
-                borderColor: isDark ? 'rgba(52, 211, 153, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                color: isDark ? 'rgb(110, 231, 183)' : 'rgb(16, 185, 129)',
-              }}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full"
-                style={{
-                  background: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                }}
-              >
-                <FiCheckCircle size={18} />
-              </div>
-              <span className="font-medium">{successMessage}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <AnimatePresence>{/* Removed static success message banner */}</AnimatePresence>
 
         {/* Error message */}
-        <AnimatePresence>
-          {formError && (
-            <motion.div
-              className="flex items-center gap-2.5 rounded-lg border px-5 py-3"
-              style={{
-                background: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(254, 226, 226, 0.5)',
-                borderColor: isDark ? 'rgba(248, 113, 113, 0.2)' : 'rgba(239, 68, 68, 0.1)',
-                color: isDark ? '#f87171' : '#ef4444',
-              }}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              <FiAlertCircle size={18} />
-              <span className="font-medium">{formError}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <AnimatePresence>{/* Removed static error message banner */}</AnimatePresence>
 
         {/* Users table */}
         <motion.div
@@ -519,7 +455,6 @@ const UserManagement = () => {
         isOpen={showAddModal}
         onClose={closeModals}
         onSubmit={handleAddUser}
-        formError={formError}
         username={username}
         setUsername={setUsername}
         password={password}
@@ -543,7 +478,6 @@ const UserManagement = () => {
         isOpen={showEditModal}
         onClose={closeModals}
         onSubmit={handleEditUser}
-        formError={formError}
         username={username}
         setUsername={setUsername}
         password={password}
