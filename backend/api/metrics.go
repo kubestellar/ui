@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/backend/k8s"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"github.com/kubestellar/ui/backend/k8s"
 )
 
 // MetricsConfig holds configuration for metrics API
@@ -351,7 +351,7 @@ func GetPodHealthMetrics(c *gin.Context) {
 		// }
 		podList, err := clientset.CoreV1().Pods(ns.Name).List(c, metav1.ListOptions{})
 		if err != nil {
-			continue 
+			continue
 		}
 		totalPods += len(podList.Items)
 		for _, pod := range podList.Items {
