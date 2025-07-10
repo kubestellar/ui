@@ -103,7 +103,7 @@
         "title": "篩選器",
         "toggle": "篩選器",
         "clear": "清除所有篩選器",
-        "active": "{{count}} 個篩選器啟用",
+        "active": "{{count}} 個篩選器已啟用",
         "filter": "篩選器",
         "filters": "篩選器",
         "role": {
@@ -119,10 +119,10 @@
           "filter": "權限："
         },
         "accessLevel": {
-          "label": "按存取層級篩選", 
+          "label": "按存取層級篩選",
           "all": "所有存取層級",
           "read": "僅讀取",
-          "write": "讀取與寫入",
+          "write": "讀寫",
           "filter": "存取："
         }
       },
@@ -157,7 +157,7 @@
           "write": "寫入",
           "none": "無",
           "readOnly": "僅讀取",
-          "readWrite": "讀取與寫入"
+          "readWrite": "讀寫"
         }
       },
       "form": {

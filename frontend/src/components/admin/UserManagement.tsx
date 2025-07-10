@@ -140,6 +140,7 @@ const UserManagement = () => {
     }
 
     setFilteredUsers(filtered);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, users, roleFilter, permissionFilter, permissionLevelFilter]);
 
   // Clear all filters

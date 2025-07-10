@@ -103,7 +103,7 @@
         "title": "筛选器",
         "toggle": "筛选器",
         "clear": "清除所有筛选器",
-        "active": "{{count}} 个筛选器启用",
+        "active": "{{count}} 个筛选器已启用",
         "filter": "筛选器",
         "filters": "筛选器",
         "role": {
@@ -121,8 +121,8 @@
         "accessLevel": {
           "label": "按访问级别筛选",
           "all": "所有访问级别",
-          "read": "仅读取",
-          "write": "读取与写入",
+          "read": "仅限读取",
+          "write": "读写",
           "filter": "访问："
         }
       },
@@ -156,8 +156,8 @@
           "read": "读取",
           "write": "写入",
           "none": "无",
-          "readOnly": "仅读取",
-          "readWrite": "读取与写入"
+          "readOnly": "仅限读取",
+          "readWrite": "读写"
         }
       },
       "form": {

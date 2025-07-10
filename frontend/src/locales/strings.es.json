@@ -2186,6 +2186,56 @@
         "userAdded": "Usuario añadido con éxito",
         "userUpdated": "Usuario actualizado con éxito",
         "userDeleted": "Usuario eliminado con éxito"
+      },
+      "search": {
+        "placeholder": "Buscar por nombre de usuario, rol o permisos...",
+        "label": "Buscar:"
+      },
+      "filters": {
+        "title": "Filtros",
+        "toggle": "Filtros",
+        "clear": "Borrar todos los filtros",
+        "active": "{{count}} filtro(s) activo(s)",
+        "filter": "Filtro",
+        "filters": "Filtros",
+        "role": {
+          "label": "Filtrar por rol",
+          "all": "Todos los roles",
+          "admin": "Administrador",
+          "user": "Usuario regular",
+          "filter": "Rol:"
+        },
+        "permission": {
+          "label": "Filtrar por permiso",
+          "all": "Todos los permisos",
+          "filter": "Permiso:"
+        },
+        "accessLevel": {
+          "label": "Filtrar por nivel de acceso",
+          "all": "Todos los niveles de acceso",
+          "read": "Solo lectura",
+          "write": "Lectura y escritura",
+          "filter": "Acceso:"
+        }
+      },
+      "roles": {
+        "admin": "Administrador",
+        "user": "Usuario",
+        "administrator": "Administrador",
+        "regularUser": "Usuario regular"
+      },
+      "permissions": {
+        "users": "Usuarios",
+        "resources": "Recursos",
+        "system": "Sistema",
+        "dashboard": "Panel",
+        "levels": {
+          "read": "Lectura",
+          "write": "Escritura",
+          "none": "Ninguno",
+          "readOnly": "Solo lectura",
+          "readWrite": "Lectura y escritura"
+        }
       }
     }
   }

@@ -92,6 +92,12 @@
         "permissions": "Permissions",
         "actions": "Actions"
       },
+      "stats": {
+        "usersShown": "{{filtered}} of {{count}} users",
+        "user": "user",
+        "users": "users",
+        "shown": "shown"
+      },
       "roles": {
         "admin": "Admin",
         "user": "User"
@@ -139,6 +145,56 @@
         "userAdded": "User added successfully",
         "userUpdated": "User updated successfully",
         "userDeleted": "User deleted successfully"
+      },
+      "search": {
+        "placeholder": "Search by username, role, or permissions...",
+        "label": "Search:"
+      },
+      "filters": {
+        "title": "Filters",
+        "toggle": "Filters",
+        "clear": "Clear all filters",
+        "active": "{{count}} filter(s) active",
+        "filter": "Filter",
+        "filters": "Filters",
+        "role": {
+          "label": "Filter by role",
+          "all": "All roles",
+          "admin": "Administrator",
+          "user": "Regular User",
+          "filter": "Role:"
+        },
+        "permission": {
+          "label": "Filter by permission",
+          "all": "All permissions",
+          "filter": "Permission:"
+        },
+        "accessLevel": {
+          "label": "Filter by access level",
+          "all": "All access levels",
+          "read": "Read only",
+          "write": "Read and write",
+          "filter": "Access:"
+        }
+      },
+      "roles": {
+        "admin": "Administrator",
+        "user": "User",
+        "administrator": "Administrator",
+        "regularUser": "Regular User"
+      },
+      "permissions": {
+        "users": "Users",
+        "resources": "Resources",
+        "system": "System",
+        "dashboard": "Dashboard",
+        "levels": {
+          "read": "Read",
+          "write": "Write",
+          "none": "None",
+          "readOnly": "Read only",
+          "readWrite": "Read and write"
+        }
       }
     }
   },

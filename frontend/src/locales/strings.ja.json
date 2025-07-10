@@ -104,7 +104,9 @@
         "levels": {
           "read": "読み取り",
           "write": "書き込み",
-          "none": "なし"
+          "none": "なし",
+          "readOnly": "読み取り専用",
+          "readWrite": "読み書き"
         }
       },
       "form": {
@@ -139,6 +141,37 @@
         "userAdded": "ユーザーが正常に追加されました",
         "userUpdated": "ユーザーが正常に更新されました",
         "userDeleted": "ユーザーが正常に削除されました"
+      },
+      "search": {
+        "placeholder": "ユーザー名、役割、または権限で検索...",
+        "label": "検索："
+      },
+      "filters": {
+        "title": "フィルター",
+        "toggle": "フィルター",
+        "clear": "すべてのフィルターをクリア",
+        "active": "{{count}} 件のフィルターが有効",
+        "filter": "フィルター",
+        "filters": "フィルター",
+        "role": {
+          "label": "役割でフィルター",
+          "all": "すべての役割",
+          "admin": "管理者",
+          "user": "一般ユーザー",
+          "filter": "役割："
+        },
+        "permission": {
+          "label": "権限でフィルター",
+          "all": "すべての権限",
+          "filter": "権限："
+        },
+        "accessLevel": {
+          "label": "アクセスレベルでフィルター",
+          "all": "すべてのアクセスレベル",
+          "read": "読み取り専用",
+          "write": "読み書き",
+          "filter": "アクセス："
+        }
       }
     }
   },
