@@ -1,37 +1,19 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ include "chart.fullname" . }}-backend
-  labels:
-    app: {{ include "chart.name" . }}
-    chart: {{ include "chart.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-spec:
-  replicas: {{ .Values.backend.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ include "chart.name" . }}
-      release: {{ .Release.Name }}
-  template:
-    metadata:
-      labels:
-        app: {{ include "chart.name" . }}
-        release: {{ .Release.Name }}
-    spec:
-      containers:
-        - name: backend
-          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
-          env:
-            - name: REDIS_URL
-              value: "redis://{{ .Release.Name }}-redis-master:6379"
-            - name: REDIS_HOST
-              value: {{ .Values.redis.host }}
-            - name: REDIS_PORT
-              value: {{ .Values.redis.port }}
-          command: ["./start-backend.sh"]
-          ports:
-            - containerPort: 8080
-          resources:
-            {{- toYaml .Values.backend.resources | nindent 12 }}
+# Node modules and build output
+node_modules/
+dist/
+coverage/
+
+# Editor and system files
+.DS_Store
+.env
+*.tsbuildinfo
+
+# Helm chart lock file (user-generated, should not be committed)
+Chart.lock
+charts/
+
+# Ignore local Helm test output
+helm-ui-test*
+
+# Ignore other common files
+*.log
