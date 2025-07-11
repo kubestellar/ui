@@ -139,7 +139,7 @@ export function Layout() {
             <div className="mb-3 flex justify-end">
               <motion.button
                 onClick={toggleSidebar}
-                className={`rounded-lg border-2 p-2 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${isSidebarCollapsed ? "mr-2": ""}`}
+                className={`rounded-lg border-2 p-2 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${isSidebarCollapsed ? 'mr-2' : ''}`}
                 style={{
                   background: isDark
                     ? 'linear-gradient(to bottom right, #3b82f6, #2563eb)'
@@ -150,7 +150,6 @@ export function Layout() {
                     : '0 4px 10px rgba(37, 99, 235, 0.2)',
                   outline: 'none', // Remove default focus outline
                   WebkitTapHighlightColor: 'transparent', // Remove mobile tap highlight
-  
                 }}
                 whileHover={{
                   scale: 1.05,
@@ -160,16 +159,16 @@ export function Layout() {
                 }}
                 aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 whileTap={{ scale: 0.9 }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.boxShadow = isDark
-                        ? '0 0 0 3px rgba(96, 165, 250, 0.3)'
-                        : '0 0 0 3px rgba(59, 130, 246, 0.3)';
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = isDark
+                    ? '0 0 0 3px rgba(96, 165, 250, 0.3)'
+                    : '0 0 0 3px rgba(59, 130, 246, 0.3)';
                 }}
-                onBlur={(e) => {
-                e.currentTarget.style.boxShadow = isDark
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = isDark
                     ? '0 4px 10px rgba(37, 99, 235, 0.4)'
                     : '0 4px 10px rgba(37, 99, 235, 0.2)';
-                  }}
+                }}
               >
                 <div
                   className="flex h-5 w-5 items-center justify-center"
