@@ -15,11 +15,10 @@ backend:
 
 redis:
   enabled: true
-  # You can override redis chart values here if needed
-  # For example, to override the password:
-  # auth:
-  #   enabled: true
-  #   password: mypassword
+  architecture: standalone
+  auth:
+    enabled: false
+  # Add more overrides as needed for the Bitnami subchart
 
 postgresql:
   enabled: true
