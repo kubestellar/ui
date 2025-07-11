@@ -14,6 +14,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // MetricsConfig holds configuration for metrics API
@@ -327,52 +328,66 @@ func SetupMetricsRoutes(router *gin.Engine, logger *zap.Logger) {
 		zap.String("raw_api", "/api/v1/metrics/raw"))
 }
 
-// GetPodHealthMetrics returns the percentage of healthy pods across all namespaces
+// GetPodHealthMetrics returns the percentage of healthy pods across all clusters/contexts
 func GetPodHealthMetrics(c *gin.Context) {
-	clientset, _, err := k8s.GetClientSet()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Kubernetes client", "details": err.Error()})
-		return
+	fmt.Println("GetPodHealthMetrics handler called (aggregate all contexts)")
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		home := os.Getenv("HOME")
+		if home == "" {
+			home = os.Getenv("USERPROFILE") // Windows
+		}
+		kubeconfig = fmt.Sprintf("%s/.kube/config", home)
 	}
 
-	nsList, err := clientset.CoreV1().Namespaces().List(c, metav1.ListOptions{})
+	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list namespaces", "details": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load kubeconfig", "details": err.Error()})
 		return
 	}
 
 	totalPods := 0
 	healthyPods := 0
 
-	for _, ns := range nsList.Items {
-		// Skip system namespaces
-		// if ns.Name == "kube-system" || ns.Name == "kube-public" || ns.Name == "kube-node-lease" {
-		// 	continue
-		// }
-		podList, err := clientset.CoreV1().Pods(ns.Name).List(c, metav1.ListOptions{})
+	for contextName := range config.Contexts {
+		fmt.Printf("Checking context: %s\n", contextName)
+		clientset, _, err := k8s.GetClientSetWithContext(contextName)
 		if err != nil {
+			fmt.Printf("Error getting client for context %s: %v\n", contextName, err)
 			continue
 		}
-		totalPods += len(podList.Items)
-		for _, pod := range podList.Items {
-			if pod.Status.Phase == "Running" {
-				allReady := true
-				for _, cs := range pod.Status.ContainerStatuses {
-					if !cs.Ready {
-						allReady = false
-						break
+		nsList, err := clientset.CoreV1().Namespaces().List(c, metav1.ListOptions{})
+		if err != nil {
+			fmt.Printf("Error listing namespaces in context %s: %v\n", contextName, err)
+			continue
+		}
+		for _, ns := range nsList.Items {
+			podList, err := clientset.CoreV1().Pods(ns.Name).List(c, metav1.ListOptions{})
+			if err != nil {
+				fmt.Printf("Error listing pods in namespace %s (context %s): %v\n", ns.Name, contextName, err)
+				continue
+			}
+			for _, pod := range podList.Items {
+				totalPods++
+				if pod.Status.Phase == "Running" {
+					allReady := true
+					for _, cs := range pod.Status.ContainerStatuses {
+						if !cs.Ready {
+							allReady = false
+							break
+						}
 					}
-				}
-				if allReady {
-					healthyPods++
+					if allReady {
+						healthyPods++
+					}
 				}
 			}
 		}
 	}
 
-	healthPercent := 0.0
+	healthPercent := 0
 	if totalPods > 0 {
-		healthPercent = float64(healthyPods) / float64(totalPods) * 100
+		healthPercent = int(float64(healthyPods) / float64(totalPods) * 100)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
