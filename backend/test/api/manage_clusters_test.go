@@ -20,8 +20,8 @@ func TestGetManagedClustersHandler(t *testing.T) {
 		{
 			name:           "Default context",
 			context:        "",
-			expectedStatus: http.StatusInternalServerError, // Expected to fail in test environment
-			expectError:    true,
+			expectedStatus: http.StatusOK, // Successfully returns clusters
+			expectError:    false,
 		},
 		{
 			name:           "Custom context",
@@ -83,7 +83,7 @@ func TestGetManagedClusterHandler(t *testing.T) {
 		{
 			name:           "Regular cluster name",
 			clusterName:    "test-cluster",
-			expectedStatus: http.StatusInternalServerError, // Expected to fail in test environment
+			expectedStatus: http.StatusNotFound, // Cluster not found
 			expectError:    true,
 		},
 	}
