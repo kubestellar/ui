@@ -1085,7 +1085,7 @@
       }
     },
     "loadingCanvas": "Chargement des données du canevas...",
-    "dragDrop": {
+    "selection": {
       "infoAlert": "Cette interface utilise des réponses simulées pour créer des politiques de liaison. Sélectionnez des clusters et des charges de travail dans les listes pour les ajouter au canevas, puis cliquez sur une charge de travail puis sur un cluster pour créer une connexion de politique de liaison.",
       "helpDialog": {
         "title": "Créer des politiques de liaison avec des connexions directes",
@@ -1631,7 +1631,7 @@
     "creating": "Création...",
     "createContext": "Créer un contexte"
   },
-  "policyDragDropStore": {
+  "policySelectionStore": {
     "labelsAssigned": "Étiquettes automatiquement attribuées à {{itemType}} {{itemId}}",
     "policyAssigned": "Politique {{policyName}} assignée avec succès à {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "Le cluster {{targetName}} est déjà assigné à la politique {{policyName}}",
@@ -1966,6 +1966,10 @@
       "bindingPolicies": {
         "title": "Politiques d'assignation",
         "description": "Configurer les politiques d'assignation"
+      },
+      "userManagement": {
+        "title": "Gestion des utilisateurs",
+        "description": "Gérer les utilisateurs du système et leurs permissions"
       },
       "wdsTreeview": {
         "title": "Vue en arborescence WDS",

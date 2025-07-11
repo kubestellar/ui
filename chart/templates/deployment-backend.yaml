@@ -249,6 +249,7 @@ spec:
       containers:
         - name: backend
           image: {{ .Values.backend.image }}
+          imagePullPolicy: {{ .Values.backend.imagePullPolicy | default "Always" }}
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -276,36 +277,72 @@ spec:
           env:
             - name: KUBECONFIG
               value: "/home/kubeconfig/config"
+            # Database Configuration
+            - name: DATABASE_URL
+              value: "postgres://{{ .Values.postgresql.username }}:{{ .Values.postgresql.password }}@postgresql:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}?sslmode=disable"
+            - name: DB_HEALTH_TIMEOUT
+              value: "5s"
+            # Redis Configuration
             - name: REDIS_HOST
               value: "redis"
             - name: REDIS_PORT
               value: "{{ .Values.redis.port }}"
-
-          # Add Redis sidecar container
-
-     # Add Redis sidecar container
-        - name: redis-sidecar
-          image: redis:7.0-alpine
-          ports:
-            - containerPort: 6379
-              # Listen on localhost (::1) which is what the backend is hardcoded to use
-              hostIP: ::1
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend-service
-spec:
-  selector:
-    app: backend
-  ports:
-  - port: 80
-    targetPort: {{ .Values.backend.port }}
-  type: ClusterIP
+            - name: REDIS_HEALTH_TIMEOUT
+              value: "3s"
+            # Application Configuration
+            - name: PORT
+              value: "{{ .Values.backend.port }}"
+            - name: GIN_MODE
+              value: "{{ .Values.backendConfig.ginMode }}"
+            - name: JWT_SECRET
+              value: "{{ .Values.backendConfig.jwtSecret }}"
+            # Service Configuration
+            - name: SERVICE_NAME
+              value: "{{ .Values.backendConfig.serviceName }}"
+            - name: SERVICE_VERSION
+              value: "{{ .Values.backendConfig.serviceVersion }}"
+            - name: ENVIRONMENT
+              value: "{{ .Values.backendConfig.environment }}"
+            # Health Check Configuration
+            - name: ENABLE_HEALTH_ENDPOINTS
+              value: "{{ .Values.backendConfig.enableHealthEndpoints }}"
+            - name: ENABLE_METRICS
+              value: "{{ .Values.backendConfig.enableMetrics }}"
+            - name: HEALTH_ENDPOINT
+              value: "/health"
+            - name: LIVENESS_ENDPOINT
+              value: "/healthz"
+            - name: READINESS_ENDPOINT
+              value: "/readyz"
+            - name: METRICS_ENDPOINT
+              value: "/api/v1/metrics"
+            - name: HEALTH_CHECK_TIMEOUT
+              value: "{{ .Values.backendConfig.healthCheckTimeout }}"
+            - name: HEALTH_COMPONENTS
+              value: "database,redis,memory,disk"
+            # Performance Configuration
+            - name: MEMORY_THRESHOLD
+              value: "{{ .Values.backendConfig.memoryThreshold }}"
+            - name: DISK_THRESHOLD
+              value: "{{ .Values.backendConfig.diskThreshold }}"
+            - name: DISK_PATH
+              value: "/"
+            # CORS Configuration
+            - name: CORS_ALLOWED_ORIGIN
+              value: "{{ .Values.backendConfig.corsAllowedOrigin }}"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3

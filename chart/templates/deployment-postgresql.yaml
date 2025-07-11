@@ -1,0 +1,96 @@
+# PostgreSQL Deployment
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  labels:
+    app: postgresql
+    component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        component: database
+    spec:
+      containers:
+        - name: postgresql
+          image: {{ .Values.postgresql.image }}
+          ports:
+            - containerPort: {{ .Values.postgresql.port }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    sleep 10
+                    echo "Initializing database schema..."
+                    psql -U {{ .Values.postgresql.username }} -d {{ .Values.postgresql.database }} -f /docker-entrypoint-initdb.d/000001_init_schema.up.sql || echo "Schema already exists"
+                    echo "Database initialization completed"
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.database }}
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.username }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgresql.password }}
+            - name: POSTGRES_SHARED_PRELOAD_LIBRARIES
+              value: "pg_stat_statements"
+            - name: POSTGRES_MAX_CONNECTIONS
+              value: "100"
+            - name: POSTGRES_SHARED_BUFFERS
+              value: "256MB"
+            - name: POSTGRES_EFFECTIVE_CACHE_SIZE
+              value: "1GB"
+          resources:
+            requests:
+              cpu: {{ .Values.postgresql.resources.requests.cpu }}
+              memory: {{ .Values.postgresql.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.postgresql.resources.limits.cpu }}
+              memory: {{ .Values.postgresql.resources.limits.memory }}
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+            - name: postgresql-init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.postgresql.username }} -d {{ .Values.postgresql.database }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.postgresql.username }} -d {{ .Values.postgresql.database }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: postgresql-data
+          {{- if .Values.postgresql.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: postgresql-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: postgresql-init
+          configMap:
+            name: postgresql-init
+{{- end }}

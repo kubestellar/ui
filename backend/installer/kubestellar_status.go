@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"strings"
 
-	// "github.com/kubestellar/ui/telemetry"
-	"github.com/kubestellar/ui/telemetry"
+	// "github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/telemetry"
 )
 
 // KubeStellarStatus holds the check results

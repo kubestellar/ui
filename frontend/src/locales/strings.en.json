@@ -72,9 +72,32 @@
     "users": {
       "title": "User Management",
       "subtitle": "System Users",
+      "description": "Manage system users and their permissions",
+      "searchPlaceholder": "Search users by name, role, or permissions...",
+      "refresh": "Refresh Users",
+      "addUser": "Add User",
       "noUsers": "No Users Found",
       "noUsersDescription": "There are no users in the system yet. Click 'Add User' to create your first user.",
       "noPermissions": "No permissions assigned",
+      "filters": {
+        "title": "Filters",
+        "reset": "Reset Filters",
+        "role": "Role",
+        "allRoles": "All Roles",
+        "permission": "Permission",
+        "anyPermission": "Any Permission",
+        "permissionLevel": "Permission Level",
+        "anyLevel": "Any Level",
+        "sortBy": "Sort By",
+        "created": "Creation Date",
+        "ascending": "Ascending",
+        "descending": "Descending",
+        "active": "Active Filters",
+        "roleFilter": "Role",
+        "permissionFilter": "Permission",
+        "levelFilter": "Level",
+        "searchFilter": "Search"
+      },
       "actions": {
         "addUser": "Add User",
         "editUser": "Edit User",
@@ -1014,7 +1037,7 @@
       "policyBindingCreatedChip": "Binding created for policy propagation"
     },
     "tabs": {
-      "selectItems": "Select Items",
+      "selectItems": "Click and Drop",
       "yaml": "YAML",
       "uploadFile": "Upload File"
     },
@@ -1163,7 +1186,7 @@
       }
     },
     "loadingCanvas": "Loading canvas data...",
-    "dragDrop": {
+    "selection": {
       "infoAlert": "This interface is using simulated responses to create binding policies. Select clusters and workloads from the lists to add them to the canvas, then click on a workload and then a cluster to create a binding policy connection.",
       "helpDialog": {
         "title": "Create Binding Policies with Direct Connections",
@@ -1259,8 +1282,7 @@
       "title": "Labels:",
       "key": "Key",
       "value": "Value",
-      "add": "Add",
-      "count": "{{count}} unique labels across {{total}}"
+      "add": "Add"
     },
     "creatingConnection": "Creating connection:",
     "previewDialog": {
@@ -1708,7 +1730,8 @@
     "creating": "Creating...",
     "createContext": "Create Context"
   },
-  "policyDragDropStore": {
+
+  "policySelectionStore": {
     "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
     "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",
@@ -1719,9 +1742,11 @@
       "success": "Login successful",
       "error": "Login error:",
       "successWithUser": "Login successful for user: {{username}}. Redirecting to {{path}}",
-      "invalidCredentials": "Invalid credentials",
+      "invalidCredentials": "Invalid username or password. Please try again.",
       "authFailed": "Authentication failed. Please check your credentials.",
-      "noToken": "No token received from server"
+      "noToken": "No token received from server",
+      "invalidRequest": "Invalid request. Please check your input and try again.",
+      "serverError": "Server error. Please try again later."
     }
   },
   "kubestellarData": {

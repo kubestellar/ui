@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/kubestellar/ui/telemetry"
-	"github.com/kubestellar/ui/wds"
+	"github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/wds"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"

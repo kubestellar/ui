@@ -4,7 +4,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import LabelIcon from '@mui/icons-material/Label';
 import LinkIcon from '@mui/icons-material/Link';
-import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
 import { useTranslation } from 'react-i18next'; // Add this import
 
 interface SuccessNotificationProps {
@@ -22,7 +22,7 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
     successMessage: storeMessage,
     clearSuccessMessageAfterDelay,
     setSuccessMessage,
-  } = usePolicyDragDropStore();
+  } = usePolicySelectionStore();
   const { t } = useTranslation(); // Add translation hook
 
   // Use provided props or fallback to store values

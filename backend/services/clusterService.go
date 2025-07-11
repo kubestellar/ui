@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/models"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

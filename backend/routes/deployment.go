@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubestellar/ui/telemetry"
-	"github.com/kubestellar/ui/wds"
-	"github.com/kubestellar/ui/wds/deployment"
+	"github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/wds"
+	"github.com/kubestellar/ui/backend/wds/deployment"
 	"k8s.io/client-go/informers"
 )
 

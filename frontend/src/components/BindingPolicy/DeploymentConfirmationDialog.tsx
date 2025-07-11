@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -22,9 +22,11 @@ import CodeIcon from '@mui/icons-material/Code';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import KubernetesIcon from './KubernetesIcon';
-import { Editor } from '@monaco-editor/react';
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
+
+// Lazy load Monaco Editor
+const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 
 export interface DeploymentPolicy {
   id: string;
@@ -291,22 +293,24 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
               border: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
             }}
           >
-            <Editor
-              height="100%"
-              language="yaml"
-              value={selectedPolicy?.yaml || ''}
-              theme={darkMode ? 'vs-dark' : 'light'}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                fontFamily: "'JetBrains Mono', monospace",
-                padding: { top: 10 },
-                readOnly: true,
-              }}
-            />
+            <Suspense fallback={<CircularProgress />}>
+              <MonacoEditor
+                height="100%"
+                language="yaml"
+                value={selectedPolicy?.yaml || ''}
+                theme={darkMode ? 'vs-dark' : 'light'}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  padding: { top: 10 },
+                  readOnly: true,
+                }}
+              />
+            </Suspense>
           </Paper>
         </DialogContent>
         <DialogActions

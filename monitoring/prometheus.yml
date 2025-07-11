@@ -1,0 +1,58 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "alert_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # KubeStellar UI Backend (using host network)
+  - job_name: 'kubestellar-backend'
+    static_configs:
+      # Since backend uses host network, scrape via host IP
+      - targets: ['host.docker.internal:4000']
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    # Add labels for better identification
+    relabel_configs:
+      - target_label: 'service'
+        replacement: 'kubestellar-backend'
+      - target_label: 'environment'
+        replacement: 'docker-compose'
+
+  # Alternative target for Linux hosts (if host.docker.internal doesn't work)
+  - job_name: 'kubestellar-backend-linux'
+    static_configs:
+      - targets: ['172.17.0.1:4000']  # Default Docker bridge IP
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    relabel_configs:
+      - target_label: 'service'
+        replacement: 'kubestellar-backend'
+      - target_label: 'environment'
+        replacement: 'docker-compose'
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s

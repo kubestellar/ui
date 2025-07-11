@@ -3,7 +3,38 @@ import { Position, MarkerType } from 'reactflow';
 import { NodeLabel } from '../Wds_Topology/NodeLabel';
 import useTheme from '../../stores/themeStore';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
+import useZoomStore from '../../stores/zoomStore';
+import useEdgeTypeStore from '../../stores/edgeTypeStore';
 import { CustomNode, ResourceItem, CustomEdge } from './types';
+import ConfigMap from '../../assets/k8s_resources_logo/cm.svg';
+import ClusterRoleBinding from '../../assets/k8s_resources_logo/crb.svg';
+import CustomResourceDefinition from '../../assets/k8s_resources_logo/crd.svg';
+import ClusterRole from '../../assets/k8s_resources_logo/c-role.svg';
+import CronJob from '../../assets/k8s_resources_logo/cronjob.svg';
+import Deployment from '../../assets/k8s_resources_logo/deploy.svg';
+import DaemonSet from '../../assets/k8s_resources_logo/ds.svg';
+import Endpoints from '../../assets/k8s_resources_logo/ep.svg';
+import Group from '../../assets/k8s_resources_logo/group.svg';
+import HorizontalPodAutoscaler from '../../assets/k8s_resources_logo/hpa.svg';
+import Ingress from '../../assets/k8s_resources_logo/ing.svg';
+import Job from '../../assets/k8s_resources_logo/job.svg';
+import LimitRange from '../../assets/k8s_resources_logo/limits.svg';
+import NetworkPolicy from '../../assets/k8s_resources_logo/netpol.svg';
+import Namespace from '../../assets/k8s_resources_logo/ns.svg';
+import PodSecurityPolicy from '../../assets/k8s_resources_logo/psp.svg';
+import PersistentVolume from '../../assets/k8s_resources_logo/pv.svg';
+import PersistentVolumeClaim from '../../assets/k8s_resources_logo/pvc.svg';
+import ResourceQuota from '../../assets/k8s_resources_logo/quota.svg';
+import RoleBinding from '../../assets/k8s_resources_logo/rb.svg';
+import Role from '../../assets/k8s_resources_logo/role.svg';
+import ReplicaSet from '../../assets/k8s_resources_logo/rs.svg';
+import ServiceAccount from '../../assets/k8s_resources_logo/sa.svg';
+import StorageClass from '../../assets/k8s_resources_logo/sc.svg';
+import Secret from '../../assets/k8s_resources_logo/secret.svg';
+import StatefulSet from '../../assets/k8s_resources_logo/sts.svg';
+import Service from '../../assets/k8s_resources_logo/svc.svg';
+import User from '../../assets/k8s_resources_logo/user.svg';
+import Volume from '../../assets/k8s_resources_logo/vol.svg';
 
 interface TreeViewNodesProps {
   onNodeSelect: (nodeData: {
@@ -18,44 +49,38 @@ interface TreeViewNodesProps {
   isExpanded: boolean;
 }
 
-const nodeStyle: React.CSSProperties = {
-  padding: '2px 12px',
-  fontSize: '6px',
-  border: 'none',
-  width: '146px',
-  height: '30px',
-};
+// Node styling is now handled dynamically through the zoom store
 
 const iconMap: Record<string, string> = {
-  ConfigMap: '/src/assets/k8s_resources_logo/cm.svg',
-  ClusterRoleBinding: '/src/assets/k8s_resources_logo/crb.svg',
-  CustomResourceDefinition: '/src/assets/k8s_resources_logo/crd.svg',
-  ClusterRole: '/src/assets/k8s_resources_logo/c-role.svg',
-  CronJob: '/src/assets/k8s_resources_logo/cronjob.svg',
-  Deployment: '/src/assets/k8s_resources_logo/deploy.svg',
-  DaemonSet: '/src/assets/k8s_resources_logo/ds.svg',
-  Endpoints: '/src/assets/k8s_resources_logo/ep.svg',
-  Group: '/src/assets/k8s_resources_logo/group.svg',
-  HorizontalPodAutoscaler: '/src/assets/k8s_resources_logo/hpa.svg',
-  Ingress: '/src/assets/k8s_resources_logo/ing.svg',
-  Job: '/src/assets/k8s_resources_logo/job.svg',
-  LimitRange: '/src/assets/k8s_resources_logo/limits.svg',
-  NetworkPolicy: '/src/assets/k8s_resources_logo/netpol.svg',
-  Namespace: '/src/assets/k8s_resources_logo/ns.svg',
-  PodSecurityPolicy: '/src/assets/k8s_resources_logo/psp.svg',
-  PersistentVolume: '/src/assets/k8s_resources_logo/pv.svg',
-  PersistentVolumeClaim: '/src/assets/k8s_resources_logo/pvc.svg',
-  ResourceQuota: '/src/assets/k8s_resources_logo/quota.svg',
-  RoleBinding: '/src/assets/k8s_resources_logo/rb.svg',
-  Role: '/src/assets/k8s_resources_logo/role.svg',
-  ReplicaSet: '/src/assets/k8s_resources_logo/rs.svg',
-  ServiceAccount: '/src/assets/k8s_resources_logo/sa.svg',
-  StorageClass: '/src/assets/k8s_resources_logo/sc.svg',
-  Secret: '/src/assets/k8s_resources_logo/secret.svg',
-  StatefulSet: '/src/assets/k8s_resources_logo/sts.svg',
-  Service: '/src/assets/k8s_resources_logo/svc.svg',
-  User: '/src/assets/k8s_resources_logo/user.svg',
-  Volume: '/src/assets/k8s_resources_logo/vol.svg',
+  ConfigMap: ConfigMap,
+  ClusterRoleBinding: ClusterRoleBinding,
+  CustomResourceDefinition: CustomResourceDefinition,
+  ClusterRole: ClusterRole,
+  CronJob: CronJob,
+  Deployment: Deployment,
+  DaemonSet: DaemonSet,
+  Endpoints: Endpoints,
+  Group: Group,
+  HorizontalPodAutoscaler: HorizontalPodAutoscaler,
+  Ingress: Ingress,
+  Job: Job,
+  LimitRange: LimitRange,
+  NetworkPolicy: NetworkPolicy,
+  Namespace: Namespace,
+  PodSecurityPolicy: PodSecurityPolicy,
+  PersistentVolume: PersistentVolume,
+  PersistentVolumeClaim: PersistentVolumeClaim,
+  ResourceQuota: ResourceQuota,
+  RoleBinding: RoleBinding,
+  Role: Role,
+  ReplicaSet: ReplicaSet,
+  ServiceAccount: ServiceAccount,
+  StorageClass: StorageClass,
+  Secret: Secret,
+  StatefulSet: StatefulSet,
+  Service: Service,
+  User: User,
+  Volume: Volume,
 };
 
 const getNodeConfig = (type: string) => {
@@ -228,8 +253,10 @@ const getTimeAgo = (timestamp: string | undefined, t: (key: string) => string): 
 export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeViewNodesProps) => {
   const theme = useTheme(state => state.theme);
   const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
+  const { currentZoom, getScaledNodeStyle } = useZoomStore();
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeIdCounter = useRef<number>(0);
+  const { edgeType } = useEdgeTypeStore();
 
   const createNode = useCallback(
     (
@@ -257,6 +284,9 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         highlightedLabels &&
         resourceData?.metadata?.labels &&
         resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
+
+      // Get dynamically scaled node style
+      const scaledNodeStyle = getScaledNodeStyle(currentZoom);
 
       const node =
         cachedNode ||
@@ -301,11 +331,10 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           },
           position: { x: 0, y: 0 },
           style: {
-            ...nodeStyle,
+            ...scaledNodeStyle,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '2px 12px',
             color: theme === 'dark' ? '#fff' : '#000',
             ...(hasHighlightedLabel
               ? {
@@ -334,7 +363,10 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
       // If the node is already cached but highlighting changed, update style
       if (cachedNode) {
         node.style = {
-          ...node.style,
+          ...scaledNodeStyle,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           backgroundColor: hasHighlightedLabel
             ? theme === 'dark'
               ? 'rgba(68, 152, 255, 0.15)'
@@ -372,7 +404,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           id: edgeId,
           source: parent,
           target: id,
-          type: 'step',
+          type: edgeType,
           animated: true,
           style: { stroke: theme === 'dark' ? '#777' : '#a3a3a3', strokeDasharray: '2,2' },
           markerEnd: {
@@ -383,7 +415,16 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         newEdges.push(edge);
       }
     },
-    [theme, isExpanded, highlightedLabels, onNodeSelect, onMenuOpen]
+    [
+      theme,
+      isExpanded,
+      highlightedLabels,
+      onNodeSelect,
+      onMenuOpen,
+      currentZoom,
+      getScaledNodeStyle,
+      edgeType,
+    ]
   );
 
   const clearNodeCache = useCallback(() => {
@@ -400,8 +441,13 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           highlightedLabels &&
           resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
 
+        const scaledNodeStyle = getScaledNodeStyle(currentZoom);
+
         const newStyle = {
-          ...node.style,
+          ...scaledNodeStyle,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           backgroundColor: hasHighlightedLabel
             ? theme === 'dark'
               ? 'rgba(47, 134, 255, 0.2)'
@@ -424,7 +470,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         };
       });
     },
-    [theme, highlightedLabels]
+    [theme, highlightedLabels, currentZoom, getScaledNodeStyle]
   );
 
   return {

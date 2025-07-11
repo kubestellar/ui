@@ -59,6 +59,10 @@
         "title": "绑定策略",
         "description": "配置绑定策略"
       },
+      "userManagement": {
+        "title": "用户管理",
+        "description": "管理系统用户和权限"
+      },
       "wdsTreeview": {
         "title": "WDS 树视图",
         "description": "可视化工作负载分布"

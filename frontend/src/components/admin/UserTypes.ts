@@ -8,6 +8,15 @@ export interface User {
   updated_at?: string;
 }
 
+// Filter options for users
+export interface UserFilter {
+  role: 'all' | 'admin' | 'user' | null;
+  permission: string | null;
+  permissionLevel: 'read' | 'write' | null;
+  sortBy: 'username' | 'role' | 'created' | null;
+  sortDirection: 'asc' | 'desc';
+}
+
 // Permission component type
 export interface PermissionComponent {
   id: string;
@@ -41,7 +50,7 @@ export interface UserFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: () => void;
-  formError: string;
+  formError?: string;
   username: string;
   setUsername: (username: string) => void;
   password: string;

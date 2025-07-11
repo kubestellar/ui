@@ -1157,7 +1157,7 @@
       }
     },
     "loadingCanvas": "キャンバスデータを読み込んでいます...",
-    "dragDrop": {
+    "selection": {
       "infoAlert": "このインターフェースでは、バインディングポリシーを作成するためにシミュレーションされた応答を使用しています。左側のリストからクラスターを、右側のリストからワークロードを選択してキャンバスに追加し、ワークロードをクリックした後にクラスターをクリックすると、バインディングポリシーの接続が作成されます。",
       "helpDialog": {
         "title": "直接接続でバインディングポリシーを作成",
@@ -1702,7 +1702,7 @@
     "creating": "作成中...",
     "createContext": "コンテキストを作成"
   },
-  "policyDragDropStore": {
+  "policySelectionStore": {
     "labelsAssigned": "{{itemType}}「{{itemId}}」にラベルを自動で割り当てました",
     "policyAssigned": "ポリシー「{{policyName}}」を{{targetType}}「{{targetName}}」に正常に割り当てました",
     "clusterAlreadyAssigned": "クラスタ「{{targetName}}」はすでにポリシー「{{policyName}}」に割り当てられています",
@@ -2037,6 +2037,10 @@
       "bindingPolicies": {
         "title": "バインディングポリシー",
         "description": "バインディングポリシーを構成"
+      },
+      "userManagement": {
+        "title": "ユーザー管理",
+        "description": "システムユーザーと権限を管理"
       },
       "wdsTreeview": {
         "title": "WDS ツリービュー",

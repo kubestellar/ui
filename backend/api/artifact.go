@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/backend/k8s"
 )
 
 // First, let's define a simplified package struct for the helper functions

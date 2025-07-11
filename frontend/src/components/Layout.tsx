@@ -16,9 +16,9 @@ const LoadingPlaceholder = () => {
   const themeStyles = getThemeStyles(isDark);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-6">
+    <div className="flex h-full w-full items-center justify-center p-2">
       <div
-        className="relative mx-auto h-[200px] w-full max-w-3xl animate-pulse-subtle overflow-hidden rounded-xl shadow-inner"
+        className="relative mx-auto h-[180px] w-full max-w-4xl animate-pulse-subtle overflow-hidden rounded-lg shadow-inner"
         style={{
           background: isDark
             ? 'linear-gradient(to right, #1f2937, #374151, #1f2937)'
@@ -45,10 +45,10 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
         className="page-content"
       >
         {children}
@@ -74,7 +74,7 @@ export function Layout() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 500);
+    }, 400); // Reduced from 500ms for faster initial load
 
     return () => clearTimeout(timer);
   }, []);
@@ -99,34 +99,16 @@ export function Layout() {
     return {
       backgroundColor: themeStyles.colors.bg.primary,
       backgroundImage: isDark
-        ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)'
-        : 'radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px)',
+        ? 'radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px)'
+        : 'radial-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px)',
       backgroundSize: '20px 20px',
       backgroundPosition: '0 0',
     };
   };
 
-  // Animation variants for the main content
-  const mainContentVariants = {
-    expanded: {
-      marginLeft: 0,
-      transition: { type: 'spring', stiffness: 300, damping: 30 },
-    },
-    collapsed: {
-      marginLeft: 0,
-      transition: { type: 'spring', stiffness: 300, damping: 30 },
-    },
-  };
-
-  // Animation variants for the sidebar toggle button
-  const toggleButtonVariants = {
-    expanded: { rotate: 0 },
-    collapsed: { rotate: 180 },
-  };
-
   return (
     <div
-      className="relative flex min-h-screen w-full flex-col justify-between transition-colors duration-500"
+      className="relative flex min-h-screen w-full flex-col justify-between transition-colors duration-300"
       style={getBgPatternStyle()}
     >
       <ScrollRestoration getKey={location => location.pathname} />
@@ -139,44 +121,54 @@ export function Layout() {
           isMobileMenuOpen={isMobileMenuOpen}
         />
 
-        <div className="relative mb-auto flex w-full gap-0 pt-20 xl:pt-[96px] 2xl:pt-[112px]">
+        <div className="relative mb-auto flex w-full gap-0 pt-14 xl:pt-[76px] 2xl:pt-[88px]">
           {/* Sidebar/Menu - Desktop */}
           <motion.aside
-            className="sticky mt-1 hidden overflow-hidden px-4 py-4 transition-all duration-300 xl:block"
+            className="sticky mt-1 hidden overflow-hidden px-3 py-3 transition-all duration-300 xl:block"
             style={{
-              height: 'calc(100vh - 96px)',
-              top: '96px',
-              borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
+              height: 'calc(100vh - 76px)',
+              top: '76px',
+              borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.2)' : 'rgba(226, 232, 240, 0.5)'}`,
             }}
             animate={{
               width: isSidebarCollapsed ? '80px' : '280px',
-              transition: { duration: 0.3, ease: 'easeInOut' },
+              transition: { duration: 0.25, ease: 'easeInOut' },
             }}
             initial={false}
           >
-            <div className="mb-4 flex justify-end">
+            <div className="mb-3 flex justify-end">
               <motion.button
                 onClick={toggleSidebar}
-                className="rounded-lg border-2 p-2.5 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95"
+                className={`rounded-lg border-2 p-2 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${isSidebarCollapsed ? 'mr-2' : ''}`}
                 style={{
                   background: isDark
                     ? 'linear-gradient(to bottom right, #3b82f6, #2563eb)'
                     : 'linear-gradient(to bottom right, #3b82f6, #1d4ed8)',
                   borderColor: isDark ? '#60a5fa' : '#3b82f6',
                   boxShadow: isDark
-                    ? '0 4px 12px rgba(37, 99, 235, 0.5)'
-                    : '0 4px 12px rgba(37, 99, 235, 0.3)',
+                    ? '0 4px 10px rgba(37, 99, 235, 0.4)'
+                    : '0 4px 10px rgba(37, 99, 235, 0.2)',
+                  outline: 'none', // Remove default focus outline
+                  WebkitTapHighlightColor: 'transparent', // Remove mobile tap highlight
                 }}
                 whileHover={{
                   scale: 1.05,
                   boxShadow: isDark
-                    ? '0 6px 16px rgba(37, 99, 235, 0.6)'
-                    : '0 6px 16px rgba(37, 99, 235, 0.4)',
+                    ? '0 6px 14px rgba(37, 99, 235, 0.5)'
+                    : '0 6px 14px rgba(37, 99, 235, 0.3)',
                 }}
                 aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                variants={toggleButtonVariants}
-                animate={isSidebarCollapsed ? 'collapsed' : 'expanded'}
                 whileTap={{ scale: 0.9 }}
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = isDark
+                    ? '0 0 0 3px rgba(96, 165, 250, 0.3)'
+                    : '0 0 0 3px rgba(59, 130, 246, 0.3)';
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = isDark
+                    ? '0 4px 10px rgba(37, 99, 235, 0.4)'
+                    : '0 4px 10px rgba(37, 99, 235, 0.2)';
+                }}
               >
                 <div
                   className="flex h-5 w-5 items-center justify-center"
@@ -194,6 +186,10 @@ export function Layout() {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    style={{
+                      transform: isSidebarCollapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.3s ease',
+                    }}
                   >
                     <path d="M15 18l-6-6 6-6" />
                   </svg>
@@ -217,7 +213,7 @@ export function Layout() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                   className="fixed inset-0 z-20 backdrop-blur-sm xl:hidden"
-                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
                   onClick={() => setIsMobileMenuOpen(false)}
                   aria-label="Close menu"
                 />
@@ -225,18 +221,18 @@ export function Layout() {
                   initial={{ x: '-100%' }}
                   animate={{ x: 0 }}
                   exit={{ x: '-100%' }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
                   className="fixed left-0 top-[72px] z-30 h-[calc(100vh-72px)] w-[280px] overflow-y-auto xl:hidden"
                   style={{
-                    background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(10px)',
-                    borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
+                    background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(255, 255, 255, 0.97)',
+                    backdropFilter: 'blur(12px)',
+                    borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.2)' : 'rgba(226, 232, 240, 0.5)'}`,
                     boxShadow: isDark
                       ? '0 8px 32px rgba(0, 0, 0, 0.3)'
                       : '0 8px 32px rgba(0, 0, 0, 0.1)',
                   }}
                 >
-                  <div className="px-4 py-4">
+                  <div className="px-3 py-3">
                     <Suspense fallback={<LoadingPlaceholder />}>
                       <Menu collapsed={false} />
                     </Suspense>
@@ -248,15 +244,18 @@ export function Layout() {
 
           {/* Main content area */}
           <motion.main
-            className="w-full overflow-hidden px-4 py-6 sm:px-6 xl:flex-1 xl:px-8 xl:py-8 2xl:px-10"
-            variants={mainContentVariants}
+            className="w-full overflow-hidden px-2 py-2 sm:px-3 xl:flex-1 xl:px-4 xl:py-3 2xl:px-5"
+            variants={{
+              expanded: { marginLeft: 0 },
+              collapsed: { marginLeft: 0 },
+            }}
             animate={isSidebarCollapsed ? 'collapsed' : 'expanded'}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{ opacity: isLoading ? 0 : 1 }}
           >
             <Suspense fallback={<LoadingPlaceholder />}>
               <PageTransition>
-                <div className="mx-auto max-w-7xl">
+                <div className="mx-auto max-w-full">
                   <Outlet />
                 </div>
               </PageTransition>
@@ -267,7 +266,7 @@ export function Layout() {
 
       {/* Footer with conditional rendering */}
       <div className="transition-opacity duration-300" style={{ opacity: isLoading ? 0 : 1 }}>
-        <Suspense fallback={<div className="h-16"></div>}>
+        <Suspense fallback={<div className="h-12"></div>}>
           <Footer commitHash={commitHash} />
         </Suspense>
       </div>
@@ -288,7 +287,7 @@ const ScrollToTop = () => {
   // Show button when page is scrolled down
   useEffect(() => {
     const toggleVisibility = () => {
-      if (window.pageYOffset > 500) {
+      if (window.pageYOffset > 400) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
@@ -311,24 +310,24 @@ const ScrollToTop = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2 }}
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 rounded-full p-3 text-white shadow-lg
+          className="fixed bottom-6 right-6 z-50 rounded-full p-3 text-white shadow-lg
             transition-all duration-300 hover:shadow-xl"
           style={{
             background: themeStyles.effects.gradients.primary,
             boxShadow: themeStyles.colors.shadow.lg,
           }}
           whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.9 }}
           aria-label="Scroll to top"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -336,7 +335,7 @@ const ScrollToTop = () => {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={2.5}
               d="M5 10l7-7m0 0l7 7m-7-7v18"
             />
           </svg>

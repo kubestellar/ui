@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/routes"
+	"github.com/kubestellar/ui/backend/routes"
 	"github.com/stretchr/testify/assert"
 )
 

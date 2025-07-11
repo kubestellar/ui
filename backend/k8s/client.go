@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"go.uber.org/zap"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

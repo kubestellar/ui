@@ -38,8 +38,17 @@ api.interceptors.response.use(
     const isAuthCheck = error.config?.url?.includes('/api/me');
     if (error.response?.status === 401 && isAuthCheck) {
       console.log('Auth verification failed, ignoring toast');
+    } else if (error.config?.url?.includes('/login') && error.response?.status === 401) {
+      // Don't show global toast for login 401 errors - the login hook will handle this
+      console.log('Login failed, letting login hook handle the error');
+    } else if (error.response?.status === 401) {
+      // For other 401 errors, show a user-friendly message
+      const toastId = `api-error-401`;
+      toast.error('Authentication required. Please log in again.', { id: toastId });
     } else {
-      toast.error(errorMessage);
+      // For other errors, show toast but use a consistent ID to prevent duplicates
+      const toastId = `api-error-${error.response?.status || 'unknown'}`;
+      toast.error(errorMessage, { id: toastId });
     }
 
     return Promise.reject(error);

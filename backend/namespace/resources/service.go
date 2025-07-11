@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/models"
-	ns "github.com/kubestellar/ui/namespace"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/models"
+	ns "github.com/kubestellar/ui/backend/namespace"
+	"github.com/kubestellar/ui/backend/telemetry"
 )
 
 // createNamespace handles creating a new namespace

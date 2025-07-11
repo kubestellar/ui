@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/plugin"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/plugin"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +18,7 @@ import (
 )
 
 var (
+	pluginID      = 1
 	pluginName    = "backup-plugin"
 	pluginVersion = "0.0.1"
 )
@@ -25,6 +26,10 @@ var (
 type backupPlugin struct {
 	storageType string
 	c           *kubernetes.Clientset
+}
+
+func (p backupPlugin) ID() int {
+	return pluginID
 }
 
 func (p backupPlugin) Name() string {

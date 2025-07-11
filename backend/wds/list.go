@@ -10,9 +10,9 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/redis"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/redis"
+	"github.com/kubestellar/ui/backend/telemetry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"

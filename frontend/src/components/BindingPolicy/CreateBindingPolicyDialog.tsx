@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import Editor from '@monaco-editor/react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import yaml from 'js-yaml';
+
+// Lazy load Monaco Editor
+const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 import {
   Dialog,
   DialogContent,
@@ -30,10 +32,10 @@ import {
   getDialogPaperProps,
 } from './styles/CreateBindingPolicyStyles';
 import { DEFAULT_BINDING_POLICY_TEMPLATE } from './constants/index';
-import PolicyDragDrop from './PolicyDragDrop'; // TODO: Rename component to PolicySelection
+import PolicySelection from './PolicySelection';
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
-import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { toast } from 'react-hot-toast';
 import CancelButton from '../common/CancelButton';
@@ -102,7 +104,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     config?: PolicyConfiguration;
   } | null>(null);
 
-  const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
+  const policyCanvasEntities = usePolicySelectionStore(state => state.canvasEntities);
 
   const { useGenerateBindingPolicyYaml, useWorkloadSSE } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
@@ -934,7 +936,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const isDarkTheme = theme === 'dark';
 
   const handleClearPolicyCanvas = () => {
-    usePolicyDragDropStore.getState().clearCanvas();
+    usePolicySelectionStore.getState().clearCanvas();
   };
 
   const getWorkloadDisplayName = (workloadId: string): string => {
@@ -1174,34 +1176,36 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                       bgcolor: theme === 'dark' ? '#1e1e1e' : '#fff',
                     }}
                   >
-                    <Editor
-                      height="100%"
-                      language="yaml"
-                      value={editorContent}
-                      theme={isDarkTheme ? 'vs-dark' : 'light'}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: 'on',
-                        scrollBeyondLastLine: true,
-                        automaticLayout: true,
-                        fontFamily: "'JetBrains Mono', monospace",
-                        padding: { top: 10, bottom: 10 },
-                      }}
-                      onChange={value => {
-                        setEditorContent(value || '');
-                        if (value) {
-                          try {
-                            const parsedYaml = yaml.load(value) as YamlPolicy;
-                            if (parsedYaml?.metadata?.name) {
-                              setPolicyName(parsedYaml.metadata.name);
+                    <Suspense fallback={<CircularProgress />}>
+                      <MonacoEditor
+                        height="100%"
+                        language="yaml"
+                        value={editorContent}
+                        theme={isDarkTheme ? 'vs-dark' : 'light'}
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 14,
+                          lineNumbers: 'on',
+                          scrollBeyondLastLine: true,
+                          automaticLayout: true,
+                          fontFamily: "'JetBrains Mono', monospace",
+                          padding: { top: 10, bottom: 10 },
+                        }}
+                        onChange={value => {
+                          setEditorContent(value || '');
+                          if (value) {
+                            try {
+                              const parsedYaml = yaml.load(value) as YamlPolicy;
+                              if (parsedYaml?.metadata?.name) {
+                                setPolicyName(parsedYaml.metadata.name);
+                              }
+                            } catch (e) {
+                              console.log('Error parsing YAML on change:', e);
                             }
-                          } catch (e) {
-                            console.log('Error parsing YAML on change:', e);
                           }
-                        }
-                      }}
-                    />
+                        }}
+                      />
+                    </Suspense>
                   </StyledPaper>
                 </Box>
               )}
@@ -1402,22 +1406,24 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                           mb: 2,
                         }}
                       >
-                        <Editor
-                          height="100%"
-                          language="yaml"
-                          value={fileContent}
-                          theme={isDarkTheme ? 'vs-dark' : 'light'}
-                          options={{
-                            minimap: { enabled: false },
-                            fontSize: 14,
-                            lineNumbers: 'on',
-                            scrollBeyondLastLine: true,
-                            automaticLayout: true,
-                            fontFamily: "'JetBrains Mono', monospace",
-                            padding: { top: 10, bottom: 10 },
-                            readOnly: true,
-                          }}
-                        />
+                        <Suspense fallback={<CircularProgress />}>
+                          <MonacoEditor
+                            height="100%"
+                            language="yaml"
+                            value={fileContent}
+                            theme={isDarkTheme ? 'vs-dark' : 'light'}
+                            options={{
+                              minimap: { enabled: false },
+                              fontSize: 14,
+                              lineNumbers: 'on',
+                              scrollBeyondLastLine: true,
+                              automaticLayout: true,
+                              fontFamily: "'JetBrains Mono', monospace",
+                              padding: { top: 10, bottom: 10 },
+                              readOnly: true,
+                            }}
+                          />
+                        </Suspense>
                       </StyledPaper>
                     </Box>
                   )}
@@ -1436,7 +1442,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                     overflow: 'hidden',
                   }}
                 >
-                  <PolicyDragDrop
+                  <PolicySelection
                     clusters={clusters}
                     workloads={allWorkloads}
                     onCreateBindingPolicy={handleCreateBindingPolicy}
@@ -1580,22 +1586,24 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.12)' : undefined,
             }}
           >
-            <Editor
-              height="100%"
-              language="yaml"
-              value={previewYaml}
-              theme={isDarkTheme ? 'vs-dark' : 'light'}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                fontFamily: "'JetBrains Mono', monospace",
-                padding: { top: 10 },
-                readOnly: true,
-              }}
-            />
+            <Suspense fallback={<CircularProgress />}>
+              <MonacoEditor
+                height="100%"
+                language="yaml"
+                value={previewYaml}
+                theme={isDarkTheme ? 'vs-dark' : 'light'}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  padding: { top: 10 },
+                  readOnly: true,
+                }}
+              />
+            </Suspense>
           </StyledPaper>
         </DialogContent>
         <DialogActions

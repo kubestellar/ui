@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 func TestReadFileContent(t *testing.T) {
