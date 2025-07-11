@@ -90,6 +90,9 @@ func setupMetricsRoutes(router *gin.Engine) {
 
 		// Kubernetes metrics
 		metrics.GET("/kubernetes", getKubernetesMetrics)
+
+		// Pod health metrics
+		metrics.GET("/pod-health", api.GetPodHealthMetrics)
 	}
 }
 

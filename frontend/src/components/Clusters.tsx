@@ -799,7 +799,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 // Main function for rendering the dashboard
 const K8sInfo = () => {
   const { t } = useTranslation();
-  const { useK8sInfo } = useK8sQueries();
+  const { useK8sInfo, usePodHealthQuery } = useK8sQueries();
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
   const { useBindingPolicies } = useBPQueries();
@@ -812,6 +812,7 @@ const K8sInfo = () => {
   const { data: clusterData, isLoading: clustersLoading } = useClusters(1);
   const { data: workloadsData, isLoading: workloadsLoading } = useWorkloads();
   const { data: bindingPoliciesData, isLoading: bpLoading } = useBindingPolicies();
+  const { data: podHealth, isLoading: podHealthLoading } = usePodHealthQuery();
 
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
@@ -1301,7 +1302,7 @@ const K8sInfo = () => {
 
             {/* Pod Health with OptimizedProgressBar */}
             <OptimizedProgressBar
-              value={85}
+              value={podHealthLoading || !podHealth ? 0 : Math.round(podHealth.healthPercent)}
               color="bg-gradient-to-br from-emerald-500 to-green-600"
               label={t('clusters.dashboard.pods.health')}
               icon={Layers}
