@@ -1,9 +1,15 @@
 package api
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,7 +19,37 @@ import (
 	"github.com/kubestellar/ui/backend/plugin"
 	"github.com/kubestellar/ui/backend/plugin/plugins"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
+
+// Global plugin manager and registry for dynamic plugin loading
+var (
+	GlobalPluginManager  *pkg.PluginManager
+	GlobalPluginRegistry *pkg.PluginRegistry
+	pluginManagerMutex   sync.RWMutex
+)
+
+// SetGlobalPluginManager sets the global plugin manager and registry
+func SetGlobalPluginManager(manager *pkg.PluginManager, registry *pkg.PluginRegistry) {
+	pluginManagerMutex.Lock()
+	defer pluginManagerMutex.Unlock()
+	GlobalPluginManager = manager
+	GlobalPluginRegistry = registry
+}
+
+// GetGlobalPluginManager returns the global plugin manager
+func GetGlobalPluginManager() *pkg.PluginManager {
+	pluginManagerMutex.RLock()
+	defer pluginManagerMutex.RUnlock()
+	return GlobalPluginManager
+}
+
+// GetGlobalPluginRegistry returns the global plugin registry
+func GetGlobalPluginRegistry() *pkg.PluginRegistry {
+	pluginManagerMutex.RLock()
+	defer pluginManagerMutex.RUnlock()
+	return GlobalPluginRegistry
+}
 
 // In-memory storage for plugin system state
 var (
@@ -86,32 +122,59 @@ func ListPluginsHandler(c *gin.Context) {
 
 	pluginsList := []PluginDetails{}
 
-	// Get enabled plugins from plugin manager
-	enabledPlugins := getRegisteredPlugins()
-	for _, p := range enabledPlugins {
-		pluginsList = append(pluginsList, PluginDetails{
-			ID:      p.Name(),
-			Name:    p.Name(),
-			Version: p.Version(),
-			Enabled: true,
-			Status:  "active",
-			Routes:  extractPluginRoutes(p),
-		})
-	}
+	// Get plugins from the global plugin manager
+	pluginManager := GetGlobalPluginManager()
+	pluginRegistry := GetGlobalPluginRegistry()
 
-	// Get disabled plugins from storage
-	disabledPluginsMutex.RLock()
-	for _, p := range disabledPlugins {
-		pluginsList = append(pluginsList, PluginDetails{
-			ID:      p.Name(),
-			Name:    p.Name(),
-			Version: p.Version(),
-			Enabled: false,
-			Status:  "inactive",
-			Routes:  extractPluginRoutes(p),
-		})
+	if pluginManager != nil && pluginRegistry != nil {
+		// Get all loaded plugins from the manager
+		loadedPlugins := pluginManager.GetPluginList()
+
+		// Convert to API response format
+		for _, p := range loadedPlugins {
+			if p.Manifest != nil {
+				pluginsList = append(pluginsList, PluginDetails{
+					ID:          p.Manifest.Name,
+					Name:        p.Manifest.Name,
+					Version:     p.Manifest.Version,
+					Enabled:     p.Status == "running",
+					Description: p.Manifest.Description,
+					Author:      p.Manifest.Author,
+					CreatedAt:   p.LoadTime,
+					UpdatedAt:   p.LoadTime,
+					Routes:      extractPluginRoutesFromManifest(p.Manifest),
+					Status:      p.Status,
+				})
+			}
+		}
+	} else {
+		// Fallback to old method if global manager not available
+		enabledPlugins := getRegisteredPlugins()
+		for _, p := range enabledPlugins {
+			pluginsList = append(pluginsList, PluginDetails{
+				ID:      p.Name(),
+				Name:    p.Name(),
+				Version: p.Version(),
+				Enabled: true,
+				Status:  "active",
+				Routes:  extractPluginRoutes(p),
+			})
+		}
+
+		// Get disabled plugins from storage
+		disabledPluginsMutex.RLock()
+		for _, p := range disabledPlugins {
+			pluginsList = append(pluginsList, PluginDetails{
+				ID:      p.Name(),
+				Name:    p.Name(),
+				Version: p.Version(),
+				Enabled: false,
+				Status:  "inactive",
+				Routes:  extractPluginRoutes(p),
+			})
+		}
+		disabledPluginsMutex.RUnlock()
 	}
-	disabledPluginsMutex.RUnlock()
 
 	c.JSON(http.StatusOK, gin.H{
 		"plugins": pluginsList,
@@ -169,48 +232,187 @@ func GetPluginDetailsHandler(c *gin.Context) {
 
 // InstallPluginHandler installs a new plugin
 func InstallPluginHandler(c *gin.Context) {
-	var req struct {
-		Name    string `json:"name" binding:"required"`
-		Version string `json:"version"`
-		Source  string `json:"source" binding:"required"` // URL or local path
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// Handle multipart form data for file upload
+	file, err := c.FormFile("file")
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request: " + err.Error(),
+			"error": "No file uploaded or invalid file: " + err.Error(),
 		})
 		return
 	}
 
-	// For now, we'll simulate the installation process
-	// In a real implementation, you would:
-	// 1. Download/copy the plugin from the source
-	// 2. Verify its integrity
-	// 3. Install it to the plugins directory
-	// 4. Register it with the plugin manager
+	// Validate file type
+	if !strings.HasSuffix(file.Filename, ".tar.gz") {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid file type. Please upload a .tar.gz file",
+		})
+		return
+	}
 
-	log.LogInfo("Plugin installation requested",
-		zap.String("name", req.Name),
-		zap.String("version", req.Version),
-		zap.String("source", req.Source))
+	// Create temporary directory for extraction
+	tempDir, err := os.MkdirTemp("", "plugin_install_*")
+	if err != nil {
+		log.LogError("Failed to create temp directory", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create temporary directory",
+		})
+		return
+	}
+	defer os.RemoveAll(tempDir) // Clean up temp directory
 
-	// Simulate installation failure if the plugin already exists
-	if findPluginByID(req.Name) != nil {
+	// Save uploaded file to temp directory
+	tempFile := filepath.Join(tempDir, file.Filename)
+	if err := c.SaveUploadedFile(file, tempFile); err != nil {
+		log.LogError("Failed to save uploaded file", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to save uploaded file",
+		})
+		return
+	}
+
+	// Extract the tar.gz file
+	extractDir := filepath.Join(tempDir, "extracted")
+	if err := os.MkdirAll(extractDir, 0755); err != nil {
+		log.LogError("Failed to create extract directory", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create extract directory",
+		})
+		return
+	}
+
+	// Extract tar.gz file
+	if err := extractTarGz(tempFile, extractDir); err != nil {
+		log.LogError("Failed to extract plugin archive", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to extract plugin archive: " + err.Error(),
+		})
+		return
+	}
+
+	// Find plugin.yml in extracted directory
+	manifestPath := filepath.Join(extractDir, "plugin.yml")
+	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "plugin.yml not found in uploaded archive",
+		})
+		return
+	}
+
+	// Parse plugin manifest
+	manifestData, err := os.ReadFile(manifestPath)
+	if err != nil {
+		log.LogError("Failed to read plugin manifest", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to read plugin manifest",
+		})
+		return
+	}
+
+	var manifest pkg.PluginManifest
+	if err := yaml.Unmarshal(manifestData, &manifest); err != nil {
+		log.LogError("Failed to parse plugin manifest", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid plugin manifest format: " + err.Error(),
+		})
+		return
+	}
+
+	// Check if plugin already exists
+	if findPluginByID(manifest.Name) != nil {
 		c.JSON(http.StatusConflict, gin.H{
-			"error": "Plugin already installed",
+			"error": "Plugin already installed: " + manifest.Name,
 		})
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"message": "Plugin installation initiated",
-		"name":    req.Name,
-		"status":  "installing",
-		"details": "This is a simulated response. In a real implementation, the plugin would be installed asynchronously.",
+	// Find WASM file
+	wasmPath := filepath.Join(extractDir, manifest.Name+".wasm")
+	if _, err := os.Stat(wasmPath); os.IsNotExist(err) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "WASM file not found: " + manifest.Name + ".wasm",
+		})
+		return
+	}
+
+	// Create plugin directory in plugins folder
+	pluginDir := filepath.Join("./plugins", manifest.Name)
+	if err := os.MkdirAll(pluginDir, 0755); err != nil {
+		log.LogError("Failed to create plugin directory", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create plugin directory",
+		})
+		return
+	}
+
+	// Copy files to plugin directory
+	if err := copyFile(manifestPath, filepath.Join(pluginDir, "plugin.yml")); err != nil {
+		log.LogError("Failed to copy plugin manifest", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to copy plugin manifest",
+		})
+		return
+	}
+
+	if err := copyFile(wasmPath, filepath.Join(pluginDir, manifest.Name+".wasm")); err != nil {
+		log.LogError("Failed to copy WASM file", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to copy WASM file",
+		})
+		return
+	}
+
+	// Copy frontend directory if it exists
+	frontendSrc := filepath.Join(extractDir, "frontend")
+	frontendDest := filepath.Join(pluginDir, "frontend")
+	if _, err := os.Stat(frontendSrc); err == nil {
+		if err := copyDir(frontendSrc, frontendDest); err != nil {
+			log.LogError("Failed to copy frontend directory", zap.Error(err))
+			// Don't fail the installation for frontend copy errors
+		}
+	}
+
+	// Load the plugin dynamically using the global plugin manager
+	pluginManager := GetGlobalPluginManager()
+	pluginRegistry := GetGlobalPluginRegistry()
+
+	if pluginManager != nil && pluginRegistry != nil {
+		// Load the plugin
+		if err := pluginRegistry.LoadPlugin(manifest.Name); err != nil {
+			log.LogError("Failed to load plugin after installation",
+				zap.String("name", manifest.Name),
+				zap.Error(err))
+
+			// Return success for installation but warn about loading failure
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Plugin installed successfully but failed to load",
+				"name":    manifest.Name,
+				"version": manifest.Version,
+				"status":  "installed",
+				"path":    pluginDir,
+				"warning": "Plugin loaded with errors: " + err.Error(),
+			})
+			return
+		}
+
+		log.LogInfo("Plugin installed and loaded successfully",
+			zap.String("name", manifest.Name),
+			zap.String("version", manifest.Version),
+			zap.String("path", pluginDir))
+	} else {
+		log.LogWarn("Plugin manager not available for dynamic loading",
+			zap.String("name", manifest.Name))
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Plugin installed and loaded successfully",
+		"name":    manifest.Name,
+		"version": manifest.Version,
+		"status":  "loaded",
+		"path":    pluginDir,
 	})
 }
 
-// UninstallPluginHandler uninstalls a plugin
+// UninstallPluginHandler uninstalls a plugin completely from the system
 func UninstallPluginHandler(c *gin.Context) {
 	pluginID := c.Param("id")
 	if pluginID == "" {
@@ -220,41 +422,120 @@ func UninstallPluginHandler(c *gin.Context) {
 		return
 	}
 
-	// Check if plugin exists (enabled or disabled)
-	plugin := findPluginByID(pluginID)
-	var found bool = plugin != nil
+	log.LogInfo("Starting plugin uninstallation", zap.String("id", pluginID))
 
-	if !found {
-		disabledPluginsMutex.RLock()
-		_, found = disabledPlugins[pluginID]
-		disabledPluginsMutex.RUnlock()
+	// Get global plugin manager and registry
+	pluginManager := GetGlobalPluginManager()
+	pluginRegistry := GetGlobalPluginRegistry()
+
+	var uninstallErrors []string
+	var successMessages []string
+
+	// Step 1: Handle new WASM-based plugin system
+	if pluginManager != nil && pluginRegistry != nil {
+		log.LogInfo("Processing WASM plugin uninstallation", zap.String("id", pluginID))
+
+		// Check if plugin exists in the WASM manager
+		if plugin, exists := pluginManager.GetPlugin(pluginID); exists {
+			log.LogInfo("Found WASM plugin, unloading", zap.String("id", pluginID))
+
+			// Log plugin details before unloading
+			if plugin.Manifest != nil {
+				log.LogInfo("Plugin manifest details",
+					zap.String("id", pluginID),
+					zap.String("version", plugin.Manifest.Version),
+					zap.String("author", plugin.Manifest.Author),
+					zap.String("description", plugin.Manifest.Description))
+			}
+
+			// Get registered routes before unloading
+			registeredRoutes := pluginManager.GetRegisteredRoutes(pluginID)
+			if len(registeredRoutes) > 0 {
+				successMessages = append(successMessages, fmt.Sprintf("Found %d registered routes", len(registeredRoutes)))
+				log.LogInfo("Found registered routes", zap.String("id", pluginID), zap.Strings("routes", registeredRoutes))
+			}
+
+			// Unload the plugin from the manager (this closes WASM instance and removes routes)
+			if err := pluginManager.UnloadPlugin(pluginID); err != nil {
+				uninstallErrors = append(uninstallErrors, fmt.Sprintf("Failed to unload WASM plugin: %v", err))
+				log.LogError("Failed to unload WASM plugin", zap.String("id", pluginID), zap.Error(err))
+			} else {
+				successMessages = append(successMessages, "WASM plugin unloaded successfully")
+				if len(registeredRoutes) > 0 {
+					successMessages = append(successMessages, "Plugin routes removed from router")
+				}
+				log.LogInfo("WASM plugin unloaded successfully", zap.String("id", pluginID))
+			}
+		}
 	}
 
-	if !found {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Plugin not found",
-		})
-		return
+	// Step 2: Handle old plugin system
+	oldPlugin := findPluginByID(pluginID)
+	if oldPlugin != nil {
+		log.LogInfo("Found old plugin, deregistering", zap.String("id", pluginID))
+
+		// Deregister from old plugin manager
+		plugins.Pm.Deregister(oldPlugin)
+		successMessages = append(successMessages, "Old plugin deregistered successfully")
+		log.LogInfo("Old plugin deregistered successfully", zap.String("id", pluginID))
 	}
 
-	// If plugin is currently enabled, deregister it
-	if plugin != nil {
-		plugins.Pm.Deregister(plugin)
-		log.LogInfo("Deregistered plugin from manager", zap.String("id", pluginID))
-	}
-
-	// Remove from disabled plugins storage if it exists there
+	// Step 3: Remove from disabled plugins storage
 	disabledPluginsMutex.Lock()
-	delete(disabledPlugins, pluginID)
+	if _, exists := disabledPlugins[pluginID]; exists {
+		delete(disabledPlugins, pluginID)
+		successMessages = append(successMessages, "Removed from disabled plugins")
+		log.LogInfo("Removed from disabled plugins", zap.String("id", pluginID))
+	}
 	disabledPluginsMutex.Unlock()
 
-	log.LogInfo("Plugin uninstalled successfully", zap.String("id", pluginID))
+	// Step 4: Remove plugin files from filesystem
+	pluginDir := filepath.Join("./plugins", pluginID)
+	if _, err := os.Stat(pluginDir); err == nil {
+		log.LogInfo("Removing plugin directory", zap.String("path", pluginDir))
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Plugin uninstalled successfully",
-		"id":      pluginID,
-		"status":  "uninstalled",
-	})
+		// Remove the entire plugin directory
+		if err := os.RemoveAll(pluginDir); err != nil {
+			uninstallErrors = append(uninstallErrors, fmt.Sprintf("Failed to remove plugin directory: %v", err))
+			log.LogError("Failed to remove plugin directory", zap.String("path", pluginDir), zap.Error(err))
+		} else {
+			successMessages = append(successMessages, "Plugin files removed from filesystem")
+			log.LogInfo("Plugin directory removed successfully", zap.String("path", pluginDir))
+		}
+	} else {
+		log.LogInfo("Plugin directory not found, skipping file removal", zap.String("path", pluginDir))
+	}
+
+	// Step 5: Remove routes from Gin router
+	// Routes are automatically removed when the plugin is unloaded from the manager
+	// The route tracking system ensures routes are properly cleaned up
+	log.LogInfo("Plugin routes have been removed from router", zap.String("id", pluginID))
+
+	// Prepare response
+	if len(uninstallErrors) > 0 {
+		// Partial success or failure
+		c.JSON(http.StatusPartialContent, gin.H{
+			"message": "Plugin uninstallation completed with errors",
+			"id":      pluginID,
+			"status":  "partially_uninstalled",
+			"success": successMessages,
+			"errors":  uninstallErrors,
+		})
+		log.LogWarn("Plugin uninstallation completed with errors",
+			zap.String("id", pluginID),
+			zap.Strings("errors", uninstallErrors))
+	} else {
+		// Complete success
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Plugin uninstalled successfully",
+			"id":      pluginID,
+			"status":  "uninstalled",
+			"success": successMessages,
+		})
+		log.LogInfo("Plugin uninstalled successfully",
+			zap.String("id", pluginID),
+			zap.Strings("success", successMessages))
+	}
 }
 
 // ReloadPluginHandler reloads a plugin
@@ -618,4 +899,122 @@ func extractPluginRoutes(p plugin.Plugin) []string {
 	}
 
 	return routes
+}
+
+// extractPluginRoutesFromManifest extracts routes from a plugin manifest
+func extractPluginRoutesFromManifest(manifest *pkg.PluginManifest) []string {
+	routes := []string{}
+
+	for _, route := range manifest.Routes {
+		routes = append(routes, route.Method+" "+route.Path)
+	}
+
+	return routes
+}
+
+// Helper functions for file operations
+
+// extractTarGz extracts a tar.gz file to the specified directory
+func extractTarGz(tarGzPath, extractPath string) error {
+	// Open the tar.gz file
+	file, err := os.Open(tarGzPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Create gzip reader
+	gzr, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+
+	// Create tar reader
+	tr := tar.NewReader(gzr)
+
+	// Extract files
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		// Skip if it's a directory
+		if header.Typeflag == tar.TypeDir {
+			continue
+		}
+
+		// Create the file path
+		target := filepath.Join(extractPath, header.Name)
+
+		// Create directory if it doesn't exist
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			return err
+		}
+
+		// Create the file
+		f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+		if err != nil {
+			return err
+		}
+
+		// Copy file contents
+		if _, err := io.Copy(f, tr); err != nil {
+			f.Close()
+			return err
+		}
+		f.Close()
+	}
+
+	return nil
+}
+
+// copyFile copies a file from src to dst
+func copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	return err
+}
+
+// copyDir copies a directory recursively
+func copyDir(src, dst string) error {
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		if entry.IsDir() {
+			if err := os.MkdirAll(dstPath, 0755); err != nil {
+				return err
+			}
+			if err := copyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			if err := copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

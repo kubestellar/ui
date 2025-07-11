@@ -112,6 +112,9 @@ func main() {
 	pluginManager := plugins.NewPluginManager(router)
 	pluginRegistry := plugins.NewPluginRegistry("./plugins", pluginManager)
 
+	// Set global plugin manager for API access
+	api.SetGlobalPluginManager(pluginManager, pluginRegistry)
+
 	// Start plugin discovery and loading
 	if err := initializePlugins(pluginRegistry, logger); err != nil {
 		logger.Error("Failed to initialize plugins", zap.Error(err))

@@ -1,72 +1,15 @@
-apiVersion: kubestellar.io/v1
-kind: Plugin
-metadata:
-  name: "cluster-monitor"
-  version: "1.0.0"
-  author: "developer@company.com"
-  description: "Simple cluster monitoring dashboard"
-spec:
-  # Plugin binary information
-  wasm:
-    file: "plugin.wasm"
-    entrypoint: "main"
-    memory_limit: "64MB"
-  
-  # Go-specific build information
-  build:
-    go_version: "1.21"
-    tinygo_version: "0.30.0"
-  
-  # Backend integration
-  backend:
-    enabled: true
-    routes:
-      - path: "/status"
-        methods: ["GET"]
-        handler: "handle_status"
-      - path: "/data"
-        methods: ["GET", "POST"]
-        handler: "handle_data"
-  
-  # Basic permissions
-  permissions:
-    - "kubestellar:read:clusters"
-    - "kubestellar:read:workloads"
-  
-  # Frontend integration
-  frontend:
-    enabled: true
-    # Navigation integration
-    navigation:
-      - label: "Cluster Monitor"
-        icon: "monitor"
-        path: "/plugins/cluster-monitor"
-        position: "main"
-        order: 10
-    
-    # Dashboard widgets
-    widgets:
-      - name: "cluster-status"
-        title: "Cluster Status"
-        size: "medium"
-        dashboard: "overview"
-        component: "ClusterStatusWidget"
-    
-    # Route definitions
-    routes:
-      - path: "/plugins/cluster-monitor"
-        component: "MonitorDashboard"
-        exact: true
-      - path: "/plugins/cluster-monitor/cluster/:id"
-        component: "ClusterDetails"
-  
-  # Basic configuration
-  configuration:
-    - name: "refresh_interval"
-      type: "integer"
-      default: 30
-      description: "Data refresh interval in seconds"
-    - name: "max_clusters"
-      type: "integer"
-      default: 10
-      description: "Maximum clusters to monitor" 
+name: "cluster-monitor"
+version: "1.0.0"
+author: "developer@company.com"
+description: "Simple cluster monitoring dashboard"
+backend: true
+routes:
+  - path: "/status"
+    method: "GET"
+    handler: "handle_status"
+  - path: "/data"
+    method: "GET"
+    handler: "handle_data"
+permissions:
+  - "kubestellar:read:clusters"
+  - "kubestellar:read:workloads" 

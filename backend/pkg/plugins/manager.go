@@ -27,6 +27,9 @@ type PluginManager struct {
 	router  *gin.Engine        // Gin router to dynamically add plugin-specific routes
 	ctx     context.Context    // Context shared across plugin execution
 	mu      sync.RWMutex       // Mutex to manage concurrent plugin map access
+	// Route tracking for unregistration
+	registeredRoutes map[string][]string // Map of plugin name to route paths for tracking
+	routeMutex       sync.RWMutex        // Mutex for route tracking
 }
 
 // Plugin represents a single loaded WASM plugin and its runtime details.
@@ -65,10 +68,11 @@ func NewPluginManager(router *gin.Engine) *PluginManager {
 	runtime := wazero.NewRuntimeWithConfig(ctx, config)
 
 	pm := &PluginManager{
-		runtime: runtime,
-		plugins: make(map[string]*Plugin),
-		router:  router,
-		ctx:     ctx,
+		runtime:          runtime,
+		plugins:          make(map[string]*Plugin),
+		router:           router,
+		ctx:              ctx,
+		registeredRoutes: make(map[string][]string),
 	}
 
 	// Register host functions for WASM runtime bridge
@@ -135,14 +139,28 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 // registerPluginRoutes maps each declared route from plugin manifest to Gin route group.
 func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 	group := pm.router.Group("/api/plugins/" + plugin.Manifest.Name)
+
+	// Track routes for this plugin
+	pm.routeMutex.Lock()
+	pm.registeredRoutes[plugin.Manifest.Name] = []string{}
+	pm.routeMutex.Unlock()
+
 	for _, route := range plugin.Manifest.Routes {
 		handler := pm.createPluginHandler(plugin, route.Handler)
+		routePath := route.Path
+
 		switch route.Method {
 		case "GET":
-			group.GET(route.Path, handler)
+			group.GET(routePath, handler)
 		case "POST":
-			group.POST(route.Path, handler)
+			group.POST(routePath, handler)
 		}
+
+		// Track the registered route
+		pm.routeMutex.Lock()
+		pm.registeredRoutes[plugin.Manifest.Name] = append(pm.registeredRoutes[plugin.Manifest.Name],
+			fmt.Sprintf("%s %s", route.Method, routePath))
+		pm.routeMutex.Unlock()
 	}
 }
 
@@ -239,7 +257,29 @@ func (pm *PluginManager) UnloadPlugin(name string) error {
 	if !ok {
 		return errors.New("plugin not found")
 	}
+
+	// Close the WASM instance
 	plugin.Instance.Close(pm.ctx)
+
+	// Remove from plugins map
 	delete(pm.plugins, name)
+
+	// Clean up route tracking
+	pm.routeMutex.Lock()
+	delete(pm.registeredRoutes, name)
+	pm.routeMutex.Unlock()
+
+	log.Printf("Plugin %s unloaded successfully", name)
 	return nil
+}
+
+// GetRegisteredRoutes returns the list of registered routes for a plugin
+func (pm *PluginManager) GetRegisteredRoutes(pluginName string) []string {
+	pm.routeMutex.RLock()
+	defer pm.routeMutex.RUnlock()
+
+	if routes, exists := pm.registeredRoutes[pluginName]; exists {
+		return routes
+	}
+	return []string{}
 }
