@@ -87,5 +87,3 @@ func main() {
 
 	chat(indexPath)
 }
-
-

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/blevesearch/bleve/v2"
+	"github.com/gin-gonic/gin"
+	"k8s.io/klog/v2"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"github.com/blevesearch/bleve/v2"
-	"github.com/gin-gonic/gin"
-	"k8s.io/klog/v2"
 )
 
 // GeminiRequest and AskGemini function
@@ -180,9 +180,6 @@ func loadDocuments(dir string) (map[string]string, error) {
 // 	fmt.Println("Received answer from Gemini:", answer)
 // 	c.JSON(http.StatusOK, gin.H{"answer": answer, "sources": topDocs})
 // }
-
-
-
 
 func ChatbotHandler(c *gin.Context) {
 	fmt.Println("ChatbotHandler invoked")
