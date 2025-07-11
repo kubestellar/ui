@@ -7,28 +7,23 @@ WORKDIR /app
 # Install Git
 RUN apt-get update && apt-get install -y git
 
+# Copy git directory
+COPY .git .git
+
+# Get git commit hash
+RUN git rev-parse HEAD | cut -c1-7 > commit_hash.txt 2>/dev/null || echo "unknown" > commit_hash.txt
+
 # Copy package files for caching
-COPY package.json package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --legacy-peer-deps
-
-# Copy source code
-COPY . .
-
-
-# Get commit hash or use a default value
-RUN if [ -d .git ]; then \
-      git rev-parse HEAD > commit_hash.txt; \
-    elif [ -f commit_hash.txt ]; then \
-      echo "Using existing commit_hash.txt"; \
-    else \
-      echo "no-git-version" > commit_hash.txt; \
-    fi
-
 
 # Accept build arguments
 ARG VITE_APP_VERSION=0.1.0
 ARG VITE_SKIP_PREREQUISITES_CHECK=true
 ARG VITE_BASE_URL
+
+# Copy frontend source code
+COPY frontend/ .
 
 # Set environment variables from build args
 ENV VITE_APP_VERSION=$VITE_APP_VERSION
@@ -52,7 +47,7 @@ RUN apk add --no-cache gettext
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
 # Copy nginx template (make sure this file exists in your project root)
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY frontend/nginx.conf /etc/nginx/templates/default.conf.template
 
 # Create startup script that respects mounted configs
 RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
