@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/plugin"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/plugin"
 	"go.uber.org/zap"
 )
 
@@ -15,7 +15,7 @@ import (
 // a centralized manager that handles our plugins
 
 type pluginManager struct {
-	plugins map[string]plugin.Plugin
+	plugins map[int]plugin.Plugin
 	mx      sync.Mutex
 }
 
@@ -62,7 +62,7 @@ func (pm *pluginManager) SetupPluginsRoutes(e *gin.Engine) {
 func (pm *pluginManager) Register(p plugin.Plugin) {
 	pm.mx.Lock()
 	defer pm.mx.Unlock()
-	pm.plugins[p.Name()] = p
+	pm.plugins[p.ID()] = p
 	log.LogInfo("registered a new plugin", zap.String("NAME", p.Name()))
 }
 
@@ -70,17 +70,17 @@ func (pm *pluginManager) Register(p plugin.Plugin) {
 func (pm *pluginManager) Deregister(p plugin.Plugin) {
 	pm.mx.Lock()
 	defer pm.mx.Unlock()
-	delete(pm.plugins, p.Name())
+	delete(pm.plugins, p.ID())
 	log.LogInfo("deregistered plugin", zap.String("NAME", p.Name()))
 }
 
 // GetPlugins returns all registered plugins
-func (pm *pluginManager) GetPlugins() map[string]plugin.Plugin {
+func (pm *pluginManager) GetPlugins() map[int]plugin.Plugin {
 	pm.mx.Lock()
 	defer pm.mx.Unlock()
 
 	// Return a copy to avoid concurrent map access issues
-	pluginsCopy := make(map[string]plugin.Plugin, len(pm.plugins))
+	pluginsCopy := make(map[int]plugin.Plugin, len(pm.plugins))
 	for k, v := range pm.plugins {
 		pluginsCopy[k] = v
 	}
@@ -88,4 +88,4 @@ func (pm *pluginManager) GetPlugins() map[string]plugin.Plugin {
 	return pluginsCopy
 }
 
-var Pm *pluginManager = &pluginManager{plugins: map[string]plugin.Plugin{}}
+var Pm *pluginManager = &pluginManager{plugins: map[int]plugin.Plugin{}}

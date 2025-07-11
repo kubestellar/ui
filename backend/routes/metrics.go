@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/api"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/redis"
 )
 
 // Application start time for uptime calculation
@@ -90,6 +90,9 @@ func setupMetricsRoutes(router *gin.Engine) {
 
 		// Kubernetes metrics
 		metrics.GET("/kubernetes", getKubernetesMetrics)
+
+		// Pod health metrics
+		metrics.GET("/pod-health", api.GetPodHealthMetrics)
 	}
 }
 

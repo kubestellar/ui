@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="KubeStellar Logo" width="250px" src="public/Kubestellar-logo.png" />
+  <img alt="KubeStellar Logo" width="250px" src="frontend/public/Kubestellar-logo.png" />
 </p>
 
 <h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud</h2>
@@ -33,6 +33,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
   - [Local Setup](#local-setup)
   - [Local Setup with Docker Compose](#local-setup-with-docker-compose)
 - [Accessing the Application](#accessing-the-application)
+- [Migration Commands](#migration-commands)
 
 ## Prerequisites
 
@@ -63,7 +64,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
 
-> [!NOTE]  
+> [!NOTE]
 > If you're running on macOS, you may need to manually add a host entry to resolve `its1.localtest.me` to `localhost` using:
 >
 > ```bash
@@ -75,6 +76,10 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 - Make sure you have "make" installed to directly execute the backend script via makefile
 - Air helps in hot reloading of the backend
 - **Air guide**: [Guide](https://github.com/air-verse/air#installation)
+
+### 6. Golang Migrate
+- Make sure you have installed 'golang-migrate' cli tool which helps in database migration
+- **Installation Guide:** [Install](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 
 ## Installation Steps
 
@@ -95,9 +100,11 @@ Then go through one of the setup options below:
 
 #### Step 1: Create `.env` File for Frontend Configuration
 
-To configure the frontend, copy the `.env.example` file to a `.env` file in the project root directory (where `package.json` is located).
+To configure the frontend, copy the `.env.example` file to a `.env` file in the `frontend/` directory (where `package.json` is located).
 
 ```bash
+cd frontend/
+
 cp .env.example .env
 ```
 
@@ -128,17 +135,27 @@ KubestellarUI uses environment variables to track the app version and the curren
 
 KubestellarUI uses Redis for caching real-time WebSocket updates to prevent excessive Kubernetes API calls.
 
-Run Redis using Docker:
+#### Step 3: Run PostgreSQL and Redis with Docker Compose
+
+To run PostgreSQL and Redis services:
 
 ```bash
-docker run --name redis -d -p 6379:6379 redis
+# Navigate to the backend directory
+cd backend
+
+# Start PostgreSQL and Redis services in detached mode
+docker compose up -d
+
+# Verify that services are running
+docker ps
 ```
 
-Verify Redis is running:
+This will start:
 
-```bash
-docker ps | grep redis
-```
+- PostgreSQL on port 5432 (for persistent data storage)
+- Redis on port 6379 (for caching WebSocket updates)
+
+Both services are configured with appropriate volumes to persist data between restarts.
 
 #### Step 3: Install and Run the Backend
 
@@ -148,6 +165,12 @@ Make sure you are in the root directory of the project
 cd backend
 
 go mod download
+
+make migrate-up #for keeping our database in sync with changes in sql code of project(only use when you've added/updated migration files)
+
+# run this only when DB got changes without migration
+# it forces the migration version(in local) to match with DB state
+make migrate-force
 
 # Option 1 : Start backend with hot reloading (recommended)
 make dev
@@ -163,6 +186,8 @@ You should see output indicating the server is running on port `4000`.
 Open another terminal and make sure you are in the root directory of the project.
 
 ```bash
+cd frontend
+
 npm install
 
 npm run dev
@@ -191,9 +216,11 @@ Docker Compose is configured to use environment variables with sensible defaults
 
 **Option 1: Using a .env file** (Recommended for persistent configuration)
 
-Create a `.env` file in the project root directory:
+Create a `.env` file in the `frontend/` directory:
 
 ```bash
+cd frontend/
+
 cp .env.example .env
 ```
 
@@ -312,7 +339,8 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 ---
 
-> **Note for WSL Users 🐧**
+> [!NOTE]
+> **For WSL Users 🐧**
 >
 > If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
 >
@@ -327,12 +355,22 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 1. **Backend API**: [http://localhost:4000](http://localhost:4000) (or custom port if `BACKEND_PORT` is set)
 2. **Frontend UI**: [http://localhost:5173](http://localhost:5173) (or custom port if `FRONTEND_PORT` is set)
 
+### Migration Commands
+
+```
+cd backend
+make migrate-up #for keeping our database in sync with changes in sql code
+make migrate-down #rollback to previous 1 migration version(1 by default) and can specify if needed more than 1
+make create-migration #create new migration file
+make migrate-force # Force set migration version (use if out of sync)
+```
+
 #### Dashboard Default Login Credentials
 
 - **Username: admin**
 - **Password: admin**
 
-> [!NOTE]  
+> [!NOTE]
 > If you're encountering errors while setting up the Kubestellar UI, even after correctly following the guide, try pruning the Docker images and containers related to the KS core.  
 > Rebuild them and perform a restart.
 >

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -103,6 +104,7 @@ func getResourceGVR(discoveryClient discovery.DiscoveryInterface, kind string) (
 			}
 		}
 	}
+	telemetry.K8sClientErrorCounter.WithLabelValues("getResourceGVR", "kind_not_found", "404").Inc()
 	return schema.GroupVersionResource{}, fmt.Errorf("resource kind '%s' not found", kind)
 }
 
@@ -117,6 +119,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 	discoveryClient := clientSet.Discovery()
 	files, err := os.ReadDir(deployPath)
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "read_folder", "500").Inc()
 		return nil, fmt.Errorf("failed to read folder: %v", err)
 	}
 
@@ -132,6 +135,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 		filePath := filepath.Join(deployPath, file.Name())
 		data, err := os.ReadFile(filePath)
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "read_file", "500").Inc()
 			return nil, fmt.Errorf("failed to read manifest %s: %v", filePath, err)
 		}
 
@@ -182,6 +186,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 		if !dryRun && obj.GetKind() != "Namespace" {
 			err = EnsureNamespaceExists(dynamicClient, finalNamespace, workloadLabel)
 			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "ensure_namespace", "500").Inc()
 				return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", finalNamespace, err)
 			}
 		}
@@ -189,6 +194,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 		// Apply or simulate resource application
 		err = applyOrCreateResource(dynamicClient, gvr, &obj, finalNamespace, dryRun, dryRunStrategy)
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "apply_resource", "500").Inc()
 			return nil, fmt.Errorf("failed to apply %s: %v", obj.GetKind(), err)
 		}
 
@@ -227,6 +233,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 		if workloadLabel != "" {
 			metadata, exists := existingNs.Object["metadata"].(map[string]interface{})
 			if !exists {
+				telemetry.K8sClientErrorCounter.WithLabelValues("EnsureNamespaceExists", "metadata_missing", "500").Inc()
 				return fmt.Errorf("unexpected namespace structure, metadata missing")
 			}
 
@@ -246,6 +253,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 				// Update the namespace
 				_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), existingNs, v1.UpdateOptions{})
 				if err != nil {
+					telemetry.K8sClientErrorCounter.WithLabelValues("EnsureNamespaceExists", "update_namespace", "500").Inc()
 					return fmt.Errorf("failed to update namespace %s with workload label: %v", namespace, err)
 				}
 				fmt.Printf("Updated namespace %s with workload label\n", namespace)
@@ -276,6 +284,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 
 	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("EnsureNamespaceExists", "create_namespace", "500").Inc()
 		return fmt.Errorf("failed to create namespace %s: %v", namespace, err)
 	}
 
@@ -294,6 +303,7 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 			dryRunOpts := v1.CreateOptions{DryRun: []string{"All"}}
 			_, err := resource.Create(context.TODO(), obj, dryRunOpts)
 			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("applyOrCreateResource", "server_dry_run", "400").Inc()
 				return fmt.Errorf("server validation failed for %s %s: %v", obj.GetKind(), obj.GetName(), err)
 			}
 			fmt.Printf("[Server Dry Run] Validated: %s %s\n", obj.GetKind(), obj.GetName())
@@ -312,6 +322,7 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 			obj.SetResourceVersion(existing.GetResourceVersion()) // Keep the resource version
 			_, updateErr := resource.Update(context.TODO(), obj, v1.UpdateOptions{})
 			if updateErr != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("applyOrCreateResource", "update_resource", "500").Inc()
 				return fmt.Errorf("failed to update %s %s: %v", obj.GetKind(), obj.GetName(), updateErr)
 			}
 			fmt.Printf("Updated: %s %s\n", obj.GetKind(), obj.GetName())
@@ -319,6 +330,7 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 			// Resource doesn't exist, create it
 			_, createErr := resource.Create(context.TODO(), obj, v1.CreateOptions{})
 			if createErr != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("applyOrCreateResource", "create_resource", "500").Inc()
 				return fmt.Errorf("failed to create %s %s: %v", obj.GetKind(), obj.GetName(), createErr)
 			}
 			fmt.Printf("Created: %s %s\n", obj.GetKind(), obj.GetName())
@@ -378,6 +390,7 @@ func storeConfigMapData(configMapName string, data map[string]string) error {
 
 			_, err = clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Create(ctx, configMap, v1.CreateOptions{})
 			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("storeConfigMapData", "create_configmap", "500").Inc()
 				return fmt.Errorf("failed to create ConfigMap: %v", err)
 			}
 			return nil
@@ -402,6 +415,7 @@ func GetConfigMapData(contextName string, configMapName string) (map[string]stri
 
 	configMap, err := clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Get(ctx, configMapName, v1.GetOptions{})
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("GetConfigMapData", "get_configmap", "500").Inc()
 		return nil, err
 	}
 
@@ -463,6 +477,7 @@ func StoreHelmDeployment(deploymentData map[string]string) error {
 		existing, err := clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Get(ctx, HelmConfigMapName, v1.GetOptions{})
 		if err != nil {
 			if !errors.IsNotFound(err) {
+				telemetry.K8sClientErrorCounter.WithLabelValues("StoreHelmDeployment", "get_configmap", "500").Inc()
 				return fmt.Errorf("failed to check if ConfigMap exists: %v", err)
 			}
 
@@ -470,6 +485,7 @@ func StoreHelmDeployment(deploymentData map[string]string) error {
 			deployments := []HelmDeploymentData{helmData}
 			deploymentsJSON, err := json.Marshal(deployments)
 			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("StoreHelmDeployment", "marshal_deployments", "500").Inc()
 				return fmt.Errorf("failed to marshal deployments: %v", err)
 			}
 
@@ -485,6 +501,7 @@ func StoreHelmDeployment(deploymentData map[string]string) error {
 
 			_, err = clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Create(ctx, configMap, v1.CreateOptions{})
 			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("StoreHelmDeployment", "create_configmap", "500").Inc()
 				return fmt.Errorf("failed to create ConfigMap: %v", err)
 			}
 			return nil
@@ -510,6 +527,7 @@ func StoreHelmDeployment(deploymentData map[string]string) error {
 		// Marshal updated deployments array
 		deploymentsJSON, err := json.Marshal(deployments)
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("StoreHelmDeployment", "marshal_deployments", "500").Inc()
 			return fmt.Errorf("failed to marshal updated deployments: %v", err)
 		}
 
@@ -544,6 +562,7 @@ func StoreGitHubDeployment(deploymentData map[string]string) error {
 		configMap, err := clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Get(ctx, GitHubConfigMapName, v1.GetOptions{})
 		if err != nil {
 			if !errors.IsNotFound(err) {
+				telemetry.K8sClientErrorCounter.WithLabelValues("StoreGitHubDeployment", "get_configmap", "500").Inc()
 				return fmt.Errorf("failed to check if ConfigMap exists: %v", err)
 			}
 
@@ -558,6 +577,7 @@ func StoreGitHubDeployment(deploymentData map[string]string) error {
 
 			_, err = clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Create(ctx, configMap, v1.CreateOptions{})
 			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("StoreGitHubDeployment", "create_configmap", "500").Inc()
 				return fmt.Errorf("failed to create ConfigMap: %v", err)
 			}
 			return nil
@@ -597,6 +617,7 @@ func GetGithubDeployments(contextName string) ([]any, error) {
 func GetHelmDeployments(contextName string) ([]HelmDeploymentData, error) {
 	configMapData, err := GetConfigMapData(contextName, HelmConfigMapName)
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("GetHelmDeployments", "get_configmap", "500").Inc()
 		return nil, fmt.Errorf("failed to get Helm ConfigMap: %v", err)
 	}
 
@@ -607,6 +628,7 @@ func GetHelmDeployments(contextName string) ([]HelmDeploymentData, error) {
 
 	var deployments []HelmDeploymentData
 	if err := json.Unmarshal([]byte(deploymentsJSON), &deployments); err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("GetHelmDeployments", "unmarshal_deployments", "500").Inc()
 		return nil, fmt.Errorf("failed to parse deployments data: %v", err)
 	}
 
@@ -676,6 +698,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	cmd := exec.CommandContext(ctx, "kubectl", "config", "current-context")
 	output, err := cmd.Output()
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "get_current_context", "500").Inc()
 		return nil, fmt.Errorf("failed to get current context: %v", err)
 	}
 
@@ -686,13 +709,17 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	if needsContextSwitch {
 		cmd = exec.CommandContext(ctx, "kubectl", "config", "use-context", "wds1")
 		if err := cmd.Run(); err != nil {
+			telemetry.InstrumentKubectlCommand(cmd, "DeployHelmChart", "wds1")
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "switch_context", "500").Inc()
 			return nil, fmt.Errorf("failed to switch to wds1 context: %v", err)
 		}
 
 		// Ensure the original context is restored after execution
 		defer func() {
 			restoreCmd := exec.CommandContext(ctx, "kubectl", "config", "use-context", currentContext)
+			telemetry.InstrumentKubectlCommand(cmd, "DeployHelmChart", currentContext)
 			if restoreErr := restoreCmd.Run(); restoreErr != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "restore_context", "500").Inc()
 				fmt.Printf("Warning: failed to restore original context: %v\n", restoreErr)
 			}
 		}()
@@ -713,6 +740,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		if errors.IsNotFound(err) {
 			nsExists = false
 		} else {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "check_namespace", "500").Inc()
 			return nil, fmt.Errorf("failed to check namespace: %v", err)
 		}
 	}
@@ -734,6 +762,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 		_, err = dynamicClient.Resource(nsGVR).Create(ctx, nsObj, v1.CreateOptions{})
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "create_namespace", "500").Inc()
 			return nil, fmt.Errorf("failed to create labeled namespace: %v", err)
 		}
 		fmt.Printf("Created namespace %s with workload label\n", req.Namespace)
@@ -748,6 +777,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 			// Get or create labels map
 			metadata, ok := existingNs.Object["metadata"].(map[string]interface{})
 			if !ok {
+				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "metadata_missing", "500").Inc()
 				return fmt.Errorf("unexpected metadata structure")
 			}
 
@@ -771,6 +801,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		})
 
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "update_namespace_labels", "500").Inc()
 			fmt.Printf("Warning: failed to update namespace labels: %v\n", err)
 		}
 	}
@@ -788,6 +819,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 	// Wait for Helm initialization to complete
 	if err := <-initDone; err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "helm_init", "500").Inc()
 		return nil, fmt.Errorf("failed to initialize Helm: %v", err)
 	}
 
@@ -814,6 +846,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	if !repoExists {
 		addRepoCmd := exec.CommandContext(ctx, "helm", "repo", "add", req.RepoName, req.RepoURL, "--force-update")
 		if out, err := addRepoCmd.CombinedOutput(); err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "add_repo", "500").Inc()
 			return nil, fmt.Errorf("failed to add helm repository: %v, output: %s", err, string(out))
 		}
 	}
@@ -841,6 +874,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	go func() {
 		chartPath, err := install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "locate_chart", "500").Inc()
 			chartChan <- chartResult{nil, fmt.Errorf("failed to locate chart: %v", err)}
 			return
 		}
@@ -966,6 +1000,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	// Install the chart
 	release, err := install.Run(chartRes.chartObj, chartValues)
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "install_chart", "500").Inc()
 		return nil, fmt.Errorf("failed to install chart: %v", err)
 	}
 
@@ -988,6 +1023,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		// Store deployment data in ConfigMap
 		err = StoreHelmDeployment(helmDeployData)
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "store_helm_deployment", "500").Inc()
 			fmt.Printf("Warning: failed to store Helm deployment data in ConfigMap: %v\n", err)
 		} else {
 			fmt.Printf("Helm deployment data stored in ConfigMap: %s\n", HelmConfigMapName)
@@ -1005,6 +1041,7 @@ type labelAddingPostRenderer struct {
 // Run implements the PostRenderer interface and adds the kubestellar.io/workload label to all resources
 func (r *labelAddingPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
 	if renderedManifests == nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("labelAddingPostRenderer", "run", "nil_manifests").Inc()
 		return nil, fmt.Errorf("rendered manifests is nil")
 	}
 
@@ -1081,6 +1118,8 @@ func (r *labelAddingPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.B
 func HelmDeployHandler(c *gin.Context) {
 	var req HelmDeploymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/deploy", "400").Inc()
+		fmt.Printf("Error binding request: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
@@ -1100,6 +1139,7 @@ func HelmDeployHandler(c *gin.Context) {
 	// Pass the parsed "store" parameter to deployHelmChart
 	release, err := DeployHelmChart(req, store)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/deploy", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Deployment failed: %v", err)})
 		return
 	}
@@ -1117,7 +1157,7 @@ func HelmDeployHandler(c *gin.Context) {
 	if store {
 		response["stored_in"] = "kubestellar-helm ConfigMap"
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/deploy").Inc()
 	c.JSON(http.StatusOK, response)
 }
 
@@ -1126,10 +1166,11 @@ func ListGithubDeployments(c *gin.Context) {
 
 	deployments, err := GetGithubDeployments(contextName)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/github/deployments", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "GitHub deployments retrieved successfully",
 		"count":       len(deployments),
@@ -1143,10 +1184,11 @@ func ListHelmDeploymentsHandler(c *gin.Context) {
 
 	deployments, err := GetHelmDeployments(contextName)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployments", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "Helm deployments retrieved successfully",
 		"count":       len(deployments),
@@ -1159,10 +1201,11 @@ func ListGithubDeploymentsHandler(c *gin.Context) {
 
 	deployments, err := GetGithubDeployments(contextName)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/github/deployments", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "GitHub deployments retrieved successfully",
 		"count":       len(deployments),
@@ -1176,16 +1219,18 @@ func GetHelmDeploymentHandler(c *gin.Context) {
 	deploymentID := c.Param("id")
 
 	if deploymentID == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployment/:id", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
 		return
 	}
 
 	deployment, err := GetHelmDeploymentByID(contextName, deploymentID)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployment/:id", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Deployment not found: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployment/:id").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "Helm deployment retrieved successfully",
 		"deployment": deployment,
@@ -1198,16 +1243,18 @@ func ListHelmDeploymentsByNamespaceHandler(c *gin.Context) {
 	namespace := c.Param("namespace")
 
 	if namespace == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployments/namespace/:namespace", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Namespace is required"})
 		return
 	}
 
 	deployments, err := GetHelmDeploymentsByNamespace(contextName, namespace)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployments/namespace/:namespace", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments/namespace/:namespace").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     fmt.Sprintf("Helm deployments in namespace %s retrieved successfully", namespace),
 		"count":       len(deployments),
@@ -1222,16 +1269,18 @@ func ListHelmDeploymentsByReleaseHandler(c *gin.Context) {
 	releaseName := c.Param("release")
 
 	if releaseName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployments/release/:release", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Release name is required"})
 		return
 	}
 
 	deployments, err := GetHelmDeploymentsByRelease(contextName, releaseName)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployments/release/:release", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments/release/:release").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     fmt.Sprintf("Helm deployments for release %s retrieved successfully", releaseName),
 		"count":       len(deployments),
@@ -1255,17 +1304,20 @@ func DeleteHelmDeploymentByID(contextName, deploymentID string) error {
 		// Try to get existing ConfigMap
 		configMap, err := clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Get(ctx, HelmConfigMapName, v1.GetOptions{})
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeleteHelmDeploymentByID", "get_configmap", "500").Inc()
 			return fmt.Errorf("failed to get ConfigMap: %v", err)
 		}
 
 		// Get current deployments
 		deploymentsJSON, ok := configMap.Data[HelmDeploymentsKey]
 		if !ok || deploymentsJSON == "" {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeleteHelmDeploymentByID", "no_deployments", "404").Inc()
 			return fmt.Errorf("no deployments found in ConfigMap")
 		}
 
 		var deployments []HelmDeploymentData
 		if err := json.Unmarshal([]byte(deploymentsJSON), &deployments); err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeleteHelmDeploymentByID", "unmarshal_deployments", "500").Inc()
 			return fmt.Errorf("failed to parse deployments data: %v", err)
 		}
 
@@ -1288,6 +1340,7 @@ func DeleteHelmDeploymentByID(contextName, deploymentID string) error {
 		// Marshal updated deployments array
 		updatedDeploymentsJSON, err := json.Marshal(deployments)
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeleteHelmDeploymentByID", "marshal_updated_deployments", "500").Inc()
 			return fmt.Errorf("failed to marshal updated deployments: %v", err)
 		}
 
@@ -1314,6 +1367,7 @@ func DeleteGitHubDeploymentByID(contextName, deploymentID string) error {
 		// Try to get existing ConfigMap
 		configMap, err := clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Get(ctx, GitHubConfigMapName, v1.GetOptions{})
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeleteGitHubDeploymentByID", "get_configmap", "500").Inc()
 			return fmt.Errorf("failed to get ConfigMap: %v", err)
 		}
 
@@ -1347,6 +1401,7 @@ func DeleteGitHubDeploymentByID(contextName, deploymentID string) error {
 		// Marshal updated deployments array
 		updatedDeploymentsJSON, err := json.Marshal(deployments)
 		if err != nil {
+			telemetry.K8sClientErrorCounter.WithLabelValues("DeleteGitHubDeploymentByID", "marshal_updated_deployments", "500").Inc()
 			return fmt.Errorf("failed to marshal updated deployments: %v", err)
 		}
 
@@ -1364,12 +1419,14 @@ func DeleteHelmDeploymentHandler(c *gin.Context) {
 	deploymentID := c.Param("id")
 
 	if deploymentID == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/helm/deployment/:id", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
 		return
 	}
 
 	err := DeleteHelmDeploymentByID(contextName, deploymentID)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/helm/deployment/:id", "500").Inc()
 		status := http.StatusInternalServerError
 		if strings.Contains(err.Error(), "not found") {
 			status = http.StatusNotFound
@@ -1377,7 +1434,7 @@ func DeleteHelmDeploymentHandler(c *gin.Context) {
 		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/helm/deployment/:id").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Helm deployment %s deleted successfully", deploymentID),
 		"id":      deploymentID,
@@ -1390,12 +1447,14 @@ func DeleteGitHubDeploymentHandler(c *gin.Context) {
 	deploymentID := c.Param("id")
 
 	if deploymentID == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/github/deployment/:id", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
 		return
 	}
 
 	err := DeleteGitHubDeploymentByID(contextName, deploymentID)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/github/deployment/:id", "500").Inc()
 		status := http.StatusInternalServerError
 		if strings.Contains(err.Error(), "not found") {
 			status = http.StatusNotFound
@@ -1403,7 +1462,7 @@ func DeleteGitHubDeploymentHandler(c *gin.Context) {
 		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/github/deployment/:id").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("GitHub deployment %s deleted successfully", deploymentID),
 		"id":      deploymentID,

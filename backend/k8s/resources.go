@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"io"
 	"log"
 	"net/http"
@@ -40,6 +41,7 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 			if strings.EqualFold(resource.Kind, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
+					telemetry.K8sClientErrorCounter.WithLabelValues("getGVR", "parse_group_version", "500").Inc()
 					return schema.GroupVersionResource{}, false, err
 				}
 				isNamespaced := resource.Namespaced
@@ -47,6 +49,7 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 			} else if strings.EqualFold(resource.Name, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
+					telemetry.K8sClientErrorCounter.WithLabelValues("getGVR", "parse_group_version", "500").Inc()
 					return schema.GroupVersionResource{}, false, err
 				}
 				isNamespaced := resource.Namespaced
@@ -140,6 +143,7 @@ func EnsureNamespaceExistsAndAddLabel(dynamicClient dynamic.Interface, namespace
 
 	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("EnsureNamespaceExistsAndAddLabel", "create_namespace", "500").Inc()
 		return fmt.Errorf("failed to create namespace %s: %v", namespace, err)
 	}
 
@@ -362,6 +366,7 @@ func UpdateResource(c *gin.Context) {
 	discoveryClient := clientset.Discovery()
 	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("UpdateResource", "getGVR", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
@@ -529,10 +534,12 @@ func LogWorkloads(c *gin.Context) {
 	// ALL VALIDATION DONE - Now safe to upgrade to WebSocket
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionUpgradedFailed.WithLabelValues("logWorkloads", "upgrade_error").Inc()
 		log.Println("WebSocket Upgrade Error:", err)
 		// DO NOT call c.JSON here - just return
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("logWorkloads", cookieContext).Inc()
 	defer conn.Close()
 
 	// Create informer factory filtering by name if provided

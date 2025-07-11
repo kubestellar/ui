@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	redisPkg "github.com/kubestellar/ui/redis"
+	redisPkg "github.com/kubestellar/ui/backend/redis"
 )
 
 func setupRedisEnv() {

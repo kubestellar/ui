@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/wecs"
+	"github.com/kubestellar/ui/backend/wecs"
 )
 
 func getWecsResources(router *gin.Engine) {

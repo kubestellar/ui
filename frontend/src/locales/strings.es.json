@@ -1,0 +1,2190 @@
+{
+  "common": {
+    "changes": "Cambios",
+    "clusterLabel": "Etiqueta de Clúster",
+    "workloadLabel": "Etiqueta de Carga de Trabajo",
+    "workloads": "Cargas de Trabajo",
+    "clearCanvas": "Limpiar Lienzo",
+    "clearFilter": "Limpiar Filtro",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "create": "Crear",
+    "add": "Añadir",
+    "refresh": "Actualizar",
+    "search": "Buscar",
+    "connect": "Conectar",
+    "import": "Importar",
+    "loading": "Cargando...",
+    "success": "Éxito",
+    "error": "Error",
+    "warning": "Advertencia",
+    "actions": "Acciones",
+    "status": {
+      "status": "Estado",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "pending": "Pendiente",
+      "checking": "Verificando",
+      "success": "Éxito",
+      "warning": "Versión incompatible",
+      "error": "Faltante",
+      "installed": "Instalado"
+    },
+    "noResource": "No se ha especificado {{resource}}",
+    "copy": "Copiar",
+    "close": "Cerrar",
+    "update": "Actualizar",
+    "unknown": "Desconocido",
+    "workload": "Carga de Trabajo",
+    "tryAgain": "Intentar de Nuevo",
+    "confirm": "Confirmar",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "submit": "Enviar",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "details": "Detalles",
+    "view": "Ver",
+    "yes": "Sí",
+    "no": "No",
+    "all": "Todos",
+    "none": "Ninguno",
+    "ok": "OK",
+    "finish": "Finalizar",
+    "next": "Siguiente",
+    "retry": "Reintentar",
+    "previous": "Anterior",
+    "page": "Página",
+    "sync": "Sincronizar",
+    "clearAll": "Limpiar Todo",
+    "fitView": "Ajustar Vista",
+    "clearSearch": "Limpiar Búsqueda",
+    "clearFilters": "Limpiar Filtros",
+    "clear": "Limpiar",
+    "of": "de",
+    "items": "elemento{{count, plural, one {} other {s}}}",
+    "filteredFrom": "filtrado de"
+  },
+  "installationPage": {
+    "successSection": {
+      "installed": "está correctamente instalado y cumple con los requisitos de versión."
+    },
+    "errorSection": {
+      "title": "Instrucciones de instalación",
+      "viewGuide": "Ver guía de instalación"
+    },
+    "statusBadge": {
+      "installed": "Instalado",
+      "versionMismatch": "Versión incompatible",
+      "missing": "Faltante",
+      "checking": "Verificando"
+    },
+    "codeBlock": {
+      "bash": "bash"
+    },
+    "title": "Instalación",
+    "verification": "Verificación",
+    "installCommand": "Ejecuta el siguiente comando para instalar",
+    "verifyCommand": "Verifica la instalación con",
+    "welcome": "Bienvenido a KubeStellar",
+    "gettingStarted": "Comienza con KubeStellar configurando tu entorno de desarrollo. Sigue nuestro proceso guiado de instalación para desplegar tu sistema de demostración.",
+    "tabs": {
+      "prerequisites": "Requisitos Previos",
+      "installation": "Instalación"
+    },
+    "sidebarSteps": {
+      "title": "Pasos de Instalación",
+      "description": "Sigue estos pasos para configurar KubeStellar",
+      "checkPrerequisites": "Verificar Requisitos Previos",
+      "checkPrerequisitesDescription": "Asegúrate de tener instaladas todas las herramientas requeridas",
+      "installKubestellar": "Instalar KubeStellar",
+      "installKubestellarDescription": "Despliega KubeStellar utilizando los comandos CLI",
+      "startUsingKubestellar": "Comenzar a Usar KubeStellar",
+      "startUsingKubestellarDescription": "Inicia sesión y comienza a gestionar tus clústeres"
+    },
+    "documentationLink": "Ver guía completa de instalación",
+    "prerequisites": {
+      "prerequisites": "Requisitos previos",
+      "title": "Requisitos del Sistema",
+      "description": "Asegúrate de tener estas herramientas instaladas antes de continuar",
+      "status": {
+        "success": "Éxito",
+        "warnings": "Advertencias",
+        "missing": "Faltante",
+        "checking": "Verificando"
+      },
+      "coreRequirements": "Requisitos Básicos",
+      "demoEnvironmentRequirements": "Requisitos del Entorno de Demostración",
+      "buttons": {
+        "refresh": "Actualizar",
+        "nextInstallation": "Siguiente: Instalación"
+      }
+    },
+    "installation": {
+      "title": "Instalar KubeStellar",
+      "description": "Elige tu plataforma y ejecuta el script de instalación",
+      "installPrerequisitesFirst": {
+        "title": "Instalar Requisitos Previos Primero",
+        "description": "Antes de ejecutar el script de instalación, asegúrate de tener todos los requisitos previos instalados en tu sistema.",
+        "button": "Ver Requisitos de Instalación"
+      },
+      "platform": "Plataforma",
+      "platforms": {
+        "kind": "kind",
+        "k3d": "k3d"
+      },
+      "installationScript": "Script de Instalación",
+      "scriptInstructions": "Ejecuta este comando en tu terminal para instalar KubeStellar con",
+      "installationProcess": {
+        "title": "Proceso de Instalación:",
+        "steps": [
+          "Crea y configura clústeres locales",
+          "Instala los componentes y dependencias de KubeStellar",
+          "Configura la red y los permisos adecuados",
+          "Prepara un entorno de demostración"
+        ]
+      },
+      "importantNotes": {
+        "title": "Notas Importantes:",
+        "notes": [
+          "La instalación puede tardar varios minutos",
+          "Asegúrate de tener suficientes recursos del sistema disponibles",
+          "Mantén la ventana de la terminal abierta hasta que finalice la instalación",
+          "Revisa la salida de la terminal por posibles errores"
+        ]
+      },
+      "afterInstallation": {
+        "title": "Después de la Instalación:",
+        "steps": [
+          "Verifica la instalación comprobando el estado del clúster",
+          "Revisa la documentación de introducción",
+          "Comienza a gestionar tu entorno KubeStellar"
+        ]
+      },
+      "buttons": {
+        "backPrerequisites": "Atrás: Requisitos Previos",
+        "startInstallation": "Iniciar Instalación",
+        "installing": "Instalando..."
+      }
+    },
+    "checkingStatus": {
+      "title": "Verificando estado de instalación de KubeStellar...",
+      "description": "Esto tomará solo un momento. Estamos comprobando si KubeStellar ya está instalado en tu sistema."
+    },
+    "checkError": {
+      "title": "Error en la Verificación del Estado",
+      "description": "No se pudo verificar si KubeStellar está instalado. Puede deberse a un problema de conexión con el servicio backend o a una interrupción temporal del servidor.",
+      "retryButton": "Reintentar Conexión",
+      "persistenceNote": "Si el problema persiste, revisa tu conexión de red o contacta con tu administrador del sistema."
+    },
+    "footer": {
+      "copyright": "KubeStellar",
+      "documentation": "Documentación",
+      "github": "GitHub",
+      "description": "KubeStellar es un proyecto de código abierto. Para soporte, solicitudes de funciones o reportes de errores, visita nuestro repositorio de GitHub."
+    },
+    "skipPrerequisitesNotice": {
+      "title": "Verificación de Requisitos Previa Omitida",
+      "description": "La verificación de requisitos ha sido desactivada en este entorno. Puedes continuar directamente con la instalación.",
+      "note": "Nota: Asegúrate de haber instalado manualmente todas las herramientas requeridas antes de ejecutar los comandos de instalación."
+    },
+    "toasts": {
+      "alreadyInstalled": "¡KubeStellar ya está instalado! Redirigiendo al inicio de sesión...",
+      "notInstalled": "No se encontró el clúster de Kubeflex. Sigue los pasos para configurar el entorno de KubeStellar.",
+      "checkFailed": "Falló la verificación del estado de KubeStellar",
+      "preparingInstructions": "Preparando instrucciones de instalación...",
+      "followInstructions": "Sigue las instrucciones CLI a continuación para instalar KubeStellar",
+      "loadInstructionsFailed": "No se pudieron cargar las instrucciones de instalación. Por favor, actualiza la página e intenta nuevamente.",
+      "installationDetected": "¡Se detectó la instalación de KubeStellar! Redirigiendo a la página de inicio de sesión..."
+    }
+  },
+  "header": {
+    "themeToggle": "Cambiar tema",
+    "dashboard": "Panel",
+    "clusters": "Clústeres",
+    "workloads": "Cargas de trabajo",
+    "policies": "Políticas",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "language": "Idioma",
+    "importCluster": "Importar clúster",
+    "menu": "Menú",
+    "goToHome": "Ir a la página principal",
+    "logoAlt": "Logo de KubeStellar",
+    "themeToggleTip": "Alt+Q para cambiar el tema",
+    "switchTheme": "Cambiar a modo {{mode}}"
+  },
+  "login": {
+    "controlPlane": "Plano de control",
+    "layout": {
+      "logoAlt": "KubeStellar",
+      "tagline": "Gestión Multiclúster Sin Esfuerzo",
+      "taglineEmphasis": "Construido para el Futuro.",
+      "fullscreen": "Activar pantalla completa",
+      "welcomeBack": "Bienvenido de nuevo",
+      "accessDashboard": "Accede a tu panel",
+      "enterCredentials": "Ingresa tus credenciales a continuación",
+      "needHelp": "¿Necesitas ayuda?",
+      "contactSupport": "Contactar Soporte"
+    },
+    "loading": {
+      "logoAlt": "KubeStellar",
+      "initializing": "Inicializando entorno KubeStellar..."
+    },
+    "form": {
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "rememberMe": "Recordarme",
+      "signIn": "Iniciar sesión en KubeStellar",
+      "signingIn": "Iniciando sesión...",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "errors": {
+        "usernameRequired": "El nombre de usuario es obligatorio",
+        "passwordRequired": "La contraseña es obligatoria"
+      }
+    }
+  },
+  "clusters": {
+    "title": "Administrar Clusters",
+    "subtitle": "Administra y supervisa tus clusters de Kubernetes",
+    "searchPlaceholder": "Buscar clusters por nombre, etiqueta, estado o contexto...",
+    "importCluster": "Importar Cluster",
+    "activeFilters": "Filtros Activos:",
+    "search": "Buscar",
+    "noClustersFound": "No se encontraron clusters",
+    "noClustersMatchBoth": "Ningún cluster coincide con tu búsqueda y criterios de filtro",
+    "noClustersMatchSearch": "Ningún cluster coincide con tu término de búsqueda",
+    "noClustersMatchFilter": "Ningún cluster coincide con tu selección de filtro",
+    "noClustersAvailable": "Aún no hay clusters disponibles. Importa tu primer cluster para comenzar.",
+    "importYourFirst": "Importar tu primer cluster",
+    "filteredByLabel": "Filtrar por etiqueta",
+    "actions": {
+      "viewDetails": "Ver detalles",
+      "editLabels": "Editar etiquetas",
+      "copyName": "Copiar nombre",
+      "detachCluster": "Desvincular cluster"
+    },
+    "status": {
+      "title": "Estado",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "pending": "Pendiente"
+    },
+    "table": {
+      "name": "Nombre",
+      "labels": "Etiquetas",
+      "creationTime": "Fecha de creación",
+      "context": "Contexto",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "quickConnect": {
+      "title": "Conectar con Quick Connect",
+      "description": "Importa tu cluster usando la función de conexión rápida",
+      "clusterName": "Nombre del cluster",
+      "clusterNamePlaceholder": "Ingresa un nombre para tu cluster",
+      "token": "Token",
+      "tokenPlaceholder": "Ingresa tu token",
+      "hubApiServer": "Servidor API del Hub",
+      "hubApiServerPlaceholder": "Ingresa la URL del servidor API del hub",
+      "steps": {
+        "step1": {
+          "title": "Elige tu cluster",
+          "description": "Selecciona un cluster del menú desplegable arriba"
+        },
+        "step2": {
+          "title": "Incorporación con un clic",
+          "description": "Haz clic en el botón \"Incorporar cluster\" para comenzar el proceso automatizado"
+        },
+        "step3": {
+          "title": "Conexión instantánea",
+          "description": "Tu cluster se incorporará automáticamente sin comandos manuales"
+        }
+      }
+    },
+    "manualImport": {
+      "title": "Configuración manual del cluster",
+      "subtitle": "Recomendado",
+      "description": "Sigue los pasos a continuación para importar manualmente tu cluster usando comandos kubectl",
+      "generateCommand": "Generar comando",
+      "copyCommand": "Copiar comando",
+      "runInTerminal": "Ejecutar en terminal",
+      "commandGenerated": "Comando generado exitosamente",
+      "selectCluster": "Seleccionar cluster",
+      "generateImportCommand": "Generar comando de importación",
+      "importCommand": "Comando de importación"
+    },
+    "apiUrl": {
+      "title": "Conectar mediante API/URL",
+      "description": "Importa tu cluster proporcionando el endpoint de la API y los detalles de autenticación",
+      "endpoint": "Endpoint de API/URL",
+      "endpointPlaceholder": "https://kubernetes.ejemplo.com:6443",
+      "token": "Token de autenticación (opcional)",
+      "tokenPlaceholder": "Ingresa el token de autenticación si es necesario",
+      "connectImport": "Conectar e importar"
+    },
+    "excluded": [
+      "kubestellar-report",
+      "kube-node-lease",
+      "kube-public",
+      "default",
+      "kube-system",
+      "open-cluster-management-hub",
+      "open-cluster-management",
+      "local-path-storage"
+    ],
+    "labels": {
+      "label": "Etiqueta",
+      "editvalue": "Se requieren tanto la clave como el valor",
+      "manage": "Gestionar etiquetas",
+      "clearFilter": "Limpiar filtro",
+      "searchLabelsPlaceholder": "Buscar etiquetas...",
+      "bulkEditTitle": "Editar etiquetas para {{count}} clusters",
+      "editTitle": "Editar etiquetas para {{name}}",
+      "bulkEditDescription": "Estás editando etiquetas para {{count}} clusters. Los cambios se aplicarán a todos los clusters seleccionados.",
+      "keyPlaceholder": "p. ej. entorno",
+      "valuePlaceholder": "p. ej. producción",
+      "protectedLabelsCannotBeModified": "🔒 Las etiquetas protegidas no pueden ser modificadas.",
+      "exitSearch": "Salir de la búsqueda",
+      "saveChanges": "Guardar cambios",
+      "saveChangesButton": "Guardar cambios",
+      "tooltipTitle": "Clusters:",
+      "noLabelsAvailable": "No hay etiquetas de cluster disponibles. Agrega clusters con etiquetas para usarlas en políticas de asignación.",
+      "noLabelsMatchSearch": "Ninguna etiqueta coincide con tu búsqueda.",
+      "noLabelsFound": "No se encontraron etiquetas en los clusters disponibles.",
+      "clickToAdd": "Haz clic en una etiqueta para añadirla al lienzo",
+      "edit": "Editar etiquetas",
+      "add": "Agregar etiquetas",
+      "for": "para",
+      "bulkEdit": "Modo de edición masiva",
+      "appendToExisting": "Añadir a etiquetas existentes",
+      "key": "Clave de etiqueta",
+      "value": "Valor de etiqueta",
+      "noLabels": "Aún no se han añadido etiquetas",
+      "noMatchingLabels": "No se encontraron etiquetas coincidentes",
+      "addYourFirst": "Agrega tu primera etiqueta usando los campos de arriba para organizar este cluster.",
+      "tip": "Consejo: Presiona Enter para cambiar de campo, o haz doble clic en las etiquetas para editarlas",
+      "tryDifferentSearch": "Intenta con otro término de búsqueda o borra la búsqueda",
+      "count": "{{count}} etiqueta{{count, plural, one {} other {s}}}",
+      "description": "Agrega, edita o elimina etiquetas para organizar y categorizar tu cluster.",
+      "defaultProtected": "Etiqueta predeterminada: no se puede modificar",
+      "bindingProtected": "Usada en política de asignación: no se puede modificar",
+      "manageLabels": "Gestionar etiquetas",
+      "bulkLabels": "Etiquetas masivas",
+      "editValue": "Editar etiqueta",
+      "removeLabel": "Eliminar etiqueta",
+      "cancelEdit": "Cancelar edición",
+      "added": "Etiqueta añadida: {{key}}",
+      "updated": "Etiqueta actualizada: {{key}}",
+      "removed": "Etiqueta eliminada: {{key}}",
+      "updateSuccess": "Etiqueta actualizada correctamente",
+      "duplicate": "Ya existe una etiqueta con la clave \"{{key}}\"",
+      "protected": "No se puede modificar la etiqueta protegida: {{key}}",
+      "finishEditing": "Finalizar edición",
+      "noClustersToEdit": "No hay clusters disponibles para editar",
+      "noClustersSelected": "No hay clusters seleccionados",
+      "cannotDeleteUsed": "Las etiquetas están siendo utilizadas en una política de asignación y no se pueden eliminar. Por favor, elimina la política primero.",
+      "bulkUpdateSuccess": "Etiquetas actualizadas para los {{count}} clusters",
+      "bulkUpdatePartial": "Etiquetas actualizadas para {{success}} clusters, falló en {{failures}} clusters",
+      "bulkUpdateFail": "No se pudo actualizar etiquetas para los {{count}} clusters"
+    },
+    "dialog": {
+      "selectMultipleClusters": "Seleccionar múltiples clusters",
+      "selectClusterToEdit": "Seleccionar cluster para editar",
+      "selectedCount": "{{count}} seleccionado{{count, plural, one {} other {s}}}",
+      "editClustersButton": "Editar {{count}} cluster{{count, plural, one {} other {s}}}"
+    },
+    "list": {
+      "more": "más",
+      "title": "Administrar Clusters",
+      "subtitle": "Administra y supervisa tus clusters de Kubernetes",
+      "searchPlaceholder": "Buscar clusters por nombre, etiqueta, estado o contexto...",
+      "import": "Importar Cluster",
+      "noResults": "No se encontraron clusters",
+      "name": "Nombre",
+      "creationTime": "Fecha de creación",
+      "context": "Contexto",
+      "description": "Administra y supervisa tus clusters de Kubernetes",
+      "filter": "Filtrar por estado",
+      "activeFilters": "Filtros activos:",
+      "searchFilter": "Búsqueda: \"{{query}}\"",
+      "statusFilter": "Estado: {{value}}",
+      "labelFilter": "Etiqueta: {{key}}={{value}}",
+      "clearAll": "Limpiar todo",
+      "showingResults": "{{count}} resultado{{count, plural, one {} other {s}}}",
+      "clearSearch": "Presiona Esc para borrar la búsqueda",
+      "importCluster": "Importar Cluster",
+      "importYourFirst": "Importar tu primer cluster",
+      "searchLabelsPlaceholder": "Buscar etiquetas...",
+      "search": "Buscar",
+      "label": "Etiqueta",
+      "filteredByLabel": "Filtrado por etiqueta:",
+      "filterByLabel": "Haz clic para filtrar por esta etiqueta",
+      "noClustersFound": "No se encontraron clusters",
+      "noClustersMatchBoth": "Ningún cluster coincide con tu búsqueda y filtro",
+      "noClustersMatchSearch": "Ningún cluster coincide con tu búsqueda",
+      "noClustersMatchFilter": "Ningún cluster coincide con tu filtro",
+      "noClustersAvailable": "Aún no hay clusters disponibles. Importa tu primer cluster para comenzar.",
+      "table": {
+        "name": "Nombre",
+        "labels": "Etiquetas",
+        "creationTime": "Fecha de creación",
+        "context": "Contexto",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "pending": "Pendiente"
+      },
+      "actions": {
+        "viewDetails": "Ver detalles",
+        "editLabels": "Editar etiquetas",
+        "copyName": "Copiar nombre",
+        "detachCluster": "Desvincular cluster"
+      },
+      "labels": {
+        "edit": "Editar etiquetas",
+        "add": "Agregar etiquetas",
+        "bulkEdit": "Modo de edición masiva",
+        "appendToExisting": "Añadir a etiquetas existentes",
+        "key": "Clave de etiqueta",
+        "value": "Valor de etiqueta",
+        "noLabels": "Aún no se han añadido etiquetas",
+        "noMatchingLabels": "No se encontraron etiquetas coincidentes",
+        "addYourFirst": "Agrega tu primera etiqueta usando los campos de arriba para organizar este cluster.",
+        "tip": "Consejo: Presiona Enter para cambiar de campo, o haz doble clic en las etiquetas para editarlas",
+        "tryDifferentSearch": "Intenta con otro término de búsqueda o borra la búsqueda",
+        "count": "{{count}} etiqueta{{count, plural, one {} other {s}}}",
+        "description": "Agrega, edita o elimina etiquetas para organizar y categorizar tu cluster.",
+        "defaultProtected": "Etiqueta predeterminada: no se puede modificar",
+        "bindingProtected": "Usada en política de asignación: no se puede modificar",
+        "manage": "Gestionar etiquetas"
+      }
+    },
+    "details": {
+      "title": "Detalles del Cluster",
+      "overview": "Resumen",
+      "labels": "Etiquetas",
+      "resources": "Recursos",
+      "status": "Estado",
+      "events": "Eventos",
+      "logs": "Registros"
+    },
+    "clusterDetailDialog": {
+      "title": "Detalles del Clúster",
+      "loading": "Cargando información del clúster...",
+      "error": {
+        "title": "No se pudieron cargar los detalles del clúster",
+        "description": "Ocurrió un error al recuperar la información de este clúster."
+      },
+      "status": {
+        "available": "Disponible",
+        "unavailable": "No disponible"
+      },
+      "kubernetes": "Kubernetes {{version}}",
+      "createdOn": "Creado el {{date}}",
+      "labels": "Etiquetas",
+      "labelCount": "{{count}} etiquetas",
+      "noLabels": "No se han asignado etiquetas a este clúster",
+      "capacityResources": "Capacidad y Recursos",
+      "cpuCores": "Núcleos de CPU",
+      "memory": "Memoria",
+      "podCapacity": "Capacidad de Pods",
+      "lastRefreshed": "Última actualización",
+      "noClusterSelected": "Ningún clúster seleccionado"
+    },
+    "dashboard": {
+      "title": "Panel",
+      "lastUpdatedJustNow": "Última actualización: hace un momento",
+      "status": "Estado: Óptimo",
+      "other": "Otros",
+      "distribution": "Distribución",
+      "state": "Pendiente o inactivo",
+      "otherClusters": "Otros Clústeres",
+      "hoverFormula": "Pasa el cursor para ver el desglose de la fórmula",
+      "healthScore": "Fórmula de Salud",
+      "clusterHealth": "Salud General del Clúster",
+      "clusterStatus": "Estado del Clúster",
+      "welcome": "Bienvenido al panel de administración de KubeStellar",
+      "errorLoading": "Error al cargar la información del clúster",
+      "addCluster": "Agregar Clúster",
+      "notAvailable": "N/D",
+      "invalidDate": "Fecha no válida",
+      "managedClusters": "Clústeres Gestionados",
+      "total": "total",
+      "viewAll": "Ver todos",
+      "cpuCapacity": "Capacidad de CPU",
+      "memoryCapacity": "Capacidad de Memoria",
+      "podCapacity": "Capacidad de Pods",
+      "podCapacityLabel": "Capacidad de Pods",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "noManagedClusters": "No se encontraron clústeres gestionados",
+      "importCluster": "Importar Clúster",
+      "showMoreClusters": "Mostrar más clústeres",
+      "clustersActive": "Clústeres Activos",
+      "systemHealth": "Salud del Sistema",
+      "refresh": "Actualizar",
+      "noRecentActivity": "No se encontró actividad reciente",
+      "recentActivity": "Actividad Reciente",
+      "resourceUtilization": "Utilización de Recursos",
+      "clusterMetrics": "Basado en métricas del clúster",
+      "pods": {
+        "formula": "Fórmula de Salud de Pods",
+        "calculation": "Calculado con base en la proporción de pods saludables sobre el total de pods en todos los espacios de nombres.",
+        "status": "Considera el estado del pod, readiness probes y liveness checks",
+        "value": "Valores más altos indican mejor salud del clúster",
+        "formulaDesc": "(Pods en Ejecución / Total de Pods) × 100%",
+        "health": "Salud de Pods"
+      },
+      "cpu": {
+        "usage": "Uso de CPU",
+        "formula": "Fórmula de Uso de CPU",
+        "calculation": "Calculado como el porcentaje de los recursos de CPU asignados que están en uso actualmente en todos los nodos del clúster.",
+        "value": "Valores más bajos indican mejor disponibilidad de recursos",
+        "formulaDesc": "(CPU Utilizada / CPU Total) × 100%",
+        "health": "Valores más bajos indican mejor rendimiento"
+      },
+      "memory": {
+        "usage": "Uso de Memoria",
+        "formula": "Fórmula de Uso de Memoria",
+        "calculation": "Calculado como el porcentaje de la memoria asignada que está en uso actualmente en todos los nodos del clúster.",
+        "value": "Valores más bajos indican mejor disponibilidad de recursos",
+        "formulaDesc": "(Memoria Usada / Memoria Total) × 100%"
+      },
+      "stats": {
+        "running": "En ejecución y disponible",
+        "totalClusters": "Total de Clústeres",
+        "activeClusters": "Clústeres Activos",
+        "bindingPolicies": "Políticas de Enlace",
+        "currentContext": "Contexto Actual",
+        "none": "Ninguno"
+      },
+      "health": {
+        "excellent": "Excelente",
+        "good": "Buena",
+        "fair": "Aceptable",
+        "needsAttention": "Requiere Atención",
+        "critical": "Crítica"
+      },
+      "guide": {
+        "title": "Guía del Panel",
+        "clusterStats": "Estadísticas del Clúster",
+        "clusterStatsDesc": "Muestra los clústeres totales y activos. Pasa el cursor sobre las métricas para ver información detallada sobre su cálculo.",
+        "healthMetrics": "Métricas de Salud",
+        "healthMetricsDesc": "Muestra el uso de CPU, memoria y la salud de los pods. Indicadores verdes significan buena salud, ámbar indica que se requiere atención.",
+        "recentActivity": "Actividad Reciente",
+        "recentActivityDesc": "Muestra cambios recientes en clústeres y políticas. Haz clic en un clúster para ver más detalles.",
+        "proTip": "Consejo Profesional",
+        "proTipDesc": "Pasa el cursor sobre cualquier métrica o gráfico para ver cómo se calcula y qué acciones puedes tomar."
+      }
+    },
+    "detach": {
+      "title": "Desvincular Clúster",
+      "confirmation": "¿Estás seguro de que deseas desvincular el siguiente clúster?",
+      "context": "Contexto",
+      "warning": "Advertencia: Esta acción eliminará el clúster de la gestión. Ya no será visible ni controlado desde esta interfaz.",
+      "detaching": "Desvinculando...",
+      "detach": "Desvincular Clúster"
+    }
+  },
+  "webSocket": {
+    "errors": {
+      "notConnected": "WebSocket no está conectado",
+      "closingError": "Error al cerrar WebSocket:",
+      "expectedStringData": "Se esperaban datos de tipo cadena para el análisis JSON",
+      "processingFailed": "Error al procesar el mensaje de WebSocket",
+      "connectionError": "Error de WebSocket"
+    }
+  },
+  "wdsQueries": {
+    "errors": {
+      "fetchWorkloads": "No se pudieron obtener las cargas de trabajo",
+      "errorFetchingWorkloads": "Error al obtener las cargas de trabajo:",
+      "fetchWorkloadDetails": "No se pudieron obtener los detalles de la carga de trabajo",
+      "errorFetchingWorkloadDetails": "Error al obtener los detalles de la carga de trabajo:",
+      "statusFetchFailed": "Error al obtener el estado:",
+      "createWorkloadFailed": "No se pudo crear la carga de trabajo",
+      "errorCreatingWorkload": "Error al crear la carga de trabajo:",
+      "uploadFileFailed": "No se pudo subir el archivo",
+      "errorUploadingFile": "Error al subir el archivo:",
+      "updateWorkloadFailed": "No se pudo actualizar la carga de trabajo",
+      "errorUpdatingWorkload": "Error al actualizar la carga de trabajo:",
+      "scaleWorkloadFailed": "No se pudo escalar la carga de trabajo",
+      "errorScalingWorkload": "Error al escalar la carga de trabajo:",
+      "deleteWorkloadFailed": "No se pudo eliminar la carga de trabajo",
+      "errorDeletingWorkload": "Error al eliminar la carga de trabajo:",
+      "fetchWorkloadLogsFailed": "No se pudieron obtener los registros de la carga de trabajo",
+      "errorFetchingWorkloadLogs": "Error al obtener los registros de la carga de trabajo:"
+    },
+    "success": {
+      "workloadCreated": "Carga de trabajo creada correctamente",
+      "fileUploaded": "Archivo subido con éxito",
+      "workloadUpdated": "Carga de trabajo actualizada correctamente",
+      "workloadScaled": "Carga de trabajo escalada a {{replicas}} réplicas",
+      "workloadDeleted": "Carga de trabajo eliminada correctamente"
+    },
+    "defaults": {
+      "deploymentKind": "despliegue",
+      "defaultNamespace": "predeterminado"
+    }
+  },
+  "clusterQueries": {
+    "status": {
+      "available": "Disponible",
+      "unavailable": "No disponible"
+    },
+    "logging": {
+      "clusterOnboardRequestPayload": "[DEPURACIÓN] Payload de solicitud para incorporación del clúster:",
+      "clusterOnboardResponse": "[DEPURACIÓN] Respuesta a la solicitud de incorporación del clúster:",
+      "onboardSuccessful": "[DEPURACIÓN] Mutación de incorporación de clúster exitosa, invalidando la caché de consulta de clústeres",
+      "onboardError": "[DEPURACIÓN] Error en la mutación de incorporación del clúster:",
+      "mutationStart": "[DEPURACIÓN] ========== INICIO DE MUTACIÓN ==========",
+      "context": "[DEPURACIÓN] Contexto:",
+      "cluster": "[DEPURACIÓN] Clúster:",
+      "originalLabels": "[DEPURACIÓN] Etiquetas originales:",
+      "deletedLabels": "[DEPURACIÓN] Etiquetas eliminadas:",
+      "processingBulkUpdate": "[DEPURACIÓN] Procesando actualización masiva de etiquetas para {{count}} clústeres",
+      "addingDeletedLabels": "[DEPURACIÓN] Añadiendo etiquetas eliminadas como valores vacíos:",
+      "finalLabels": "[DEPURACIÓN] Etiquetas finales enviadas al backend:",
+      "apiPayload": "[DEPURACIÓN] Payload de la API:",
+      "apiResponse": "[DEPURACIÓN] Respuesta de la API:",
+      "apiError": "[DEPURACIÓN] Error de la API:",
+      "labelsUpdated": "[DEPURACIÓN] Etiquetas actualizadas correctamente, invalidando la caché de consulta de clústeres",
+      "errorUpdatingLabels": "[DEPURACIÓN] Error al actualizar las etiquetas del clúster:",
+      "detachingCluster": "[DEPURACIÓN] Desvinculando clúster:",
+      "detachSuccessful": "[DEPURACIÓN] Desvinculación de clúster exitosa, invalidando la caché de consulta de clústeres",
+      "detachError": "[DEPURACIÓN] Error en la mutación de desvinculación de clúster:",
+      "skippingDetailsFetch": "[DEPURACIÓN] Omisión de obtención de detalles para clúster masivo virtual"
+    },
+    "messages": {
+      "applyLabelsToMultipleClusters": "Se aplicarán etiquetas a {{count}} clústeres"
+    },
+    "defaults": {
+      "virtualBulkOperationId": "operación-masiva-virtual"
+    }
+  },
+  "bpQueries": {
+    "logging": {
+      "fetchingPolicyDetails": "Obteniendo detalles completos para la política de vinculación: {{policyName}}",
+      "receivedResponses": "Respuestas recibidas de ambos endpoints de la API",
+      "foundPolicyDetails": "Detalles de la política encontrados en la respuesta principal de BP:",
+      "receivedStatusData": "Datos de estado recibidos:",
+      "yamlFromResponse": "Usando YAML directamente desde la raíz de la respuesta",
+      "yamlFromMetadata": "Usando YAML desde metadata.annotations.yaml",
+      "yamlAvailable": "Contenido YAML extraído para la política {{policyName}} disponible ({{length}} caracteres)",
+      "noYamlFound": "No se encontró contenido YAML para la política {{policyName}}",
+      "parsedYaml": "YAML analizado:",
+      "errorParsingYaml": "Error al analizar YAML:",
+      "usingStatus": "Usando estado \"{{status}}\" del endpoint de estado de la API",
+      "finalPolicyObject": "Objeto final de la política:",
+      "extractedUniqueWorkloads": "{{count}} cargas de trabajo únicas extraídas en total",
+      "rawBindingPolicies": "Políticas de vinculación en crudo:"
+    },
+    "errors": {
+      "policyNotFound": "Política {{policyName}} no encontrada en la respuesta principal",
+      "errorParsingJson": "Error al analizar JSON desde el campo raw fieldsv1:",
+      "resourcesNull": "Resources es nulo para el espacio de nombres {{namespace}}, tipo de recurso {{resourceType}}",
+      "resourcesNullClusterScoped": "Resources es nulo para tipo de recurso de ámbito de clúster {{resourceType}}"
+    }
+  },
+  "wecsTopology": {
+    "title": "Vista en árbol de clúster remoto",
+    "createWorkload": "Crear Carga de Trabajo",
+    "viewModes": {
+      "tiles": "Cuadrículas",
+      "list": "Lista"
+    },
+    "note": "Nota: Los espacios de nombres predeterminados, del sistema Kubernetes y de OpenShift están filtrados en esta vista.",
+    "emptyState": {
+      "title": "No se encontraron cargas de trabajo",
+      "description": "Empieza creando tu primera carga de trabajo"
+    },
+    "contextMenu": {
+      "details": "Detalles",
+      "edit": "Editar",
+      "logs": "Registros",
+      "execPods": "Ejecutar Pods"
+    },
+    "fullscreen": {
+      "toggle": "Alternar vista de pantalla completa"
+    },
+    "timeAgo": {
+      "today": "Hoy",
+      "days": "{{count}} día",
+      "days_plural": "{{count}} días"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "zoomControls": {
+      "groupByResource": "Agrupar por Recurso/Tipo",
+      "expandAll": "Expandir todos los nodos hijos de todos los nodos padre",
+      "collapseAll": "Colapsar todos los nodos hijos de todos los nodos padre",
+      "zoomIn": "Acercar",
+      "zoomOut": "Alejar"
+    },
+    "nodeLabel": {
+      "labels": "Etiquetas:",
+      "noLabels": "Sin etiquetas"
+    }
+  },
+  "wecsDetailsPanel": {
+    "common": {
+      "update": "Actualizar",
+      "sync": "Sincronizar",
+      "delete": "Eliminar",
+      "close": "Cerrar",
+      "unknown": "Desconocido",
+      "na": "N/A",
+      "today": "Hoy",
+      "daysAgo": "Hace {{count}} días"
+    },
+    "buttons": {
+      "clearTerminal": "Limpiar Terminal",
+      "minimize": "Minimizar",
+      "maximize": "Maximizar"
+    },
+    "tabs": {
+      "summary": "RESUMEN",
+      "edit": "EDITAR",
+      "logs": "REGISTROS",
+      "execPods": "EJECUTAR PODS"
+    },
+    "terminal": {
+      "connecting": "Conectando a la shell del pod en el contenedor {{containerName}}...",
+      "connected": "Conectado a la shell del pod en el contenedor {{containerName}}",
+      "connectionClosed": "Conexión cerrada",
+      "connectionNotActive": "Conexión no activa. No se puede enviar el comando.",
+      "errorConnecting": "Error al conectar con el pod. Por favor, inténtalo de nuevo."
+    },
+    "format": {
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "table": {
+      "kind": "TIPO",
+      "name": "NOMBRE",
+      "namespace": "NAMESPACE",
+      "createdAt": "CREADO EN",
+      "context": "CONTEXTO",
+      "labels": "ETIQUETAS"
+    },
+    "containers": {
+      "selectContainer": "Seleccionar contenedor",
+      "noContainersFound": "No se encontraron contenedores"
+    },
+    "errors": {
+      "failedLoadClusterDetails": "No se pudieron cargar los detalles del clúster.",
+      "failedLoadDetails": "No se pudieron cargar los detalles de {{type}}.",
+      "apiNotImplemented": "API no implementada para actualizar el pod \"{{resourceName}}\"",
+      "failedFetchContainers": "No se pudo obtener la lista de contenedores"
+    },
+    "cluster": {
+      "active": "Activo"
+    },
+    "noManifest": "No hay manifiesto disponible"
+  },
+  "treeView": {
+    "title": "Gestionar Cargas de Trabajo",
+    "createWorkload": "Crear Carga de Trabajo",
+    "note": "Nota: Los espacios de nombres predeterminados, del sistema de Kubernetes y de OpenShift están filtrados en esta vista.",
+    "filteringContext": "Filtrando: Mostrando solo recursos del contexto {{context}}.",
+    "unknown": "Desconocido",
+    "viewModes": {
+      "tiles": "Cuadrículas",
+      "list": "Lista"
+    },
+    "timeAgo": {
+      "today": "Hoy",
+      "days": "{{count}} día",
+      "days_plural": "{{count}} días"
+    },
+    "emptyState": {
+      "title": "No se encontraron cargas de trabajo",
+      "description": "Empieza creando tu primera carga de trabajo"
+    },
+    "fullscreen": {
+      "toggle": "Alternar vista de pantalla completa"
+    },
+    "contextMenu": {
+      "details": "Detalles",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "logs": "Registros"
+    },
+    "deleteDialog": {
+      "title": "Confirmar Eliminación de Recurso",
+      "message": "¿Estás seguro de que deseas eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
+      "confirm": "Sí, Eliminar"
+    }
+  },
+  "quickConnect": {
+    "title": "Configuración de Clúster con Un Clic",
+    "description": "Incorporación de clúster automatizada y simplificada sin comandos. Selecciona tu clúster y deja que el sistema haga el resto.",
+    "selectCluster": "Selecciona un Clúster de Kubernetes",
+    "searchingClusters": "Buscando clústeres disponibles...",
+    "errorLoadingClusters": "Error al cargar los clústeres",
+    "automatedOnboarding": "Incorporación Automatizada de Clúster",
+    "new": "Nuevo",
+    "automatedDescription": "Esta es la forma más sencilla de conectar tu clúster de Kubernetes. Selecciona un clúster y haz clic en el botón Incorporar para conectarlo directamente sin comandos manuales.",
+    "retry": "Reintentar",
+    "chooseCluster": "Elige un clúster...",
+    "noClusters": "No hay clústeres disponibles",
+    "discoveredClusters": {
+      "title": "Clústeres Descubiertos",
+      "description": "Estos son los clústeres descubiertos en tu entorno. Selecciona uno para continuar."
+    },
+    "refreshClustersList": "Actualizar lista de clústeres",
+    "howToConnect": "Cómo Conectar tu Clúster",
+    "steps": {
+      "step1": {
+        "title": "Elige tu Clúster",
+        "description": "Selecciona un clúster del menú desplegable arriba"
+      },
+      "step2": {
+        "title": "Incorporación con Un Clic",
+        "description": "Haz clic en el botón \"Incorporar Clúster\" para iniciar el proceso automatizado"
+      },
+      "step3": {
+        "title": "Conexión Instantánea",
+        "description": "Tu clúster será incorporado automáticamente sin comandos manuales"
+      }
+    },
+    "whyUseAutomated": "¿Por qué usar la incorporación automatizada?",
+    "approaches": {
+      "automated": {
+        "title": "Método Automatizado (Nuevo)",
+        "features": [
+          "Proceso de configuración con un clic",
+          "Sin ejecución de comandos manuales",
+          "Experiencia optimizada",
+          "Menor probabilidad de errores"
+        ]
+      },
+      "manual": {
+        "title": "Método Manual (Antiguo)",
+        "features": [
+          "Copiar y ejecutar comandos manualmente",
+          "Requiere múltiples pasos en la CLI",
+          "Proceso más complejo",
+          "Requiere conocimientos de línea de comandos"
+        ]
+      }
+    },
+    "buttons": {
+      "onboarding": "Incorporando...",
+      "onboard": "Incorporar Clúster",
+      "back": "Atrás",
+      "close": "Cerrar",
+      "openDashboard": "Abrir Panel del Clúster",
+      "goToDashboard": "Ir al Panel"
+    },
+    "success": {
+      "title": "Clúster Incorporado Exitosamente",
+      "clusterAdded": "Clúster agregado correctamente",
+      "clusterAvailable": "Tu clúster ahora está disponible en la plataforma",
+      "message": "El clúster {{clusterName}} ha sido incorporado exitosamente a la plataforma.",
+      "detailMessage": "Tu clúster {{clusterName}} ha sido incorporado correctamente. Esto es lo que puedes hacer a continuación:",
+      "nextSteps": {
+        "viewManage": {
+          "title": "Ver y Gestionar",
+          "description": "Accede a tu clúster a través del panel para ver recursos y estado"
+        },
+        "deployApps": {
+          "title": "Desplegar Aplicaciones",
+          "description": "Despliega aplicaciones y servicios en contenedores a tu clúster"
+        },
+        "configureSettings": {
+          "title": "Configurar Ajustes",
+          "description": "Personaliza y configura los ajustes y políticas de tu clúster"
+        }
+      }
+    }
+  },
+  "bindingPolicy": {
+    "editPolicy": "Editar política",
+    "saveAndCreatePolicy": "Guardar y crear política",
+    "title": "Administrar políticas de vinculación",
+    "description": "Crea y administra políticas de vinculación para la distribución de cargas de trabajo",
+    "createBindingPolicy": "Crear política de vinculación",
+    "noBindingPolicies": "No se encontraron políticas de vinculación",
+    "noBindingPoliciesDescription": "No hay políticas de vinculación disponibles",
+    "noBindingPoliciesWithFilter": "Ninguna política de vinculación coincide con tu filtro de estado {{status}}",
+    "notifications": {
+      "fetchError": "Error al obtener políticas de vinculación",
+      "createSuccess": "Política de vinculación creada exitosamente",
+      "createError": "Error al crear la política de vinculación",
+      "deleteSuccess": "Política de vinculación \"{{name}}\" eliminada correctamente",
+      "deleteError": "Error al eliminar la política de vinculación",
+      "deleteManySuccess": "{{count}} política{{count, plural, one {} other {s}}} de vinculación eliminada{{count, plural, one {} other {s}}} exitosamente",
+      "deleteManyError": "Error al eliminar las políticas de vinculación",
+      "deploySuccess": "Implementación completada exitosamente",
+      "deployError": "Error en la implementación",
+      "yamlGenerateError": "Error al generar el YAML de la política de vinculación",
+      "quickConnectError": "Error al crear la política de vinculación",
+      "labelsAssignedTitle": "Etiquetas asignadas",
+      "policyBindingCreatedTitle": "Vinculación de política creada",
+      "labelsAssignedChip": "Las etiquetas ayudan a dirigir políticas a recursos específicos",
+      "policyBindingCreatedChip": "Vinculación creada para la propagación de la política"
+    },
+    "tabs": {
+      "selectItems": "Seleccionar elementos",
+      "yaml": "YAML",
+      "uploadFile": "Subir archivo"
+    },
+    "upload": {
+      "createNamespaceAutomatically": "Crear espacio de nombres automáticamente",
+      "chooseDifferentYaml": "Elegir otro archivo YAML",
+      "filePreview": "Vista previa del archivo",
+      "chooseOrDrag": "Selecciona o arrastra y suelta un archivo YAML",
+      "or": "- o -",
+      "chooseYaml": "Seleccionar archivo YAML",
+      "uploadAndDeploy": "Subir e implementar",
+      "dropHere": "Suelta aquí el archivo YAML",
+      "chooseOrUpload": "Seleccionar o subir un archivo YAML",
+      "selectFile": "Seleccionar archivo YAML",
+      "acceptedFormats": "Formatos aceptados: .yaml, .yml",
+      "chooseDifferentFile": "Elegir otro archivo"
+    },
+    "previewGeneratedYaml": "Vista previa del YAML generado",
+    "deployBindingPolicies": "Implementar políticas de vinculación",
+    "deployBindingPolicy": "Implementar política de vinculación",
+    "creating": "Creando...",
+    "loadingResources": "Cargando recursos...",
+    "deploying": "Implementando...",
+    "table": {
+      "name": "Nombre de la política",
+      "clusters": "Clusters",
+      "workload": "Carga de trabajo",
+      "creationDate": "Fecha de creación",
+      "status": "Estado",
+      "actions": "Acciones",
+      "noClusters": "No hay clusters definidos como destino",
+      "noWorkloads": "No hay cargas de trabajo definidas"
+    },
+    "yamlGeneration": {
+      "resourceRequired": "Debe especificarse al menos un tipo de recurso",
+      "resourceRequiredYaml": "Debe especificarse al menos un tipo de recurso para generar el YAML"
+    },
+    "quickConnect": {
+      "unknownWorkload": "desconocida",
+      "unknownLocationGroup": "desconocido"
+    },
+    "loading": "Cargando...",
+    "unknown": "Desconocido",
+    "visualization": {
+      "title": "Red de políticas de vinculación",
+      "policies": "{{count}} políticas",
+      "targetCluster": "Cluster objetivo",
+      "clusters": "{{count}} clusters",
+      "workloads": "{{count}} cargas de trabajo",
+      "showWorkloads": "Mostrar cargas de trabajo",
+      "highlightActive": "Resaltar activas",
+      "refresh": "Actualizar visualización",
+      "fitView": "Ajustar vista",
+      "search": "Buscar nodos... (⌘+K)",
+      "legend": "Leyenda",
+      "policyPreview": "Vista previa de política",
+      "policyDistribution": "Distribución de política",
+      "previewMode": "Modo de vista previa",
+      "workloadSource": "Origen de carga de trabajo",
+      "matchingWorkloads": "{{count}} carga{{count, plural, one {} other {s}}} de trabajo coincidente{{count, plural, one {} other {s}}}",
+      "matchRateShort": "{{matchRate}}% de coincidencia",
+      "targetClusters": "Clusters objetivos ({{count}})",
+      "moreClusters": "+{{count}} más",
+      "policyInsights": "Información de políticas",
+      "status": "Estado",
+      "lastModified": "Última modificación",
+      "notModified": "Sin modificar",
+      "matchRate": "Tasa de coincidencia",
+      "matchRateLong": "{{matchRate}}% de los clusters disponibles",
+      "legendItems": {
+        "activePolicy": "Política activa",
+        "cluster": "Cluster",
+        "workload": "Carga de trabajo",
+        "activeConnection": "Conexión activa",
+        "inactiveConnection": "Conexión inactiva"
+      },
+      "layout": {
+        "title": "Distribución",
+        "horizontal": "Horizontal",
+        "vertical": "Vertical",
+        "radial": "Radial"
+      },
+      "empty": {
+        "title": "Sin datos para visualizar",
+        "description": "No hay políticas, clusters ni cargas de trabajo para visualizar. Crea algunos recursos para verlos en esta vista."
+      },
+      "error": {
+        "title": "Error en la visualización",
+        "description": "Ocurrió un error al renderizar la visualización."
+      },
+      "loading": "Cargando visualización...",
+      "searchResources": "Buscar recursos",
+      "noNodesFound": "No se encontraron nodos que coincidan con \"{{searchTerm}}\""
+    },
+    "policyName": "Nombre de la política",
+    "namespace": "Espacio de nombres",
+    "propagationMode": "Modo de propagación",
+    "updateStrategy": "Estrategia de actualización",
+    "resources": "Recursos",
+    "advanced": "Configuración avanzada",
+    "basic": "Configuración básica",
+    "scheduling": "Reglas de programación",
+    "yaml": "YAML",
+    "modes": {
+      "downsyncOnly": "Solo Downsync",
+      "upsyncOnly": "Solo Upsync",
+      "bidirectionalSync": "Sincronización bidireccional"
+    },
+    "strategies": {
+      "serverSideApply": "Aplicación del lado del servidor",
+      "forceApply": "Aplicación forzada",
+      "rollingUpdate": "Actualización gradual",
+      "blueGreenDeployment": "Despliegue azul-verde"
+    },
+    "deploymentType": {
+      "allClusters": "Todos los clusters disponibles",
+      "selectedClusters": "Clusters seleccionados"
+    },
+    "confirm": {
+      "title": "Confirmar implementación de políticas",
+      "description": "Estás a punto de implementar {{count}} políticas de vinculación. Revísalas antes de continuar.",
+      "deploy": "Implementar políticas",
+      "deploying": "Implementando...",
+      "viewYaml": "Ver YAML"
+    },
+    "emptyState": {
+      "noClusters": {
+        "title": "No hay clusters listos",
+        "description": "Actualmente no hay clusters disponibles para vincular. Necesitas al menos un cluster en estado \"Listo\" para crear políticas.",
+        "button": "Administrar clusters"
+      },
+      "noWorkloads": {
+        "title": "No se encontraron cargas de trabajo",
+        "description": "No hay cargas de trabajo disponibles. Asegúrate de tener acceso a ellas.",
+        "button": "Ir a Cargas de trabajo"
+      },
+      "noResources": {
+        "title": "No se encontraron clusters ni cargas de trabajo",
+        "description": "Necesitas tanto clusters como cargas de trabajo para crear políticas de vinculación.",
+        "button": "Ver recursos"
+      },
+      "noPolicies": {
+        "title": "No se encontraron políticas de vinculación",
+        "description": "Comienza creando tu primera política de vinculación",
+        "button": "Crear política de vinculación"
+      }
+    },
+    "loadingCanvas": "Cargando datos del lienzo...",
+    "selection": {
+      "infoAlert": "Esta interfaz utiliza respuestas simuladas para crear políticas de vinculación. Selecciona clústeres y cargas de trabajo desde las listas para agregarlos al lienzo, luego haz clic en una carga de trabajo y luego en un clúster para crear una conexión de política de vinculación.",
+      "helpDialog": {
+        "title": "Crear políticas de vinculación con conexiones directas",
+        "intro": "Sigue estos pasos para crear políticas de vinculación:",
+        "steps": {
+          "selectClusters": "1. Selecciona clústeres del panel izquierdo para incluirlos en el lienzo",
+          "selectWorkloads": "2. Selecciona cargas de trabajo del panel derecho para incluirlas en el lienzo",
+          "createConnection": "3. Haz clic en una carga de trabajo y luego en un clúster para crear una conexión directa",
+          "fillDetails": "4. Completa los detalles de la política en el cuadro de diálogo que aparece",
+          "deploy": "5. Usa el botón 'Desplegar políticas de vinculación' para simular el despliegue"
+        },
+        "gotIt": "Entendido",
+        "helpDialog": {
+          "title": "Cómo crear políticas de vinculación",
+          "intro": "Sigue estos pasos para crear políticas de vinculación:",
+          "steps": {
+            "selectLabels": "1. Selecciona etiquetas para agregarlas al lienzo",
+            "selectLabelsDesc": "Haz clic en clústeres del panel izquierdo y cargas de trabajo del panel derecho para agregarlos al lienzo de políticas de vinculación",
+            "deploy": "2. Despliega tus políticas",
+            "deployDesc": "Haz clic en 'Desplegar políticas de vinculación' para crear y desplegar políticas que conecten cargas de trabajo con clústeres basados en las etiquetas seleccionadas"
+          },
+          "tip": "Consejo: El enfoque basado en etiquetas permite crear políticas de vinculación poderosas que se aplican automáticamente a todos los recursos que coincidan con las etiquetas seleccionadas, tanto ahora como en el futuro.",
+          "dontShowAgain": "No mostrar de nuevo",
+          "tooltip": "Ver instrucciones de selección"
+        }
+      }
+    },
+    "messages": {
+      "noSelectedPolicies": "No hay políticas seleccionadas para eliminar",
+      "invalidPolicyNames": "Error: Algunos nombres de políticas seleccionados no son válidos",
+      "partialDeleteSuccess": "Se eliminaron {{success}} políticas, pero no se pudieron eliminar {{failures}}",
+      "deleteError": "Error al eliminar las políticas de vinculación: {{errorMessage}}",
+      "updateSuccess": "Política de vinculación \"{{name}}\" actualizada con éxito",
+      "updateError": "Error al actualizar la política de vinculación \"{{name}}\"",
+      "simulatedAssignment": "Política {{policy}} asignada exitosamente al {{targetType}} {{target}}",
+      "policyCreatedSuccess": "Política de vinculación creada exitosamente: {{name}}"
+    },
+    "editDialog": {
+      "title": "Editar política de vinculación",
+      "infoTitle": "Información",
+      "info": "Edita la configuración de tu política de vinculación. Los cambios se aplicarán después de guardar.",
+      "name": "Nombre de la política de vinculación",
+      "save": "Guardar cambios",
+      "unsavedTitle": "Cambios no guardados",
+      "unsavedWarning": "Advertencia",
+      "unsavedInfo": "Tienes cambios no guardados. ¿Estás seguro de que deseas cerrar sin guardar?",
+      "continueEditing": "Seguir editando",
+      "discard": "Descartar cambios"
+    },
+    "deleteDialog": {
+      "title": "Eliminar política de vinculación",
+      "confirm": "¿Estás seguro de que deseas eliminar la política de vinculación \"{{name}}\"? Esta acción no se puede deshacer."
+    },
+    "header": {
+      "searchPlaceholder": "Buscar políticas por nombre, etiqueta o estado",
+      "clearSearch": "Presiona Esc para borrar búsqueda",
+      "deleteSelected": "Eliminar seleccionadas",
+      "create": "Crear política de vinculación",
+      "activeFilters": "Filtros activos:",
+      "search": "Buscar",
+      "status": "Estado",
+      "clearAll": "Limpiar todo"
+    },
+    "statusFilter": {
+      "all": "Todos los estados",
+      "active": "Activas",
+      "pending": "Pendientes",
+      "inactive": "Inactivas",
+      "label": "Filtro de estado"
+    },
+    "availableItems": {
+      "title": "Elementos disponibles",
+      "subtitle": "Selecciona y agrega políticas, clústeres o cargas de trabajo al lienzo haciendo clic sobre ellos.",
+      "policy-list": "Políticas",
+      "cluster-list": "Clústeres",
+      "workload-list": "Cargas de trabajo",
+      "clickToAdd": "Haz clic en un elemento para agregarlo al lienzo",
+      "none": "No hay {{title}} disponibles"
+    },
+    "canvas": {
+      "policiesOnCanvas": "Políticas en el lienzo:",
+      "clusters": "{{count}} clústeres",
+      "workloads": "{{count}} cargas de trabajo",
+      "status": "Estado:",
+      "namespace": "Espacio de nombres:",
+      "namespaces": "Espacios de nombres:",
+      "clustersOnCanvas": "Clústeres en el lienzo:",
+      "workloadsOnCanvas": "Cargas de trabajo en el lienzo:",
+      "selectClusters": "Selecciona clústeres aquí",
+      "matches": "Coincidencias: {{count}} {{resourceType}}"
+    },
+    "labels": {
+      "title": "Etiquetas:",
+      "key": "Clave",
+      "value": "Valor",
+      "add": "Agregar",
+      "count": "{{count}} etiquetas únicas en {{total}}"
+    },
+    "creatingConnection": "Creando conexión:",
+    "previewDialog": {
+      "title": "Vista previa e información de la política",
+      "visualizationTab": "Visualización",
+      "detailsTab": "Detalles",
+      "matchingDetails": "Detalles de coincidencia",
+      "matchedClusters": "Clústeres coincidentes ({{count}})",
+      "clusterStatus": "{{name}} - {{status}}",
+      "labels": "Etiquetas: {{labels}}",
+      "matchedWorkloads": "Cargas de trabajo coincidentes ({{count}})",
+      "workloadNamespace": "{{name}} ({{namespace}})"
+    },
+    "policyNameDialog": {
+      "title": "Nombra tu política de vinculación",
+      "policyName": "Nombre de la política",
+      "generateNew": "Generar nuevo nombre",
+      "placeholder": "Introduce el nombre de la política...",
+      "invalid": "El nombre debe contener solo caracteres alfanuméricos en minúscula con guiones, máximo 253 caracteres",
+      "helper": "Usa solo letras minúsculas, números y guiones",
+      "namingTipsTitle": "💡 Consejos para nombrar:",
+      "namingTips": "Usa nombres descriptivos como \"frontend-to-production\" o \"database-sync-policy\" para una mejor organización.",
+      "creating": "Creando...",
+      "createPolicy": "Crear política"
+    },
+    "configureDialog": {
+      "title": "Configurar política de vinculación",
+      "creatingFor": "Creando política de vinculación para:",
+      "creatingForDesc": "Esto creará una política de vinculación que conecta el {{sourceType}} con el {{targetType}}.",
+      "tabs": {
+        "basic": "Básico",
+        "advanced": "Avanzado",
+        "scheduling": "Programación",
+        "yaml": "YAML"
+      },
+      "nameHelper": "Nombre de la política de vinculación",
+      "namespaceHelper": "Espacio de nombres de la política",
+      "updateStrategyHelper": "Selecciona cómo se deben aplicar los cambios de recursos en los clústeres. Agrega clústeres y cargas de trabajo seleccionándolos desde los paneles.",
+      "addCustomLabels": "Agregar etiquetas personalizadas",
+      "labelsTooltip": "Las etiquetas ayudan a identificar y seleccionar recursos",
+      "tolerationsTitle": "Tolerancias (Avanzado)",
+      "tolerationExpression": "Expresión de tolerancia",
+      "tolerationRequired": "Se requiere tolerancia",
+      "schedulingRules": "Reglas de programación",
+      "schedulingTooltip": "Define condiciones que deben cumplirse para que un clúster reciba esta carga de trabajo",
+      "resource": "Recurso",
+      "resource.cpu": "Núcleos de CPU",
+      "resource.memory": "Memoria",
+      "resource.storage": "Almacenamiento",
+      "resource.pods": "Pods disponibles",
+      "operator": "Operador",
+      "activeRules": "Reglas activas:",
+      "noSchedulingRules": "No se agregaron reglas de programación. La política se aplicará a todos los clústeres coincidentes independientemente de sus recursos.",
+      "yamlPreview": "Vista previa YAML",
+      "yamlPreviewInfo": "Esta es una vista previa del YAML que se aplicará. Puedes realizar cambios en las otras pestañas para actualizar esta vista previa."
+    }
+  },
+  "workloads": {
+    "label": {
+      "title": "Etiqueta de Workload *",
+      "prefix": "kubestellar.io/workload:",
+      "helpTextError": "Etiqueta no encontrada",
+      "helpText": "La etiqueta de workload es un par clave:valor. La clave es constante y tiene por defecto 'kubestellar.io/workload', solo puedes cambiar el valor."
+    },
+    "github": {
+      "repositoryUrlLabel": "URL del Repositorio *",
+      "pathLabel": "Ruta *",
+      "branchLabel": "Rama (por defecto: main) *",
+      "credentialsLabel": "Credenciales",
+      "credentialsTip": "Selecciona o añade credenciales para repositorios privados",
+      "addCredentials": "Agregar Credencial",
+      "webhooksLabel": "Webhooks",
+      "webhooksTip": "Selecciona o añade un webhook para despliegues automáticos",
+      "addWebhook": "Agregar Webhook",
+      "previousDeploymentsTitle": "Lista de Despliegues Anteriores",
+      "loadingPreviousDeployments": "Cargando despliegues anteriores...",
+      "noPreviousDeployments": "No hay despliegues anteriores disponibles.",
+      "confirmResourceDeletion": "Confirmar Eliminación de Recurso",
+      "deleteConfirmation": "¿Estás seguro de que deseas eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
+      "yesDelete": "Sí, Eliminar",
+      "apply": "Aplicar",
+      "deploying": "Desplegando...",
+      "createFromYourGitHub": "Crear desde tu GitHub",
+      "deployFromPopularRepositories": "Desplegar desde repositorios populares",
+      "listOfPreviousDeployments": "Lista de Despliegues Anteriores",
+      "repositoryUrl": "URL del Repositorio *",
+      "repositoryUrlPlaceholder": "p. ej., https://github.com/usuario/repositorio",
+      "repositoryUrlTip": "Usa una URL válida de un repositorio de GitHub",
+      "path": "Ruta *",
+      "pathPlaceholder": "p. ej., /ruta/al/yaml",
+      "pathTip": "Especifica la ruta a tus archivos YAML en el repositorio",
+      "branch": "Rama (por defecto: main) *",
+      "branchPlaceholder": "p. ej., master, rama-dev",
+      "branchTip": "Especifica la rama desde la que desplegar",
+      "credentials": "Credenciales",
+      "credentialsPlaceholder": "p. ej., usuario-token",
+      "title": "¡Crea desde tu Repositorio de GitHub y despliega!",
+      "tab": {
+        "importFromGitHub": "Importar desde GitHub",
+        "selectRepositorySource": "Selecciona una fuente de repositorio para importar tu aplicación",
+        "repositorySource": "Fuente del Repositorio",
+        "selectRepository": "Seleccionar un Repositorio",
+        "repositoryDetails": "Detalles del Repositorio",
+        "selectedRepository": "Repositorio Seleccionado:"
+      },
+      "options": {
+        "yourGitHub": {
+          "title": "Tu Repositorio de GitHub",
+          "description": "Importar desde tu propio repositorio de GitHub"
+        },
+        "enterprise": {
+          "title": "Repositorio Empresarial",
+          "description": "Importar desde un repositorio empresarial de GitHub"
+        },
+        "public": {
+          "title": "Repositorio Público",
+          "description": "Importar desde cualquier repositorio público de GitHub"
+        },
+        "popular": {
+          "title": "Repositorios Populares",
+          "description": "Elige entre nuestra lista seleccionada de ejemplos"
+        },
+        "placeholder": {
+          "yourGitHub": "Aquí iría el formulario de tu Repositorio de GitHub",
+          "enterprise": "Aquí iría el formulario del Repositorio Empresarial",
+          "public": "Aquí iría el formulario del Repositorio Público"
+        }
+      }
+    },
+    "artifactHub": {
+      "searchPackages": "Buscar Paquetes",
+      "directDeploy": "Desplegar Chart de Helm desde Artifact Hub",
+      "listRepositories": "Listar Repositorios",
+      "form": {
+        "packageId": "ID del Paquete *",
+        "packageIdTooltip": "Formato: helm/nombre-repositorio/nombre-chart (p. ej., helm/bitnami/nginx)",
+        "packageIdPlaceholder": "helm/bitnami/nginx",
+        "packageIdTip": "Especifica el ID del paquete de Helm (p. ej., helm/bitnami/nginx)",
+        "version": "Versión (por defecto: última)",
+        "versionTooltip": "Versión del chart a desplegar (p. ej., 13.2.10). Si no se especifica, se usará la última.",
+        "versionPlaceholder": "13.2.10 (dejar vacío para la última)",
+        "versionTip": "Especifica la versión a desplegar (dejar vacío para la última)",
+        "releaseName": "Nombre del Despliegue *",
+        "releaseNameTooltip": "Nombre para identificar tu despliegue de Helm",
+        "releaseNamePlaceholder": "mi-nginx",
+        "releaseNameTip": "Especifica el nombre del despliegue de Helm",
+        "namespace": "Namespace",
+        "namespaceTooltip": "Namespace de Kubernetes donde desplegar",
+        "namespacePlaceholder": "default",
+        "namespaceTip": "Especifica el namespace de despliegue (por defecto 'default')",
+        "customValues": "Valores Personalizados",
+        "customValuesTooltip": "Formato: clave=valor,clave2=valor2 (p. ej., service.type=LoadBalancer,service.port=80)",
+        "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
+        "customValuesTip": "Valores de configuración personalizados para tu chart de Helm (formato clave=valor)"
+      },
+      "validation": {
+        "selectPackage": "Por favor selecciona un paquete primero",
+        "enterWorkloadLabel": "Por favor introduce una etiqueta de workload",
+        "enterPackageId": "Por favor introduce un ID de paquete.",
+        "enterReleaseName": "Por favor introduce un nombre de despliegue."
+      },
+      "buttons": {
+        "close": "Cerrar",
+        "apply": "Aplicar"
+      },
+      "searchPackagesForm": {
+        "searchHint": "Empieza a escribir para buscar paquetes Helm en Artifact Hub",
+        "errorMessage": {
+          "enterSearchTerm": "Por favor introduce un término de búsqueda",
+          "noPackagesFound": "No se encontraron paquetes para '{{query}}'",
+          "searchFailed": "Error en la búsqueda: {{message}}"
+        },
+        "serviceConfig": {
+          "title": "Configuración del Servicio",
+          "serviceType": "Tipo de Servicio",
+          "servicePort": "Puerto del Servicio"
+        },
+        "packageDetails": {
+          "stars": "Estrellas",
+          "repository": "Repositorio:",
+          "verified": "Verificado",
+          "namespace": "Namespace"
+        }
+      },
+      "repositoriesList": {
+        "tip": "Los repositorios son fuentes de charts de Helm, haz clic en una tarjeta para ver más detalles",
+        "loading": "Cargando repositorios...",
+        "noRepositories": "No hay repositorios disponibles",
+        "official": "Oficial",
+        "helm": "Helm",
+        "other": "Otros",
+        "organization": "Organización:",
+        "user": "Usuario:",
+        "url": "URL:"
+      }
+    },
+    "yaml": {
+      "createNamespaceAutomatically": "Crear Namespace Automáticamente",
+      "editor": "Editor YAML",
+      "deploy": "Desplegar"
+    },
+    "helm": {
+      "createOwn": "Crea tu propio chart de Helm",
+      "popularCharts": "Implementa desde charts populares de Helm",
+      "prevCharts": "Lista de charts creados por el usuario",
+      "form": {
+        "repositoryName": "Nombre del repositorio *",
+        "repositoryNameTip": "Especifica el nombre del repositorio de Helm",
+        "repositoryNamePlaceholder": "p. ej., mi-helm-repo",
+        "repositoryUrl": "URL del repositorio *",
+        "repositoryUrlTip": "Usa una URL válida de repositorio de Helm",
+        "repositoryUrlPlaceholder": "p. ej., https://charts.helm.sh/stable",
+        "chartName": "Nombre del chart *",
+        "chartNameTip": "Especifica el nombre del chart de Helm a implementar",
+        "chartNamePlaceholder": "p. ej., nginx",
+        "releaseName": "Nombre del release *",
+        "releaseNameTip": "Especifica el nombre del release para esta implementación de Helm",
+        "releaseNamePlaceholder": "p. ej., mi-release",
+        "version": "Versión (por defecto: la más reciente)",
+        "versionTip": "Especifica la versión del chart a implementar",
+        "versionPlaceholder": "p. ej., 1.2.3",
+        "namespace": "Namespace *",
+        "namespaceTip": "Especifica el namespace para el chart de Helm",
+        "namespacePlaceholder": "p. ej., default, mi-namespace",
+        "searchChartLabel": "Buscar chart de Helm"
+      },
+      "userCharts": {
+        "loading": "Cargando charts del usuario...",
+        "noCharts": "No hay charts creados por el usuario disponibles.",
+        "delete": "Eliminar",
+        "confirmDeletion": "Confirmar eliminación del recurso",
+        "deleteConfirmation": "¿Estás seguro de que deseas eliminar \"{{chartId}}\"? Esta acción no se puede deshacer.",
+        "deleteSuccess": "¡Chart {{chartId}} eliminado con éxito!",
+        "deleteError": "¡No se pudo eliminar el chart {{chartId}}!"
+      },
+      "buttons": {
+        "cancel": "Cancelar",
+        "deploying": "Implementando...",
+        "apply": "Aplicar"
+      },
+      "messages": {
+        "selectChart": "Por favor, selecciona un chart de Helm para implementar.",
+        "deploySuccess": "¡Chart de Helm {{chartName}} implementado correctamente!",
+        "deployFailureReuse": "Error en la implementación: no se puede reutilizar un nombre que ya está en uso.",
+        "deployFailure": "¡Error al implementar chart popular de Helm!"
+      }
+    },
+    "list": {
+      "title": "Workloads",
+      "create": "Crear workload",
+      "filter": "Filtrar workloads",
+      "noWorkloads": "No se encontraron workloads",
+      "createFirst": "Crea tu primer workload para comenzar"
+    },
+    "tabs": {
+      "yaml": "YAML",
+      "helm": "Helm",
+      "github": "GitHub",
+      "artifactHub": "Artifact Hub"
+    },
+    "createOptions": {
+      "title": "Crear Workload",
+      "subtitle": "Crear Workloads",
+      "yaml": {
+        "createNamespaceAutomatically": "Crear Namespace automáticamente",
+        "deploy": "Implementar",
+        "cancel": "Cancelar"
+      },
+      "file": {
+        "title": "Desde archivo",
+        "dragDrop": "Arrastra y suelta tu archivo YAML o JSON aquí",
+        "browse": "Buscar",
+        "selectFile": "Selecciona un archivo YAML o JSON",
+        "fileSelected": "Archivo seleccionado",
+        "fileSize": "Tamaño del archivo",
+        "deploy": "Implementar",
+        "cancel": "Cancelar",
+        "noFileSelected": "No se ha seleccionado ningún archivo.",
+        "invalidFile": "Por favor, sube un archivo YAML o JSON válido."
+      },
+      "github": {
+        "title": "GitHub",
+        "workloadLabel": "Etiqueta del workload",
+        "workloadLabelPlaceholder": "Introduce el valor para la etiqueta 'kubestellar.io/workload'",
+        "repositoryUrl": "URL del repositorio",
+        "repositoryUrlPlaceholder": "p. ej., https://github.com/usuario/repositorio",
+        "path": "Ruta",
+        "pathPlaceholder": "p. ej., /ruta/a/yaml",
+        "branch": "Rama (por defecto: main)",
+        "branchPlaceholder": "p. ej., master, rama-dev",
+        "credentials": "Credenciales",
+        "webhook": "Webhook",
+        "addCredentials": "Agregar credenciales",
+        "addWebhook": "Agregar Webhook",
+        "deploy": "Implementar",
+        "cancel": "Cancelar"
+      },
+      "helm": {
+        "title": "Helm",
+        "repoName": "Nombre del repositorio",
+        "repoNamePlaceholder": "p. ej., bitnami",
+        "repoUrl": "URL del repositorio",
+        "repoUrlPlaceholder": "p. ej., https://charts.bitnami.com/bitnami",
+        "chartName": "Nombre del chart",
+        "chartNamePlaceholder": "p. ej., nginx",
+        "releaseName": "Nombre del release",
+        "releaseNamePlaceholder": "p. ej., mi-release",
+        "version": "Versión (dejar en blanco para la última)",
+        "versionPlaceholder": "p. ej., 1.0.0",
+        "namespace": "Namespace",
+        "namespacePlaceholder": "p. ej., default",
+        "workloadLabel": "Etiqueta del workload",
+        "workloadLabelPlaceholder": "Introduce el valor para la etiqueta 'kubestellar.io/workload'",
+        "deploy": "Implementar",
+        "cancel": "Cancelar",
+        "userCharts": {
+          "title": "Lista de charts creados por el usuario",
+          "deleteSuccess": "¡Chart {{chartId}} eliminado exitosamente!",
+          "deleteError": "¡Chart {{chartId}} no eliminado!",
+          "loading": "Cargando charts del usuario...",
+          "noCharts": "No hay charts creados por el usuario disponibles.",
+          "delete": "Eliminar",
+          "confirmDeletion": "Confirmar eliminación del recurso",
+          "deleteConfirmation": "¿Estás seguro de que deseas eliminar \"{{chartId}}\"? Esta acción no se puede deshacer."
+        }
+      },
+      "artifactHub": {
+        "title": "Artifact Hub",
+        "searchPlaceholder": "Buscar charts de Helm...",
+        "selectPackage": "Por favor, selecciona un paquete.",
+        "enterReleaseName": "Por favor, introduce un nombre de release."
+      },
+      "credentials": {
+        "title": "Agregar credenciales",
+        "username": "Nombre de usuario de GitHub",
+        "usernamePlaceholder": "Introduce tu nombre de usuario de GitHub",
+        "token": "Token de acceso personal",
+        "tokenPlaceholder": "Introduce tu token de acceso personal de GitHub",
+        "add": "Agregar",
+        "cancel": "Cancelar",
+        "fillBoth": "Por favor, completa el nombre de usuario y el token de acceso personal de GitHub."
+      },
+      "webhook": {
+        "title": "Agregar Webhook",
+        "url": "URL del Webhook",
+        "urlPlaceholder": "Introduce la URL del webhook",
+        "token": "Token de acceso personal",
+        "tokenPlaceholder": "Introduce el token de acceso personal para el webhook",
+        "add": "Agregar",
+        "cancel": "Cancelar",
+        "fillBoth": "Por favor, completa tanto la URL del webhook como el token de acceso personal."
+      },
+      "cancelConfirmation": {
+        "title": "¿Descartar cambios?",
+        "message": "Tienes cambios no guardados. ¿Estás seguro de que deseas cancelar?",
+        "confirm": "Sí, descartar",
+        "cancel": "No, seguir editando"
+      },
+      "notifications": {
+        "workloadDeploySuccess": "¡Workload implementado con éxito!",
+        "deploymentSuccess": "¡Implementación exitosa!",
+        "helmDeploySuccess": "¡Chart de Helm implementado con éxito!",
+        "artifactHubDeploySuccess": "¡Implementación desde Artifact Hub exitosa!",
+        "credentialAddedSuccess": "¡Credencial agregada con éxito!",
+        "webhookAddedSuccess": "¡Webhook agregado con éxito!",
+        "deploymentConflict": "Error de conflicto: ¡ya hay una implementación en curso!",
+        "workloadAlreadyExists": "No se pudo crear {{kind}} {{name}} en el namespace {{namespace}}, el workload ya existe o el namespace {{namespace}} no fue encontrado.",
+        "unknownWorkloadExists": "No se pudo crear Unknown {{name}}, el workload ya existe.",
+        "helmDeployFailed": "Error de implementación: no se puede reutilizar un nombre que ya está en uso.",
+        "gitRepoError": "No se pudo clonar el repositorio, ¡verifica la URL y la ruta!",
+        "enterWorkloadLabel": "Por favor, introduce la etiqueta del workload.",
+        "invalidWorkloadLabel": "Solo puedes ingresar un valor. La clave es constante y está predeterminada como 'kubestellar.io/workload'.",
+        "enterGitRepo": "Por favor, introduce el repositorio Git.",
+        "enterPath": "Por favor, introduce la ruta.",
+        "enterRepoName": "Por favor, introduce el nombre del repositorio.",
+        "enterRepoUrl": "Por favor, introduce la URL del repositorio.",
+        "enterChartName": "Por favor, introduce el nombre del chart.",
+        "enterReleaseName": "Por favor, introduce el nombre del release.",
+        "enterNamespace": "Por favor, introduce un namespace.",
+        "enterYamlJson": "Por favor, introduce contenido YAML o JSON.",
+        "needMetadataName": "Al menos un documento debe tener 'metadata.name'"
+      }
+    }
+  },
+  "visualization": {
+    "policyDistribution": "{{count}} Conexiones",
+    "clusters": {
+      "edge": "Clúster de Borde",
+      "aiInference": "Clúster de Inferencia de IA",
+      "aiTraining": "Clúster de Entrenamiento de IA",
+      "service": "Clúster de Servicios",
+      "compute": "Clúster de Cómputo",
+      "descriptions": {
+        "edge": "Recursos de computación en el borde para procesamiento de baja latencia",
+        "aiInference": "Servicios de inferencia y predicción de modelos de IA en tiempo real",
+        "aiTraining": "Cómputo de alto rendimiento para entrenamiento de modelos de IA",
+        "service": "Microservicios principales y puntos finales de API",
+        "compute": "Recursos de cómputo de propósito general"
+      }
+    },
+    "title": "Visualización",
+    "controls": "Controles de Vista",
+    "zoom": "Zoom",
+    "searchResources": "Buscar Recursos"
+  },
+  "namespaces": {
+    "default": "predeterminado",
+    "create": "Crear Espacio de Nombres",
+    "select": "Seleccionar Espacio de Nombres"
+  },
+  "errors": {
+    "policyNameRequired": "El nombre de la política es obligatorio",
+    "policyNotFound": "Política {{name}} no encontrada",
+    "parseError": "No se puede analizar la respuesta de las políticas de vinculación",
+    "unexpectedFormat": "Formato de respuesta de API inesperado",
+    "error": "Error",
+    "required": "Este campo es obligatorio",
+    "invalidFormat": "Formato inválido",
+    "connectionFailed": "Conexión fallida",
+    "forbidden": "No tienes permiso para acceder a este recurso",
+    "serverError": "Ocurrió un error en el servidor",
+    "notFound": "Recurso no encontrado",
+    "timeout": "La solicitud superó el tiempo de espera",
+    "unknown": "Ocurrió un error desconocido",
+    "contextNameRequired": "El nombre del contexto es obligatorio",
+    "versionRequired": "La versión de KubeStellar es obligatoria",
+    "operationTimeout": "La operación superó el tiempo de espera. El proceso puede seguir ejecutándose en segundo plano.",
+    "failedToCreateContext": "No se pudo crear el contexto",
+    "creatingContext": "Error al crear el contexto:",
+    "websocketConnectionFailed": "No se pudo conectar con el servidor. Verifica tu conexión de red e intenta nuevamente.",
+    "websocketClosedUnexpectedly": "La conexión WebSocket se cerró inesperadamente",
+    "fetchingContexts": "Error al obtener los contextos:"
+  },
+  "contexts": {
+    "filterByContext": "Filtrar por contexto",
+    "allContexts": "Todos los Contextos",
+    "showingAllContexts": "Mostrando recursos de todos los contextos",
+    "filteringByContext": "Filtrando para mostrar solo el contexto {{context}}",
+    "createdSuccessfully": "¡Contexto creado con éxito!",
+    "websocketClosed": "Conexión WebSocket cerrada:",
+    "contextCreatedSuccess": "¡Contexto \"{{contextName}}\" creado con éxito!",
+    "createNewContext": "Crear Nuevo Contexto",
+    "contextName": "Nombre del Contexto",
+    "kubestellarVersion": "Versión de KubeStellar",
+    "creating": "Creando...",
+    "createContext": "Crear Contexto"
+  },
+  "policySelectionStore": {
+    "labelsAssigned": "Etiquetas asignadas automáticamente a {{itemType}} {{itemId}}",
+    "policyAssigned": "Política {{policyName}} asignada exitosamente a {{targetType}} {{targetName}}",
+    "clusterAlreadyAssigned": "El clúster {{targetName}} ya está asignado a la política {{policyName}}",
+    "workloadAlreadyAssigned": "La carga de trabajo {{targetName}} ya está asignada a la política {{policyName}}"
+  },
+  "auth": {
+    "login": {
+      "success": "Inicio de sesión exitoso",
+      "error": "Error de inicio de sesión:",
+      "successWithUser": "Inicio de sesión exitoso para el usuario: {{username}}. Redirigiendo a {{path}}",
+      "invalidCredentials": "Credenciales inválidas",
+      "authFailed": "Autenticación fallida. Verifica tus credenciales.",
+      "noToken": "No se recibió token del servidor"
+    }
+  },
+  "kubestellarData": {
+    "logging": {
+      "clustersApiResponse": "Respuesta de la API de Clústeres:",
+      "processedClusters": "Clústeres procesados:",
+      "errorFetchingClusters": "Error al obtener clústeres:",
+      "processedWorkloads": "Cargas de trabajo procesadas:",
+      "errorFetchingWorkloads": "Error al obtener cargas de trabajo:",
+      "errorFetchingPolicies": "Error al obtener políticas:",
+      "assigningPolicy": "Asignando política {{policyName}} a {{targetType}} {{targetName}}"
+    },
+    "errors": {
+      "failedFetchClusters": "Error al obtener los clústeres",
+      "failedFetchWorkloads": "Error al obtener las cargas de trabajo",
+      "failedFetchPolicies": "Error al obtener las políticas",
+      "errorAssigningPolicy": "Error al asignar la política:",
+      "failedToAssign": "Error al asignar {{policyName}} a {{targetType}} {{targetName}}"
+    },
+    "success": {
+      "successfullyAssigned": "Política {{policyName}} asignada exitosamente a {{targetType}} {{targetName}}"
+    },
+    "defaults": {
+      "unknown": "Desconocido",
+      "ready": "Listo",
+      "deployment": "Despliegue",
+      "defaultNamespace": "predeterminado",
+      "active": "Activo",
+      "alwaysMatch": "CoincidirSiempre"
+    }
+  },
+  "profileSection": {
+    "logoutMessage": "Has cerrado sesión correctamente.",
+    "account": "Cuenta",
+    "admin": "Administrador",
+    "helpSupport": "Ayuda y Soporte",
+    "raiseIssue": "Reportar un problema",
+    "signOut": "Cerrar sesión",
+    "changePassword": "Cambiar contraseña",
+    "changePasswordSubtitle": "Por favor, introduce tu contraseña actual y elige una nueva.",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "passwordChangedSuccess": "Contraseña cambiada con éxito.",
+    "passwordChangedError": "No se pudo cambiar la contraseña.",
+    "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden.",
+    "passwordRequired": "La contraseña es obligatoria.",
+    "errorCurrentPasswordIncorrect": "La contraseña actual es incorrecta",
+    "cancel": "Cancelar",
+    "changePasswordButton": "Cambiar contraseña",
+    "passwordsMatch": "¡Las contraseñas coinciden!"
+  },
+  "onboardingLogs": {
+    "onboarding": "Incorporación",
+    "complete": "Completado",
+    "connecting": "Conectando al flujo de registros...",
+    "errors": {
+      "websocketFailed": "Fallo en la conexión WebSocket. Por favor, inténtalo de nuevo.",
+      "connectionFailed": "No se pudo conectar al flujo de registros. Por favor, inténtalo de nuevo."
+    },
+    "status": {
+      "processing": "Procesando",
+      "verifying": "Verificando",
+      "available": "Disponible",
+      "completed": "Completado",
+      "error": "Error"
+    }
+  },
+  "newAppDialog": {
+    "title": "Crear Nueva Aplicación",
+    "githubUrl": "URL de GitHub",
+    "path": "Ruta",
+    "deploy": "Desplegar"
+  },
+  "navbar": {
+    "generateLog": "Generar Registro",
+    "toggleTheme": "Cambiar Tema",
+    "brandName": "KubestellarUI",
+    "its": "ITS",
+    "wds": "WDS",
+    "logFilename": "kubestellarui.log",
+    "generateLogError": "Error al generar el registro. Por favor, inténtalo de nuevo."
+  },
+  "manualImportTab": {
+    "loadingClusters": "Cargando clústeres disponibles...",
+    "errorLoadingClusters": "Error al cargar los clústeres",
+    "title": "Configuración Manual del Clúster",
+    "recommended": "Recomendado",
+    "description": "Esta es la forma más sencilla de conectar tu clúster de Kubernetes. Selecciona un clúster y haz clic en el botón 'Incorporar Clúster' para conectarlo directamente a tu plataforma sin comandos manuales.",
+    "selectCluster": "Selecciona un clúster para conectar",
+    "chooseCluster": "Elegir un clúster...",
+    "noClusters": "No hay clústeres disponibles",
+    "discoveredClusters": "Estos son los clústeres detectados en tu entorno. Selecciona uno para continuar.",
+    "refreshClustersList": "Actualizar lista de clústeres",
+    "howToConnect": "Cómo conectar tu clúster",
+    "steps": {
+      "selectCluster": "Selecciona un clúster del menú desplegable de arriba",
+      "clickOnboard": "Haz clic en el botón \"Incorporar Clúster\" para conectarlo directamente",
+      "autoOnboard": "Tu clúster se incorporará automáticamente sin comandos manuales"
+    },
+    "connectionError": "Error de Conexión",
+    "installationGuide": "Guía de Instalación:",
+    "installCommand": "Para instalar clusteradm, ejecuta:",
+    "commandCopied": "¡Comando de instalación copiado!",
+    "onboarding": "Incorporando...",
+    "onboardCluster": "Incorporar Clúster",
+    "clusterAddedSuccess": "El clúster ha sido añadido a la plataforma",
+    "clusterOnboardedSuccess": "Tu clúster {{clusterName}} ha sido incorporado con éxito. Ahora puedes:",
+    "nextSteps": {
+      "viewManage": "Ver y gestionar el clúster en el panel",
+      "deployApps": "Desplegar aplicaciones y servicios en el clúster",
+      "configureSettings": "Configurar y gestionar la configuración del clúster"
+    },
+    "viewDashboard": "Ver Clúster en el Panel",
+    "goToDashboard": "Ir al Panel"
+  },
+  "logModal": {
+    "connectedToStream": "Conectado al flujo de registros...",
+    "connectionClosed": "Registros Completos. Conexión cerrada.",
+    "retryConnection": "Conexión cerrada. Por favor, reintenta.",
+    "logs": "Registros",
+    "loadingLogs": "Cargando registros..."
+  },
+  "loadingFallback": {
+    "loadingContent": "Cargando contenido..."
+  },
+  "listView": {
+    "connecting": "Conectando al servidor...",
+    "receivingWorkloads": "Recibiendo cargas de trabajo...",
+    "receivedWorkloadsSoFar": "{{count}} cargas de trabajo recibidas hasta ahora...",
+    "allWorkloadsReceived": "Todas las {{count}} cargas de trabajo recibidas",
+    "connectionLost": "Conexión perdida. Mostrando {{count}} cargas de trabajo recibidas.",
+    "connectionError": "Conexión al servidor perdida o fallida. Probando método alternativo...",
+    "fetchingFallback": "Obteniendo recursos (método alternativo)...",
+    "invalidResponseFormat": "Formato de respuesta inválido del servidor",
+    "unknownError": "Ocurrió un error desconocido al obtener recursos.",
+    "errorLoading": "Error al cargar recursos",
+    "downloadLogs": "Descargar registros",
+    "namespace": "Espacio de Nombres",
+    "created": "Creado",
+    "filteredByContext": "Filtrado por contexto: {{context}}",
+    "showingResourceCount": "Mostrando {{showing}} de {{total}} recursos totales",
+    "resourceStats": "{{raw}} recursos sin procesar detectados, {{processed}} procesados",
+    "pagination": {
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "showing": "Mostrando de {{from}} a {{to}} de {{total}} entradas",
+      "filtered": " (filtrado por el contexto {{context}})"
+    },
+    "troubleshooting": {
+      "title": "Prueba estos pasos de solución de problemas:",
+      "step1": "1. Verifica que el servidor backend esté ejecutándose en http://localhost:4000",
+      "step2": "2. Verifica que la configuración CORS del servidor permita solicitudes desde http://localhost:5173",
+      "step3": "3. Si el servidor usa CORS con comodín (*), no puede aceptar solicitudes con credenciales",
+      "step4": "4. Verifica la consola del navegador para ver mensajes de error detallados"
+    },
+    "noWorkloads": {
+      "title": "No se Encontraron Cargas de Trabajo",
+      "noResourcesForContext": "No se encontraron recursos para el contexto {{context}}",
+      "resourcesFilteredOut": "Los recursos están disponibles pero fueron filtrados",
+      "getStarted": "Empieza creando tu primera carga de trabajo",
+      "resourcesAvailable": "{{count}} recursos disponibles en total, pero ninguno coincide con el filtro actual"
+    }
+  },
+  "kubeconfigImport": {
+    "title": "Subir Archivo Kubeconfig",
+    "description": "Importa tu clúster subiendo un archivo kubeconfig",
+    "dragAndDrop": "Arrastra y suelta tu archivo kubeconfig aquí",
+    "or": "- o -",
+    "browseFiles": "Explorar Archivos",
+    "importCluster": "Importar Clúster"
+  },
+  "importClusters": {
+    "title": "Importar Clúster",
+    "description": "Conecta tu clúster de Kubernetes a la plataforma",
+    "tabs": {
+      "quickConnect": "Conexión Rápida",
+      "kubeconfig": "Kubeconfig",
+      "apiUrl": "API/URL"
+    },
+    "abortDialog": {
+      "title": "Abortar Proceso de Incorporación",
+      "warning": "¿Estás seguro de que deseas abortar la incorporación? Se perderá todo el progreso.",
+      "continue": "Continuar Incorporación",
+      "confirm": "Sí, Abortar"
+    },
+    "fileUpload": {
+      "selected": "Archivo \"{{filename}}\" seleccionado. Funcionalidad de subida por implementar."
+    },
+    "icons": {
+      "quickConnect": "conexión rápida",
+      "kubeconfig": "kubeconfig",
+      "apiUrl": "api url",
+      "ariaLabel": "importar"
+    }
+  },
+  "groupPanel": {
+    "close": "Cerrar panel",
+    "tableAriaLabel": "Tabla de elementos del grupo",
+    "table": {
+      "name": "Nombre",
+      "groupKind": "Grupo/Tipo",
+      "syncOrder": "Orden de Sincronización",
+      "namespace": "Espacio de Nombres",
+      "createdAt": "Creado el"
+    },
+    "notAvailable": "N/D"
+  },
+  "downloadLogsModal": {
+    "title": "Descargar Registros",
+    "fileSize": "Tamaño del archivo",
+    "download": "Descargar"
+  },
+  "footer": {
+    "commit": "Commit",
+    "viewCommit": "Ver detalles del commit en GitHub"
+  },
+  "downloadLogsButton": {
+    "title": "Descargar registros",
+    "placeholder": {
+      "header": "Registros del pod {{podName}} en el espacio de nombres {{namespace}} del clúster {{cluster}}",
+      "generated": "Generado el: {{date}}",
+      "noContent": "Contenido del registro no disponible directamente. Por favor usa la funcionalidad de registros en streaming."
+    },
+    "toast": {
+      "success": "Registros descargados para {{podName}}",
+      "error": "Error al descargar los registros"
+    }
+  },
+  "detachmentLogsDialog": {
+    "title": "Desconectando Clúster: {{clusterName}}",
+    "logs": "Registros de Desconexión",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "connecting": "Conectando al servicio de desconexión...",
+    "completedSuccessfully": "La desconexión del clúster se completó con éxito.",
+    "done": "Hecho"
+  },
+  "addWebhookDialog": {
+    "copiedToClipboard": "¡Copiado al portapapeles!",
+    "setupWebhook": "Configurar Webhook",
+    "localDevSmee": "Desarrollo Local Usando Smee.io",
+    "installSmee": "Instala el Cliente de Smee (npm install -g smee-client).",
+    "goToSmee": "Ve a Smee.io y crea un nuevo canal.",
+    "copySmeeUrl": "Copia la URL generada por Smee.io.",
+    "runSmeeClient": "Ejecuta el cliente de Smee para reenviar webhooks a tu backend Go local:",
+    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+    "configureWebhookSmee": "Configura el webhook en tu servicio externo usando la URL de Smee.io.",
+    "startGoBackend": "Inicia tu backend Go y asegúrate de que escuche en /api/webhook.",
+    "testWebhook": "Prueba el webhook.",
+    "vmIp4000": "Webhook en una Máquina Virtual (VM) Usando IP:4000",
+    "ensureGoBackend4000": "Asegúrate de que tu backend Go se esté ejecutando en el puerto 4000 y manejando /api/webhook.",
+    "openPort4000": "Abre el puerto 4000 en tu firewall/grupo de seguridad (UFW, AWS, GCP o Azure).",
+    "findPublicIp": "Encuentra tu IP pública (curl ifconfig.me) y añádela.",
+    "configureWebhookVm": "Configura el webhook en tu servicio externo usando:",
+    "vmWebhookUrl": "http://tu-ip-publica:4000/api/webhook",
+    "vmWebhookUrlCopy": "http://<tu-ip-publica>:4000/api/webhook",
+    "testWebhookOtherMachine": "Prueba el webhook desde otra máquina.",
+    "keepGoServerRunning": "Mantén tu servidor Go ejecutándose en segundo plano (nohup o systemd)."
+  },
+  "cancelConfirmationDialog": {
+    "title": "Cancelar Creación de Carga de Trabajo",
+    "titlePolicy": "Cancelar Creación de Política",
+    "warning": "Advertencia",
+    "message": "¿Estás seguro de que deseas cancelar? Todos los cambios se perderán.",
+    "continueEditing": "Seguir Editando",
+    "yesCancel": "Sí, Cancelar"
+  },
+  "addCredentialsDialog": {
+    "title": "Agregar credenciales",
+    "usernameLabel": "Nombre de usuario de GitHub *",
+    "usernamePlaceholder": "por ejemplo, onkar717",
+    "usernameTip": "Ingresa tu nombre de usuario de GitHub",
+    "tokenLabel": "Token de acceso personal (PAT) *",
+    "tokenPlaceholder": "por ejemplo, ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tokenTip": "Ingresa tu token de acceso personal de GitHub"
+  },
+  "commandPalette": {
+    "ariaLabel": "Abrir paleta de comandos",
+    "title": "Paleta de comandos (Ctrl+K)",
+    "badge": "K",
+    "searchPlaceholder": "Buscar comandos...",
+    "noCommandsFound": "No se encontraron comandos. Intenta con otro término.",
+    "footer": {
+      "navigate": "navegar",
+      "select": "seleccionar",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "Navegación",
+      "visualizations": "Visualizaciones",
+      "help": "Ayuda",
+      "account": "Cuenta",
+      "admin": "Administración"
+    },
+    "commands": {
+      "home": {
+        "title": "Inicio",
+        "description": "Ir al panel principal"
+      },
+      "plugin": {
+        "title": "Gestor de Plugins",
+        "description": "Gestionar y supervisar los plugins de KubeStellar"
+      },
+      "clusters": {
+        "title": "Clusters Remotos",
+        "description": "Administrar clusters de Kubernetes"
+      },
+      "workloads": {
+        "title": "Cargas de trabajo",
+        "description": "Gestionar cargas de trabajo entre clusters"
+      },
+      "bindingPolicies": {
+        "title": "Políticas de vinculación",
+        "description": "Configurar políticas de vinculación"
+      },
+      "userManagement": {
+        "title": "Gestión de Usuarios",
+        "description": "Gestionar los usuarios del sistema y sus permisos"
+      },
+      "wdsTreeview": {
+        "title": "Vista de árbol WDS",
+        "description": "Visualizar la distribución de cargas de trabajo"
+      },
+      "wecsTreeview": {
+        "title": "Vista de árbol WECS",
+        "description": "Visualizar la estructura de cargas de trabajo desplegadas"
+      },
+      "documentation": {
+        "title": "Abrir documentación",
+        "description": "Abrir la documentación de KubeStellar"
+      },
+      "logout": {
+        "title": "Cerrar sesión",
+        "description": "Salir de tu cuenta",
+        "infoMessage": "Has cerrado sesión exitosamente."
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "Principal",
+      "management": "Administración",
+      "plugins": "Plugins",
+      "admin": "Administración"
+    },
+    "items": {
+      "home": "Inicio",
+      "remoteClusters": "Clústeres Remotos",
+      "stagedWorkloads": "Cargas de Trabajo Preparadas",
+      "bindingPolicies": "Políticas de Vinculación",
+      "deployedWorkloads": "Cargas de Trabajo Desplegadas",
+      "pluginManager": "Gestor de Plugins",
+      "userManagement": "Gestión de Usuarios"
+    }
+  },
+  "plugins": {
+    "title": "Gestor de Plugins",
+    "description": "Gestionar y supervisar los plugins de KubeStellar",
+    "install": {
+      "title": "Instalar Nuevo Plugin",
+      "methods": {
+        "local": "Ruta Local",
+        "github": "GitHub"
+      },
+      "localPlaceholder": "Ingresa la ruta del directorio local del plugin",
+      "githubPlaceholder": "https://github.com/user/plugin-repo",
+      "browse": "Explorar",
+      "installLocal": "Instalar desde Ruta Local",
+      "installGithub": "Instalar desde GitHub",
+      "localHelp": "Instala un plugin desde un directorio local en tu sistema. Haz clic en Explorar para seleccionar una carpeta o ingresa la ruta completa manualmente.",
+      "githubHelp": "La instalación desde GitHub aún no está implementada. Usa la instalación por ruta local por ahora.",
+      "placeholder": "URL del plugin, repositorio de GitHub o ruta local",
+      "button": "Instalar",
+      "installing": "Instalando...",
+      "success": "Plugin instalado con éxito",
+      "error": "Fallo al instalar el plugin"
+    },
+    "list": {
+      "title": "Plugins Instalados",
+      "noPlugins": "No hay plugins instalados",
+      "noPluginsDescription": "Empieza instalando tu primer plugin",
+      "searchPlaceholder": "Buscar plugins por nombre, autor o estado...",
+      "total": "Total",
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "card": {
+      "version": "v{{version}}",
+      "author": "por {{author}}",
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "loading": "Cargando",
+        "error": "Error"
+      },
+      "actions": {
+        "enable": "Habilitar",
+        "disable": "Deshabilitar",
+        "details": "Detalles",
+        "uninstall": "Desinstalar",
+        "reload": "Recargar",
+        "settings": "Configuración"
+      }
+    },
+    "details": {
+      "title": "Detalles del Plugin",
+      "information": "Información",
+      "configuration": "Configuración",
+      "routes": "Rutas API",
+      "widgets": "Widgets",
+      "assets": "Recursos",
+      "noRoutes": "No se definieron rutas API",
+      "noWidgets": "No hay widgets disponibles",
+      "noAssets": "No se cargaron recursos"
+    },
+    "notifications": {
+      "enableSuccess": "Plugin {{name}} habilitado con éxito",
+      "enableError": "Fallo al habilitar el plugin {{name}}",
+      "disableSuccess": "Plugin {{name}} deshabilitado con éxito",
+      "disableError": "Fallo al deshabilitar el plugin {{name}}",
+      "uninstallSuccess": "Plugin {{name}} desinstalado con éxito",
+      "uninstallError": "Fallo al desinstalar el plugin {{name}}",
+      "reloadSuccess": "Plugin {{name}} recargado con éxito",
+      "reloadError": "Fallo al recargar el plugin {{name}}",
+      "fetchError": "Fallo al cargar los datos del plugin"
+    },
+    "confirmations": {
+      "uninstall": {
+        "title": "Confirmar desinstalación del plugin",
+        "message": "¿Estás seguro de que deseas desinstalar \"{{name}}\"? Esta acción no se puede deshacer y eliminará todos los datos del plugin.",
+        "confirm": "Sí, desinstalar"
+      },
+      "disable": {
+        "title": "Confirmar deshabilitación del plugin",
+        "message": "Deshabilitar \"{{name}}\" detendrá toda la funcionalidad del plugin. Puedes volver a habilitarlo más tarde.",
+        "confirm": "Sí, deshabilitar"
+      }
+    },
+    "marketplace": {
+      "title": "Mercado de Plugins",
+      "browse": "Explorar Plugins Disponibles",
+      "featured": "Plugins Destacados",
+      "categories": "Categorías",
+      "search": "Buscar en el mercado..."
+    },
+    "development": {
+      "title": "Desarrollo de Plugins",
+      "createNew": "Crear Nuevo Plugin",
+      "template": "Usar Plantilla",
+      "documentation": "Ver Documentación",
+      "examples": "Ejemplos"
+    },
+    "feedback": {
+      "title": "Comparte tu opinión",
+      "rate": "Califica este complemento",
+      "comment": {
+        "title": "Tu comentario",
+        "placeholder": "Cuéntanos sobre tu experiencia"
+      },
+      "suggestion": {
+        "title": "Sugerencias de mejora",
+        "placeholder": "¿Alguna sugerencia para mejorar?"
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Gestión de Usuarios",
+      "subtitle": "Usuarios del Sistema",
+      "noUsers": "No se encontraron usuarios",
+      "noUsersDescription": "Aún no hay usuarios en el sistema. Haga clic en 'Agregar Usuario' para crear su primer usuario.",
+      "noPermissions": "Sin permisos asignados",
+      "actions": {
+        "addUser": "Agregar Usuario",
+        "editUser": "Editar Usuario",
+        "add": "Agregar Usuario",
+        "update": "Actualizar Usuario",
+        "delete": "Eliminar Usuario",
+        "edit": "Editar",
+        "deleteUser": "Eliminar Usuario"
+      },
+      "table": {
+        "username": "Nombre de Usuario",
+        "role": "Rol",
+        "permissions": "Permisos",
+        "actions": "Acciones"
+      },
+      "roles": {
+        "admin": "Administrador",
+        "user": "Usuario"
+      },
+      "permissions": {
+        "users": "Usuarios",
+        "resources": "Recursos",
+        "system": "Sistema",
+        "dashboard": "Panel de Control",
+        "levels": {
+          "read": "Lectura",
+          "write": "Escritura",
+          "none": "Ninguno"
+        }
+      },
+      "form": {
+        "username": "Nombre de Usuario",
+        "usernamePlaceholder": "Ingrese nombre de usuario",
+        "password": "Contraseña",
+        "passwordPlaceholder": "Ingrese contraseña",
+        "passwordOptional": "Contraseña (opcional)",
+        "passwordOptionalPlaceholder": "Ingrese nueva contraseña o deje en blanco",
+        "confirmPassword": "Confirmar Contraseña",
+        "confirmPasswordPlaceholder": "Confirme contraseña",
+        "isAdmin": "Acceso de Administrador",
+        "permissions": "Permisos de Componentes",
+        "cancel": "Cancelar",
+        "optional": "opcional"
+      },
+      "delete": {
+        "title": "Eliminar Usuario",
+        "confirmTitle": "Confirmar Eliminación",
+        "confirmMessage": "¿Está seguro de que desea eliminar el usuario \"{{username}}\"? Esta acción no se puede deshacer.",
+        "confirm": "Eliminar Usuario"
+      },
+      "errors": {
+        "fetchFailed": "Error al obtener usuarios",
+        "missingFields": "Por favor complete todos los campos requeridos",
+        "passwordMismatch": "Las contraseñas no coinciden",
+        "addFailed": "Error al agregar usuario",
+        "updateFailed": "Error al actualizar usuario",
+        "deleteFailed": "Error al eliminar usuario"
+      },
+      "success": {
+        "userAdded": "Usuario agregado correctamente",
+        "userUpdated": "Usuario actualizado correctamente",
+        "userDeleted": "Usuario eliminado correctamente"
+      }
+    }
+  }
+}

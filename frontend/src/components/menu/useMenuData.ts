@@ -1,0 +1,94 @@
+import {
+  HiOutlineCube,
+  HiOutlineCommandLine,
+  HiOutlinePuzzlePiece,
+  HiOutlineUsers,
+} from 'react-icons/hi2';
+import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
+import { useTranslation } from 'react-i18next';
+import { MenuItemData } from './Menu';
+import { useAdminCheck } from '../../hooks/useAuth';
+
+export const useMenuData = (): MenuItemData[] => {
+  const { t } = useTranslation();
+  const { isAdmin } = useAdminCheck();
+
+  const menuItems: MenuItemData[] = [
+    {
+      catalog: t('menu.catalogs.main'),
+      centered: true,
+      marginTop: '1rem',
+      listItems: [
+        {
+          isLink: true,
+          url: '/',
+          icon: MdDashboard,
+          label: t('menu.items.home'),
+        },
+      ],
+    },
+    {
+      catalog: t('menu.catalogs.management'),
+      centered: true,
+      marginTop: '1rem',
+      listItems: [
+        {
+          isLink: true,
+          url: '/its',
+          icon: HiOutlineCube,
+          label: t('menu.items.remoteClusters'),
+        },
+        {
+          isLink: true,
+          url: '/workloads/manage',
+          icon: HiOutlineCommandLine,
+          label: t('menu.items.stagedWorkloads'),
+        },
+        {
+          isLink: true,
+          url: '/bp/manage',
+          icon: MdPolicy,
+          label: t('menu.items.bindingPolicies'),
+        },
+        {
+          isLink: true,
+          url: '/wecs/treeview',
+          icon: MdAssuredWorkload,
+          label: t('menu.items.deployedWorkloads'),
+        },
+      ],
+    },
+    {
+      catalog: t('menu.catalogs.plugins'),
+      centered: true,
+      marginTop: '1rem',
+      listItems: [
+        {
+          isLink: true,
+          url: '/plugins/manage',
+          icon: HiOutlinePuzzlePiece,
+          label: t('menu.items.pluginManager'),
+        },
+      ],
+    },
+  ];
+
+  // Add User Management option only for admins
+  if (isAdmin) {
+    menuItems.push({
+      catalog: t('menu.catalogs.admin') || 'Admin',
+      centered: true,
+      marginTop: '1rem',
+      listItems: [
+        {
+          isLink: true,
+          url: '/admin/users',
+          icon: HiOutlineUsers,
+          label: t('menu.items.userManagement') || 'User Management',
+        },
+      ],
+    });
+  }
+
+  return menuItems;
+};

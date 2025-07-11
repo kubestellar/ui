@@ -12,8 +12,9 @@ import (
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	"github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/scheme"
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/redis"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -300,7 +301,7 @@ func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
 		}
 	}
 
-	log.LogInfo("ectractTargetCLusters - returning clusters", zap.Int("count", len(clusters)), zap.Strings("clusters", clusters))
+	log.LogInfo("extractTargetCLusters - returning clusters", zap.Int("count", len(clusters)), zap.Strings("clusters", clusters))
 	return clusters
 }
 
@@ -336,16 +337,20 @@ func watchOnBps() {
 			log.LogError("failed to watch on BP", zap.String("error", err.Error()))
 			return
 		}
+		start := time.Now()
 		eventChan := w.ResultChan()
 		for event := range eventChan {
 			switch event.Type {
 			case "MODIFIED":
+				telemetry.BindingPolicyReconciliationDuration.Observe(time.Since(start).Seconds())
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
 
 				// Determine the correct status
 				status := "inactive"
 				if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
 					status = "active"
+					telemetry.BindingPolicyReconciliationDuration.Observe(time.Since(start).Seconds())
+					telemetry.BindingPolicyWatchEvents.WithLabelValues("modified", "reconciled").Inc()
 					log.LogInfo("BP reconciled successfully - updating cache to active", zap.String("name", bp.Name))
 				} else {
 					log.LogInfo("BP reconciling - keeping as inactive", zap.String("name", bp.Name))
@@ -388,6 +393,7 @@ func watchOnBps() {
 
 			case "ADDED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+				telemetry.BindingPolicyWatchEvents.WithLabelValues("added", "success").Inc()
 				log.LogInfo("BP added: ", zap.String("name", bp.Name))
 
 				//  YAML content from stored policies or generate it
@@ -421,6 +427,8 @@ func watchOnBps() {
 
 			case "DELETED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+				telemetry.BindingPolicyWatchEvents.WithLabelValues("deleted", "success").Inc()
+
 				err := redis.DeleteBindingPolicy(bp.Name)
 				if err != nil {
 					log.LogError("Error deleting bp from redis", zap.String("error", err.Error()))
@@ -437,7 +445,10 @@ func watchOnBps() {
 // forces a refresh of all binding policies in the cache
 func RefreshBindingPolicyCache() error {
 	log.LogInfo("Refreshing binding policy cache from Kubernetes")
-
+	start := time.Now()
+	defer func() {
+		telemetry.BindingPolicyOperationDuration.WithLabelValues("cache_refresh").Observe(time.Since(start).Seconds())
+	}()
 	c, err := getClientForBp()
 	if err != nil {
 		log.LogError("failed to create client for cache refresh", zap.Error(err))
@@ -496,6 +507,7 @@ func RefreshBindingPolicyCache() error {
 	}
 
 	log.LogInfo("Completed binding policy cache refresh")
+	telemetry.BindingPolicyOperationsTotal.WithLabelValues("cache_refresh", "success").Inc()
 	return nil
 }
 

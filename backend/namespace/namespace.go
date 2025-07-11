@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/models"
-	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/models"
+	"github.com/kubestellar/ui/backend/redis"
+	"github.com/kubestellar/ui/backend/telemetry"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -726,9 +727,11 @@ func MultiContextWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("namespace", "upgrade_error").Inc()
 		http.Error(w, "Could not open WebSocket connection", http.StatusBadRequest)
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("namespace", contextName).Inc()
 	defer conn.Close()
 
 	// Allow client to switch contexts via messages
@@ -985,9 +988,11 @@ func GetAllContextNamespaces() (map[string][]NamespaceDetails, error) {
 func MultiContextNamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("namespace", "upgrade_error").Inc()
 		http.Error(w, "Could not open WebSocket connection", http.StatusBadRequest)
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("namespace", "all_contexts").Inc()
 	defer conn.Close()
 
 	// Monitor for client disconnections
@@ -1040,9 +1045,11 @@ func MultiContextNamespaceWebSocketHandler(w http.ResponseWriter, r *http.Reques
 func WatchAllContextsNamespaces(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("namespace", "upgrade_error").Inc()
 		http.Error(w, "Could not open WebSocket connection", http.StatusBadRequest)
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("namespace", "all_contexts_watch").Inc()
 	defer conn.Close()
 
 	// Create a context that cancels when the connection closes
@@ -1240,9 +1247,11 @@ func WatchNamespaceInContext(w http.ResponseWriter, r *http.Request) {
 	// Upgrade to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("namespace", "upgrade_error").Inc()
 		http.Error(w, "Could not open WebSocket connection", http.StatusBadRequest)
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("namespace", contextName).Inc()
 	defer conn.Close()
 
 	// Create a context that cancels when the client disconnects

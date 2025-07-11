@@ -9,11 +9,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/telemetry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	// "github.com/kubestellar/ui/backend/telemetry"
 )
 
 // ManagedClusterCondition represents a condition of a managed cluster
@@ -47,10 +49,11 @@ type ManagedClusterInfo struct {
 func GetManagedClustersHandler(c *gin.Context) {
 	// Get the hub context
 	hubContext := c.DefaultQuery("context", "its1")
-
+	startTime := time.Now()
 	// Get client config for the hub
 	_, restConfig, err := k8s.GetClientSetWithConfigContext(hubContext)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/new/clusters", "500").Inc()
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("Failed to create client: %v", err),
 		})
@@ -60,6 +63,7 @@ func GetManagedClustersHandler(c *gin.Context) {
 	// Create dynamic client from config
 	dynamicClient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/new/clusters", "500").Inc()
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("Failed to create dynamic client: %v", err),
 		})
@@ -76,12 +80,14 @@ func GetManagedClustersHandler(c *gin.Context) {
 	// List all managed clusters
 	clusters, err := listManagedClusters(dynamicClient, managedClusterGVR)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/new/clusters", "500").Inc()
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("Failed to list managed clusters: %v", err),
 		})
 		return
 	}
-
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/new/clusters").Observe(time.Since(startTime).Seconds())
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/new/clusters", "200").Inc()
 	c.JSON(200, gin.H{
 		"clusters": clusters,
 		"count":    len(clusters),
@@ -90,8 +96,10 @@ func GetManagedClustersHandler(c *gin.Context) {
 
 // GetManagedClusterHandler returns details of a specific managed cluster
 func GetManagedClusterHandler(c *gin.Context) {
+	startTime := time.Now()
 	clusterName := c.Param("name")
 	if clusterName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/clusters/:name", "400").Inc()
 		c.JSON(400, gin.H{
 			"error": "Cluster name is required",
 		})
@@ -118,6 +126,7 @@ func GetManagedClusterHandler(c *gin.Context) {
 	// Get client config for the hub
 	_, restConfig, err := k8s.GetClientSetWithConfigContext(hubContext)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/clusters/:name", "500").Inc()
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("Failed to create client: %v", err),
 		})
@@ -127,6 +136,7 @@ func GetManagedClusterHandler(c *gin.Context) {
 	// Create dynamic client from config
 	dynamicClient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/clusters/:name", "500").Inc()
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("Failed to create dynamic client: %v", err),
 		})
@@ -143,12 +153,14 @@ func GetManagedClusterHandler(c *gin.Context) {
 	// Get the managed cluster
 	cluster, err := getManagedCluster(dynamicClient, managedClusterGVR, clusterName)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/clusters/:name", "404").Inc()
 		c.JSON(404, gin.H{
 			"error": fmt.Sprintf("Failed to get managed cluster: %v", err),
 		})
 		return
 	}
-
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/clusters/:name").Observe(time.Since(startTime).Seconds())
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/clusters/:name", "200").Inc()
 	c.JSON(200, cluster)
 }
 

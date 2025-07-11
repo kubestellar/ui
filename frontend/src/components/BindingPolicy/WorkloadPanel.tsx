@@ -1,0 +1,2086 @@
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+} from 'react';
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Paper,
+  alpha,
+  Button,
+  Chip,
+  Tooltip,
+  InputBase,
+  IconButton,
+  LinearProgress,
+  useTheme as useMuiTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Zoom,
+  InputAdornment,
+  List,
+  ListItemText,
+  ListItemButton,
+  Divider,
+  Checkbox,
+  FormControlLabel,
+} from '@mui/material';
+import CancelButton from '../common/CancelButton';
+import { Workload } from '../../types/bindingPolicy';
+import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
+import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LabelIcon from '@mui/icons-material/Label';
+import { Tag, Tags } from 'lucide-react';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useBPQueries } from '../../hooks/queries/useBPQueries';
+import { toast } from 'react-hot-toast';
+import useTheme from '../../stores/themeStore';
+import { api } from '../../lib/api';
+import { BsTagFill } from 'react-icons/bs';
+import { AxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
+
+interface WorkloadPanelProps {
+  workloads: Workload[];
+  loading: boolean;
+  error?: string;
+  compact?: boolean;
+  onItemClick?: (workloadId: string) => void;
+}
+
+// Group representing a unique label key+value with workloads that share it
+interface LabelGroup {
+  key: string;
+  value: string;
+  workloads: Array<{
+    name: string;
+    kind: string;
+    namespace: string;
+  }>;
+}
+
+interface LabelEditDialogProps {
+  open: boolean;
+  onClose: () => void;
+  workload: Workload | null;
+  workloads: Workload[];
+  isBulkEdit: boolean;
+  onSave: (
+    workloadName: string,
+    namespace: string,
+    kind: string,
+    labels: { [key: string]: string }
+  ) => void;
+  onBulkSave: (workloads: Workload[], labels: { [key: string]: string }) => void;
+  isDark: boolean;
+  colors: ColorTheme;
+}
+
+interface SelectWorkloadDialogProps {
+  open: boolean;
+  onClose: () => void;
+  workloads: Workload[];
+  onSelectWorkload: (workload: Workload) => void;
+  onSelectWorkloads: (workloads: Workload[]) => void;
+  isDark: boolean;
+  colors: ColorTheme;
+}
+
+interface ColorTheme {
+  primary: string;
+  primaryLight: string;
+  primaryDark: string;
+  secondary: string;
+  white: string;
+  background: string;
+  paper: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+  success: string;
+  warning: string;
+  error: string;
+  disabled: string;
+}
+
+const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
+  workloads: propWorkloads,
+  loading: propLoading,
+  error: propError,
+  compact = false,
+  onItemClick,
+}) => {
+  const muiTheme = useMuiTheme();
+  const theme = useTheme(state => state.theme); // Get custom theme state (dark/light)
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedWorkload, setSelectedWorkload] = useState<Workload | null>(null);
+  const [selectedWorkloads, setSelectedWorkloads] = useState<Workload[]>([]);
+  const [isBulkEdit, setIsBulkEdit] = useState(false);
+  const [loadingWorkloadEdit, setLoadingWorkloadEdit] = useState<string | null>(null);
+  const [selectWorkloadDialogOpen, setSelectWorkloadDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
+
+  const isDarkTheme = theme === 'dark';
+
+  // Use the SSE API to get workload data
+  const { useWorkloadSSE } = useBPQueries();
+  const { state, startSSEConnection, extractWorkloads } = useWorkloadSSE();
+
+  // Use the SSE or prop workloads based on SSE connection status
+  const panelWorkloads = React.useMemo(() => {
+    if (state.status === 'success' && state.data) {
+      const extracted = extractWorkloads();
+      // console.log('Extracted workloads by useWorkloadSSE:', extracted.length, extracted); // Previous log
+      return extracted;
+    }
+    // console.log('Using propWorkloads:', propWorkloads.length, propWorkloads); // Previous log
+    return propWorkloads;
+  }, [state.status, state.data, propWorkloads, extractWorkloads]);
+
+  useEffect(() => {
+    console.log('[WorkloadPanel] panelWorkloads updated:', panelWorkloads.length, panelWorkloads);
+  }, [panelWorkloads]);
+
+  // Use SSE or prop workloads based on SSE connection status
+  const loading = (state.status === 'loading' || state.status === 'idle') && propLoading;
+  const error = state.error?.message || propError;
+
+  // Start SSE connection when component mounts or refresh is triggered
+  useEffect(() => {
+    console.log('Starting SSE connection, refreshTrigger:', refreshTrigger);
+    const cleanup = startSSEConnection();
+    return cleanup;
+  }, [startSSEConnection, refreshTrigger]);
+
+  const refreshWorkloads = useCallback(() => {
+    console.log('Manually refreshing workloads data');
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  const handleCreateWorkload = () => {
+    navigate('/workloads/manage?create=true');
+  };
+
+  const handleAddLabels = () => {
+    if (panelWorkloads.length > 0) {
+      setSelectWorkloadDialogOpen(true);
+      setIsBulkEdit(false);
+      setSelectedWorkloads([]);
+    } else {
+      toast.error(t('clusters.labels.noLabelsAvailable'));
+    }
+  };
+
+  const handleEditSpecificWorkload = (workload: Workload) => {
+    console.log('handleEditSpecificWorkload called with:', JSON.stringify(workload, null, 2));
+
+    if (workload.kind === 'Namespace') {
+      console.log('===== NAMESPACE EDIT DEBUG =====');
+      console.log('Original workload object:', JSON.stringify(workload, null, 2));
+
+      const namespaceWorkload = JSON.parse(JSON.stringify(workload));
+
+      // Namespaces don't have a namespace themselves
+      namespaceWorkload.namespace = '';
+
+      // Log the namespace object for debugging
+      console.log('Modified namespace workload:', JSON.stringify(namespaceWorkload, null, 2));
+      console.log('===== END NAMESPACE EDIT DEBUG =====');
+
+      setSelectedWorkload(namespaceWorkload);
+    } else {
+      setSelectedWorkload(workload);
+    }
+    setEditDialogOpen(true);
+    setSelectWorkloadDialogOpen(false);
+    setIsBulkEdit(false);
+  };
+
+  const handleEditMultipleWorkloads = (workloads: Workload[]) => {
+    console.log('handleEditMultipleWorkloads called with:', JSON.stringify(workloads, null, 2));
+
+    if (workloads.length === 0) {
+      toast.error('No workloads selected');
+      return;
+    }
+
+    setSelectedWorkloads(workloads);
+    setEditDialogOpen(true);
+    setSelectWorkloadDialogOpen(false);
+    setIsBulkEdit(true);
+  };
+
+  const handleSaveLabels = async (
+    workloadName: string,
+    namespace: string,
+    kind: string,
+    labels: { [key: string]: string }
+  ) => {
+    setLoadingWorkloadEdit(workloadName);
+
+    try {
+      // Special handling for Namespace resources
+      if (kind === 'Namespace') {
+        console.log('===== NAMESPACE LABELS DEBUG =====');
+        console.log('Input parameters:');
+        console.log('- workloadName:', workloadName);
+        console.log('- namespace:', namespace);
+        console.log('- kind:', kind);
+        console.log('- labels:', JSON.stringify(labels, null, 2));
+
+        // Get the current namespace details
+        const getUrl = `/api/namespaces/${workloadName}`;
+        console.log('Fetching namespace from:', getUrl);
+
+        const getResponse = await api.get(getUrl);
+        console.log('Namespace API response status:', getResponse.status);
+        console.log('Namespace data:', JSON.stringify(getResponse.data, null, 2));
+
+        const currentResource = getResponse.data;
+
+        if (!currentResource) {
+          console.error('No namespace data returned from API');
+          throw new Error(`Namespace ${workloadName} not found`);
+        }
+
+        // For namespaces, the labels are at the top level, not in metadata
+        const updatedResource = {
+          ...currentResource,
+          // Update the labels field directly
+          labels: labels,
+        };
+
+        const updateUrl = `/api/namespaces/update/${workloadName}`;
+        console.log(`Sending update to: ${updateUrl}`);
+
+        try {
+          const updateResponse = await api.put(updateUrl, updatedResource);
+          console.log('Update response status:', updateResponse.status);
+          console.log('Update response data:', JSON.stringify(updateResponse.data, null, 2));
+
+          console.log('Forcing refresh of workload data...');
+
+          try {
+            console.log('Attempting direct label update as fallback...');
+
+            // Create a simplified update payload with just the labels
+            const directUpdatePayload = {
+              name: workloadName,
+              labels: labels,
+            };
+
+            // Make a direct update request
+            const directResponse = await api.put(
+              `/api/namespaces/update/${workloadName}`,
+              directUpdatePayload
+            );
+            console.log('Direct update response:', JSON.stringify(directResponse.data, null, 2));
+          } catch (directError) {
+            console.error('Failed direct label update:', directError);
+          }
+
+          // small delay to allow the backend to process the update, then fetch fresh data
+          setTimeout(async () => {
+            try {
+              // Call API directly to refresh namespace data
+              const refreshResponse = await api.get(`/api/namespaces/${workloadName}`);
+              console.log(
+                'Refresh namespace response:',
+                JSON.stringify(refreshResponse.data, null, 2)
+              );
+
+              // Check if the labels in the fresh data match what we tried to set
+              const freshLabels = refreshResponse.data?.labels || {};
+              const missingLabels = Object.entries(labels).filter(
+                ([key, value]) => freshLabels[key] !== value
+              );
+
+              if (missingLabels.length > 0) {
+                console.warn('Some labels are missing in the fresh data:', missingLabels);
+                const finalPayload = {
+                  name: workloadName,
+                  labels: {
+                    ...freshLabels,
+                    ...labels,
+                  },
+                };
+                const finalResponse = await api.put(
+                  `/api/namespaces/update/${workloadName}`,
+                  finalPayload
+                );
+                console.log('Final update response:', JSON.stringify(finalResponse.data, null, 2));
+              } else {
+                console.log('All labels were successfully set');
+              }
+            } catch (refreshError) {
+              console.error('Error refreshing namespace data:', refreshError);
+            }
+
+            // Trigger a global refresh after all attempts
+            refreshWorkloads();
+          }, 1000);
+
+          console.log('===== END NAMESPACE LABELS DEBUG =====');
+        } catch (error) {
+          const updateError = error as AxiosError;
+          console.error('Update API error:', updateError);
+          console.error('Update API error response:', updateError.response?.data);
+          console.log('===== END NAMESPACE LABELS DEBUG (WITH ERROR) =====');
+          throw updateError;
+        }
+
+        toast.success(`Labels updated for Namespace ${workloadName}`, {
+          icon: '🏷️',
+          style: {
+            borderRadius: '10px',
+            background: isDarkTheme ? '#1e293b' : '#ffffff',
+            color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+            border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+          },
+        });
+      } else {
+        const kindToPluralMap: Record<string, string> = {
+          Deployment: 'deployments',
+          StatefulSet: 'statefulsets',
+          DaemonSet: 'daemonsets',
+          Pod: 'pods',
+          Service: 'services',
+          ConfigMap: 'configmaps',
+          Secret: 'secrets',
+          // need to add more mappings here
+        };
+
+        const pluralForm = kindToPluralMap[kind] || `${kind.toLowerCase()}s`;
+
+        // Get the current resource
+        const getUrl = `/api/${pluralForm}/${namespace}/${workloadName}`;
+        const getResponse = await api.get(getUrl);
+        const currentResource = getResponse.data;
+
+        if (!currentResource) {
+          throw new Error(`Resource ${kind}/${namespace}/${workloadName} not found`);
+        }
+
+        // Update the resource with new labels
+        const updatedResource = {
+          ...currentResource,
+          metadata: {
+            ...currentResource.metadata,
+            labels: labels, // Set the new labels directly
+          },
+        };
+
+        // Update the resource
+        const updateUrl = `/api/${pluralForm}/${namespace}/${workloadName}`;
+        console.log(`Updating resource at: ${updateUrl}`, updatedResource);
+        await api.put(updateUrl, updatedResource);
+
+        toast.success(`Labels updated for ${kind} ${workloadName}`, {
+          icon: '🏷️',
+          style: {
+            borderRadius: '10px',
+            background: isDarkTheme ? '#1e293b' : '#ffffff',
+            color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+            border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+          },
+        });
+      }
+
+      // Schedule a refresh after the save is complete
+      setTimeout(() => {
+        refreshWorkloads();
+      }, 1000);
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      console.error('Error updating workload labels:', axiosError);
+      toast.error(`Failed to update labels for ${kind} ${workloadName}`, {
+        icon: '❌',
+        style: {
+          borderRadius: '10px',
+          background: isDarkTheme ? '#1e293b' : '#ffffff',
+          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+        },
+      });
+    } finally {
+      setLoadingWorkloadEdit(null);
+    }
+  };
+
+  const handleBulkSaveLabels = async (workloads: Workload[], labels: { [key: string]: string }) => {
+    if (workloads.length === 0) return;
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    setLoadingWorkloadEdit('bulk-edit');
+
+    for (const workload of workloads) {
+      try {
+        // Special handling for Namespace resources
+        if (workload.kind === 'Namespace') {
+          // Get the current namespace details
+          const getUrl = `/api/namespaces/${workload.name}`;
+          const getResponse = await api.get(getUrl);
+          const currentResource = getResponse.data;
+
+          if (!currentResource) {
+            console.error(`No namespace data returned for ${workload.name}`);
+            failureCount++;
+            continue;
+          }
+
+          const updatedResource = {
+            ...currentResource,
+            labels: {
+              ...currentResource.labels,
+              ...labels, // Only add/update the new labels, keep existing ones
+            },
+          };
+
+          const updateUrl = `/api/namespaces/update/${workload.name}`;
+          await api.put(updateUrl, updatedResource);
+          successCount++;
+        } else {
+          const kindToPluralMap: Record<string, string> = {
+            Deployment: 'deployments',
+            StatefulSet: 'statefulsets',
+            DaemonSet: 'daemonsets',
+            Pod: 'pods',
+            Service: 'services',
+            ConfigMap: 'configmaps',
+            Secret: 'secrets',
+            // need to add more mappings here
+          };
+
+          const pluralForm = kindToPluralMap[workload.kind] || `${workload.kind.toLowerCase()}s`;
+          const namespace = workload.namespace || 'default';
+
+          // Get the current resource
+          const getUrl = `/api/${pluralForm}/${namespace}/${workload.name}`;
+          const getResponse = await api.get(getUrl);
+          const currentResource = getResponse.data;
+
+          if (!currentResource) {
+            console.error(`Resource ${workload.kind}/${namespace}/${workload.name} not found`);
+            failureCount++;
+            continue;
+          }
+
+          // Update the resource with new labels
+          const updatedResource = {
+            ...currentResource,
+            metadata: {
+              ...currentResource.metadata,
+              labels: {
+                ...(currentResource.metadata.labels || {}),
+                ...labels, // Only add/update the new labels, keep existing ones
+              },
+            },
+          };
+
+          // Update the resource
+          const updateUrl = `/api/${pluralForm}/${namespace}/${workload.name}`;
+          await api.put(updateUrl, updatedResource);
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Error updating workload ${workload.kind}/${workload.name}:`, error);
+        failureCount++;
+      }
+    }
+
+    if (successCount > 0 && failureCount === 0) {
+      toast.success(`Labels updated for all ${successCount} resources`, {
+        icon: '🏷️',
+        style: {
+          borderRadius: '10px',
+          background: isDarkTheme ? '#1e293b' : '#ffffff',
+          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+        },
+      });
+    } else if (successCount > 0 && failureCount > 0) {
+      toast(`Labels updated for ${successCount} resources, failed for ${failureCount} resources`, {
+        icon: '⚠️',
+        style: {
+          borderRadius: '10px',
+          background: isDarkTheme ? '#1e293b' : '#ffffff',
+          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+        },
+      });
+    } else {
+      toast.error(`Failed to update labels for all ${failureCount} resources`, {
+        icon: '❌',
+        style: {
+          borderRadius: '10px',
+          background: isDarkTheme ? '#1e293b' : '#ffffff',
+          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+        },
+      });
+    }
+
+    setLoadingWorkloadEdit(null);
+
+    // Schedule a refresh after the save is complete
+    setTimeout(() => {
+      refreshWorkloads();
+    }, 1000);
+  };
+
+  // Colors for theming the dialogs
+  const colors = {
+    primary: muiTheme.palette.secondary.main,
+    primaryLight: muiTheme.palette.secondary.light,
+    primaryDark: muiTheme.palette.secondary.dark,
+    secondary: muiTheme.palette.primary.main,
+    white: '#ffffff',
+    background: isDarkTheme ? '#0f172a' : '#ffffff',
+    paper: isDarkTheme ? '#1e293b' : '#f8fafc',
+    text: isDarkTheme ? '#f1f5f9' : '#1e293b',
+    textSecondary: isDarkTheme ? '#94a3b8' : '#64748b',
+    border: isDarkTheme ? '#334155' : '#e2e8f0',
+    success: '#67c073',
+    warning: '#ffb347',
+    error: '#ff6b6b',
+    disabled: isDarkTheme ? '#475569' : '#94a3b8',
+  };
+
+  // Extract from workloads
+  const uniqueLabels = React.useMemo(() => {
+    const labelMap: Record<string, LabelGroup> = {};
+
+    // Define system labels to filter out
+    const systemLabelPrefixes = [
+      'pod-template-hash',
+      'controller-revision-hash',
+      'statefulset.kubernetes.io/',
+      'batch.kubernetes.io/',
+      'controller-uid',
+      'kubernetes.io/config.',
+      'pod-template-generation',
+    ];
+
+    // Define special labels that should never be filtered out
+    const importantLabelKeys = [
+      'app.kubernetes.io/part-of',
+      'app.kubernetes.io/name',
+      'app.kubernetes.io/instance',
+      'app.kubernetes.io/component',
+      'app.kubernetes.io/version',
+      'app',
+      'app.kubernetes.io/created-by',
+      'app.kubernetes.io/team',
+      'kubestellar.io/workload',
+    ];
+
+    panelWorkloads.forEach(workload => {
+      if (workload.labels && Object.keys(workload.labels).length > 0) {
+        Object.entries(workload.labels).forEach(([key, value]) => {
+          // Special handling for kubernetes.io/metadata.name label
+          if (key === 'kubernetes.io/metadata.name') {
+            // Only filter out if it's not a namespace resource
+            if (workload.kind !== 'Namespace') {
+              return;
+            }
+          }
+
+          const isSystemLabel = systemLabelPrefixes.some(prefix => key.startsWith(prefix));
+
+          // Don't filter out system labels if they're in the important list
+          if (isSystemLabel && !importantLabelKeys.includes(key)) {
+            return;
+          }
+
+          const labelId = `${key}:${value}`;
+
+          // Initialize the label group if it doesn't exist
+          if (!labelMap[labelId]) {
+            labelMap[labelId] = {
+              key,
+              value,
+              workloads: [],
+            };
+          }
+
+          // Check if this workload is already in the group
+          const existingWorkload = labelMap[labelId].workloads.find(
+            w =>
+              w.name === workload.name &&
+              w.kind === workload.kind &&
+              (w.namespace || '') === (workload.namespace || '')
+          );
+          if (!existingWorkload) {
+            labelMap[labelId].workloads.push({
+              name: workload.name,
+              kind: workload.kind,
+              namespace: workload.namespace || '',
+            });
+          }
+        });
+      }
+    });
+
+    return Object.values(labelMap).sort((a, b) => {
+      // Give priority to kubestellar.io/workload labels
+      if (a.key === 'kubestellar.io/workload' && b.key !== 'kubestellar.io/workload') return -1;
+      if (b.key === 'kubestellar.io/workload' && a.key !== 'kubestellar.io/workload') return 1;
+
+      // Then sort by number of workloads
+      if (b.workloads.length !== a.workloads.length) {
+        return b.workloads.length - a.workloads.length;
+      }
+
+      return a.key.localeCompare(b.key);
+    });
+  }, [panelWorkloads]);
+
+  // Filter labels based on search term
+  const filteredLabels = React.useMemo(() => {
+    if (!searchTerm) return uniqueLabels;
+
+    return uniqueLabels.filter(
+      label =>
+        label.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        label.value.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [uniqueLabels, searchTerm]);
+
+  // Render a label item - modified to use Box instead of Draggable
+  const renderLabelItem = (labelGroup: LabelGroup) => {
+    // Use first workload for the item ID
+    const firstWorkload = labelGroup.workloads[0];
+    const itemId = `label-${labelGroup.key}:${labelGroup.value}`;
+
+    // Check if this item is in the canvas
+    const { canvasEntities } = usePolicySelectionStore.getState();
+    const isInCanvas = canvasEntities.workloads.includes(itemId);
+
+    // Check if this is from a cluster-scoped resource
+    const isClusterScoped = firstWorkload.namespace === '';
+    const workloadObjects = labelGroup.workloads
+      .map(w =>
+        panelWorkloads.find(
+          workload =>
+            workload.name === w.name &&
+            workload.kind === w.kind &&
+            (workload.namespace || '') === (w.namespace || '')
+        )
+      )
+      .filter((w): w is Workload => w !== undefined);
+
+    // Sort workloads by kind for consistent display
+    const sortedWorkloads = [...workloadObjects].sort((a, b) => {
+      // Put Namespace first
+      if (a.kind === 'Namespace') return -1;
+      if (b.kind === 'Namespace') return 1;
+      // Then sort by kind
+      return a.kind.localeCompare(b.kind);
+    });
+
+    return (
+      <Box
+        key={`${labelGroup.key}:${labelGroup.value}`}
+        onClick={e => {
+          e.stopPropagation();
+          if (onItemClick) {
+            console.log('Workload clicked:', itemId);
+            console.log(`Label details - key: "${labelGroup.key}", value: "${labelGroup.value}"`);
+            console.log('Associated workloads:', sortedWorkloads);
+
+            // Check if this item is already in the canvas
+            if (isInCanvas) {
+              console.log(`⚠️ Workload ${itemId} is already in the canvas`);
+              return;
+            }
+
+            onItemClick(itemId);
+          }
+        }}
+        sx={{
+          p: 1,
+          m: compact ? 0.5 : 1,
+          borderRadius: 1,
+          backgroundColor: isDarkTheme
+            ? 'rgba(30, 41, 59, 0.8)'
+            : muiTheme.palette.background.paper,
+          border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : muiTheme.palette.divider}`,
+          boxShadow: 0,
+          cursor: 'pointer',
+          position: 'relative',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: isDarkTheme
+              ? 'rgba(30, 41, 59, 0.95)'
+              : alpha(muiTheme.palette.secondary.main, 0.1),
+            boxShadow: 2,
+            transform: 'translateY(-2px)',
+          },
+          ...(isClusterScoped && {
+            borderLeft: `3px solid ${isDarkTheme ? muiTheme.palette.warning.dark : muiTheme.palette.warning.main}`,
+          }),
+        }}
+      >
+        {/* Label key as the primary display */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Tooltip
+            title={
+              <React.Fragment>
+                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                  Resource Types:
+                </Typography>
+                <div style={{ marginTop: 4 }}>
+                  {Array.from(new Set(sortedWorkloads.map(w => w.kind))).join(', ')}
+                </div>
+              </React.Fragment>
+            }
+            arrow
+          >
+            <Chip
+              size="small"
+              label={
+                sortedWorkloads.length > 1
+                  ? 'Multiple Resources'
+                  : isClusterScoped
+                    ? `${sortedWorkloads[0].kind}`
+                    : sortedWorkloads[0].kind
+              }
+              sx={{
+                fontSize: '0.75rem',
+                maxWidth: '70%',
+                height: 24,
+                '& .MuiChip-label': {
+                  px: 1,
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                },
+                bgcolor: isClusterScoped
+                  ? isDarkTheme
+                    ? alpha(muiTheme.palette.warning.dark, 0.2)
+                    : alpha(muiTheme.palette.warning.main, 0.1)
+                  : isDarkTheme
+                    ? alpha(muiTheme.palette.secondary.dark, 0.2)
+                    : alpha(muiTheme.palette.secondary.main, 0.1),
+                color: isClusterScoped
+                  ? isDarkTheme
+                    ? muiTheme.palette.warning.light
+                    : muiTheme.palette.warning.main
+                  : isDarkTheme
+                    ? muiTheme.palette.secondary.light
+                    : muiTheme.palette.secondary.main,
+                fontWeight: 500,
+              }}
+            />
+          </Tooltip>
+
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Tooltip
+              title={`${sortedWorkloads.length} resource${sortedWorkloads.length !== 1 ? 's' : ''}`}
+            >
+              <Chip
+                size="small"
+                label={`${sortedWorkloads.length}`}
+                sx={{
+                  fontSize: '0.8rem',
+                  height: 16,
+                  '& .MuiChip-label': { px: 0.5 },
+                  bgcolor: isDarkTheme
+                    ? alpha(muiTheme.palette.info.dark, 0.2)
+                    : alpha(muiTheme.palette.info.main, 0.1),
+                  color: isDarkTheme ? muiTheme.palette.info.light : muiTheme.palette.info.main,
+                }}
+              />
+            </Tooltip>
+          </Box>
+        </Box>
+
+        {/* Show resource list for multiple resources */}
+        <Box sx={{ mt: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
+              mb: 0.5,
+            }}
+          >
+            Resources:
+          </Typography>
+          {sortedWorkloads.map(w => (
+            <Chip
+              key={`${w.kind}-${w.namespace}-${w.name}`}
+              size="small"
+              label={`${w.kind}${w.namespace ? ` (${w.namespace})` : ''}`}
+              sx={{
+                fontSize: '0.75rem',
+                height: 20,
+                mr: 0.5,
+                mb: 0.5,
+                bgcolor: isDarkTheme
+                  ? alpha(muiTheme.palette.primary.dark, 0.2)
+                  : alpha(muiTheme.palette.primary.main, 0.1),
+                color: isDarkTheme ? muiTheme.palette.primary.light : muiTheme.palette.primary.main,
+              }}
+            />
+          ))}
+        </Box>
+
+        <Box sx={{ mt: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              fontSize: '0.75rem',
+              fontFamily: 'monospace',
+              backgroundColor: isDarkTheme
+                ? 'rgba(255, 255, 255, 0.1)'
+                : alpha(muiTheme.palette.grey[500], 0.1),
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : muiTheme.palette.text.secondary,
+              padding: '4px 8px',
+              borderRadius: '12px',
+              border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.2)' : alpha(muiTheme.palette.grey[500], 0.2)}`,
+              wordBreak: 'break-all',
+              whiteSpace: 'normal',
+              lineHeight: 1.2,
+            }}
+          >
+            {labelGroup.key} = {labelGroup.value}
+          </Typography>
+        </Box>
+
+        {isInCanvas && (
+          <CheckCircleIcon
+            sx={{
+              position: 'absolute',
+              bottom: 4,
+              right: 4,
+              fontSize: '1.2rem',
+              color: muiTheme.palette.success.main,
+              backgroundColor: isDarkTheme
+                ? 'rgba(17, 25, 40, 0.8)'
+                : alpha(muiTheme.palette.background.paper, 0.7),
+              borderRadius: '50%',
+            }}
+          />
+        )}
+      </Box>
+    );
+  };
+
+  return (
+    <Paper
+      elevation={2}
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        borderRadius: 2,
+        backgroundColor: isDarkTheme ? 'rgba(17, 25, 40, 0.8)' : muiTheme.palette.background.paper,
+        border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+        backdropFilter: 'blur(10px)',
+      }}
+    >
+      <Box
+        sx={{
+          p: compact ? 1 : 2,
+          backgroundColor: isDarkTheme ? 'rgba(37, 99, 235, 0.9)' : muiTheme.palette.secondary.main,
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+          {showSearch ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                borderRadius: 1,
+                px: 1,
+                mr: 1,
+                bgcolor: alpha(muiTheme.palette.common.white, 0.15),
+                flexGrow: 1,
+              }}
+            >
+              <InputBase
+                placeholder={
+                  t('common.search') + ' ' + t('bindingPolicy.labels.title').toLowerCase()
+                }
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                sx={{
+                  color: 'white',
+                  flexGrow: 1,
+                  '& .MuiInputBase-input': {
+                    py: 0.5,
+                  },
+                }}
+                autoFocus
+              />
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setSearchTerm('');
+                  setShowSearch(false);
+                }}
+                sx={{
+                  color: 'white',
+                  p: 0.25,
+                  '&:hover': {
+                    backgroundColor: isDarkTheme
+                      ? 'rgba(255, 255, 255, 0.15)'
+                      : 'rgba(255, 255, 255, 0.25)',
+                  },
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          ) : (
+            <Typography variant={compact ? 'subtitle1' : 'h6'}>
+              {t('bindingPolicy.labels.title')}
+            </Typography>
+          )}
+          {!showSearch && !compact && (
+            <IconButton
+              size="small"
+              sx={{
+                ml: 1,
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: isDarkTheme
+                    ? 'rgba(255, 255, 255, 0.15)'
+                    : 'rgba(255, 255, 255, 0.25)',
+                },
+              }}
+              onClick={() => {
+                setShowSearch(true);
+                setSearchTerm('kubestellar.io/workload');
+              }}
+            >
+              <SearchIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+        {!compact && (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {/* "Add Labels" button */}
+            <Button
+              variant="contained"
+              endIcon={<BsTagFill />}
+              onClick={handleAddLabels}
+              size="small"
+              sx={{
+                bgcolor: 'white',
+                color: isDarkTheme ? 'rgba(37, 99, 235, 0.9)' : muiTheme.palette.secondary.main,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                },
+              }}
+            >
+              {t('clusters.labels.add')}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateWorkload}
+              size="small"
+              sx={{
+                bgcolor: 'white',
+                color: isDarkTheme ? 'rgba(37, 99, 235, 0.9)' : muiTheme.palette.secondary.main,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                },
+              }}
+            >
+              {t('common.create')}
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      {/* Show progress bar during SSE loading */}
+      {state.status === 'loading' && (
+        <Box sx={{ width: '100%', height: '4px' }}>
+          <LinearProgress
+            variant="determinate"
+            value={state.progress}
+            sx={{
+              backgroundColor: isDarkTheme
+                ? alpha(muiTheme.palette.primary.dark, 0.2)
+                : alpha(muiTheme.palette.primary.main, 0.1),
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: isDarkTheme
+                  ? muiTheme.palette.primary.light
+                  : muiTheme.palette.primary.main,
+              },
+            }}
+          />
+        </Box>
+      )}
+
+      <Box
+        sx={{
+          p: compact ? 0.5 : 1,
+          overflow: 'auto',
+          flexGrow: 1,
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+          scrollbarWidth: 'none',
+          '-ms-overflow-style': 'none',
+          backgroundColor: isDarkTheme ? 'rgba(17, 25, 40, 0.8)' : 'transparent',
+        }}
+      >
+        {loading && !state.data ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress
+              size={30}
+              sx={{
+                color: isDarkTheme ? '#60a5fa' : undefined,
+              }}
+            />
+          </Box>
+        ) : error ? (
+          <Typography color="error" sx={{ p: 2 }}>
+            {error}
+          </Typography>
+        ) : panelWorkloads.length === 0 ? (
+          <Typography
+            sx={{
+              p: 2,
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
+              textAlign: 'center',
+            }}
+          >
+            {state.status === 'loading'
+              ? t('bindingPolicy.loadingResources')
+              : t('clusters.labels.noLabelsAvailable')}
+          </Typography>
+        ) : (
+          <Box sx={{ minHeight: '100%' }}>
+            {filteredLabels.length === 0 ? (
+              <Typography
+                sx={{
+                  p: 2,
+                  color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
+                  textAlign: 'center',
+                }}
+              >
+                {searchTerm
+                  ? t('clusters.labels.noLabelsMatchSearch')
+                  : t('clusters.labels.noLabelsFound')}
+              </Typography>
+            ) : (
+              <>{filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}</>
+            )}
+          </Box>
+        )}
+      </Box>
+
+      {/* Label Edit Dialog */}
+      <LabelEditDialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+          if (loadingWorkloadEdit && selectedWorkload) {
+            setLoadingWorkloadEdit(null);
+          }
+        }}
+        workload={selectedWorkload}
+        workloads={selectedWorkloads}
+        isBulkEdit={isBulkEdit}
+        onSave={handleSaveLabels}
+        onBulkSave={handleBulkSaveLabels}
+        isDark={isDarkTheme}
+        colors={colors}
+      />
+
+      {/* Select Workload Dialog */}
+      <SelectWorkloadDialog
+        open={selectWorkloadDialogOpen}
+        onClose={() => setSelectWorkloadDialogOpen(false)}
+        workloads={panelWorkloads}
+        onSelectWorkload={handleEditSpecificWorkload}
+        onSelectWorkloads={handleEditMultipleWorkloads}
+        isDark={isDarkTheme}
+        colors={colors}
+      />
+    </Paper>
+  );
+};
+
+// LabelEditDialog component for workloads
+const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
+  open,
+  onClose,
+  workload,
+  workloads,
+  isBulkEdit,
+  onSave,
+  onBulkSave,
+  isDark,
+  colors,
+}) => {
+  const [labels, setLabels] = useState<Array<{ key: string; value: string }>>([]);
+  const [newKey, setNewKey] = useState('');
+  const [newValue, setNewValue] = useState('');
+  const [labelSearch, setLabelSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(null);
+  const [appendLabels, setAppendLabels] = useState(true);
+  const keyInputRef = useRef<HTMLInputElement>(null);
+  const valueInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
+
+  // Filter labels based on search
+  const filteredLabels =
+    labelSearch.trim() === ''
+      ? labels
+      : labels.filter(
+          label =>
+            label.key.toLowerCase().includes(labelSearch.toLowerCase()) ||
+            label.value.toLowerCase().includes(labelSearch.toLowerCase())
+        );
+
+  useEffect(() => {
+    if (open) {
+      if (isBulkEdit) {
+        console.log('LabelEditDialog opened for bulk edit with workloads:', workloads.length);
+
+        // For bulk edit, start with empty labels
+        setLabels([]);
+      } else if (workload) {
+        console.log('LabelEditDialog opened with workload:', JSON.stringify(workload, null, 2));
+
+        const labelArray = Object.entries(workload.labels || {}).map(([key, value]) => ({
+          key,
+          value,
+        }));
+        console.log('Initial labels array:', JSON.stringify(labelArray, null, 2));
+
+        setLabels(labelArray);
+      }
+
+      setNewKey('');
+      setNewValue('');
+      setLabelSearch('');
+      setIsSearching(false);
+      setSelectedLabelIndex(null);
+      setAppendLabels(true);
+
+      setTimeout(() => {
+        if (keyInputRef.current) {
+          keyInputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [workload, workloads, isBulkEdit, open]);
+
+  const handleAddLabel = () => {
+    if (newKey.trim() && newValue.trim()) {
+      // Check for duplicates
+      const isDuplicate = labels.some(label => label.key === newKey.trim());
+
+      if (isDuplicate) {
+        // Update existing label with same key
+        setLabels(
+          labels.map(label =>
+            label.key === newKey.trim() ? { ...label, value: newValue.trim() } : label
+          )
+        );
+        toast.success(`Updated existing label: ${newKey}`);
+      } else {
+        // Add new label with animation effect
+        setLabels(prev => [...prev, { key: newKey.trim(), value: newValue.trim() }]);
+        toast.success(`Added new label: ${newKey}`);
+      }
+
+      setNewKey('');
+      setNewValue('');
+      if (keyInputRef.current) {
+        keyInputRef.current.focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (e: ReactKeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+
+      if (newKey && !newValue && valueInputRef.current) {
+        valueInputRef.current.focus();
+      } else if (newKey && newValue) {
+        handleAddLabel();
+      }
+    } else if (e.key === 'Escape') {
+      setNewKey('');
+      setNewValue('');
+      if (keyInputRef.current) {
+        keyInputRef.current.focus();
+      }
+    }
+  };
+
+  const handleRemoveLabel = (index: number) => {
+    const labelToRemove = labels[index];
+    setLabels(labels.filter((_, i) => i !== index));
+    toast.success(`Removed label: ${labelToRemove.key}`);
+  };
+
+  const handleSave = () => {
+    if (isBulkEdit) {
+      if (workloads.length === 0) return;
+
+      setSaving(true);
+
+      // Convert array back to object format
+      const labelObject: { [key: string]: string } = {};
+      labels.forEach(({ key, value }) => {
+        labelObject[key] = value;
+      });
+
+      console.log('===== BULK LABEL SAVE DEBUG =====');
+      console.log('Workloads being saved:', workloads.length);
+      console.log('Labels being saved:', JSON.stringify(labelObject, null, 2));
+      console.log('Append mode:', appendLabels);
+
+      // Add a slight delay to show loading state
+      setTimeout(() => {
+        onBulkSave(workloads, labelObject);
+        setSaving(false);
+        onClose();
+      }, 300);
+    } else if (workload) {
+      setSaving(true);
+
+      const labelObject: { [key: string]: string } = {};
+      labels.forEach(({ key, value }) => {
+        labelObject[key] = value;
+      });
+
+      console.log('===== LABEL SAVE DEBUG =====');
+      console.log('Workload being saved:', JSON.stringify(workload, null, 2));
+      console.log('Labels being saved:', JSON.stringify(labelObject, null, 2));
+
+      // Add a slight delay to show loading state
+      setTimeout(() => {
+        onSave(workload.name, workload.namespace || 'default', workload.kind, labelObject);
+        setSaving(false);
+        onClose();
+      }, 300);
+    }
+  };
+
+  const toggleSearchMode = () => {
+    setIsSearching(!isSearching);
+    if (!isSearching) {
+      setTimeout(() => {
+        const searchInput = document.getElementById('label-search-input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 100);
+    } else {
+      setLabelSearch('');
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      TransitionComponent={Zoom}
+      transitionDuration={300}
+      PaperProps={{
+        style: {
+          backgroundColor: colors.paper,
+          color: colors.text,
+          border: `1px solid ${colors.border}`,
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: isDark
+            ? '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4)'
+            : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+        },
+      }}
+    >
+      <DialogTitle
+        style={{
+          color: colors.primary,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '20px 24px',
+          borderBottom: `1px solid ${colors.border}`,
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <LabelIcon style={{ color: colors.primary }} />
+          <Typography variant="h6" component="span">
+            {isBulkEdit
+              ? t('clusters.labels.bulkEditTitle', { count: workloads.length })
+              : t('clusters.labels.editTitle', { name: workload?.name })}
+
+            {!isBulkEdit && workload && (
+              <Typography
+                component="span"
+                style={{ fontSize: '0.8rem', marginLeft: '8px', color: colors.textSecondary }}
+              >
+                ({workload.kind})
+              </Typography>
+            )}
+          </Typography>
+        </div>
+        <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent style={{ padding: '20px 24px' }}>
+        {isBulkEdit && (
+          <Box mb={2} pb={2} borderBottom={`1px solid ${colors.border}`}>
+            <Typography
+              variant="subtitle2"
+              style={{ marginBottom: '8px', color: colors.textSecondary }}
+            >
+              {t('clusters.labels.bulkEdit')}
+            </Typography>
+            <Typography
+              variant="body2"
+              style={{ marginBottom: '12px', color: colors.textSecondary }}
+            >
+              {t('clusters.labels.bulkEditDescription', { count: workloads.length })}
+            </Typography>
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={appendLabels}
+                  onChange={e => setAppendLabels(e.target.checked)}
+                  sx={{
+                    color: colors.primary,
+                    '&.Mui-checked': {
+                      color: colors.primary,
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography variant="body2">{t('clusters.labels.appendToExisting')}</Typography>
+              }
+            />
+          </Box>
+        )}
+
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <Typography variant="body2" style={{ color: colors.textSecondary }}>
+              {t('clusters.labels.description')}
+            </Typography>
+
+            <div className="flex gap-2">
+              <Tooltip title={isSearching ? t('clusters.labels.exitSearch') : t('common.search')}>
+                <IconButton
+                  size="small"
+                  onClick={toggleSearchMode}
+                  style={{
+                    color: isSearching ? colors.primary : colors.textSecondary,
+                    backgroundColor: isSearching
+                      ? isDark
+                        ? 'rgba(47, 134, 255, 0.15)'
+                        : 'rgba(47, 134, 255, 0.1)'
+                      : 'transparent',
+                  }}
+                >
+                  <SearchIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {labels.length > 0 && (
+                <Chip
+                  size="small"
+                  label={t('clusters.labels.count', { count: labels.length })}
+                  style={{
+                    backgroundColor: isDark
+                      ? 'rgba(47, 134, 255, 0.15)'
+                      : 'rgba(47, 134, 255, 0.1)',
+                    color: colors.primary,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              )}
+            </div>
+          </div>
+
+          <Zoom in={isSearching} mountOnEnter unmountOnExit>
+            <div className="mb-4">
+              <TextField
+                id="label-search-input"
+                placeholder={t('clusters.labels.searchLabelsPlaceholder')}
+                value={labelSearch}
+                onChange={e => setLabelSearch(e.target.value)}
+                fullWidth
+                variant="outlined"
+                size="small"
+                autoFocus
+                InputProps={{
+                  style: { color: colors.text },
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon style={{ color: colors.primary, fontSize: '1.2rem' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: labelSearch && (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => setLabelSearch('')}
+                        style={{ color: colors.textSecondary }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                    '& fieldset': { borderColor: colors.border },
+                    '&:hover fieldset': { borderColor: colors.primaryLight },
+                    '&.Mui-focused fieldset': { borderColor: colors.primary },
+                  },
+                }}
+              />
+            </div>
+          </Zoom>
+
+          <Zoom in={!isSearching}>
+            <div className="mb-5">
+              <div className="mb-2 flex flex-col gap-2 sm:flex-row">
+                <TextField
+                  label={t('clusters.labels.key')}
+                  placeholder={t('clusters.labels.keyPlaceholder')}
+                  value={newKey}
+                  onChange={e => setNewKey(e.target.value)}
+                  inputRef={keyInputRef}
+                  onKeyDown={handleKeyDown}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  autoComplete="off"
+                  InputProps={{
+                    style: { color: colors.text },
+                  }}
+                  InputLabelProps={{
+                    style: { color: colors.textSecondary },
+                    shrink: true,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: colors.border },
+                      '&:hover fieldset': { borderColor: colors.primaryLight },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
+                />
+                <TextField
+                  label={t('clusters.labels.value')}
+                  placeholder={t('clusters.labels.valuePlaceholder')}
+                  value={newValue}
+                  onChange={e => setNewValue(e.target.value)}
+                  inputRef={valueInputRef}
+                  onKeyDown={handleKeyDown}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  autoComplete="off"
+                  InputProps={{
+                    style: { color: colors.text },
+                  }}
+                  InputLabelProps={{
+                    style: { color: colors.textSecondary },
+                    shrink: true,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: colors.border },
+                      '&:hover fieldset': { borderColor: colors.primaryLight },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
+                />
+                <Button
+                  onClick={handleAddLabel}
+                  variant="contained"
+                  disabled={!newKey.trim() || !newValue.trim()}
+                  startIcon={<AddIcon />}
+                  style={{
+                    backgroundColor:
+                      !newKey.trim() || !newValue.trim() ? colors.disabled : colors.primary,
+                    color: colors.white,
+                    minWidth: '100px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {t('clusters.labels.add')}
+                </Button>
+              </div>
+              <Typography variant="caption" style={{ color: colors.textSecondary }}>
+                {t('clusters.labels.tip')}
+              </Typography>
+            </div>
+          </Zoom>
+
+          <Divider style={{ backgroundColor: colors.border, margin: '16px 0' }} />
+
+          <div className="max-h-60 overflow-y-auto pr-1">
+            {filteredLabels.length > 0 ? (
+              <div className="space-y-2">
+                {filteredLabels.map((label, index) => (
+                  <Zoom
+                    in={true}
+                    style={{ transitionDelay: `${index * 25}ms` }}
+                    key={`${label.key}-${index}`}
+                  >
+                    <div
+                      className={`flex items-center justify-between gap-2 rounded p-2 transition-all duration-200 ${selectedLabelIndex === index ? 'ring-1' : ''}`}
+                      style={{
+                        backgroundColor:
+                          selectedLabelIndex === index
+                            ? isDark
+                              ? 'rgba(47, 134, 255, 0.2)'
+                              : 'rgba(47, 134, 255, 0.1)'
+                            : isDark
+                              ? 'rgba(47, 134, 255, 0.1)'
+                              : 'rgba(47, 134, 255, 0.05)',
+                        border: `1px solid ${selectedLabelIndex === index ? colors.primary : colors.border}`,
+                        boxShadow:
+                          selectedLabelIndex === index
+                            ? isDark
+                              ? '0 0 0 1px rgba(47, 134, 255, 0.4)'
+                              : '0 0 0 1px rgba(47, 134, 255, 0.2)'
+                            : 'none',
+                        cursor: 'default',
+                      }}
+                      onClick={() =>
+                        setSelectedLabelIndex(selectedLabelIndex === index ? null : index)
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        <Tag size={16} style={{ color: colors.primary }} />
+                        <span style={{ color: colors.text }}>
+                          <span style={{ fontWeight: 500 }}>{label.key}</span>
+                          <span style={{ color: colors.textSecondary }}> = </span>
+                          <span>{label.value}</span>
+                        </span>
+                      </div>
+                      <Tooltip title={t('clusters.labels.removeLabel')}>
+                        <IconButton
+                          size="small"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleRemoveLabel(
+                              labels.findIndex(l => l.key === label.key && l.value === label.value)
+                            );
+                          }}
+                          style={{
+                            color:
+                              selectedLabelIndex === index ? colors.primary : colors.textSecondary,
+                            opacity: 0.8,
+                            transition: 'all 0.2s ease',
+                          }}
+                          className="hover:opacity-100"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  </Zoom>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-2 flex flex-col items-center justify-center p-6 text-center">
+                <Tags size={28} style={{ color: colors.textSecondary, marginBottom: '12px' }} />
+                <Typography
+                  variant="body2"
+                  style={{ color: colors.text, fontWeight: 500, marginBottom: '4px' }}
+                >
+                  {labelSearch
+                    ? t('clusters.labels.noMatchingLabels')
+                    : t('clusters.labels.noLabels')}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  style={{ color: colors.textSecondary, maxWidth: '300px', margin: '0 auto' }}
+                >
+                  {labelSearch
+                    ? t('clusters.labels.tryDifferentSearch')
+                    : t('clusters.labels.addYourFirst')}
+                </Typography>
+
+                {labelSearch && (
+                  <Button
+                    size="small"
+                    variant="text"
+                    style={{ color: colors.primary, marginTop: '12px' }}
+                    onClick={() => setLabelSearch('')}
+                  >
+                    {t('clusters.labels.clearFilter')}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+
+      <DialogActions
+        style={{
+          padding: '16px 24px',
+          borderTop: `1px solid ${colors.border}`,
+        }}
+      >
+        {/* <Button
+          onClick={onClose}
+          variant="outlined"
+          style={{
+            borderColor: colors.border,
+            color: colors.textSecondary,
+          }}
+        >
+          Cancel
+        </Button> */}
+
+        <CancelButton
+          onClick={onClose}
+          sx={{
+            color: colors.textSecondary,
+          }}
+        />
+
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          disabled={saving}
+          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+          style={{
+            backgroundColor: colors.primary,
+            color: colors.white,
+            minWidth: '120px',
+          }}
+        >
+          {saving ? t('common.save') + '...' : t('clusters.labels.saveChangesButton')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// Select Workload Dialog Component
+const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
+  open,
+  onClose,
+  workloads,
+  onSelectWorkload,
+  onSelectWorkloads,
+  isDark,
+  colors,
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  const { t } = useTranslation();
+
+  // Reset selections when dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedItems({});
+      setBulkSelectMode(false);
+      setSearchTerm('');
+    }
+  }, [open]);
+
+  const filteredWorkloads = searchTerm
+    ? workloads.filter(
+        workload =>
+          workload.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          workload.kind.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (workload.namespace &&
+            workload.namespace.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          Object.entries(workload.labels || {}).some(
+            ([key, value]) =>
+              key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              value.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+      )
+    : workloads;
+
+  const toggleItemSelection = (workload: Workload) => {
+    const workloadId = `${workload.kind}-${workload.namespace || 'default'}-${workload.name}`;
+    setSelectedItems(prev => ({
+      ...prev,
+      [workloadId]: !prev[workloadId],
+    }));
+  };
+
+  const toggleBulkSelectMode = () => {
+    setBulkSelectMode(!bulkSelectMode);
+    if (!bulkSelectMode) {
+      // When entering bulk mode, clear any existing selections
+      setSelectedItems({});
+    }
+  };
+
+  const getSelectedWorkloads = () => {
+    return workloads.filter(workload => {
+      const workloadId = `${workload.kind}-${workload.namespace || 'default'}-${workload.name}`;
+      return selectedItems[workloadId];
+    });
+  };
+
+  const selectedCount = Object.values(selectedItems).filter(Boolean).length;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{
+        style: {
+          backgroundColor: colors.paper,
+          color: colors.text,
+          border: `1px solid ${colors.border}`,
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: isDark
+            ? '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4)'
+            : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+        },
+      }}
+    >
+      <DialogTitle
+        style={{
+          color: colors.primary,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '20px 24px',
+          borderBottom: `1px solid ${colors.border}`,
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <Typography variant="h6" component="span">
+            {bulkSelectMode
+              ? t('clusters.dialog.selectMultipleClusters')
+              : t('clusters.dialog.selectClusterToEdit')}
+          </Typography>
+        </div>
+        <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent style={{ padding: '16px 24px' }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={bulkSelectMode}
+                onChange={toggleBulkSelectMode}
+                sx={{
+                  color: colors.primary,
+                  '&.Mui-checked': {
+                    color: colors.primary,
+                  },
+                }}
+              />
+            }
+            label={t('clusters.labels.bulkEdit')}
+          />
+
+          {bulkSelectMode && selectedCount > 0 && (
+            <Chip
+              label={t('clusters.dialog.selectedCount', { count: selectedCount })}
+              color="primary"
+              size="small"
+            />
+          )}
+        </Box>
+
+        <TextField
+          placeholder={t('clusters.list.searchPlaceholder')}
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          fullWidth
+          variant="outlined"
+          size="small"
+          autoFocus
+          margin="normal"
+          InputProps={{
+            style: { color: colors.text },
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon style={{ color: colors.primary, fontSize: '1.2rem' }} />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={() => setSearchTerm('')}
+                  style={{ color: colors.textSecondary }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+              '& fieldset': { borderColor: colors.border },
+              '&:hover fieldset': { borderColor: colors.primaryLight },
+              '&.Mui-focused fieldset': { borderColor: colors.primary },
+            },
+            mb: 2,
+          }}
+        />
+
+        <List
+          sx={{
+            maxHeight: '400px',
+            overflow: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+              borderRadius: '4px',
+              '&:hover': {
+                background: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+              },
+            },
+          }}
+        >
+          {filteredWorkloads.length > 0 ? (
+            filteredWorkloads.map(workload => {
+              const workloadId = `${workload.kind}-${workload.namespace || 'default'}-${workload.name}`;
+              const isSelected = !!selectedItems[workloadId];
+
+              return (
+                <ListItemButton
+                  key={workloadId}
+                  onClick={() => {
+                    if (bulkSelectMode) {
+                      toggleItemSelection(workload);
+                    } else {
+                      onSelectWorkload(workload);
+                    }
+                  }}
+                  sx={{
+                    borderRadius: '8px',
+                    mb: 1,
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: isSelected
+                      ? isDark
+                        ? 'rgba(47, 134, 255, 0.2)'
+                        : 'rgba(47, 134, 255, 0.1)'
+                      : isDark
+                        ? 'rgba(47, 134, 255, 0.08)'
+                        : 'rgba(47, 134, 255, 0.04)',
+                    '&:hover': {
+                      backgroundColor: isSelected
+                        ? isDark
+                          ? 'rgba(47, 134, 255, 0.25)'
+                          : 'rgba(47, 134, 255, 0.15)'
+                        : isDark
+                          ? 'rgba(47, 134, 255, 0.15)'
+                          : 'rgba(47, 134, 255, 0.08)',
+                    },
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {bulkSelectMode && (
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={() => toggleItemSelection(workload)}
+                      onClick={e => e.stopPropagation()}
+                      sx={{
+                        color: colors.primary,
+                        '&.Mui-checked': {
+                          color: colors.primary,
+                        },
+                        marginRight: 1,
+                        padding: 0,
+                      }}
+                    />
+                  )}
+
+                  <ListItemText
+                    primary={
+                      <React.Fragment>
+                        {workload.name}
+                        <Chip
+                          size="small"
+                          label={workload.kind}
+                          sx={{
+                            ml: 1,
+                            fontSize: '0.7rem',
+                            height: 20,
+                            bgcolor: isDark
+                              ? alpha(colors.secondary, 0.2)
+                              : alpha(colors.secondary, 0.1),
+                            color: isDark ? colors.secondary : colors.secondary,
+                          }}
+                        />
+                      </React.Fragment>
+                    }
+                    secondary={
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                        <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                          {workload.namespace || t('namespaces.default')}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {Object.entries(workload.labels || {})
+                            .slice(0, 3)
+                            .map(([key, value]) => (
+                              <Chip
+                                key={`${key}-${value}`}
+                                size="small"
+                                label={`${key}=${value}`}
+                                sx={{
+                                  height: 20,
+                                  fontSize: '0.7rem',
+                                  bgcolor: alpha(colors.primary, 0.1),
+                                  color: colors.primary,
+                                }}
+                              />
+                            ))}
+                          {Object.keys(workload.labels || {}).length > 3 && (
+                            <Chip
+                              size="small"
+                              label={t('clusters.list.table.labels', {
+                                count: Object.keys(workload.labels || {}).length - 3,
+                              })}
+                              sx={{
+                                height: 20,
+                                fontSize: '0.7rem',
+                                bgcolor: alpha(colors.secondary, 0.1),
+                                color: colors.secondary,
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    }
+                    primaryTypographyProps={{
+                      style: {
+                        color: colors.text,
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                    secondaryTypographyProps={{
+                      style: {
+                        color: colors.textSecondary,
+                      },
+                      component: 'div',
+                    }}
+                  />
+                  {!bulkSelectMode && (
+                    <EditIcon fontSize="small" sx={{ color: colors.primary, opacity: 0.7 }} />
+                  )}
+                </ListItemButton>
+              );
+            })
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+              <Typography variant="body1" sx={{ color: colors.text, fontWeight: 500, mb: 1 }}>
+                {t('clusters.list.noResults')}
+              </Typography>
+              <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                {searchTerm
+                  ? t('clusters.list.noClustersMatchSearch')
+                  : t('clusters.labels.noClustersToEdit')}
+              </Typography>
+            </Box>
+          )}
+        </List>
+      </DialogContent>
+
+      <DialogActions
+        style={{
+          padding: '16px 24px',
+          borderTop: `1px solid ${colors.border}`,
+        }}
+      >
+        <CancelButton
+          onClick={onClose}
+          sx={{
+            color: colors.textSecondary,
+          }}
+        />
+
+        {bulkSelectMode && (
+          <Button
+            onClick={() => onSelectWorkloads(getSelectedWorkloads())}
+            variant="contained"
+            disabled={selectedCount === 0}
+            style={{
+              backgroundColor: colors.primary,
+              color: colors.white,
+            }}
+          >
+            {t('clusters.dialog.editClustersButton', { count: selectedCount })}
+          </Button>
+        )}
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default React.memo(WorkloadPanel);
