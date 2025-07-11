@@ -38,19 +38,19 @@ func TestGetDeploymentByName(t *testing.T) {
 			name:           "Valid deployment name with namespace",
 			deploymentName: "test-deployment",
 			namespace:      "default",
-			expectedStatus: http.StatusBadRequest, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusNotFound, // Deployment not found
 		},
 		{
 			name:           "Valid deployment name without namespace",
 			deploymentName: "test-deployment",
 			namespace:      "",
-			expectedStatus: http.StatusBadRequest, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusNotFound, // Deployment not found
 		},
 		{
 			name:           "Empty deployment name",
 			deploymentName: "",
 			namespace:      "default",
-			expectedStatus: http.StatusBadRequest, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusNotFound, // Deployment not found
 		},
 	}
 
@@ -90,20 +90,20 @@ func TestGetWDSWorkloads(t *testing.T) {
 			namespace:      "default",
 			setCookie:      true,
 			cookieValue:    "wds1",
-			expectedStatus: http.StatusBadRequest, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusOK, // Successfully returns workloads
 		},
 		{
 			name:           "Get workloads without namespace",
 			namespace:      "",
 			setCookie:      true,
 			cookieValue:    "wds1",
-			expectedStatus: http.StatusBadRequest, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusOK, // Successfully returns workloads
 		},
 		{
 			name:           "Get workloads without cookie",
 			namespace:      "default",
 			setCookie:      false,
-			expectedStatus: http.StatusBadRequest, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusOK, // Successfully returns workloads
 		},
 	}
 

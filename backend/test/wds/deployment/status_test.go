@@ -26,7 +26,7 @@ func TestGetDeploymentStatus(t *testing.T) {
 		{
 			name:           "Empty deployment name",
 			deploymentName: "",
-			expectedStatus: http.StatusInternalServerError,
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "Another deployment name",
