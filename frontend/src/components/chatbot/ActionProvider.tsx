@@ -10,7 +10,7 @@ class ActionProvider {
 
   handleMessage = async (message: string) => {
     try {
-      const response = await api.get(`/api/v1/chatbot?q=${message}`);
+      const response = await api.get(`/api/chatbot?q=${message}`);
       const botMessage = this.createChatBotMessage(response.data.answer);
       this.setState((prev: any) => ({
         ...prev,

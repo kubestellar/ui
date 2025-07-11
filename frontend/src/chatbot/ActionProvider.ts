@@ -26,7 +26,7 @@ class ActionProvider {
     this.setTyping(true);
     try {
       const literalMessage = `User said: "${message}"`;
-      const response = await api.get('/api/v1/chatbot', {
+      const response = await api.get('/api/chatbot', {
         params: { q: literalMessage },
       });
       const data = response.data;
