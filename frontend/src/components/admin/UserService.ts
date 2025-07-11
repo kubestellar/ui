@@ -60,12 +60,12 @@ export const UserService = {
   /**
    * Update an existing user
    * @param username - Username of the user to update
-   * @param data - Data to update (password and/or is_admin)
+   * @param data - Data to update (username, password, is_admin)
    * @returns Promise with the updated user
    */
   updateUser: async (
     username: string,
-    data: { password?: string; is_admin?: boolean }
+    data: { username?: string; password?: string; is_admin?: boolean }
   ): Promise<void> => {
     try {
       await api.put(`/api/admin/users/${username}`, data, {

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/backend/auth"
 	"github.com/kubestellar/ui/backend/middleware"
 	"github.com/kubestellar/ui/backend/models"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
@@ -534,7 +533,9 @@ func UpdateUserHandler(c *gin.Context) {
 	username := c.Param("username")
 
 	var userData struct {
+		Username    string            `json:"username"`
 		Password    string            `json:"password"`
+		IsAdmin     bool              `json:"is_admin"`
 		Permissions map[string]string `json:"permissions"`
 	}
 
@@ -554,12 +555,39 @@ func UpdateUserHandler(c *gin.Context) {
 		return
 	}
 
+	// Update username if provided and different
+	if userData.Username != "" && userData.Username != username {
+		err = models.UpdateUserUsername(user.ID, userData.Username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to update username",
+				"details": err.Error(),
+			})
+			return
+		}
+		// Update the username for subsequent operations
+		username = userData.Username
+	}
+
 	// Update password if provided
 	if userData.Password != "" {
 		err = models.UpdateUserPassword(user.ID, userData.Password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error":   "Failed to update password",
+				"details": err.Error(),
+			})
+			return
+		}
+	}
+
+	// Update admin status if provided
+	if userData.IsAdmin != user.IsAdmin {
+		query := `UPDATE users SET is_admin = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+		_, err = database.DB.Exec(query, userData.IsAdmin, user.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to update admin status",
 				"details": err.Error(),
 			})
 			return
@@ -599,21 +627,26 @@ func DeleteUserHandler(c *gin.Context) {
 	// Prevent deleting the last admin user
 	if username == "admin" {
 		users, err := models.ListAllUsers()
-		if err == nil {
-			adminCount := 0
-			for _, user := range users {
-				if user.IsAdmin {
-					adminCount++
-				}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to check admin users",
+				"details": err.Error(),
+			})
+			return
+		}
+		adminCount := 0
+		for _, user := range users {
+			if user.IsAdmin {
+				adminCount++
 			}
-			if adminCount <= 1 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete the last admin user"})
-				return
-			}
+		}
+		if adminCount <= 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete the last admin user"})
+			return
 		}
 	}
 
-	err := auth.RemoveUser(username)
+	err := models.DeleteUser(username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to delete user",

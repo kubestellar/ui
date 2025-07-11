@@ -39,7 +39,8 @@ WORKDIR /root/
 
 # Generate JWT secret and set it as an environment variable
 RUN JWT_SECRET=$(openssl rand -base64 32) && \
-    echo "export JWT_SECRET=$JWT_SECRET" > /root/.env
+     echo "export JWT_SECRET=$JWT_SECRET" > /root/.env && \
+     echo "export PORT=4000" >> /root/.env
 
 # Create a temp directory for git operations
 RUN mkdir -p /tmp && chmod 777 /tmp
@@ -54,4 +55,4 @@ VOLUME ["/root/.kube"]
 EXPOSE 4000
 
 # Source the environment variables and run the backend
-CMD ["/bin/sh", "-c", "source /root/.env && ./backend"]
+CMD ["/bin/sh", "-c", ". /root/.env && exec ./backend"]
