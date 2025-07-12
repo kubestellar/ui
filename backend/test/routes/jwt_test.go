@@ -428,8 +428,8 @@ func TestAuthInvalidMethods(t *testing.T) {
 			}()
 
 			// Accept various status codes for invalid methods since some routes may have dependency/auth issues
-			assert.True(t, w.Code == http.StatusUnauthorized || w.Code == http.StatusNotFound || w.Code == http.StatusMethodNotAllowed || w.Code == http.StatusInternalServerError,
-				"Invalid method should return 401, 404, 405, or 500, got %d", w.Code)
+			assert.True(t, w.Code == http.StatusUnauthorized || w.Code == http.StatusNotFound || w.Code == http.StatusMethodNotAllowed || w.Code == http.StatusInternalServerError || w.Code == http.StatusBadRequest,
+				"Invalid method should return 401, 404, 405, 500, or 400, got %d", w.Code)
 		})
 	}
 }

@@ -1,0 +1,15 @@
+name: "cluster-monitor"
+version: "1.0.0"
+author: "developer@company.com"
+description: "Simple cluster monitoring dashboard"
+backend: true
+routes:
+  - path: "/status"
+    method: "GET"
+    handler: "handle_status"
+  - path: "/data"
+    method: "GET"
+    handler: "handle_data"
+permissions:
+  - "kubestellar:read:clusters"
+  - "kubestellar:read:workloads" 

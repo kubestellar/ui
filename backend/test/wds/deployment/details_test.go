@@ -97,7 +97,7 @@ func TestGetWDSWorkloads(t *testing.T) {
 			namespace:      "",
 			setCookie:      true,
 			cookieValue:    "wds1",
-			expectedStatus: http.StatusBadRequest, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusBadRequest, //  Expected to fail due to no k8s connection
 		},
 		{
 			name:           "Get workloads without cookie",
