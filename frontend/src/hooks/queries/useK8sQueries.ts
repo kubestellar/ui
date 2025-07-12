@@ -12,6 +12,12 @@ interface K8sResponse {
   currentContext: string;
 }
 
+interface PodHealthResponse {
+  totalPods: number;
+  healthyPods: number;
+  healthPercent: number;
+}
+
 export const useK8sQueries = () => {
   const useK8sInfo = () => {
     return useQuery({
@@ -27,7 +33,19 @@ export const useK8sQueries = () => {
     });
   };
 
+  const usePodHealthQuery = () => {
+    return useQuery<PodHealthResponse, Error>({
+      queryKey: ['pod-health'],
+      queryFn: async () => {
+        const response = await api.get('/api/metrics/pod-health');
+        return response.data;
+      },
+      staleTime: 10000, // 10 seconds
+    });
+  };
+
   return {
     useK8sInfo,
+    usePodHealthQuery,
   };
 };
