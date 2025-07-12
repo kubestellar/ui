@@ -22,23 +22,23 @@ import (
 
 // ClusterMetrics represents the resource usage metrics for a cluster
 type ClusterMetrics struct {
-	ClusterName    string  `json:"clusterName"`
-	CPUUsage       float64 `json:"cpuUsage"`       // Percentage of CPU usage
-	MemoryUsage    float64 `json:"memoryUsage"`    // Percentage of Memory usage
-	TotalCPU       string  `json:"totalCPU"`       // Total CPU capacity
-	TotalMemory    string  `json:"totalMemory"`    // Total Memory capacity
-	UsedCPU        string  `json:"usedCPU"`        // Used CPU
-	UsedMemory     string  `json:"usedMemory"`     // Used Memory
-	NodeCount      int     `json:"nodeCount"`      // Number of nodes
-	Timestamp      string  `json:"timestamp"`
-	Error          string  `json:"error,omitempty"`
+	ClusterName string  `json:"clusterName"`
+	CPUUsage    float64 `json:"cpuUsage"`    // Percentage of CPU usage
+	MemoryUsage float64 `json:"memoryUsage"` // Percentage of Memory usage
+	TotalCPU    string  `json:"totalCPU"`    // Total CPU capacity
+	TotalMemory string  `json:"totalMemory"` // Total Memory capacity
+	UsedCPU     string  `json:"usedCPU"`     // Used CPU
+	UsedMemory  string  `json:"usedMemory"`  // Used Memory
+	NodeCount   int     `json:"nodeCount"`   // Number of nodes
+	Timestamp   string  `json:"timestamp"`
+	Error       string  `json:"error,omitempty"`
 }
 
 // ClusterMetricsResponse represents the response for cluster metrics
 type ClusterMetricsResponse struct {
 	Clusters       []ClusterMetrics `json:"clusters"`
-	OverallCPU     float64          `json:"overallCPU"`     // Overall CPU usage across all clusters
-	OverallMemory  float64          `json:"overallMemory"`  // Overall Memory usage across all clusters
+	OverallCPU     float64          `json:"overallCPU"`    // Overall CPU usage across all clusters
+	OverallMemory  float64          `json:"overallMemory"` // Overall Memory usage across all clusters
 	TotalClusters  int              `json:"totalClusters"`
 	ActiveClusters int              `json:"activeClusters"`
 	Timestamp      string           `json:"timestamp"`
@@ -235,15 +235,15 @@ func getClusterResourceMetrics(clientset *kubernetes.Clientset, clusterName stri
 	}
 
 	return ClusterMetrics{
-		ClusterName:   clusterName,
-		CPUUsage:      cpuUsagePercent,
-		MemoryUsage:   memoryUsagePercent,
-		TotalCPU:      formatCPU(totalCPUCapacity),
-		TotalMemory:   formatMemory(totalMemoryCapacity),
-		UsedCPU:       formatCPU(totalCPUUsage),
-		UsedMemory:    formatMemory(totalMemoryUsage),
-		NodeCount:     len(nodes.Items),
-		Timestamp:     time.Now().Format(time.RFC3339),
+		ClusterName: clusterName,
+		CPUUsage:    cpuUsagePercent,
+		MemoryUsage: memoryUsagePercent,
+		TotalCPU:    formatCPU(totalCPUCapacity),
+		TotalMemory: formatMemory(totalMemoryCapacity),
+		UsedCPU:     formatCPU(totalCPUUsage),
+		UsedMemory:  formatMemory(totalMemoryUsage),
+		NodeCount:   len(nodes.Items),
+		Timestamp:   time.Now().Format(time.RFC3339),
 	}, nil
 }
 
@@ -285,7 +285,7 @@ func GetClusterMetricsForContext(c *gin.Context) {
 func parseResourceQuantity(quantityStr string) (float64, error) {
 	// Remove common suffixes and convert to numeric value
 	quantityStr = strings.TrimSpace(quantityStr)
-	
+
 	// Handle CPU values (e.g., "100m", "1", "2.5")
 	if strings.HasSuffix(quantityStr, "m") {
 		value, err := strconv.ParseFloat(strings.TrimSuffix(quantityStr, "m"), 64)
@@ -294,20 +294,20 @@ func parseResourceQuantity(quantityStr string) (float64, error) {
 		}
 		return value / 1000.0, nil // Convert millicores to cores
 	}
-	
+
 	// Handle plain numeric values (assumed to be cores)
 	value, err := strconv.ParseFloat(quantityStr, 64)
 	if err != nil {
 		return 0, err
 	}
-	
+
 	return value, nil
 }
 
 // parseMemoryQuantity parses a memory quantity string and returns the numeric value in bytes
 func parseMemoryQuantity(quantityStr string) (int64, error) {
 	quantityStr = strings.TrimSpace(quantityStr)
-	
+
 	// Handle different memory units
 	if strings.HasSuffix(quantityStr, "Ki") {
 		value, err := strconv.ParseInt(strings.TrimSuffix(quantityStr, "Ki"), 10, 64)
@@ -316,7 +316,7 @@ func parseMemoryQuantity(quantityStr string) (int64, error) {
 		}
 		return value * 1024, nil
 	}
-	
+
 	if strings.HasSuffix(quantityStr, "Mi") {
 		value, err := strconv.ParseInt(strings.TrimSuffix(quantityStr, "Mi"), 10, 64)
 		if err != nil {
@@ -324,7 +324,7 @@ func parseMemoryQuantity(quantityStr string) (int64, error) {
 		}
 		return value * 1024 * 1024, nil
 	}
-	
+
 	if strings.HasSuffix(quantityStr, "Gi") {
 		value, err := strconv.ParseInt(strings.TrimSuffix(quantityStr, "Gi"), 10, 64)
 		if err != nil {
@@ -332,12 +332,12 @@ func parseMemoryQuantity(quantityStr string) (int64, error) {
 		}
 		return value * 1024 * 1024 * 1024, nil
 	}
-	
+
 	// Assume bytes if no suffix
 	value, err := strconv.ParseInt(quantityStr, 10, 64)
 	if err != nil {
 		return 0, err
 	}
-	
+
 	return value, nil
-} 
+}

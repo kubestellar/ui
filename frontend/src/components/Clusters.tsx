@@ -932,7 +932,11 @@ const K8sInfo = () => {
       let cpuUsage = 0;
       let memoryUsage = 0;
 
-      if (clusterMetrics && clusterMetrics.overallCPU !== undefined && clusterMetrics.overallMemory !== undefined) {
+      if (
+        clusterMetrics &&
+        clusterMetrics.overallCPU !== undefined &&
+        clusterMetrics.overallMemory !== undefined
+      ) {
         // Use real metrics from the API
         cpuUsage = Math.round(clusterMetrics.overallCPU * 100) / 100; // Round to 2 decimal places
         memoryUsage = Math.round(clusterMetrics.overallMemory * 100) / 100;
@@ -982,7 +986,8 @@ const K8sInfo = () => {
     }
   };
 
-  if (k8sLoading || clustersLoading || workloadsLoading || bpLoading || metricsLoading) return <ClusterSkeleton />;
+  if (k8sLoading || clustersLoading || workloadsLoading || bpLoading || metricsLoading)
+    return <ClusterSkeleton />;
 
   if (k8sError)
     return (
