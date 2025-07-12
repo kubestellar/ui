@@ -1,5 +1,14 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
+import {
+  getAccessToken,
+  setAccessToken,
+  getRefreshToken,
+  setRefreshToken,
+  clearTokens,
+  isTokenExpired,
+  refreshAccessToken
+} from '../components/login/tokenUtils';
 
 // Configurable refresh endpoint
 const REFRESH_ENDPOINT = process.env.VITE_REFRESH_ENDPOINT || '/api/refresh';
@@ -12,83 +21,13 @@ export const api = axios.create({
   },
 });
 
-// Helper functions for token management
-const ACCESS_TOKEN_KEY = 'jwtToken';
-const REFRESH_TOKEN_KEY = 'refreshToken';
-
-export function getAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
-}
-
-export function setAccessToken(token: string) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, token);
-}
-
-export function getRefreshToken() {
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
-}
-
-export function setRefreshToken(token: string) {
-  localStorage.setItem(REFRESH_TOKEN_KEY, token);
-}
-
-export function clearTokens() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-}
-
-// Helper to decode JWT and check expiration
-function isTokenExpired(token: string | null): boolean {
-  if (!token) return true;
-  try {
-    const [, payload] = token.split('.');
-    const decoded = JSON.parse(atob(payload));
-    if (!decoded.exp) return true;
-    // exp is in seconds
-    return Date.now() >= decoded.exp * 1000;
-  } catch {
-    return true;
-  }
-}
-
-// Helper to refresh token
-let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
-
-async function refreshAccessToken(): Promise<string | null> {
-  if (isRefreshing && refreshPromise) return refreshPromise;
-  isRefreshing = true;
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
-    isRefreshing = false;
-    return null;
-  }
-  refreshPromise = api
-    .post(REFRESH_ENDPOINT, { refreshToken })
-    .then(res => {
-      const { token, refreshToken: newRefreshToken } = res.data;
-      if (token) setAccessToken(token);
-      if (newRefreshToken) setRefreshToken(newRefreshToken);
-      isRefreshing = false;
-      refreshPromise = null;
-      return token;
-    })
-    .catch(() => {
-      isRefreshing = false;
-      refreshPromise = null;
-      clearTokens();
-      return null;
-    });
-  return refreshPromise;
-}
-
 // Add request interceptor to include JWT token in headers
 api.interceptors.request.use(
   async config => {
     let token = getAccessToken();
     // If token is expired, try to refresh
     if (isTokenExpired(token)) {
-      token = await refreshAccessToken();
+      token = await refreshAccessToken(api);
     }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -116,7 +55,7 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck) {
       originalRequest._retry = true;
-      const newToken = await refreshAccessToken();
+      const newToken = await refreshAccessToken(api);
       if (newToken) {
         originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
