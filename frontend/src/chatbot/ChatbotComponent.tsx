@@ -1,6 +1,6 @@
 // frontend/src/chatbot/ChatbotComponent.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import Chatbot, { IConfig } from 'react-chatbot-kit';
+import Chatbot, { createChatBotMessage } from 'react-chatbot-kit';
 import 'react-chatbot-kit/build/main.css';
 import './ChatbotV2.css';
 
@@ -10,8 +10,8 @@ import UserChatMessage from './components/UserChatMessage';
 import CustomHeader from './components/CustomHeader';
 import CustomChatInput from './components/CustomChatInput';
 
-// Define a type for our chat messages to avoid using 'any'
-interface IChatMessage {
+// Define the message interface
+export interface IChatMessage {
   message: string;
   type: string;
   id: number;
@@ -23,24 +23,9 @@ interface IChatMessage {
   };
 }
 
-// Helper function to create a bot message, replacing the monkey-patch
-const createBotMessage = (message: string, type: 'bot' | 'error' = 'bot'): IChatMessage => ({
-  message,
-  type,
-  id: Math.random(), // In a real app, use a more robust ID generator
-  payload: { timestamp: new Date().toISOString() },
-});
-
-// Define the type for props passed to custom message components
 interface IMessageProps {
   message: IChatMessage;
-  // Add other props if react-chatbot-kit passes them
-}
-
-// Define the type for props passed to the custom chat input
-interface IChatInputProps {
-  // This is a guess, adjust based on what CustomChatInput actually needs
-  actionProvider: ActionProvider;
+  [key: string]: any;
 }
 
 const ChatbotComponent: React.FC = () => {
@@ -50,20 +35,22 @@ const ChatbotComponent: React.FC = () => {
 
   const toggleFullScreen = () => setIsFullScreen(prev => !prev);
 
-  // Use the IConfig type from react-chatbot-kit for better type safety
-  const chatbotConfig: IConfig = {
+  // Chatbot configuration
+  const config = {
     initialMessages: [
-      createBotMessage(`Hello! I'm your KubeStellar assistant. How can I help you today?`),
+      createChatBotMessage(`Hello! I'm your KubeStellar assistant. How can I help you today?`, {
+        delay: 1000,
+        widget: 'response',
+      }),
     ],
     botName: 'KubeStellar Assistant',
     customComponents: {
       header: () => (
         <CustomHeader toggleFullScreen={toggleFullScreen} isFullScreen={isFullScreen} />
       ),
-      // Use the typed props interfaces here
-      botChatMessage: (props: IMessageProps) => <BotChatMessage {...props} />,
-      userChatMessage: (props: IMessageProps) => <UserChatMessage {...props} />,
-      chatInput: (props: IChatInputProps) => <CustomChatInput {...props} />,
+      botChatMessage: (props: IMessageProps) => <BotChatMessage message={props.message} />,
+      userChatMessage: (props: IMessageProps) => <UserChatMessage message={props.message} />,
+      chatInput: (props: any) => <CustomChatInput {...props} />,
       botTypingIndicator: () => (
         <div className="typing-indicator">
           <div className="dot"></div>
@@ -72,7 +59,19 @@ const ChatbotComponent: React.FC = () => {
         </div>
       ),
     },
+    // @ts-ignore - The types for messageParser and actionProvider are not properly exported
+    messageParser: {
+      parse: (message: string) => ({
+        message,
+        type: 'user',
+        id: Date.now(),
+      }),
+    },
+    // @ts-ignore - Type for ActionProvider
+    actionProvider: ActionProvider,
   };
+
+
 
   const saveMessages = (messages: IChatMessage[]): void => {
     localStorage.setItem('chatbot_messages', JSON.stringify(messages));
@@ -116,12 +115,16 @@ const ChatbotComponent: React.FC = () => {
   return (
     <div ref={chatbotContainerRef} className={containerClasses}>
       {showBot && (
-        <Chatbot
-          config={chatbotConfig}
-          actionProvider={ActionProvider}
-          messageHistory={loadMessages()}
-          saveMessages={saveMessages}
-        />
+        <div className="chatbot-container">
+          {/* @ts-ignore - The Chatbot component's props are not properly typed */}
+          <Chatbot
+            config={config}
+            messageHistory={loadMessages()}
+            saveMessages={saveMessages}
+            messageParser={config.messageParser}
+            actionProvider={config.actionProvider}
+          />
+        </div>
       )}
       <button
         onClick={() => toggleBot(prev => !prev)}

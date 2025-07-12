@@ -1,33 +1,40 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { IChatMessage } from '../ChatbotComponent';
 
-// Define a reusable interface for chat message component props.
-// It's a good idea to move this to a shared types file (e.g., src/chatbot/types.ts)
-// to avoid duplication.
-export interface ChatMessageProps {
-  message: string;
-  payload?: {
-    timestamp?: string;
-    // Add other payload properties if they exist
-  };
-  children?: React.ReactNode; // Type for props.children
+interface ChatMessageProps {
+  message: IChatMessage;
+  children?: React.ReactNode;
 }
 
-const BotChatMessage: React.FC<ChatMessageProps> = ({ message, payload, children }) => {
-  const timestamp = payload?.timestamp
-    ? new Date(payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+// Create a type that includes our static create method
+interface BotChatMessageComponent extends React.FC<ChatMessageProps> {
+  create: (message: string, type?: 'bot' | 'error') => IChatMessage;
+}
+
+const BotChatMessage: BotChatMessageComponent = ({ message, children }) => {
+  const timestamp = message.payload?.timestamp
+    ? new Date(message.payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : '';
 
   return (
     <div className="bot-chat-message-bubble">
       <div className="markdown-content">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.message}</ReactMarkdown>
       </div>
       {children}
       {timestamp && <div className="chat-message-timestamp">{timestamp}</div>}
     </div>
   );
 };
+
+// Add static create method
+BotChatMessage.create = (message: string, type: 'bot' | 'error' = 'bot'): IChatMessage => ({
+  message,
+  type,
+  id: Date.now(),
+  payload: { timestamp: new Date().toISOString() },
+});
 
 export default BotChatMessage;
