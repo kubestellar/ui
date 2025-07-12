@@ -157,6 +157,11 @@ jobs:
       - name: Update Helm Repositories
         run: helm repo update
 
+      - name: Build Helm Dependencies
+        run: |
+          cd chart
+          helm dependency build
+
       - name: Patch Helm values with SHA-tagged GHCR images
         run: |
           cp chart/values.yaml chart/values.ci.yaml
