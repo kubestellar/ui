@@ -1,5 +1,5 @@
 // frontend/src/chatbot/ChatbotComponent.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, ComponentProps } from 'react';
 import Chatbot, { createChatBotMessage } from 'react-chatbot-kit';
 import 'react-chatbot-kit/build/main.css';
 import './ChatbotV2.css';
@@ -28,6 +28,10 @@ interface IMessageProps {
   [key: string]: unknown; // Using unknown is safer than any
 }
 
+// Derive the props type directly from the custom component.
+// This ensures that if CustomChatInput's props change, this will also update.
+type CustomChatInputProps = ComponentProps<typeof CustomChatInput>;
+
 const ChatbotComponent: React.FC = () => {
   const [showBot, toggleBot] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -50,7 +54,7 @@ const ChatbotComponent: React.FC = () => {
       ),
       botChatMessage: (props: IMessageProps) => <BotChatMessage message={props.message} />,
       userChatMessage: (props: IMessageProps) => <UserChatMessage message={props.message} />,
-      chatInput: (props: any) => <CustomChatInput {...props} />,
+      chatInput: (props: CustomChatInputProps) => <CustomChatInput {...props} />,
       botTypingIndicator: () => (
         <div className="typing-indicator">
           <div className="dot"></div>
