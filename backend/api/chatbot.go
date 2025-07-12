@@ -27,7 +27,7 @@ func AskGemini(context string, question string) (string, error) {
 	fmt.Println("AskGemini invoked")
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
-		apiKey = "AIzaSyDUEf8NPEBNtXj17fO22QyPm4NEmIK58Bo"
+		apiKey = "redact"
 	}
 	fmt.Println("Using API key:", apiKey)
 	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey
