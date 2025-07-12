@@ -1,6 +1,6 @@
 // frontend/src/chatbot/ChatbotComponent.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import Chatbot from 'react-chatbot-kit';
+import Chatbot, { IConfig } from 'react-chatbot-kit';
 import 'react-chatbot-kit/build/main.css';
 import './ChatbotV2.css';
 
@@ -10,6 +10,39 @@ import UserChatMessage from './components/UserChatMessage';
 import CustomHeader from './components/CustomHeader';
 import CustomChatInput from './components/CustomChatInput';
 
+// Define a type for our chat messages to avoid using 'any'
+interface IChatMessage {
+  message: string;
+  type: string;
+  id: number;
+  loading?: boolean;
+  widget?: string;
+  payload?: {
+    timestamp: string;
+    sources?: string[];
+  };
+}
+
+// Helper function to create a bot message, replacing the monkey-patch
+const createBotMessage = (message: string, type: 'bot' | 'error' = 'bot'): IChatMessage => ({
+  message,
+  type,
+  id: Math.random(), // In a real app, use a more robust ID generator
+  payload: { timestamp: new Date().toISOString() },
+});
+
+// Define the type for props passed to custom message components
+interface IMessageProps {
+  message: IChatMessage;
+  // Add other props if react-chatbot-kit passes them
+}
+
+// Define the type for props passed to the custom chat input
+interface IChatInputProps {
+  // This is a guess, adjust based on what CustomChatInput actually needs
+  actionProvider: ActionProvider;
+}
+
 const ChatbotComponent: React.FC = () => {
   const [showBot, toggleBot] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -17,18 +50,20 @@ const ChatbotComponent: React.FC = () => {
 
   const toggleFullScreen = () => setIsFullScreen(prev => !prev);
 
-  const chatbotConfig = {
+  // Use the IConfig type from react-chatbot-kit for better type safety
+  const chatbotConfig: IConfig = {
     initialMessages: [
-      BotChatMessage.create(`Hello! I'm your KubeStellar assistant. How can I help you today?`),
+      createBotMessage(`Hello! I'm your KubeStellar assistant. How can I help you today?`),
     ],
     botName: 'KubeStellar Assistant',
     customComponents: {
       header: () => (
         <CustomHeader toggleFullScreen={toggleFullScreen} isFullScreen={isFullScreen} />
       ),
-      botChatMessage: (props: any) => <BotChatMessage {...props} />,
-      userChatMessage: (props: any) => <UserChatMessage {...props} />,
-      chatInput: (props: any) => <CustomChatInput {...props} />,
+      // Use the typed props interfaces here
+      botChatMessage: (props: IMessageProps) => <BotChatMessage {...props} />,
+      userChatMessage: (props: IMessageProps) => <UserChatMessage {...props} />,
+      chatInput: (props: IChatInputProps) => <CustomChatInput {...props} />,
       botTypingIndicator: () => (
         <div className="typing-indicator">
           <div className="dot"></div>
@@ -39,19 +74,28 @@ const ChatbotComponent: React.FC = () => {
     },
   };
 
-  const saveMessages = (messages: any) => {
+  const saveMessages = (messages: IChatMessage[]): void => {
     localStorage.setItem('chatbot_messages', JSON.stringify(messages));
   };
 
-  const loadMessages = () => {
-    const messages = localStorage.getItem('chatbot_messages');
-    return messages ? JSON.parse(messages) : [];
+  const loadMessages = (): IChatMessage[] => {
+    const messagesJSON = localStorage.getItem('chatbot_messages');
+    if (!messagesJSON) return [];
+
+    try {
+      const parsedMessages = JSON.parse(messagesJSON);
+      // Basic validation to ensure we're returning an array
+      return Array.isArray(parsedMessages) ? parsedMessages : [];
+    } catch (e) {
+      console.error('Failed to parse messages from localStorage', e);
+      return [];
+    }
   };
 
   useEffect(() => {
     if (showBot && chatbotContainerRef.current) {
       const messageContainer = chatbotContainerRef.current.querySelector(
-        '.react-chatbot-kit-chat-message-container'
+        '.react-chatbot-kit-chat-message-container',
       );
 
       if (messageContainer) {
@@ -106,12 +150,5 @@ const ChatbotComponent: React.FC = () => {
     </div>
   );
 };
-
-BotChatMessage.create = (message: string, type: 'bot' | 'error' = 'bot') => ({
-  message,
-  type,
-  id: Math.random(),
-  payload: { timestamp: new Date().toISOString() },
-});
 
 export default ChatbotComponent;

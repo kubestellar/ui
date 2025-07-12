@@ -1,8 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createClientMessage } from 'react-chatbot-kit';
+import ActionProvider from '../ActionProvider'; // Import the ActionProvider class for typing
 
-const CustomChatInput = (props: any) => {
-  const { actionProvider, botTyping, setState } = props;
+// Define types that should be consistent across your chatbot components.
+// Ideally, these would live in a shared `types.ts` file.
+interface IChatMessage {
+  message: string;
+  type: string;
+  id: number;
+  payload?: {
+    timestamp: string;
+  };
+}
+
+interface IChatbotState {
+  messages: IChatMessage[];
+  // Include other state properties if they exist
+}
+
+// Define the interface for the props this component receives.
+interface ICustomChatInputProps {
+  actionProvider: ActionProvider;
+  botTyping: boolean;
+  setState: (updater: (prevState: IChatbotState) => IChatbotState) => void;
+}
+
+const CustomChatInput: React.FC<ICustomChatInputProps> = ({ actionProvider, botTyping, setState }) => {
   const [inputValue, setInputValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -12,13 +35,17 @@ const CustomChatInput = (props: any) => {
 
   const handleSubmit = () => {
     if (inputValue.trim() !== '') {
+      // The `createClientMessage` function returns an object compatible with IChatMessage
       const message = createClientMessage(inputValue, {
         payload: { timestamp: new Date().toISOString() },
       });
-      setState((prev: any) => ({
+
+      // Use the correctly typed `prev` state
+      setState((prev: IChatbotState) => ({
         ...prev,
         messages: [...prev.messages, message],
       }));
+
       actionProvider.handleMessage(inputValue);
       setInputValue('');
     }
