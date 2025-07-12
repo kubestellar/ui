@@ -1185,7 +1185,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<ManagedClusterInfo | null>(null);
   const [loadingClusterEdit, setLoadingClusterEdit] = useState<string | null>(null);
-  const [filterByLabel, setFilterByLabel] = useState<{ key: string; value: string } | null>(null);
+  const [filterByLabel, setFilterByLabel] = useState<Array<{ key: string; value: string }>>([]);
   const [bulkLabelsAnchorEl, setBulkLabelsAnchorEl] = useState<null | HTMLElement>(null);
   const bulkLabelsMenuOpen = Boolean(bulkLabelsAnchorEl);
   const hasSelectedClusters = selectedClusters.length > 0;
@@ -1274,7 +1274,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           searchInputRef.current.blur();
         } else {
           if (filter) setFilter('');
-          if (filterByLabel) setFilterByLabel(null);
+          if (filterByLabel.length > 0) setFilterByLabel([]);
         }
       }
     };
@@ -1286,12 +1286,12 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   // Add function to handle filtering by clicking on a label
   const handleFilterByLabel = (key: string, value: string) => {
     // If clicking the same label filter, remove it
-    if (filterByLabel?.key === key && filterByLabel?.value === value) {
-      setFilterByLabel(null);
+    if (filterByLabel.some(item => item.key === key && item.value === value)) {
+      setFilterByLabel(prev => prev.filter(item => item.key !== key || item.value !== value));
       // Show a message to the user
       toast.success('Label filter removed', { duration: 2000 });
     } else {
-      setFilterByLabel({ key, value });
+      setFilterByLabel(prev => [...prev, { key, value }]);
       // Show a message to the user
       toast.success(`Filtering by label: ${key}=${value}`, { duration: 2000 });
     }
@@ -1363,10 +1363,13 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     }
 
     // Apply label filter
-    if (filterByLabel) {
+    if (filterByLabel && filterByLabel.length > 0) {
       result = result.filter(cluster => {
-        const { key, value } = filterByLabel;
-        return cluster.labels && cluster.labels[key] === value;
+        // A cluster must match ALL label filters to be included
+        return filterByLabel.every(labelFilter => {
+          const { key, value } = labelFilter;
+          return cluster.labels && cluster.labels[key] === value;
+        });
       });
     }
 
@@ -1393,7 +1396,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const handleClearFilters = () => {
     setQuery('');
     setFilter('');
-    setFilterByLabel(null);
+    setFilterByLabel([]);
     toast.success('All filters cleared', { duration: 2000 });
   };
 
@@ -1969,7 +1972,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         </div>
 
         {/* Active Filter Display */}
-        {(query || filter || filterByLabel) && (
+        {(query || filter || filterByLabel.length > 0) && (
           <div
             className="relative mb-2 flex flex-wrap items-center gap-2 overflow-hidden rounded-xl p-4"
             style={{
@@ -2060,32 +2063,41 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               />
             )}
 
-            {filterByLabel && (
-              <Chip
-                label={`${t('clusters.labels.label')}: ${filterByLabel.key}=${filterByLabel.value}`}
-                size="medium"
-                onDelete={() => setFilterByLabel(null)}
-                sx={{
-                  backgroundColor: isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
-                  color: colors.primary,
-                  fontWeight: 500,
-                  '& .MuiChip-deleteIcon': {
-                    color: colors.primary,
-                    '&:hover': { color: colors.primaryDark },
-                  },
-                  borderRadius: '8px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
+            {filterByLabel.length > 0 &&
+              filterByLabel.map((labelFilter, index) => (
+                <Chip
+                  key={`${labelFilter.key}-${labelFilter.value}-${index}`}
+                  label={`${t('clusters.labels.label')}: ${labelFilter.key}=${labelFilter.value}`}
+                  size="medium"
+                  onDelete={() => {
+                    setFilterByLabel(prev => prev.filter((_, i) => i !== index));
+                    toast.success(`Label filter removed: ${labelFilter.key}=${labelFilter.value}`, {
+                      duration: 2000,
+                    });
+                  }}
+                  sx={{
                     backgroundColor: isDark
-                      ? 'rgba(47, 134, 255, 0.2)'
-                      : 'rgba(47, 134, 255, 0.15)',
-                    boxShadow: '0 2px 4px rgba(47, 134, 255, 0.2)',
-                  },
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              />
-            )}
+                      ? 'rgba(47, 134, 255, 0.15)'
+                      : 'rgba(47, 134, 255, 0.1)',
+                    color: colors.primary,
+                    fontWeight: 500,
+                    '& .MuiChip-deleteIcon': {
+                      color: colors.primary,
+                      '&:hover': { color: colors.primaryDark },
+                    },
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: isDark
+                        ? 'rgba(47, 134, 255, 0.2)'
+                        : 'rgba(47, 134, 255, 0.15)',
+                      boxShadow: '0 2px 4px rgba(47, 134, 255, 0.2)',
+                    },
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                />
+              ))}
 
             <Box sx={{ flexGrow: 1 }} />
 
@@ -2253,19 +2265,20 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                     <span
                                       onClick={() => handleFilterByLabel(key, value)}
                                       style={{
-                                        backgroundColor:
-                                          filterByLabel?.key === key &&
-                                          filterByLabel?.value === value
-                                            ? isDark
-                                              ? 'rgba(47, 134, 255, 0.3)'
-                                              : 'rgba(47, 134, 255, 0.15)'
-                                            : isDark
-                                              ? 'rgba(47, 134, 255, 0.15)'
-                                              : 'rgba(47, 134, 255, 0.08)',
+                                        backgroundColor: filterByLabel.some(
+                                          item => item.key === key && item.value === value
+                                        )
+                                          ? isDark
+                                            ? 'rgba(47, 134, 255, 0.3)'
+                                            : 'rgba(47, 134, 255, 0.15)'
+                                          : isDark
+                                            ? 'rgba(47, 134, 255, 0.15)'
+                                            : 'rgba(47, 134, 255, 0.08)',
                                         color: colors.primary,
                                         border: `1px solid ${
-                                          filterByLabel?.key === key &&
-                                          filterByLabel?.value === value
+                                          filterByLabel.some(
+                                            item => item.key === key && item.value === value
+                                          )
                                             ? colors.primary
                                             : isDark
                                               ? 'rgba(47, 134, 255, 0.4)'
@@ -2610,7 +2623,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         </TableContainer>
       )}
 
-      {filterByLabel && (
+      {filterByLabel.length > 0 && (
         <div
           className="mt-4 flex items-center rounded-lg bg-opacity-10 p-2"
           style={{
@@ -2622,12 +2635,12 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           <span style={{ color: colors.textSecondary }}>
             {t('clusters.filteredByLabel')}
             <span style={{ fontWeight: 500, color: colors.primary, margin: '0 4px' }}>
-              {filterByLabel.key}={filterByLabel.value}
+              {filterByLabel.map(item => `${item.key}=${item.value}`).join(', ')}
             </span>
           </span>
           <Button
             size="small"
-            onClick={() => setFilterByLabel(null)}
+            onClick={() => setFilterByLabel([])}
             sx={{
               minWidth: 'auto',
               ml: 2,

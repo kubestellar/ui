@@ -310,8 +310,8 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       }
                       label={
                         clusterDetails.available
-                          ? t('cluster.clusterDetailDialog.status.available')
-                          : t('cluster.clusterDetailDialog.status.unavailable')
+                          ? t('clusters.clusterDetailDialog.status.available')
+                          : t('clusters.clusterDetailDialog.status.unavailable')
                       }
                       sx={{
                         backgroundColor: clusterDetails.available
@@ -626,7 +626,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
                     }}
                   >
-                    {t('cluseters.clusterDetailDialog.capacityResources')}
+                    {t('clusters.clusterDetailDialog.capacityResources')}
                   </Typography>
                 </Box>
                 <Divider
