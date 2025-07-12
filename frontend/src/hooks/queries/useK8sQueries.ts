@@ -8,7 +8,7 @@ interface ContextInfo {
 
 interface K8sResponse {
   contexts: ContextInfo[];
-  clusters: string[];
+  clusters: unknown[];
   currentContext: string;
 }
 
@@ -16,6 +16,29 @@ interface PodHealthResponse {
   totalPods: number;
   healthyPods: number;
   healthPercent: number;
+}
+
+// New interfaces for cluster metrics
+interface ClusterMetrics {
+  clusterName: string;
+  cpuUsage: number;
+  memoryUsage: number;
+  totalCPU: string;
+  totalMemory: string;
+  usedCPU: string;
+  usedMemory: string;
+  nodeCount: number;
+  timestamp: string;
+  error?: string;
+}
+
+interface ClusterMetricsResponse {
+  clusters: ClusterMetrics[];
+  overallCPU: number;
+  overallMemory: number;
+  totalClusters: number;
+  activeClusters: number;
+  timestamp: string;
 }
 
 export const useK8sQueries = () => {
@@ -44,8 +67,41 @@ export const useK8sQueries = () => {
     });
   };
 
+  // New hook for cluster resource metrics
+  const useClusterMetricsQuery = () => {
+    return useQuery<ClusterMetricsResponse, Error>({
+      queryKey: ['cluster-metrics'],
+      queryFn: async () => {
+        const response = await api.get('/api/metrics/cluster-resources');
+        return response.data;
+      },
+      staleTime: 30000, // 30 seconds - metrics don't change as frequently
+      refetchInterval: 60000, // Refresh every minute
+      retry: 2,
+      retryDelay: 5000, // Wait 5 seconds between retries
+    });
+  };
+
+  // Hook for specific cluster metrics
+  const useClusterMetricsForContext = (contextName: string) => {
+    return useQuery<ClusterMetrics, Error>({
+      queryKey: ['cluster-metrics', contextName],
+      queryFn: async () => {
+        const response = await api.get(`/api/metrics/cluster-resources/${contextName}`);
+        return response.data;
+      },
+      enabled: !!contextName,
+      staleTime: 30000, // 30 seconds
+      refetchInterval: 60000, // Refresh every minute
+      retry: 2,
+      retryDelay: 5000,
+    });
+  };
+
   return {
     useK8sInfo,
     usePodHealthQuery,
+    useClusterMetricsQuery,
+    useClusterMetricsForContext,
   };
 };

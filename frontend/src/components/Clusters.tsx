@@ -799,7 +799,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 // Main function for rendering the dashboard
 const K8sInfo = () => {
   const { t } = useTranslation();
-  const { useK8sInfo, usePodHealthQuery } = useK8sQueries();
+  const { useK8sInfo, usePodHealthQuery, useClusterMetricsQuery } = useK8sQueries();
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
   const { useBindingPolicies } = useBPQueries();
@@ -813,6 +813,7 @@ const K8sInfo = () => {
   const { data: workloadsData, isLoading: workloadsLoading } = useWorkloads();
   const { data: bindingPoliciesData, isLoading: bpLoading } = useBindingPolicies();
   const { data: podHealth, isLoading: podHealthLoading } = usePodHealthQuery();
+  const { data: clusterMetrics, isLoading: metricsLoading } = useClusterMetricsQuery();
 
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
@@ -927,28 +928,20 @@ const K8sInfo = () => {
       // Get accurate workload stats from workloadsData
       const totalWorkloads = workloadsData?.length || 0;
 
-      // Calculate resource usage percentages based on kubernetes metrics (if available)
+      // Use real cluster metrics only - no fallback to hardcoded values
       let cpuUsage = 0;
       let memoryUsage = 0;
 
-      // Use type assertion for metrics to avoid TypeScript errors
-      const clusterDataWithMetrics = clusterData as {
-        metrics?: { cpuPercentage?: number; memoryPercentage?: number };
-      };
-      if (clusterDataWithMetrics?.metrics) {
-        cpuUsage = clusterDataWithMetrics.metrics.cpuPercentage || 0;
-        memoryUsage = clusterDataWithMetrics.metrics.memoryPercentage || 0;
-      } else {
-        // Default to average values based on available data
-        if (processedClusters.length > 0) {
-          const activeClusterCount = activeClusters || 1;
-          const defaultCpuUsage = Math.min(70, 30 + activeClusterCount * 10);
-          const defaultMemoryUsage = Math.min(65, 25 + activeClusterCount * 8);
-
-          cpuUsage = defaultCpuUsage;
-          memoryUsage = defaultMemoryUsage;
-        }
+      if (
+        clusterMetrics &&
+        clusterMetrics.overallCPU !== undefined &&
+        clusterMetrics.overallMemory !== undefined
+      ) {
+        // Use real metrics from the API
+        cpuUsage = Math.round(clusterMetrics.overallCPU * 100) / 100; // Round to 2 decimal places
+        memoryUsage = Math.round(clusterMetrics.overallMemory * 100) / 100;
       }
+      // If no real metrics available, keep values at 0 to indicate no data
 
       setStats({
         totalClusters,
@@ -960,7 +953,7 @@ const K8sInfo = () => {
         memoryUsage,
       });
     }
-  }, [k8sData, clusterData, workloadsData, processedClusters, bindingPoliciesData]);
+  }, [k8sData, clusterData, workloadsData, processedClusters, bindingPoliciesData, clusterMetrics]);
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -993,7 +986,8 @@ const K8sInfo = () => {
     }
   };
 
-  if (k8sLoading || clustersLoading || workloadsLoading || bpLoading) return <ClusterSkeleton />;
+  if (k8sLoading || clustersLoading || workloadsLoading || bpLoading || metricsLoading)
+    return <ClusterSkeleton />;
 
   if (k8sError)
     return (
@@ -1264,6 +1258,21 @@ const K8sInfo = () => {
                         {t('clusters.dashboard.cpu.formulaDesc')}
                       </code>
                     </div>
+                    {clusterMetrics ? (
+                      <div className="mt-2 rounded-md bg-green-50 p-2 dark:bg-green-900/20">
+                        <div className="flex items-center text-xs text-green-700 dark:text-green-300">
+                          <CheckCircle size={12} className="mr-1" />
+                          Real-time data from {clusterMetrics.activeClusters} active clusters
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-md bg-red-50 p-2 dark:bg-red-900/20">
+                        <div className="flex items-center text-xs text-red-700 dark:text-red-300">
+                          <X size={12} className="mr-1" />
+                          No metrics data available
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
                     {t('clusters.dashboard.cpu.health')}
@@ -1291,6 +1300,21 @@ const K8sInfo = () => {
                         {t('clusters.dashboard.memory.formulaDesc')}
                       </code>
                     </div>
+                    {clusterMetrics ? (
+                      <div className="mt-2 rounded-md bg-green-50 p-2 dark:bg-green-900/20">
+                        <div className="flex items-center text-xs text-green-700 dark:text-green-300">
+                          <CheckCircle size={12} className="mr-1" />
+                          Real-time data from {clusterMetrics.activeClusters} active clusters
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-md bg-red-50 p-2 dark:bg-red-900/20">
+                        <div className="flex items-center text-xs text-red-700 dark:text-red-300">
+                          <X size={12} className="mr-1" />
+                          No metrics data available
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
                     {t('clusters.dashboard.memory.value')}
