@@ -695,11 +695,13 @@ export const PluginManager: React.FC = () => {
                       securityStatus={plugin.securityStatus || 'pending'}
                     />
                     <motion.button
-                      onClick={() => setSecurityScanModal({
-                        isOpen: true,
-                        pluginId: plugin.name,
-                        pluginName: plugin.name,
-                      })}
+                      onClick={() =>
+                        setSecurityScanModal({
+                          isOpen: true,
+                          pluginId: plugin.name,
+                          pluginName: plugin.name,
+                        })
+                      }
                       className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
                       style={{
                         background: themeStyles.colors.brand.primary + '20',

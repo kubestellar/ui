@@ -89,7 +89,7 @@ export const SecurityBadge: React.FC<SecurityBadgeProps> = ({
 
   return (
     <motion.div
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border ${config.bgColor} ${config.borderColor} ${config.color} ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${config.bgColor} ${config.borderColor} ${config.color} ${className}`}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -111,4 +111,4 @@ export const SecurityBadge: React.FC<SecurityBadgeProps> = ({
   );
 };
 
-export default SecurityBadge; 
+export default SecurityBadge;

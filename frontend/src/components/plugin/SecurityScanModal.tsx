@@ -129,7 +129,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
         onClick={onClose}
       >
         <motion.div
-          className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl"
+          className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl"
           style={{
             background: themeStyles.effects.glassMorphism.background,
             border: `1px solid ${themeStyles.card.borderColor}`,
@@ -137,11 +137,11 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between p-6 border-b"
+            className="flex items-center justify-between border-b p-6"
             style={{ borderColor: themeStyles.card.borderColor }}
           >
             <div className="flex items-center gap-3">
@@ -161,9 +161,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                 >
                   Security Scan Results
                 </h2>
-                <p style={{ color: themeStyles.colors.text.secondary }}>
-                  {pluginName}
-                </p>
+                <p style={{ color: themeStyles.colors.text.secondary }}>{pluginName}</p>
               </div>
             </div>
             <button
@@ -176,7 +174,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div className="max-h-[calc(90vh-120px)] overflow-y-auto p-6">
             {loading && (
               <div className="flex items-center justify-center py-12">
                 <div className="flex items-center gap-3">
@@ -189,7 +187,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
             )}
 
             {error && (
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-red-100 border border-red-200">
+              <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-100 p-4">
                 <HiExclamationTriangle className="h-5 w-5 text-red-600" />
                 <span className="text-red-800">{error}</span>
               </div>
@@ -198,12 +196,12 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
             {scanResult && (
               <div className="space-y-6">
                 {/* Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div
-                    className="p-4 rounded-lg border"
+                    className="rounded-lg border p-4"
                     style={{ borderColor: themeStyles.card.borderColor }}
                   >
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="mb-2 flex items-center gap-2">
                       <HiShieldCheck className="h-5 w-5 text-green-600" />
                       <span
                         className="font-medium"
@@ -212,16 +210,14 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                         Security Score
                       </span>
                     </div>
-                    <div className="text-2xl font-bold text-green-600">
-                      {scanResult.score}/100
-                    </div>
+                    <div className="text-2xl font-bold text-green-600">{scanResult.score}/100</div>
                   </div>
 
                   <div
-                    className="p-4 rounded-lg border"
+                    className="rounded-lg border p-4"
                     style={{ borderColor: themeStyles.card.borderColor }}
                   >
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="mb-2 flex items-center gap-2">
                       <HiExclamationTriangle className="h-5 w-5 text-orange-600" />
                       <span
                         className="font-medium"
@@ -236,10 +232,10 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                   </div>
 
                   <div
-                    className="p-4 rounded-lg border"
+                    className="rounded-lg border p-4"
                     style={{ borderColor: themeStyles.card.borderColor }}
                   >
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="mb-2 flex items-center gap-2">
                       <HiInformationCircle className="h-5 w-5 text-blue-600" />
                       <span
                         className="font-medium"
@@ -256,10 +252,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
 
                 {/* Security Badge */}
                 <div className="flex items-center gap-3">
-                  <span
-                    className="font-medium"
-                    style={{ color: themeStyles.colors.text.primary }}
-                  >
+                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>
                     Status:
                   </span>
                   <SecurityBadge
@@ -272,10 +265,10 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
 
                 {/* Recommendation */}
                 <div
-                  className="p-4 rounded-lg border"
+                  className="rounded-lg border p-4"
                   style={{ borderColor: themeStyles.card.borderColor }}
                 >
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <HiInformationCircle className="h-5 w-5 text-blue-600" />
                     <span
                       className="font-medium"
@@ -293,7 +286,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                 {scanResult.issues.length > 0 && (
                   <div>
                     <h3
-                      className="text-lg font-semibold mb-3"
+                      className="mb-3 text-lg font-semibold"
                       style={{ color: themeStyles.colors.text.primary }}
                     >
                       Security Issues
@@ -302,22 +295,20 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                       {scanResult.issues.map((issue, index) => (
                         <div
                           key={index}
-                          className={`p-3 rounded-lg border ${getSeverityColor(
-                            issue.severity
-                          )}`}
+                          className={`rounded-lg border p-3 ${getSeverityColor(issue.severity)}`}
                         >
                           <div className="flex items-start gap-2">
-                            <HiExclamationTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <HiExclamationTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="mb-1 flex items-center gap-2">
                                 <span className="font-medium">{issue.type}</span>
-                                <span className="text-xs px-2 py-1 rounded-full bg-white bg-opacity-50">
+                                <span className="rounded-full bg-white bg-opacity-50 px-2 py-1 text-xs">
                                   {issue.severity}
                                 </span>
                               </div>
                               <p className="text-sm">{issue.description}</p>
                               {issue.file && (
-                                <p className="text-xs mt-1 opacity-75">
+                                <p className="mt-1 text-xs opacity-75">
                                   File: {issue.file}
                                   {issue.line && ` (line ${issue.line})`}
                                 </p>
@@ -334,7 +325,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                 {scanResult.warnings.length > 0 && (
                   <div>
                     <h3
-                      className="text-lg font-semibold mb-3"
+                      className="mb-3 text-lg font-semibold"
                       style={{ color: themeStyles.colors.text.primary }}
                     >
                       Warnings
@@ -343,21 +334,17 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                       {scanResult.warnings.map((warning, index) => (
                         <div
                           key={index}
-                          className="p-3 rounded-lg border border-yellow-200 bg-yellow-50"
+                          className="rounded-lg border border-yellow-200 bg-yellow-50 p-3"
                         >
                           <div className="flex items-start gap-2">
-                            <HiInformationCircle className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600" />
+                            <HiInformationCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-600" />
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-yellow-800">
-                                  {warning.type}
-                                </span>
+                              <div className="mb-1 flex items-center gap-2">
+                                <span className="font-medium text-yellow-800">{warning.type}</span>
                               </div>
-                              <p className="text-sm text-yellow-800">
-                                {warning.description}
-                              </p>
+                              <p className="text-sm text-yellow-800">{warning.description}</p>
                               {warning.file && (
-                                <p className="text-xs mt-1 opacity-75 text-yellow-700">
+                                <p className="mt-1 text-xs text-yellow-700 opacity-75">
                                   File: {warning.file}
                                   {warning.line && ` (line ${warning.line})`}
                                 </p>
@@ -374,7 +361,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                 {Object.keys(scanResult.fileAnalysis).length > 0 && (
                   <div>
                     <h3
-                      className="text-lg font-semibold mb-3"
+                      className="mb-3 text-lg font-semibold"
                       style={{ color: themeStyles.colors.text.primary }}
                     >
                       File Analysis
@@ -383,10 +370,10 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                       {Object.entries(scanResult.fileAnalysis).map(([file, analysis]) => (
                         <div
                           key={file}
-                          className="p-3 rounded-lg border"
+                          className="rounded-lg border p-3"
                           style={{ borderColor: themeStyles.card.borderColor }}
                         >
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="mb-2 flex items-center justify-between">
                             <span
                               className="font-medium"
                               style={{ color: themeStyles.colors.text.primary }}
@@ -424,36 +411,24 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
 
                 {/* Scan Details */}
                 <div
-                  className="p-4 rounded-lg border text-sm"
+                  className="rounded-lg border p-4 text-sm"
                   style={{ borderColor: themeStyles.card.borderColor }}
                 >
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span style={{ color: themeStyles.colors.text.secondary }}>
-                        Scan Time:
-                      </span>
-                      <span
-                        className="ml-2"
-                        style={{ color: themeStyles.colors.text.primary }}
-                      >
+                      <span style={{ color: themeStyles.colors.text.secondary }}>Scan Time:</span>
+                      <span className="ml-2" style={{ color: themeStyles.colors.text.primary }}>
                         {new Date(scanResult.scanTime).toLocaleString()}
                       </span>
                     </div>
                     <div>
-                      <span style={{ color: themeStyles.colors.text.secondary }}>
-                        Duration:
-                      </span>
-                      <span
-                        className="ml-2"
-                        style={{ color: themeStyles.colors.text.primary }}
-                      >
+                      <span style={{ color: themeStyles.colors.text.secondary }}>Duration:</span>
+                      <span className="ml-2" style={{ color: themeStyles.colors.text.primary }}>
                         {scanResult.scanDuration}
                       </span>
                     </div>
                     <div>
-                      <span style={{ color: themeStyles.colors.text.secondary }}>
-                        Checksum:
-                      </span>
+                      <span style={{ color: themeStyles.colors.text.secondary }}>Checksum:</span>
                       <span
                         className="ml-2 font-mono text-xs"
                         style={{ color: themeStyles.colors.text.primary }}
@@ -462,9 +437,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
                       </span>
                     </div>
                     <div>
-                      <span style={{ color: themeStyles.colors.text.secondary }}>
-                        Risk Level:
-                      </span>
+                      <span style={{ color: themeStyles.colors.text.secondary }}>Risk Level:</span>
                       <span
                         className="ml-2 capitalize"
                         style={{ color: themeStyles.colors.text.primary }}
@@ -480,12 +453,12 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
 
           {/* Footer */}
           <div
-            className="flex items-center justify-end gap-3 p-6 border-t"
+            className="flex items-center justify-end gap-3 border-t p-6"
             style={{ borderColor: themeStyles.card.borderColor }}
           >
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg transition-colors"
+              className="rounded-lg px-4 py-2 transition-colors"
               style={{
                 background: themeStyles.colors.bg.secondary,
                 color: themeStyles.colors.text.primary,
@@ -496,7 +469,7 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
             {scanResult && (
               <button
                 onClick={performSecurityScan}
-                className="px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                className="flex items-center gap-2 rounded-lg px-4 py-2 transition-colors"
                 style={{
                   background: themeStyles.colors.brand.primary,
                   color: 'white',
@@ -513,4 +486,4 @@ export const SecurityScanModal: React.FC<SecurityScanModalProps> = ({
   );
 };
 
-export default SecurityScanModal; 
+export default SecurityScanModal;
