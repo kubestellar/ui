@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { Position, MarkerType } from 'reactflow';
-import { NodeLabel } from '../Wds_Topology/NodeLabel';
+import { NodeLabel } from '../wds_topology/NodeLabel';
 import useTheme from '../../stores/themeStore';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import useZoomStore from '../../stores/zoomStore';

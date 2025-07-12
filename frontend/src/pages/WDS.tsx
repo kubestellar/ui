@@ -1,7 +1,7 @@
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import TreeView from '../components/TreeViewComponent'; // Replace with your TreeView component path
 // import useTheme from "../stores/themeStore";
-import WDSSkeleton from '../components/ui/WDSSkeleton';
+import WDSSkeleton from '../components/skeleton/WDSSkeleton';
 
 const WDS = () => {
   // const theme = useTheme((state) => state.theme);

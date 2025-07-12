@@ -17,7 +17,7 @@ const PluginManagerLazy = lazy(() =>
 );
 const KubeStellarVisualizationLazy = lazy(() => import('../components/login/index'));
 const InstallationPageLazy = lazy(() => import('../pages/InstallationPage'));
-const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
+const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Dashboard'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
 const MetricsDashboardLazy = lazy(() => import('../components/MetricsDashboard'));
 

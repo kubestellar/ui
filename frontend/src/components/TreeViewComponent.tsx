@@ -3,18 +3,18 @@ import { Box, Alert, Snackbar } from '@mui/material';
 import useTheme from '../stores/themeStore';
 import ContextDropdown from './ContextDropdown';
 import CreateOptions from './CreateOptions';
-import TreeViewHeader from './TreeView/TreeViewHeader';
-import TreeViewFilters from './TreeView/TreeViewFilters';
-import TreeViewCanvas from './TreeView/TreeViewCanvas';
-import NodeDetailsPanel from './TreeView/NodeDetailsPanel';
-import TreeViewContextMenu from './TreeView/TreeViewContextMenu';
-import TreeViewDeleteDialog from './TreeView/TreeViewDeleteDialog';
-import { useTreeViewData } from './TreeView/hooks/useTreeViewData';
-import { useTreeViewActions } from './TreeView/hooks/useTreeViewActions';
-import { ResourceItem, CustomNode, CustomEdge } from './TreeView/types';
+import TreeViewHeader from './treeView/TreeViewHeader';
+import TreeViewFilters from './treeView/TreeViewFilters';
+import TreeViewCanvas from './treeView/TreeViewCanvas';
+import NodeDetailsPanel from './treeView/NodeDetailsPanel';
+import TreeViewContextMenu from './treeView/TreeViewContextMenu';
+import TreeViewDeleteDialog from './treeView/TreeViewDeleteDialog';
+import { useTreeViewData } from './treeView/hooks/useTreeViewData';
+import { useTreeViewActions } from './treeView/hooks/useTreeViewActions';
+import { ResourceItem, CustomNode, CustomEdge } from './treeView/types';
 
 // Re-export types for other components to import
-export type { ResourceItem, CustomNode, CustomEdge } from './TreeView/types';
+export type { ResourceItem, CustomNode, CustomEdge } from './treeView/types';
 
 interface TreeViewComponentProps {
   onViewModeChange?: (viewMode: 'tiles' | 'list') => void;
