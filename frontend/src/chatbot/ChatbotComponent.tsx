@@ -95,7 +95,7 @@ const ChatbotComponent: React.FC = () => {
   useEffect(() => {
     if (showBot && chatbotContainerRef.current) {
       const messageContainer = chatbotContainerRef.current.querySelector(
-        '.react-chatbot-kit-chat-message-container',
+        '.react-chatbot-kit-chat-message-container'
       );
 
       if (messageContainer) {

@@ -25,7 +25,11 @@ interface ICustomChatInputProps {
   setState: (updater: (prevState: IChatbotState) => IChatbotState) => void;
 }
 
-const CustomChatInput: React.FC<ICustomChatInputProps> = ({ actionProvider, botTyping, setState }) => {
+const CustomChatInput: React.FC<ICustomChatInputProps> = ({
+  actionProvider,
+  botTyping,
+  setState,
+}) => {
   const [inputValue, setInputValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 

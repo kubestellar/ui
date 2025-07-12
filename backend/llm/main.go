@@ -68,7 +68,6 @@ func chat(indexPath string) {
 			continue
 		}
 
-
 		fmt.Println("📚 Context sent to Gemini...")
 		answer, err := AskGemini(context.String(), query)
 		if err != nil {

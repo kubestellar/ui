@@ -25,7 +25,7 @@ class ActionProvider {
 
   constructor(
     createChatBotMessage: (message: string) => IChatMessage,
-    setStateFunc: (updater: (prevState: IChatbotState) => IChatbotState) => void,
+    setStateFunc: (updater: (prevState: IChatbotState) => IChatbotState) => void
   ) {
     this.createChatBotMessage = createChatBotMessage;
     this.setState = setStateFunc;
@@ -43,7 +43,7 @@ class ActionProvider {
     } catch (error) {
       console.error('Error fetching chatbot response:', error);
       const botMessage = this.createChatBotMessage(
-        "Sorry, I'm having trouble connecting to the server.",
+        "Sorry, I'm having trouble connecting to the server."
       );
       this.setState((prev: IChatbotState) => ({
         ...prev,

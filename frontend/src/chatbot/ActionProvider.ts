@@ -36,7 +36,7 @@ interface IApiResponse {
 class ActionProvider {
   createChatBotMessage: (
     message: string,
-    options?: { widget?: string; payload?: IMessagePayload },
+    options?: { widget?: string; payload?: IMessagePayload }
   ) => IChatMessage;
   setState: (updater: (prevState: IChatbotState) => IChatbotState) => void;
   createClientMessage: (message: string) => IChatMessage;
@@ -46,12 +46,12 @@ class ActionProvider {
   constructor(
     createChatBotMessage: (
       message: string,
-      options?: { widget?: string; payload?: IMessagePayload },
+      options?: { widget?: string; payload?: IMessagePayload }
     ) => IChatMessage,
     setStateFunc: (updater: (prevState: IChatbotState) => IChatbotState) => void,
     createClientMessage: (message: string) => IChatMessage,
     stateRef: { current: IChatbotState },
-    createCustomMessage: (message: IChatMessage) => void,
+    createCustomMessage: (message: IChatMessage) => void
   ) {
     this.createChatBotMessage = createChatBotMessage;
     this.setState = setStateFunc;
@@ -88,7 +88,7 @@ class ActionProvider {
       console.error('Error fetching chatbot response:', error);
       const errorMessage = BotChatMessage.create(
         'Sorry, something went wrong. Please try again later.',
-        'error',
+        'error'
       );
       // Assuming BotChatMessage.create returns an object compatible with IChatMessage
       this.addMessageToState(errorMessage as IChatMessage);
