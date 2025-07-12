@@ -79,6 +79,10 @@ fi
 
 kubectl create namespace "$NAMESPACE" 2>/dev/null || true
 
+echo "ℹ️ Adding Bitnami repository..."
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+
 echo "ℹ️ Running helm lint..."
 helm lint ./chart
 
