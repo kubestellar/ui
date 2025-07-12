@@ -126,14 +126,17 @@ export class PluginAPI {
       checksum: string;
       scanTime: string;
       scanDuration: string;
-      fileAnalysis: Record<string, {
-        fileType: string;
-        size: number;
-        checksum: string;
-        issues: string[];
-        warnings: string[];
-        permissions?: string;
-      }>;
+      fileAnalysis: Record<
+        string,
+        {
+          fileType: string;
+          size: number;
+          checksum: string;
+          issues: string[];
+          warnings: string[];
+          permissions?: string;
+        }
+      >;
       overallRisk: string;
       recommendation: string;
       galaxySafe: boolean;
