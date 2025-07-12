@@ -1,6 +1,9 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 
+// Configurable refresh endpoint
+const REFRESH_ENDPOINT = process.env.VITE_REFRESH_ENDPOINT || '/api/refresh';
+
 export const api = axios.create({
   baseURL: process.env.VITE_BASE_URL,
   timeout: 60000,
@@ -61,7 +64,7 @@ async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
   refreshPromise = api
-    .post('/api/refresh', { refreshToken })
+    .post(REFRESH_ENDPOINT, { refreshToken })
     .then(res => {
       const { token, refreshToken: newRefreshToken } = res.data;
       if (token) setAccessToken(token);
