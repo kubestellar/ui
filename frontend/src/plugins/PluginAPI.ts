@@ -102,4 +102,10 @@ export class PluginAPI {
   getPluginAssetURL(pluginID: number, assetPath: string): string {
     return `${this.baseURL}/${pluginID}/assets${assetPath}`;
   }
+
+  // Security scan method
+  async scanPluginSecurity(pluginID: string): Promise<any> {
+    const response = await api.post(`${this.baseURL}/${pluginID}/scan`);
+    return response.data;
+  }
 }

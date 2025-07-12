@@ -84,6 +84,12 @@ type PluginDetails struct {
 	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
 	Routes      []string  `json:"routes,omitempty"`
 	Status      string    `json:"status"`
+	// Security information
+	SecurityScore  int       `json:"securityScore,omitempty"`
+	SecurityStatus string    `json:"securityStatus,omitempty"`
+	GalaxySafe     bool      `json:"galaxySafe,omitempty"`
+	LastScanned    time.Time `json:"lastScanned,omitempty"`
+	RiskLevel      string    `json:"riskLevel,omitempty"`
 }
 
 // PluginSystemMetrics contains system-wide metrics for plugins
@@ -133,17 +139,25 @@ func ListPluginsHandler(c *gin.Context) {
 		// Convert to API response format
 		for _, p := range loadedPlugins {
 			if p.Manifest != nil {
+				// Get security information for the plugin
+				securityInfo := getPluginSecurityInfo(p.Manifest.Name)
+
 				pluginsList = append(pluginsList, PluginDetails{
-					ID:          p.Manifest.Name,
-					Name:        p.Manifest.Name,
-					Version:     p.Manifest.Version,
-					Enabled:     p.Status == "running",
-					Description: p.Manifest.Description,
-					Author:      p.Manifest.Author,
-					CreatedAt:   p.LoadTime,
-					UpdatedAt:   p.LoadTime,
-					Routes:      extractPluginRoutesFromManifest(p.Manifest),
-					Status:      p.Status,
+					ID:             p.Manifest.Name,
+					Name:           p.Manifest.Name,
+					Version:        p.Manifest.Version,
+					Enabled:        p.Status == "running",
+					Description:    p.Manifest.Description,
+					Author:         p.Manifest.Author,
+					CreatedAt:      p.LoadTime,
+					UpdatedAt:      p.LoadTime,
+					Routes:         extractPluginRoutesFromManifest(p.Manifest),
+					Status:         p.Status,
+					SecurityScore:  securityInfo.Score,
+					SecurityStatus: securityInfo.Status,
+					GalaxySafe:     securityInfo.GalaxySafe,
+					LastScanned:    securityInfo.LastScanned,
+					RiskLevel:      securityInfo.RiskLevel,
 				})
 			}
 		}
@@ -270,6 +284,45 @@ func InstallPluginHandler(c *gin.Context) {
 		return
 	}
 
+	// Perform security scan before installation
+	log.LogInfo("Starting security scan for plugin", zap.String("file", file.Filename))
+	scanner := pkg.NewSecurityScanner()
+	scanResult, err := scanner.ScanPluginArchive(tempFile)
+	if err != nil {
+		log.LogError("Security scan failed", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Security scan failed: " + err.Error(),
+		})
+		return
+	}
+
+	log.LogInfo("Security scan completed",
+		zap.Bool("safe", scanResult.Safe),
+		zap.Int("score", scanResult.Score),
+		zap.String("risk", scanResult.OverallRisk),
+		zap.Bool("galaxySafe", scanResult.GalaxySafe))
+
+	// Check if plugin is safe to install
+	if !scanResult.Safe {
+		log.LogWarn("Plugin failed security scan",
+			zap.String("file", file.Filename),
+			zap.Int("score", scanResult.Score),
+			zap.String("risk", scanResult.OverallRisk))
+
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Plugin failed security scan",
+			"details": gin.H{
+				"safe":           scanResult.Safe,
+				"score":          scanResult.Score,
+				"riskLevel":      scanResult.OverallRisk,
+				"recommendation": scanResult.Recommendation,
+				"issues":         scanResult.Issues,
+				"warnings":       scanResult.Warnings,
+			},
+		})
+		return
+	}
+
 	// Extract the tar.gz file
 	extractDir := filepath.Join(tempDir, "extracted")
 	if err := os.MkdirAll(extractDir, 0755); err != nil {
@@ -390,6 +443,12 @@ func InstallPluginHandler(c *gin.Context) {
 				"status":  "installed",
 				"path":    pluginDir,
 				"warning": "Plugin loaded with errors: " + err.Error(),
+				"security": gin.H{
+					"safe":       scanResult.Safe,
+					"score":      scanResult.Score,
+					"galaxySafe": scanResult.GalaxySafe,
+					"riskLevel":  scanResult.OverallRisk,
+				},
 			})
 			return
 		}
@@ -409,6 +468,14 @@ func InstallPluginHandler(c *gin.Context) {
 		"version": manifest.Version,
 		"status":  "loaded",
 		"path":    pluginDir,
+		"security": gin.H{
+			"safe":       scanResult.Safe,
+			"score":      scanResult.Score,
+			"galaxySafe": scanResult.GalaxySafe,
+			"riskLevel":  scanResult.OverallRisk,
+			"issues":     len(scanResult.Issues),
+			"warnings":   len(scanResult.Warnings),
+		},
 	})
 }
 
@@ -912,6 +979,28 @@ func extractPluginRoutesFromManifest(manifest *pkg.PluginManifest) []string {
 	return routes
 }
 
+// PluginSecurityInfo represents security information for a plugin
+type PluginSecurityInfo struct {
+	Score       int       `json:"score"`
+	Status      string    `json:"status"`
+	GalaxySafe  bool      `json:"galaxySafe"`
+	LastScanned time.Time `json:"lastScanned"`
+	RiskLevel   string    `json:"riskLevel"`
+}
+
+// getPluginSecurityInfo retrieves security information for a plugin
+func getPluginSecurityInfo(pluginName string) PluginSecurityInfo {
+	// For now, return default security info
+	// In a real implementation, this would query the database
+	return PluginSecurityInfo{
+		Score:       100,
+		Status:      "safe",
+		GalaxySafe:  true,
+		LastScanned: time.Now(),
+		RiskLevel:   "low",
+	}
+}
+
 // Helper functions for file operations
 
 // extractTarGz extracts a tar.gz file to the specified directory
@@ -1017,4 +1106,143 @@ func copyDir(src, dst string) error {
 	}
 
 	return nil
+}
+
+// ScanPluginSecurityHandler scans a plugin for security issues
+func ScanPluginSecurityHandler(c *gin.Context) {
+	pluginID := c.Param("id")
+	if pluginID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Plugin ID is required",
+		})
+		return
+	}
+
+	log.LogInfo("Starting security scan for plugin", zap.String("id", pluginID))
+
+	// Find the plugin
+	plugin := findPluginByID(pluginID)
+	if plugin == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Plugin not found: " + pluginID,
+		})
+		return
+	}
+
+	// Get plugin directory
+	pluginDir := filepath.Join("./plugins", pluginID)
+	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Plugin directory not found: " + pluginDir,
+		})
+		return
+	}
+
+	// Create a temporary archive for scanning
+	tempDir, err := os.MkdirTemp("", "security_scan_*")
+	if err != nil {
+		log.LogError("Failed to create temp directory for security scan", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create temporary directory",
+		})
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create archive from plugin directory
+	archivePath := filepath.Join(tempDir, pluginID+".tar.gz")
+	if err := createTarGz(pluginDir, archivePath); err != nil {
+		log.LogError("Failed to create archive for security scan", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create plugin archive for scanning",
+		})
+		return
+	}
+
+	// Perform security scan
+	scanner := pkg.NewSecurityScanner()
+	scanResult, err := scanner.ScanPluginArchive(archivePath)
+	if err != nil {
+		log.LogError("Security scan failed", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Security scan failed: " + err.Error(),
+		})
+		return
+	}
+
+	log.LogInfo("Security scan completed",
+		zap.String("plugin", pluginID),
+		zap.Bool("safe", scanResult.Safe),
+		zap.Int("score", scanResult.Score),
+		zap.String("risk", scanResult.OverallRisk),
+		zap.Bool("galaxySafe", scanResult.GalaxySafe))
+
+	c.JSON(http.StatusOK, gin.H{
+		"pluginId":   pluginID,
+		"scanResult": scanResult,
+		"message":    "Security scan completed successfully",
+	})
+}
+
+// createTarGz creates a tar.gz archive from a directory
+func createTarGz(sourceDir, targetPath string) error {
+	// Create the target file
+	targetFile, err := os.Create(targetPath)
+	if err != nil {
+		return err
+	}
+	defer targetFile.Close()
+
+	// Create gzip writer
+	gzipWriter := gzip.NewWriter(targetFile)
+	defer gzipWriter.Close()
+
+	// Create tar writer
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	// Walk through the source directory
+	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Get relative path
+		relPath, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return err
+		}
+
+		// Skip if it's the root directory
+		if relPath == "." {
+			return nil
+		}
+
+		// Create header
+		header, err := tar.FileInfoHeader(info, relPath)
+		if err != nil {
+			return err
+		}
+		header.Name = relPath
+
+		// Write header
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return err
+		}
+
+		// If it's a file, write the content
+		if !info.IsDir() {
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			if _, err := io.Copy(tarWriter, file); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

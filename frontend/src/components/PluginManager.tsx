@@ -17,12 +17,15 @@ import {
   HiOutlineFolder,
   HiOutlineCodeBracket,
   HiChatBubbleLeftEllipsis,
+  HiShieldCheck,
 } from 'react-icons/hi2';
 import { usePlugins } from '../plugins/PluginLoader';
 import { PluginAPI } from '../plugins/PluginAPI';
 import useTheme from '../stores/themeStore';
 import getThemeStyles from '../lib/theme-utils';
 import FeedbackModel from './plugin/FeedbackModel';
+import SecurityBadge from './plugin/SecurityBadge';
+import SecurityScanModal from './plugin/SecurityScanModal';
 
 interface Plugin {
   name: string;
@@ -34,6 +37,12 @@ interface Plugin {
   loadTime?: Date;
   routes?: string[];
   id: number;
+  // Security information
+  securityScore?: number;
+  securityStatus?: string;
+  galaxySafe?: boolean;
+  lastScanned?: string;
+  riskLevel?: string;
 }
 
 export const PluginManager: React.FC = () => {
@@ -59,6 +68,15 @@ export const PluginManager: React.FC = () => {
   } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [feedbackClick, setFeedbackClick] = useState<number | null>(null);
+  const [securityScanModal, setSecurityScanModal] = useState<{
+    isOpen: boolean;
+    pluginId: string;
+    pluginName: string;
+  }>({
+    isOpen: false,
+    pluginId: '',
+    pluginName: '',
+  });
 
   // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);
@@ -668,6 +686,33 @@ export const PluginManager: React.FC = () => {
                     {plugin.description}
                   </p>
 
+                  {/* Security Information */}
+                  <div className="mb-4 flex items-center justify-between">
+                    <SecurityBadge
+                      galaxySafe={plugin.galaxySafe || false}
+                      securityScore={plugin.securityScore || 0}
+                      riskLevel={plugin.riskLevel || 'unknown'}
+                      securityStatus={plugin.securityStatus || 'pending'}
+                    />
+                    <motion.button
+                      onClick={() => setSecurityScanModal({
+                        isOpen: true,
+                        pluginId: plugin.name,
+                        pluginName: plugin.name,
+                      })}
+                      className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors"
+                      style={{
+                        background: themeStyles.colors.brand.primary + '20',
+                        color: themeStyles.colors.brand.primary,
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <HiShieldCheck className="h-3 w-3" />
+                      Scan
+                    </motion.button>
+                  </div>
+
                   {/* Plugin Actions */}
                   <div className="mt-auto grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
                     {plugin.enabled ? (
@@ -809,6 +854,15 @@ export const PluginManager: React.FC = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Security Scan Modal */}
+      <SecurityScanModal
+        pluginId={securityScanModal.pluginId}
+        pluginName={securityScanModal.pluginName}
+        isOpen={securityScanModal.isOpen}
+        onClose={() => setSecurityScanModal({ isOpen: false, pluginId: '', pluginName: '' })}
+        themeStyles={themeStyles}
+      />
     </div>
   );
 };

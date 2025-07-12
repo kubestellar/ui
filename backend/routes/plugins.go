@@ -29,5 +29,8 @@ func setupPluginRoutes(router *gin.Engine) {
 
 		// Feedback
 		plugins.POST("/feedback", api.SubmitPluginFeedbackHandler)
+
+		// Security
+		plugins.POST("/:id/scan", api.ScanPluginSecurityHandler)
 	}
 }
