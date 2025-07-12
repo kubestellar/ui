@@ -58,7 +58,6 @@ const MetricCard = ({
   description?: string;
   onClick?: () => void;
 }) => {
-
   const getGradient = () => {
     if (color.includes('blue')) {
       return 'bg-gradient-to-br from-blue-500/10 to-indigo-600/5 dark:from-blue-900/20 dark:to-indigo-900/10';
@@ -119,7 +118,7 @@ const MetricCard = ({
               </span>
               {description && (
                 <div className="group relative">
-                  <Info size={12} className="ml-1 inline opacity-60 cursor-help" />
+                  <Info size={12} className="ml-1 inline cursor-help opacity-60" />
                   <div className="pointer-events-none invisible absolute -left-4 -top-10 z-20 w-48 whitespace-normal rounded-md border border-gray-200 bg-white p-2 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                     {description}
                   </div>
@@ -128,11 +127,15 @@ const MetricCard = ({
             </div>
           </div>
           {trend !== undefined && (
-            <div className={`flex items-center text-sm ${
-              trend > 0 ? 'text-green-600 dark:text-green-400' : 
-              trend < 0 ? 'text-red-600 dark:text-red-400' : 
-              'text-gray-500 dark:text-gray-400'
-            }`}>
+            <div
+              className={`flex items-center text-sm ${
+                trend > 0
+                  ? 'text-green-600 dark:text-green-400'
+                  : trend < 0
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
               <TrendingUp size={14} className={`mr-1 ${trend < 0 ? 'rotate-180' : ''}`} />
               {Math.abs(trend).toFixed(1)}%
             </div>
@@ -182,14 +185,17 @@ const MetricsChart = ({
         {data.map((item, index) => (
           <div key={item.label} className="flex items-center">
             <div className="w-20 text-sm text-gray-600 dark:text-gray-400">{item.label}</div>
-            <div className="flex-1 mx-3">
-              <div className="h-2 bg-gray-200 rounded-full dark:bg-gray-700">
+            <div className="mx-3 flex-1">
+              <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700">
                 <motion.div
                   className={`h-full rounded-full bg-gradient-to-r ${
-                    color === 'blue' ? 'from-blue-500 to-indigo-600' :
-                    color === 'green' ? 'from-emerald-500 to-green-600' :
-                    color === 'purple' ? 'from-violet-500 to-purple-600' :
-                    'from-amber-500 to-orange-600'
+                    color === 'blue'
+                      ? 'from-blue-500 to-indigo-600'
+                      : color === 'green'
+                        ? 'from-emerald-500 to-green-600'
+                        : color === 'purple'
+                          ? 'from-violet-500 to-purple-600'
+                          : 'from-amber-500 to-orange-600'
                   }`}
                   initial={{ width: 0 }}
                   animate={{ width: `${(item.value / maxValue) * 100}%` }}
@@ -209,12 +215,8 @@ const MetricsChart = ({
 
 // Main MetricsDashboard component
 const MetricsDashboard = () => {
-  const {
-    useCacheMetrics,
-    useClusterMetrics,
-    useRuntimeMetrics,
-    useMetricsSummary,
-  } = useMetricsQueries();
+  const { useCacheMetrics, useClusterMetrics, useRuntimeMetrics, useMetricsSummary } =
+    useMetricsQueries();
 
   // State for dashboard controls
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -248,9 +250,7 @@ const MetricsDashboard = () => {
     refetch: refetchRuntime,
   } = useRuntimeMetrics({ enabled: visibleSections.runtime });
 
-  const {
-    refetch: refetchSummary,
-  } = useMetricsSummary();
+  const { refetch: refetchSummary } = useMetricsSummary();
 
   // Processed metrics data
   const processedData = useMemo(() => {
@@ -289,8 +289,14 @@ const MetricsDashboard = () => {
   const chartData = useMemo(() => {
     const cacheData = cacheMetrics
       ? [
-          { label: 'Hits', value: cacheMetrics.hits.reduce((sum, m) => sum + processMetricValue(m), 0) },
-          { label: 'Misses', value: cacheMetrics.misses.reduce((sum, m) => sum + processMetricValue(m), 0) },
+          {
+            label: 'Hits',
+            value: cacheMetrics.hits.reduce((sum, m) => sum + processMetricValue(m), 0),
+          },
+          {
+            label: 'Misses',
+            value: cacheMetrics.misses.reduce((sum, m) => sum + processMetricValue(m), 0),
+          },
         ]
       : [];
 
@@ -317,7 +323,15 @@ const MetricsDashboard = () => {
       toast.error('Failed to refresh metrics');
       console.error('Refresh error:', error);
     }
-  }, [visibleSections.cache, visibleSections.cluster, visibleSections.runtime, refetchCache, refetchCluster, refetchRuntime, refetchSummary]);
+  }, [
+    visibleSections.cache,
+    visibleSections.cluster,
+    visibleSections.runtime,
+    refetchCache,
+    refetchCluster,
+    refetchRuntime,
+    refetchSummary,
+  ]);
 
   // Auto-refresh effect
   useEffect(() => {
@@ -332,7 +346,10 @@ const MetricsDashboard = () => {
 
   // Error handling - show partial data if some metrics fail
   const hasErrors = cacheError || clusterError || runtimeError;
-  const hasData = processedData.cacheHitRatio > 0 || processedData.goroutineCount > 0 || processedData.totalKubectlOps > 0;
+  const hasData =
+    processedData.cacheHitRatio > 0 ||
+    processedData.goroutineCount > 0 ||
+    processedData.totalKubectlOps > 0;
 
   if (hasErrors && !hasData) {
     return (
@@ -376,7 +393,7 @@ const MetricsDashboard = () => {
               Monitor KubeStellar performance and system metrics from Prometheus
             </p>
           </div>
-          
+
           {/* Dashboard Controls */}
           <div className="mt-4 flex items-center space-x-3 md:mt-0">
             <div className="flex items-center space-x-2">
@@ -391,10 +408,10 @@ const MetricsDashboard = () => {
                 {autoRefresh ? <Eye size={14} /> : <EyeOff size={14} />}
                 Auto-refresh
               </button>
-              
+
               <select
                 value={refreshInterval}
-                onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                onChange={e => setRefreshInterval(Number(e.target.value))}
                 className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
                 disabled={!autoRefresh}
               >
@@ -406,7 +423,7 @@ const MetricsDashboard = () => {
             </div>
 
             <button
-              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-750"
+              className="dark:hover:bg-gray-750 flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
               onClick={handleRefresh}
             >
               <RefreshCcw size={16} />
@@ -430,7 +447,7 @@ const MetricsDashboard = () => {
           isLoading={cacheLoading}
           description="Percentage of successful cache hits vs total cache operations"
         />
-        
+
         <MetricCard
           title="Active Goroutines"
           value={processedData.goroutineCount}
@@ -439,7 +456,7 @@ const MetricsDashboard = () => {
           isLoading={runtimeLoading}
           description="Number of currently running Go goroutines"
         />
-        
+
         <MetricCard
           title="Kubectl Operations"
           value={processedData.totalKubectlOps}
@@ -448,7 +465,7 @@ const MetricsDashboard = () => {
           isLoading={clusterLoading}
           description="Total number of kubectl operations executed"
         />
-        
+
         <MetricCard
           title="Avg Onboarding Time"
           value={processedData.avgOnboardingTime.toFixed(1)}
@@ -464,11 +481,7 @@ const MetricsDashboard = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Cache Metrics Chart */}
         {visibleSections.charts && chartData.cacheData.length > 0 && (
-          <MetricsChart
-            title="Cache Performance"
-            data={chartData.cacheData}
-            color="green"
-          />
+          <MetricsChart title="Cache Performance" data={chartData.cacheData} color="green" />
         )}
 
         {/* Kubectl Operations Chart */}
@@ -488,11 +501,9 @@ const MetricsDashboard = () => {
       >
         <div className="mb-4 flex items-center">
           <CheckCircle size={20} className="mr-2 text-green-500" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            System Status
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">System Status</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
             <div className="flex items-center justify-between">
@@ -500,10 +511,14 @@ const MetricsDashboard = () => {
               <CheckCircle size={16} className="text-green-500" />
             </div>
             <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {processedData.cacheHitRatio > 80 ? 'Excellent' : processedData.cacheHitRatio > 60 ? 'Good' : 'Needs Attention'}
+              {processedData.cacheHitRatio > 80
+                ? 'Excellent'
+                : processedData.cacheHitRatio > 60
+                  ? 'Good'
+                  : 'Needs Attention'}
             </div>
           </div>
-          
+
           <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600 dark:text-gray-400">Runtime Health</span>
@@ -513,7 +528,7 @@ const MetricsDashboard = () => {
               {processedData.goroutineCount < 1000 ? 'Optimal' : 'High Load'}
             </div>
           </div>
-          
+
           <div className="rounded-lg bg-purple-50 p-4 dark:bg-purple-900/20">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600 dark:text-gray-400">Cluster Ops</span>
@@ -524,7 +539,7 @@ const MetricsDashboard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
           Last updated: {new Date().toLocaleString()}
         </div>
@@ -533,4 +548,4 @@ const MetricsDashboard = () => {
   );
 };
 
-export default MetricsDashboard; 
+export default MetricsDashboard;

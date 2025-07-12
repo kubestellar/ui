@@ -44,8 +44,12 @@ export interface MetricsSummary {
 const fetchCacheMetrics = async (): Promise<CacheMetrics> => {
   try {
     const [hitsResponse, missesResponse] = await Promise.all([
-      api.get<PrometheusResponse>('http://localhost:9090/api/v1/query?query=kubestellar_binding_policy_cache_hits_total'),
-      api.get<PrometheusResponse>('http://localhost:9090/api/v1/query?query=kubestellar_binding_policy_cache_misses_total')
+      api.get<PrometheusResponse>(
+        'http://localhost:9090/api/v1/query?query=kubestellar_binding_policy_cache_hits_total'
+      ),
+      api.get<PrometheusResponse>(
+        'http://localhost:9090/api/v1/query?query=kubestellar_binding_policy_cache_misses_total'
+      ),
     ]);
 
     return {
@@ -62,8 +66,12 @@ const fetchCacheMetrics = async (): Promise<CacheMetrics> => {
 const fetchClusterMetrics = async (): Promise<ClusterMetrics> => {
   try {
     const [onboardingResponse, kubectlResponse] = await Promise.all([
-      api.get<PrometheusResponse>('http://localhost:9090/api/v1/query?query=cluster_onboarding_duration_seconds'),
-      api.get<PrometheusResponse>('http://localhost:9090/api/v1/query?query=kubectl_operations_total')
+      api.get<PrometheusResponse>(
+        'http://localhost:9090/api/v1/query?query=cluster_onboarding_duration_seconds'
+      ),
+      api.get<PrometheusResponse>(
+        'http://localhost:9090/api/v1/query?query=kubectl_operations_total'
+      ),
     ]);
 
     return {
@@ -79,8 +87,10 @@ const fetchClusterMetrics = async (): Promise<ClusterMetrics> => {
 // Fetch runtime metrics from Prometheus
 const fetchRuntimeMetrics = async (): Promise<RuntimeMetrics> => {
   try {
-    const response = await api.get<PrometheusResponse>('http://localhost:9090/api/v1/query?query=go_goroutines');
-    
+    const response = await api.get<PrometheusResponse>(
+      'http://localhost:9090/api/v1/query?query=go_goroutines'
+    );
+
     return {
       goroutines: response.data.data.result || [],
     };
@@ -157,19 +167,28 @@ export const processMetricValue = (metric: PrometheusMetric): number => {
   return parseFloat(metric.value[1]) || 0;
 };
 
-export const aggregateMetricsByLabel = (metrics: PrometheusMetric[], labelKey: string): Record<string, number> => {
-  return metrics.reduce((acc, metric) => {
-    const labelValue = metric.metric[labelKey] || 'unknown';
-    acc[labelValue] = (acc[labelValue] || 0) + processMetricValue(metric);
-    return acc;
-  }, {} as Record<string, number>);
+export const aggregateMetricsByLabel = (
+  metrics: PrometheusMetric[],
+  labelKey: string
+): Record<string, number> => {
+  return metrics.reduce(
+    (acc, metric) => {
+      const labelValue = metric.metric[labelKey] || 'unknown';
+      acc[labelValue] = (acc[labelValue] || 0) + processMetricValue(metric);
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 };
 
-export const calculateCacheHitRatio = (hits: PrometheusMetric[], misses: PrometheusMetric[]): number => {
+export const calculateCacheHitRatio = (
+  hits: PrometheusMetric[],
+  misses: PrometheusMetric[]
+): number => {
   const totalHits = hits.reduce((sum, metric) => sum + processMetricValue(metric), 0);
   const totalMisses = misses.reduce((sum, metric) => sum + processMetricValue(metric), 0);
   const total = totalHits + totalMisses;
-  
+
   if (total === 0) return 0;
   return (totalHits / total) * 100;
-}; 
+};
