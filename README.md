@@ -157,7 +157,32 @@ This will start:
 
 Both services are configured with appropriate volumes to persist data between restarts.
 
-#### Step 3: Install and Run the Backend
+#### Step 3: Create `.env` File for Backend Configuration
+
+To configure the backend, copy the `.env.example` file to a `.env` file in the `backend/` directory.
+
+```bash
+cd backend/
+
+cp .env.example .env
+```
+
+**Example `.env` file:**
+
+```
+REDIS_HOST=localhost
+REDIS_PORT=6379
+CORS_ALLOWED_ORIGIN=http://localhost:5173
+DATABASE_URL=postgres://authuser:authpass123@localhost:5400/authdb?sslmode=disable
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+PORT=4000
+GIN_MODE=debug
+```
+
+> [!NOTE]
+> Make sure to update the values according to your local environment setup, especially the `DATABASE_URL` and `JWT_SECRET` for security reasons.
+
+#### Step 4: Install and Run the Backend
 
 Make sure you are in the root directory of the project
 
@@ -181,7 +206,7 @@ go run main.go
 
 You should see output indicating the server is running on port `4000`.
 
-#### Step 4: Install and Run Frontend
+#### Step 5: Install and Run Frontend
 
 Open another terminal and make sure you are in the root directory of the project.
 
