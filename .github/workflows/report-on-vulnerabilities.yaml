@@ -132,12 +132,5 @@ jobs:
                 --label "security,vulnerability"
           
               echo "Created issue for $vuln_id"
-            else
-              echo "Issue already exists for $vuln_id (Issue #$existing_issue) - adding scheduled run reference"
-          
-              # Add comment to existing issue with scheduled run info
-              gh issue comment $existing_issue --body "🔗 **Scheduled Vulnerability Scan**: This vulnerability was detected during the scheduled weekly security scan.
-          
-              *Auto-detected by Trivy scanner on $(date)*"
             fi
           done
