@@ -1,7 +1,8 @@
 // Token and refresh logic moved from src/lib/api.ts
 import { AxiosInstance } from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
-const REFRESH_ENDPOINT = process.env.VITE_REFRESH_ENDPOINT || '/api/refresh';
+const REFRESH_ENDPOINT = import.meta.env.VITE_REFRESH_ENDPOINT || '/api/refresh';
 const ACCESS_TOKEN_KEY = 'jwtToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
@@ -26,11 +27,15 @@ export function clearTokens() {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
+interface JwtPayload {
+  exp?: number;
+  [key: string]: any;
+}
+
 export function isTokenExpired(token: string | null): boolean {
   if (!token) return true;
   try {
-    const [, payload] = token.split('.');
-    const decoded = JSON.parse(atob(payload));
+    const decoded = jwtDecode<JwtPayload>(token);
     if (!decoded.exp) return true;
     return Date.now() >= decoded.exp * 1000;
   } catch {
