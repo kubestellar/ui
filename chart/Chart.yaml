@@ -8,3 +8,9 @@ type: application
 version: "0.1.0"
 appVersion: "0.1.0"
 icon: https://raw.githubusercontent.com/kubestellar/ui/refs/heads/dev/public/logo.svg
+
+dependencies:
+  - name: redis
+    version: "21.2.5"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
