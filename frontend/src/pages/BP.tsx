@@ -16,27 +16,27 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import BPHeader from '../components/BindingPolicy/Dialogs/BPHeader';
-import BPTable from '../components/BindingPolicy/BPTable';
-import BPPagination from '../components/BindingPolicy/BPPagination';
-import PreviewDialog from '../components/BindingPolicy/PreviewDialog';
-import DeleteDialog from '../components/BindingPolicy/Dialogs/DeleteDialog';
-import EditBindingPolicyDialog from '../components/BindingPolicy/Dialogs/EditBindingPolicyDialog';
+import BPHeader from '../components/bindingPolicy/Dialogs/BPHeader';
+import BPTable from '../components/bindingPolicy/BPTable';
+import BPPagination from '../components/bindingPolicy/BPPagination';
+import PreviewDialog from '../components/bindingPolicy/PreviewDialog';
+import DeleteDialog from '../components/bindingPolicy/Dialogs/DeleteDialog';
+import EditBindingPolicyDialog from '../components/bindingPolicy/Dialogs/EditBindingPolicyDialog';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../types/bindingPolicy';
 import useTheme from '../stores/themeStore';
 // Import React Query hooks
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
-import { PolicyData } from '../components/BindingPolicy/CreateBindingPolicyDialog';
-import BPVisualization from '../components/BindingPolicy/BPVisualization';
-import PolicySelection from '../components/BindingPolicy/PolicySelection';
-import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
+import  { PolicyData } from '../components/bindingPolicy/CreateBindingPolicyDialog';
+import BPVisualizationWrapper from '../components/bindingPolicy/BPVisualization';
+import PolicySelection from '../components/bindingPolicy/PolicySelection';
+import KubernetesIcon from '../components/bindingPolicy/KubernetesIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   getTabsStyles,
   // StyledTab,
-} from '../components/BindingPolicy/styles/CreateBindingPolicyStyles';
+} from '../components/bindingPolicy/styles/CreateBindingPolicyStyles';
 import { api } from '../lib/api';
 import BPSkeleton from '../components/skeleton/BPSkeleton';
 import toast from 'react-hot-toast';
@@ -915,7 +915,7 @@ const BP = () => {
                 {bindingPolicies.length === 0 ? (
                   <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
                 ) : (
-                  <BPVisualization
+                  <BPVisualizationWrapper
                     policies={bindingPolicies}
                     clusters={clusters}
                     workloads={workloads}
