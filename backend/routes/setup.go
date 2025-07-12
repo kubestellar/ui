@@ -45,6 +45,7 @@ func SetupRoutes(router *gin.Engine) {
 	setupAuthRoutes(router)
 	setupArtifactHubRoutes(router)
 	setupPluginRoutes(router)
+	setupMetricsRoutes(router)
 	router.GET("/api/v1/metrics", func(c *gin.Context) {
 		api.GetMetrics(c)
 	})
