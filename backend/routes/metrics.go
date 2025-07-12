@@ -93,6 +93,10 @@ func setupMetricsRoutes(router *gin.Engine) {
 
 		// Pod health metrics
 		metrics.GET("/pod-health", api.GetPodHealthMetrics)
+
+		// Cluster resource metrics (CPU/Memory usage)
+		metrics.GET("/cluster-resources", k8s.GetClusterMetrics)
+		metrics.GET("/cluster-resources/:context", k8s.GetClusterMetricsForContext)
 	}
 }
 

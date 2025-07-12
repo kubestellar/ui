@@ -1,7 +1,7 @@
 import { Box, Typography, Button, Tooltip } from '@mui/material';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import useTheme from '../stores/themeStore';
-import ListViewSkeleton from './ui/ListViewSkeleton';
+import ListViewSkeleton from './skeleton/ListViewSkeleton';
 import { api } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';

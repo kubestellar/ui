@@ -27,6 +27,7 @@ jobs:
       - name: Check Formatting
         working-directory: frontend
         run: npm run format:check
+
       - name: ✅ Formatting Check Passed
         if: success()
         run: echo "Prettier formatting check passed ✅"
@@ -34,6 +35,7 @@ jobs:
       - name: Lint Check
         working-directory: frontend
         run: npm run lint
+
       - name: ✅ Lint Check Passed
         if: success()
         run: echo "Linting successful ✅"
@@ -41,6 +43,7 @@ jobs:
       - name: Run Frontend Tests
         working-directory: frontend
         run: npm test -- --ci --coverage --passWithNoTests
+
       - name: ✅ Frontend Tests Passed
         if: success()
         run: echo "Frontend tests passed ✅"
@@ -50,6 +53,7 @@ jobs:
         run: npm run build
         env:
           VITE_BASE_URL: http://localhost:4000
+
       - name: ✅ Frontend Build Successful
         if: success()
         run: echo "Frontend build successful ✅"
@@ -61,6 +65,7 @@ jobs:
           npm run dev &
         env:
           VITE_BASE_URL: http://localhost:4000
+
       - name: ✅ Frontend Server Started
         if: success()
         run: echo "Frontend server started successfully ✅"
@@ -93,6 +98,7 @@ jobs:
       - name: Install Dependencies
         working-directory: backend
         run: go mod download
+
       - name: ✅ Dependencies Installed
         if: success()
         run: echo "Go dependencies installed successfully ✅"
@@ -105,6 +111,7 @@ jobs:
             gofmt -l .
             exit 1
           fi
+
       - name: ✅ Formatting Check Passed
         if: success()
         run: echo "Go formatting check passed ✅"
@@ -112,6 +119,7 @@ jobs:
       - name: Build Backend
         working-directory: backend
         run: go build -v ./...
+
       - name: ✅ Backend Build Successful
         if: success()
         run: echo "Backend build successful ✅"
@@ -119,6 +127,7 @@ jobs:
       - name: Run Backend Tests
         working-directory: backend
         run: go test ./... -v
+
       - name: ✅ Backend Tests Passed
         if: success()
         run: echo "Backend Tests Passed ✅"
@@ -128,6 +137,7 @@ jobs:
         run: |
           echo "Starting Backend Server..."
           go run . &
+
       - name: ✅ Backend Server Started
         if: success()
         run: echo "Backend server started successfully ✅"
@@ -135,7 +145,7 @@ jobs:
   helm-chart-test:
     name: Helm Chart Test
     runs-on: ubuntu-latest
-    needs: [frontend, backend]  # ✅ Wait until images are built & pushed
+    needs: [frontend, backend]
 
     steps:
       - name: Checkout Repository
@@ -144,7 +154,7 @@ jobs:
       - name: Set up KinD Cluster
         uses: helm/kind-action@v1.9.0
         with:
-          cluster_name: helm-ui-test  # 🧠 Must match --cluster arg in test script
+          cluster_name: helm-ui-test
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -171,10 +181,11 @@ jobs:
             .backend.image.repository = "ghcr.io/kubestellar/ui-backend" |
             .backend.image.tag = "${{ github.sha }}"
           ' -i chart/values.ci.yaml
+
       - name: Run Helm Chart Test Script
         run: |
           bash scripts/helm-test.sh \
             --release=ui-test-release \
             --namespace=helm-ui-test \
             --cluster=helm-ui-test \
-            --values=chart/values.ci.yaml        
+            --values=chart/values.ci.yaml
