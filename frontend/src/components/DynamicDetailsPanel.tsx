@@ -23,7 +23,7 @@ import jsyaml from 'js-yaml';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
-import { ResourceItem } from './TreeView/types';
+import { ResourceItem } from './treeView/types';
 import useTheme from '../stores/themeStore'; // Import the useTheme hook
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api } from '../lib/api';

@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import PublicRouteSkeleton from './ui/PublicRouteSkeleton';
+import PublicRouteSkeleton from './skeleton/PublicRouteSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 

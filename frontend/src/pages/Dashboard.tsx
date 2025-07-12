@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useK8sQueries } from '../hooks/queries/useK8sQueries';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { motion, AnimatePresence } from 'framer-motion';
-import ClusterSkeleton from './ui/ClusterSkeleton';
+import ClusterSkeleton from '../components/skeleton/ClusterSkeleton';
 import {
   Activity,
   Server,
@@ -29,7 +29,7 @@ import useTheme from '../stores/themeStore';
 import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
-import ClusterDetailDialog from './ClusterDetailDialog';
+import ClusterDetailDialog from '../components/ClusterDetailDialog';
 import { useTranslation } from 'react-i18next';
 
 // Health indicator component

@@ -38,7 +38,7 @@ import {
   // StyledTab,
 } from '../components/BindingPolicy/styles/CreateBindingPolicyStyles';
 import { api } from '../lib/api';
-import BPSkeleton from '../components/ui/BPSkeleton';
+import BPSkeleton from '../components/skeleton/BPSkeleton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import React, { Suspense } from 'react';
