@@ -3,11 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   HiXMark,
   HiShieldCheck,
-  HiShieldExclamation,
   HiExclamationTriangle,
   HiInformationCircle,
   HiClock,
-  HiCheckCircle,
 } from 'react-icons/hi2';
 import { PluginAPI } from '../../plugins/PluginAPI';
 import SecurityBadge from './SecurityBadge';
@@ -17,7 +15,15 @@ interface SecurityScanModalProps {
   pluginName: string;
   isOpen: boolean;
   onClose: () => void;
-  themeStyles: any;
+  themeStyles: {
+    effects: { glassMorphism: { background: string } };
+    card: { borderColor: string };
+    colors: {
+      bg: { secondary: string };
+      brand: { primary: string };
+      text: { primary: string; secondary: string };
+    };
+  };
 }
 
 interface SecurityScanResult {

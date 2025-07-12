@@ -104,7 +104,41 @@ export class PluginAPI {
   }
 
   // Security scan method
-  async scanPluginSecurity(pluginID: string): Promise<any> {
+  async scanPluginSecurity(pluginID: string): Promise<{
+    scanResult: {
+      safe: boolean;
+      score: number;
+      issues: Array<{
+        type: string;
+        severity: string;
+        description: string;
+        file?: string;
+        line?: number;
+        code?: string;
+      }>;
+      warnings: Array<{
+        type: string;
+        description: string;
+        file?: string;
+        line?: number;
+        code?: string;
+      }>;
+      checksum: string;
+      scanTime: string;
+      scanDuration: string;
+      fileAnalysis: Record<string, {
+        fileType: string;
+        size: number;
+        checksum: string;
+        issues: string[];
+        warnings: string[];
+        permissions?: string;
+      }>;
+      overallRisk: string;
+      recommendation: string;
+      galaxySafe: boolean;
+    };
+  }> {
     const response = await api.post(`${this.baseURL}/${pluginID}/scan`);
     return response.data;
   }
