@@ -4,13 +4,10 @@ permissions:
   contents: read
   security-events: write
 on:
-  pull_request:
-    paths:
-      - '**/package*.json'
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**/Dockerfile'
-      - '.github/workflows/**'
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
 jobs:
   scan:
     name: Scan for Vulnerabilities
@@ -132,18 +129,8 @@ jobs:
               gh issue create \
                 --title "🔒 $vuln_id - Security Vulnerability" \
                 --body-file issue-content-$vuln_id.md \
-                --label "security,vulnerability" \
-                --assignee "${{ github.actor }}"
+                --label "security,vulnerability"
           
               echo "Created issue for $vuln_id"
-            else
-              echo "Issue already exists for $vuln_id (Issue #$existing_issue) - adding PR reference"
-          
-              # Add comment to existing issue with PR link
-              gh issue comment $existing_issue --body "🔗 **Same CVE detected in PR**: [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})
-          
-              This vulnerability was also found in PR #${{ github.event.pull_request.number }} on branch \`${{ github.event.pull_request.head.ref }}\`.
-          
-              *Auto-detected by Trivy scanner on $(date)*"
             fi
           done
