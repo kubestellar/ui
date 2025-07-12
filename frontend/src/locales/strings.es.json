@@ -2119,13 +2119,36 @@
     "users": {
       "title": "Gestión de Usuarios",
       "subtitle": "Usuarios del Sistema",
-      "noUsers": "No se encontraron usuarios",
-      "noUsersDescription": "Aún no hay usuarios en el sistema. Haga clic en 'Agregar Usuario' para crear su primer usuario.",
+      "description": "Gestionar usuarios del sistema y sus permisos",
+      "searchPlaceholder": "Buscar usuarios por nombre, rol o permisos...",
+      "refresh": "Actualizar Usuarios",
+      "addUser": "Añadir Usuario",
+      "noUsers": "No se encontraron Usuarios",
+      "noUsersDescription": "No hay usuarios en el sistema todavía. Haz clic en 'Añadir Usuario' para crear tu primer usuario.",
       "noPermissions": "Sin permisos asignados",
+      "filters": {
+        "title": "Filtros",
+        "reset": "Restablecer Filtros",
+        "role": "Rol",
+        "allRoles": "Todos los Roles",
+        "permission": "Permiso",
+        "anyPermission": "Cualquier Permiso",
+        "permissionLevel": "Nivel de Permiso",
+        "anyLevel": "Cualquier Nivel",
+        "sortBy": "Ordenar Por",
+        "created": "Fecha de Creación",
+        "ascending": "Ascendente",
+        "descending": "Descendente",
+        "active": "Filtros Activos",
+        "roleFilter": "Rol",
+        "permissionFilter": "Permiso",
+        "levelFilter": "Nivel",
+        "searchFilter": "Búsqueda"
+      },
       "actions": {
-        "addUser": "Agregar Usuario",
+        "addUser": "Añadir Usuario",
         "editUser": "Editar Usuario",
-        "add": "Agregar Usuario",
+        "add": "Añadir Usuario",
         "update": "Actualizar Usuario",
         "delete": "Eliminar Usuario",
         "edit": "Editar",
@@ -2145,7 +2168,7 @@
         "users": "Usuarios",
         "resources": "Recursos",
         "system": "Sistema",
-        "dashboard": "Panel de Control",
+        "dashboard": "Tablero",
         "levels": {
           "read": "Lectura",
           "write": "Escritura",
@@ -2154,13 +2177,13 @@
       },
       "form": {
         "username": "Nombre de Usuario",
-        "usernamePlaceholder": "Ingrese nombre de usuario",
+        "usernamePlaceholder": "Introducir nombre de usuario",
         "password": "Contraseña",
-        "passwordPlaceholder": "Ingrese contraseña",
+        "passwordPlaceholder": "Introducir contraseña",
         "passwordOptional": "Contraseña (opcional)",
-        "passwordOptionalPlaceholder": "Ingrese nueva contraseña o deje en blanco",
+        "passwordOptionalPlaceholder": "Introducir nueva contraseña o dejar en blanco",
         "confirmPassword": "Confirmar Contraseña",
-        "confirmPasswordPlaceholder": "Confirme contraseña",
+        "confirmPasswordPlaceholder": "Confirmar contraseña",
         "isAdmin": "Acceso de Administrador",
         "permissions": "Permisos de Componentes",
         "cancel": "Cancelar",
@@ -2169,21 +2192,21 @@
       "delete": {
         "title": "Eliminar Usuario",
         "confirmTitle": "Confirmar Eliminación",
-        "confirmMessage": "¿Está seguro de que desea eliminar el usuario \"{{username}}\"? Esta acción no se puede deshacer.",
+        "confirmMessage": "¿Estás seguro de que deseas eliminar al usuario \"{{username}}\"? Esta acción no se puede deshacer.",
         "confirm": "Eliminar Usuario"
       },
       "errors": {
         "fetchFailed": "Error al obtener usuarios",
-        "missingFields": "Por favor complete todos los campos requeridos",
+        "missingFields": "Por favor completa todos los campos requeridos",
         "passwordMismatch": "Las contraseñas no coinciden",
-        "addFailed": "Error al agregar usuario",
+        "addFailed": "Error al añadir usuario",
         "updateFailed": "Error al actualizar usuario",
         "deleteFailed": "Error al eliminar usuario"
       },
       "success": {
-        "userAdded": "Usuario agregado correctamente",
-        "userUpdated": "Usuario actualizado correctamente",
-        "userDeleted": "Usuario eliminado correctamente"
+        "userAdded": "Usuario añadido exitosamente",
+        "userUpdated": "Usuario actualizado exitosamente",
+        "userDeleted": "Usuario eliminado exitosamente"
       }
     }
   }
