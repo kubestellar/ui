@@ -5,6 +5,7 @@ import {
   HiOutlineUsers,
 } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
+import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
@@ -55,6 +56,12 @@ export const useMenuData = (): MenuItemData[] => {
           url: '/wecs/treeview',
           icon: MdAssuredWorkload,
           label: t('menu.items.deployedWorkloads'),
+        },
+        {
+          isLink: true,
+          url: '/metrics',
+          icon: BarChart3,
+          label: t('menu.items.metricsDashboard'),
         },
       ],
     },
