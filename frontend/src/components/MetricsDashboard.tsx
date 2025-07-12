@@ -271,7 +271,7 @@ const MetricsDashboard = () => {
       ? clusterMetrics.kubectlOperations.reduce((sum, m) => sum + processMetricValue(m), 0)
       : 0;
 
-    const avgOnboardingTime = clusterMetrics?.onboardingDuration.length
+    const avgOnboardingTime = Array.isArray(clusterMetrics?.onboardingDuration) && clusterMetrics.onboardingDuration.length > 0
       ? clusterMetrics.onboardingDuration.reduce((sum, m) => sum + processMetricValue(m), 0) /
         clusterMetrics.onboardingDuration.length
       : 0;
