@@ -28,7 +28,7 @@ import useTheme from '../stores/themeStore';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
-import  { PolicyData } from '../components/bindingPolicy/CreateBindingPolicyDialog';
+import { PolicyData } from '../components/bindingPolicy/CreateBindingPolicyDialog';
 import BPVisualizationWrapper from '../components/bindingPolicy/BPVisualization';
 import PolicySelection from '../components/bindingPolicy/PolicySelection';
 import KubernetesIcon from '../components/bindingPolicy/KubernetesIcon';

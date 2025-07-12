@@ -27,11 +27,13 @@ export const generateBindingPolicyYAML = (config: PolicyConfiguration): string =
         scheduling:
           config.schedulingRules.length > 0
             ? {
-                rules: config.schedulingRules.map((rule: { resource: string; operator: string; value: string }) => ({
-                  resource: rule.resource,
-                  operator: rule.operator,
-                  value: rule.value,
-                })),
+                rules: config.schedulingRules.map(
+                  (rule: { resource: string; operator: string; value: string }) => ({
+                    resource: rule.resource,
+                    operator: rule.operator,
+                    value: rule.value,
+                  })
+                ),
               }
             : undefined,
         tolerations: config.tolerations.length > 0 ? config.tolerations : undefined,
