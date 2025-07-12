@@ -50,7 +50,6 @@ const ChatbotComponent: React.FC = () => {
       ),
       botChatMessage: (props: IMessageProps) => <BotChatMessage message={props.message} />,
       userChatMessage: (props: IMessageProps) => <UserChatMessage message={props.message} />,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       chatInput: (props: any) => <CustomChatInput {...props} />,
       botTypingIndicator: () => (
         <div className="typing-indicator">
@@ -60,7 +59,6 @@ const ChatbotComponent: React.FC = () => {
         </div>
       ),
     },
-    // @ts-ignore - The types for messageParser and actionProvider are not properly exported
     messageParser: {
       parse: (message: string) => ({
         message,
@@ -68,7 +66,6 @@ const ChatbotComponent: React.FC = () => {
         id: Date.now(),
       }),
     },
-    // @ts-ignore - Type for ActionProvider
     actionProvider: ActionProvider,
   };
 
@@ -115,7 +112,6 @@ const ChatbotComponent: React.FC = () => {
     <div ref={chatbotContainerRef} className={containerClasses}>
       {showBot && (
         <div className="chatbot-container">
-          {/* @ts-ignore - The Chatbot component's props are not properly typed */}
           <Chatbot
             config={config}
             messageHistory={loadMessages()}
