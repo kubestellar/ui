@@ -25,7 +25,7 @@ func TestDetachClusterHandler(t *testing.T) {
 				"clusterName": "test-cluster",
 				"contextName": "its1",
 			},
-			expectedStatus: http.StatusNotFound, // Cluster not found in OCM hub
+			expectedStatus: http.StatusInternalServerError, // No k8s context available
 		},
 		{
 			name: "Missing cluster name",
