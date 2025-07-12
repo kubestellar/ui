@@ -7,7 +7,7 @@ import { LoginUser } from '../../api/auth';
 import { AUTH_QUERY_KEY } from '../../api/auth/constant';
 import { useTranslation } from 'react-i18next';
 import { encryptData, secureSet, secureRemove } from '../../utils/secureStorage';
-import { setAccessToken, setRefreshToken, clearTokens } from '../../lib/api';
+import { setAccessToken, setRefreshToken, clearTokens } from '../../components/login/tokenUtils';
 
 interface LoginCredentials {
   username: string;

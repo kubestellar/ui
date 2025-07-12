@@ -1,6 +1,4 @@
 // Token and refresh logic moved from src/lib/api.ts
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
 import { AxiosInstance } from 'axios';
 
 const REFRESH_ENDPOINT = process.env.VITE_REFRESH_ENDPOINT || '/api/refresh';
@@ -68,4 +66,4 @@ export async function refreshAccessToken(api: AxiosInstance): Promise<string | n
       return null;
     });
   return refreshPromise;
-} 
+}

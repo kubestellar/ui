@@ -2,16 +2,10 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 import {
   getAccessToken,
-  setAccessToken,
-  getRefreshToken,
-  setRefreshToken,
   clearTokens,
   isTokenExpired,
-  refreshAccessToken
+  refreshAccessToken,
 } from '../components/login/tokenUtils';
-
-// Configurable refresh endpoint
-const REFRESH_ENDPOINT = process.env.VITE_REFRESH_ENDPOINT || '/api/refresh';
 
 export const api = axios.create({
   baseURL: process.env.VITE_BASE_URL,
