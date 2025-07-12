@@ -8,6 +8,12 @@ coverage/
 .env
 *.tsbuildinfo
 
+# History file
+.history/
+
+# IDE files
+*.idea
+
 # Helm chart lock file (user-generated, should not be committed)
 Chart.lock
 charts/
@@ -17,3 +23,6 @@ helm-ui-test*
 
 # Ignore other common files
 *.log
+
+# Backend vendor directory
+backend/vendor/
