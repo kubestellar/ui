@@ -9,7 +9,10 @@ interface UserChatMessageProps {
 
 const UserChatMessage: React.FC<UserChatMessageProps> = ({ message }) => {
   const timestamp = message.payload?.timestamp
-    ? new Date(message.payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    ? new Date(message.payload.timestamp).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
     : '';
 
   return (

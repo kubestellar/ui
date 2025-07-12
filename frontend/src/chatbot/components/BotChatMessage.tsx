@@ -15,7 +15,10 @@ interface BotChatMessageComponent extends React.FC<ChatMessageProps> {
 
 const BotChatMessage: BotChatMessageComponent = ({ message, children }) => {
   const timestamp = message.payload?.timestamp
-    ? new Date(message.payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    ? new Date(message.payload.timestamp).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
     : '';
 
   return (

@@ -25,7 +25,7 @@ export interface IChatMessage {
 
 interface IMessageProps {
   message: IChatMessage;
-  [key: string]: any;
+  [key: string]: unknown; // Using unknown is safer than any
 }
 
 const ChatbotComponent: React.FC = () => {
@@ -50,6 +50,7 @@ const ChatbotComponent: React.FC = () => {
       ),
       botChatMessage: (props: IMessageProps) => <BotChatMessage message={props.message} />,
       userChatMessage: (props: IMessageProps) => <UserChatMessage message={props.message} />,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       chatInput: (props: any) => <CustomChatInput {...props} />,
       botTypingIndicator: () => (
         <div className="typing-indicator">
@@ -70,8 +71,6 @@ const ChatbotComponent: React.FC = () => {
     // @ts-ignore - Type for ActionProvider
     actionProvider: ActionProvider,
   };
-
-
 
   const saveMessages = (messages: IChatMessage[]): void => {
     localStorage.setItem('chatbot_messages', JSON.stringify(messages));
