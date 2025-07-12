@@ -358,7 +358,7 @@ export const PluginManager: React.FC = () => {
               <div className="flex-1">
                 <input
                   type="text"
-                  placeholder={t('plugins.install.localPlaceholder') + 'Browse file'}
+                  placeholder={t('plugins.install.localPlaceholder')}
                   value={selectedFile?.name}
                   disabled={true}
                   className="w-full cursor-not-allowed rounded-lg border px-4 py-3 outline-none transition-colors"
