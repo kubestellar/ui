@@ -35,6 +35,20 @@ export class PluginAPI {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async installPluginFile(file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post(`${this.baseURL}/install`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async uninstallPlugin(pluginID: number): Promise<any> {
     const response = await api.delete(`${this.baseURL}/${pluginID}`);
     return response.data;
