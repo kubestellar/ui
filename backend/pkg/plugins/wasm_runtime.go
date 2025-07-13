@@ -223,7 +223,14 @@ func (pm *PluginManager) executeKubernetesAPICall(apiPath string) []byte {
 
 // getPluginNameFromModule extracts the plugin name from the module context
 func (pm *PluginManager) getPluginNameFromModule(m api.Module) string {
-	// This would need to be implemented based on how plugins are tracked
-	// For now, return a placeholder
+	// Find the plugin by module instance
+	pm.mu.RLock()
+	defer pm.mu.RUnlock()
+
+	for name, plugin := range pm.plugins {
+		if plugin.Instance == m {
+			return name
+		}
+	}
 	return "unknown"
 }

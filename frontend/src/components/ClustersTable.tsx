@@ -48,7 +48,7 @@ import { toast } from 'react-hot-toast';
 import InboxIcon from '@mui/icons-material/Inbox';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import TableSkeleton from './ui/TableSkeleton';
+import TableSkeleton from './skeleton/TableSkeleton';
 import ClusterDetailDialog from './ClusterDetailDialog'; // Import the new component
 import DetachmentLogsDialog from './DetachmentLogsDialog'; // Import the new component
 import CancelButton from './common/CancelButton';

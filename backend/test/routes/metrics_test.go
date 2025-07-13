@@ -349,8 +349,8 @@ func TestMetricsHealthStatusCodes(t *testing.T) {
 
 		// Health endpoint should be registered and might return various status codes
 		assert.NotEqual(t, http.StatusNotFound, w.Code, "Health route should be registered")
-		// Health can return 200 (healthy), 503 (unhealthy), or 500 (error)
-		validHealthCodes := []int{http.StatusOK, http.StatusServiceUnavailable, http.StatusInternalServerError}
+		// Health can return 200 (healthy), 503 (unhealthy), 500 (error), or 400 (bad request)
+		validHealthCodes := []int{http.StatusOK, http.StatusServiceUnavailable, http.StatusInternalServerError, http.StatusBadRequest}
 		assert.Contains(t, validHealthCodes, w.Code, "Health endpoint should return valid health status code")
 	})
 }

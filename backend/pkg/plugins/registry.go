@@ -1,0 +1,199 @@
+package plugins
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
+
+// PluginRegistry handles plugin discovery, registration, and lifecycle management
+type PluginRegistry struct {
+	pluginsDirectory string
+	manager          *PluginManager
+	watcher          *PluginWatcher
+}
+
+// PluginInfo contains metadata about a discovered plugin
+type PluginInfo struct {
+	Name         string    `json:"name"`
+	Version      string    `json:"version"`
+	Author       string    `json:"author,omitempty"`
+	Description  string    `json:"description,omitempty"`
+	Path         string    `json:"path"`
+	ManifestPath string    `json:"manifestPath"`
+	WasmPath     string    `json:"wasmPath"`
+	DiscoveredAt time.Time `json:"discoveredAt"`
+	LastModified time.Time `json:"lastModified"`
+	Status       string    `json:"status"` // "discovered", "loaded", "error"
+	Error        string    `json:"error,omitempty"`
+}
+
+// NewPluginRegistry creates a new plugin registry
+func NewPluginRegistry(pluginsDirectory string, manager *PluginManager) *PluginRegistry {
+	registry := &PluginRegistry{
+		pluginsDirectory: pluginsDirectory,
+		manager:          manager,
+	}
+
+	// Create plugins directory if it doesn't exist
+	if err := os.MkdirAll(pluginsDirectory, 0755); err != nil {
+		fmt.Printf("Failed to create plugins directory: %v\n", err)
+	}
+
+	// Initialize plugin watcher for hot reloading
+	registry.watcher = NewPluginWatcher(registry)
+
+	return registry
+}
+
+// DiscoverPlugins scans the plugins directory for available plugins
+func (pr *PluginRegistry) DiscoverPlugins() ([]*PluginInfo, error) {
+	var plugins []*PluginInfo
+
+	// Walk through the plugins directory
+	err := filepath.Walk(pr.pluginsDirectory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip if it's not a directory or is the root plugins directory
+		if !info.IsDir() || path == pr.pluginsDirectory {
+			return nil
+		}
+
+		// Check if this directory contains a plugin
+		pluginInfo, err := pr.discoverPluginInDirectory(path)
+		if err != nil {
+			fmt.Printf("Error discovering plugin in %s: %v\n", path, err)
+			return nil // Continue with other directories
+		}
+
+		if pluginInfo != nil {
+			plugins = append(plugins, pluginInfo)
+		}
+
+		return nil
+	})
+
+	return plugins, err
+}
+
+// discoverPluginInDirectory checks if a directory contains a valid plugin
+func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo, error) {
+	// Look for plugin.yml manifest
+	manifestPath := filepath.Join(dirPath, "plugin.yml")
+	manifestInfo, err := os.Stat(manifestPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil // Not a plugin directory
+		}
+		return nil, err
+	}
+
+	// Parse the manifest to get plugin information
+	manifestData, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read manifest: %v", err)
+	}
+
+	var manifest PluginManifest
+	if err := yaml.Unmarshal(manifestData, &manifest); err != nil {
+		return nil, fmt.Errorf("failed to parse manifest: %v", err)
+	}
+
+	// Check if WASM file exists
+	wasmPath := filepath.Join(dirPath, manifest.Name+".wasm")
+	wasmInfo, err := os.Stat(wasmPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &PluginInfo{
+				Name:         manifest.Name,
+				Path:         dirPath,
+				ManifestPath: manifestPath,
+				WasmPath:     wasmPath,
+				DiscoveredAt: time.Now(),
+				LastModified: manifestInfo.ModTime(),
+				Status:       "error",
+				Error:        "WASM file not found",
+			}, nil
+		}
+		return nil, err
+	}
+
+	// Determine status based on whether plugin is loaded
+	status := "discovered"
+	if _, loaded := pr.manager.GetPlugin(manifest.Name); loaded {
+		status = "loaded"
+	}
+
+	return &PluginInfo{
+		Name:         manifest.Name,
+		Version:      manifest.Version,
+		Author:       manifest.Author,
+		Description:  manifest.Description,
+		Path:         dirPath,
+		ManifestPath: manifestPath,
+		WasmPath:     wasmPath,
+		DiscoveredAt: time.Now(),
+		LastModified: wasmInfo.ModTime(),
+		Status:       status,
+	}, nil
+}
+
+// LoadPlugin loads a plugin by name
+func (pr *PluginRegistry) LoadPlugin(name string) error {
+	// Find the plugin directory
+	pluginPath := filepath.Join(pr.pluginsDirectory, name)
+
+	// Check if directory exists
+	if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
+		return fmt.Errorf("plugin directory not found: %s", pluginPath)
+	}
+
+	// Load the plugin using the manager
+	return pr.manager.LoadPlugin(pluginPath)
+}
+
+// UnloadPlugin unloads a plugin by name
+func (pr *PluginRegistry) UnloadPlugin(name string) error {
+	return pr.manager.UnloadPlugin(name)
+}
+
+// ReloadPlugin reloads a plugin by name
+func (pr *PluginRegistry) ReloadPlugin(name string) error {
+	// First unload the plugin
+	if err := pr.UnloadPlugin(name); err != nil {
+		return fmt.Errorf("failed to unload plugin: %v", err)
+	}
+
+	// Then load it again
+	if err := pr.LoadPlugin(name); err != nil {
+		return fmt.Errorf("failed to reload plugin: %v", err)
+	}
+
+	return nil
+}
+
+// GetPluginInfo returns information about a specific plugin
+func (pr *PluginRegistry) GetPluginInfo(name string) (*PluginInfo, error) {
+	pluginPath := filepath.Join(pr.pluginsDirectory, name)
+	return pr.discoverPluginInDirectory(pluginPath)
+}
+
+// StartWatching starts the plugin watcher for hot reloading
+func (pr *PluginRegistry) StartWatching() error {
+	return pr.watcher.Start()
+}
+
+// StopWatching stops the plugin watcher
+func (pr *PluginRegistry) StopWatching() error {
+	return pr.watcher.Stop()
+}
+
+// GetPluginsDirectory returns the plugins directory path
+func (pr *PluginRegistry) GetPluginsDirectory() string {
+	return pr.pluginsDirectory
+}

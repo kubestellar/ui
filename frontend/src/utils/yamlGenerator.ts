@@ -1,4 +1,4 @@
-import { PolicyConfiguration } from '../components/BindingPolicy/ConfigurationSidebar';
+import { PolicyConfiguration } from '../components/bindingPolicy/ConfigurationSidebar';
 
 /**
  * Generates YAML for a binding policy
@@ -27,11 +27,13 @@ export const generateBindingPolicyYAML = (config: PolicyConfiguration): string =
         scheduling:
           config.schedulingRules.length > 0
             ? {
-                rules: config.schedulingRules.map(rule => ({
-                  resource: rule.resource,
-                  operator: rule.operator,
-                  value: rule.value,
-                })),
+                rules: config.schedulingRules.map(
+                  (rule: { resource: string; operator: string; value: string }) => ({
+                    resource: rule.resource,
+                    operator: rule.operator,
+                    value: rule.value,
+                  })
+                ),
               }
             : undefined,
         tolerations: config.tolerations.length > 0 ? config.tolerations : undefined,

@@ -1730,7 +1730,6 @@
     "creating": "Creating...",
     "createContext": "Create Context"
   },
-
   "policySelectionStore": {
     "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
     "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
@@ -1784,7 +1783,6 @@
     "admin": "Admin",
     "helpSupport": "Help & Support",
     "raiseIssue": "Report an Issue",
-
     "signOut": "Sign Out",
     "changePassword": "Change Password",
     "changePasswordSubtitle": "Please enter your current password and choose a new one.",
@@ -2107,7 +2105,8 @@
       "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Deployed Workloads",
       "pluginManager": "Plugin Manager",
-      "userManagement": "User Management"
+      "userManagement": "User Management",
+      "metricsDashboard": "Metrics Dashboard"
     }
   },
   "plugins": {
@@ -2119,7 +2118,7 @@
         "local": "Local Path",
         "github": "GitHub"
       },
-      "localPlaceholder": "Enter local plugin directory path",
+      "localPlaceholder": "Please select a file",
       "githubPlaceholder": "https://github.com/user/plugin-repo",
       "browse": "Browse",
       "installLocal": "Install from Local Path",

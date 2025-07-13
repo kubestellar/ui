@@ -181,8 +181,8 @@ const LanguageSwitcher = () => {
                     isLoginPage
                       ? `flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-blue-700/30 ${
                           i18n.language === lang.code
-                            ? 'bg-blue-800/40 text-blue-200'
-                            : 'text-blue-300/80'
+                            ? 'bg-blue-600/40 text-blue-100'
+                            : 'bg-transparent text-blue-200 hover:bg-blue-700/30'
                         }`
                       : `flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
                           isDark
