@@ -994,10 +994,11 @@ const WecsDetailsPanel = ({
                     sx={{
                       borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
                       color: theme === 'dark' ? '#D4D4D4' : '#333333',
-                      fontSize: '14px',
+                      fontSize: { xs: '12px', sm: '14px' },
                       fontWeight: 500,
-                      width: '150px',
-                      padding: '10px 16px',
+                      width: { xs: '30%', sm: '150px' },
+                      minWidth: { xs: '80px', sm: '120px' },
+                      padding: { xs: '8px 12px', sm: '10px 16px' },
                       verticalAlign: 'top',
                     }}
                   >
@@ -1007,11 +1008,19 @@ const WecsDetailsPanel = ({
                     sx={{
                       borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
                       color: theme === 'dark' ? '#D4D4D4' : '#333333',
-                      fontSize: '14px',
-                      padding: '10px 16px',
+                      fontSize: { xs: '12px', sm: '14px' },
+                      padding: { xs: '8px 12px', sm: '10px 16px' },
+                      width: { xs: '70%', sm: 'auto' },
                     }}
                   >
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: { xs: 0.5, sm: 0.5 },
+                        alignItems: 'flex-start',
+                      }}
+                    >
                       {clusterInfo.labels &&
                         Object.entries(clusterInfo.labels).map(([key, value], index) => (
                           <Chip
@@ -1019,10 +1028,24 @@ const WecsDetailsPanel = ({
                             label={`${key}: ${value}`}
                             size="small"
                             sx={{
-                              mr: 1,
-                              mb: 1,
+                              mr: { xs: 0.5, sm: 1 },
+                              mb: { xs: 0.5, sm: 1 },
                               backgroundColor: theme === 'dark' ? '#334155' : undefined,
                               color: theme === 'dark' ? '#fff' : undefined,
+                              fontSize: { xs: '10px', sm: '12px' },
+                              height: { xs: '24px', sm: '28px' },
+                              maxWidth: { xs: '100%', sm: 'none' },
+                              '& .MuiChip-label': {
+                                fontSize: { xs: '10px', sm: '12px' },
+                                padding: { xs: '0 6px', sm: '0 8px' },
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: { xs: '140px', sm: '180px', md: 'none' },
+                              },
+                              // Ensure chips are properly sized on mobile
+                              flexShrink: 0,
+                              minWidth: 0,
                             }}
                           />
                         ))}
