@@ -1,5 +1,11 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
+import {
+  getAccessToken,
+  clearTokens,
+  isTokenExpired,
+  refreshAccessToken,
+} from '../components/login/tokenUtils';
 
 export const api = axios.create({
   baseURL: process.env.VITE_BASE_URL,
@@ -11,8 +17,12 @@ export const api = axios.create({
 
 // Add request interceptor to include JWT token in headers
 api.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('jwtToken');
+  async config => {
+    let token = getAccessToken();
+    // If token is expired, try to refresh
+    if (isTokenExpired(token)) {
+      token = await refreshAccessToken(api);
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,16 +36,32 @@ api.interceptors.request.use(
 // Add response interceptors with proper error typing
 api.interceptors.response.use(
   response => response,
-  (error: AxiosError<{ message: string; error: string }>) => {
-    // Handle global error cases
+  async (error: unknown) => {
+    if (!axios.isAxiosError(error)) {
+      toast.error('An unknown error occurred.');
+      return Promise.reject(error);
+    }
+
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
     const errorMessage =
       error.response?.data?.message || error.response?.data?.error || error.message;
-
-    console.error('API Error:', errorMessage);
-
-    // Don't show toast for 401 errors on verification endpoint to prevent
-    // unnecessary error messages during auth checks
     const isAuthCheck = error.config?.url?.includes('/api/me');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck) {
+      originalRequest._retry = true;
+      const newToken = await refreshAccessToken(api);
+      if (newToken) {
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } else {
+        clearTokens();
+        toast.error('Session expired. Please log in again.');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+    }
+
     if (error.response?.status === 401 && isAuthCheck) {
       console.log('Auth verification failed, ignoring toast');
     } else if (error.config?.url?.includes('/login') && error.response?.status === 401) {
