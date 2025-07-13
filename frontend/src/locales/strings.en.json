@@ -2081,6 +2081,10 @@
         "title": "Logout",
         "description": "Sign out of your account",
         "infoMessage": "You have been logged out successfully."
+      },
+      "metricsDashboard": {
+        "title": "Metrics Dashboard",
+        "description": "Monitor system performance and metrics"
       }
     },
     "sections": {
