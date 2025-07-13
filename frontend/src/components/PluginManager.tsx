@@ -107,7 +107,7 @@ export const PluginManager: React.FC = () => {
   const handleInstallPlugin = async () => {
     const source = installMethod === 'local' ? selectedFile?.name : githubUrl;
     if (installMethod === 'github' && !githubUrl.trim()) {
-      alert('Please enter a URL');
+      toast.error('Please enter a plugin path or URL');
       return;
     }
 
@@ -131,15 +131,22 @@ export const PluginManager: React.FC = () => {
           `Plugin installed successfully: ${result.message || 'Installation complete'}`
         );
       } else {
-        console.log('Installation result:', result);
         toast.error(
-          `Installation completed but with warnings: ${result.message || 'Check console for details'}`
+          `Installation completed but with warnings: ${result.message || 'Check console for details'}`,
+          {
+            icon: <HiOutlineExclamationTriangle className="h-8 w-8 text-red-500" />,
+            style: {
+              background: '#facc15',
+              color: '#000',
+            },
+            duration: 3000,
+          }
         );
       }
     } catch (error) {
       console.error('Failed to install plugin:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to install plugin: ${errorMessage}`);
+      toast.error(`Failed to install plugin: ${errorMessage}`);
     } finally {
       setInstalling(false);
     }

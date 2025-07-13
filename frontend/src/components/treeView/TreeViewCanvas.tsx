@@ -4,12 +4,12 @@ import { ReactFlowProvider } from 'reactflow';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../../stores/themeStore';
-import { FlowCanvas } from '../Wds_Topology/FlowCanvas';
-import { ZoomControls } from '../Wds_Topology/ZoomControls';
-import FullScreenToggle from '../ui/FullScreenToggle';
+import { FlowCanvas } from '../wds_topology/FlowCanvas';
+import { ZoomControls } from '../wds_topology/ZoomControls';
+import FullScreenToggle from '../skeleton/FullScreenToggle';
 import ListViewComponent from '../ListViewComponent';
-import ListViewSkeleton from '../ui/ListViewSkeleton';
-import TreeViewSkeleton from '../ui/TreeViewSkeleton';
+import ListViewSkeleton from '../skeleton/ListViewSkeleton';
+import TreeViewSkeleton from '../skeleton/TreeViewSkeleton';
 import {
   CustomNode,
   CustomEdge,

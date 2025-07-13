@@ -284,9 +284,9 @@ spec:
               value: "5s"
             # Redis Configuration
             - name: REDIS_HOST
-              value: "redis"
+              value: "{{ .Release.Name }}-redis-master"
             - name: REDIS_PORT
-              value: "{{ .Values.redis.port }}"
+              value: "6379"
             - name: REDIS_HEALTH_TIMEOUT
               value: "3s"
             # Application Configuration
