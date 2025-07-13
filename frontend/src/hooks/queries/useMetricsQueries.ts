@@ -76,9 +76,7 @@ const fetchClusterMetrics = async (): Promise<ClusterMetrics> => {
       api.get<PrometheusResponse>(
         `${prometheusUrl}/api/v1/query?query=cluster_onboarding_duration_seconds`
       ),
-      api.get<PrometheusResponse>(
-        `${prometheusUrl}/api/v1/query?query=kubectl_operations_total`
-      ),
+      api.get<PrometheusResponse>(`${prometheusUrl}/api/v1/query?query=kubectl_operations_total`),
     ]);
 
     return {
