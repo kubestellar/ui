@@ -219,8 +219,14 @@ const MetricsDashboard = () => {
     useMetricsQueries();
 
   // State for dashboard controls
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(30);
+  const [autoRefresh, setAutoRefresh] = useState(() => {
+    const saved = localStorage.getItem('metrics-auto-refresh');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [refreshInterval, setRefreshInterval] = useState(() => {
+    const saved = localStorage.getItem('metrics-refresh-interval');
+    return saved !== null ? parseInt(saved, 10) : 30;
+  });
   const [visibleSections] = useState({
     cache: true,
     cluster: true,
@@ -334,6 +340,16 @@ const MetricsDashboard = () => {
     refetchRuntime,
     refetchSummary,
   ]);
+
+  // Save auto-refresh preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('metrics-auto-refresh', JSON.stringify(autoRefresh));
+  }, [autoRefresh]);
+
+  // Save refresh interval preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('metrics-refresh-interval', refreshInterval.toString());
+  }, [refreshInterval]);
 
   // Auto-refresh effect
   useEffect(() => {
