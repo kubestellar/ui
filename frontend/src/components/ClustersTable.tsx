@@ -2655,7 +2655,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         </div>
       )}
       {!isLoading && (
-        <div className="mt-6 flex items-center justify-between px-2">
+        <div className="mt-6 flex items-center justify-between gap-2 px-2">
+          {/* Previous Button - Compact */}
           <Button
             disabled={currentPage === 1}
             onClick={() => onPageChange(currentPage - 1)}
@@ -2675,15 +2676,17 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               },
               textTransform: 'none',
               fontWeight: '600',
-              padding: '8px 20px',
-              borderRadius: '10px',
+              padding: { xs: '8px 12px', sm: '8px 16px' }, // Compact padding
+              borderRadius: '8px',
               transition: 'all 0.2s ease',
+              minWidth: { xs: '80px', sm: '100px' }, // Smaller minimum width
+              fontSize: { xs: '0.8rem', sm: '0.9rem' }, // Slightly smaller text
             }}
             variant="outlined"
             startIcon={
               <svg
-                width="20"
-                height="20"
+                width="16" // Smaller icon
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -2702,37 +2705,45 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               </svg>
             }
           >
-            {t('common.previous')}
+            <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('common.previous')}</Box>
+            <Box sx={{ display: { xs: 'inline', sm: 'none' } }}>{t('common.previous')}</Box>
           </Button>
+
+          {/* Center Information - More Compact */}
           <div className="flex items-center gap-3">
+            {/* Page Info */}
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '8px 16px',
+                padding: { xs: '6px 10px', sm: '6px 12px' }, // Reduced padding
                 backgroundColor: isDark ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
-                borderRadius: '10px',
+                borderRadius: '8px', // Smaller border radius
                 border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'}`,
                 boxShadow: isDark
                   ? '0 2px 4px rgba(0, 0, 0, 0.1)'
                   : '0 2px 4px rgba(0, 0, 0, 0.05)',
+                minWidth: { xs: '100px', sm: '120px' }, // Smaller minimum width
               }}
             >
               <Typography
                 style={{
                   color: colors.textSecondary,
-                  fontSize: '0.9rem',
-                  marginRight: '6px',
+                  fontSize: '0.75rem', // Smaller font
+                  marginRight: '4px',
+                }}
+                sx={{
+                  display: { xs: 'none', sm: 'inline' },
                 }}
               >
-                {t('common.page')}
+                Page
               </Typography>
               <Typography
                 style={{
                   color: colors.primary,
                   fontWeight: 600,
-                  fontSize: '1.1rem',
+                  fontSize: '0.9rem', // Smaller font
                 }}
                 className="mx-1"
               >
@@ -2741,24 +2752,41 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               <Typography
                 style={{
                   color: colors.textSecondary,
-                  fontSize: '0.9rem',
+                  fontSize: '0.75rem', // Smaller font
                 }}
               >
-                {t('common.of')} {totalPages}
+                of {totalPages}
               </Typography>
             </Box>
 
-            <Box
+            {/* Item Count - Compact */}
+            <Typography
               sx={{
                 color: colors.textSecondary,
-                fontSize: '0.9rem',
+                fontSize: { xs: '0.75rem', sm: '0.8rem' }, // Smaller font
                 display: 'flex',
                 alignItems: 'center',
+                backgroundColor: {
+                  xs: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                  sm: 'transparent',
+                },
+                padding: { xs: '4px 8px', sm: '0' },
+                borderRadius: { xs: '6px', sm: '0' },
+                border: { xs: `1px solid ${colors.border}`, sm: 'none' },
+                minWidth: { xs: '70px', sm: 'auto' }, // Smaller minimum width
+                justifyContent: 'center',
               }}
             >
-              {filteredClusters.length} item{filteredClusters.length !== 1 ? 's' : ''}
-            </Box>
+              <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                {filteredClusters.length} items
+              </Box>
+              <Box sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                {filteredClusters.length} items
+              </Box>
+            </Typography>
           </div>
+
+          {/* Next Button - Compact */}
           <Button
             disabled={currentPage === totalPages}
             onClick={() => onPageChange(currentPage + 1)}
@@ -2778,15 +2806,17 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               },
               textTransform: 'none',
               fontWeight: '600',
-              padding: '8px 20px',
-              borderRadius: '10px',
+              padding: { xs: '8px 12px', sm: '8px 16px' }, // Compact padding
+              borderRadius: '8px',
               transition: 'all 0.2s ease',
+              minWidth: { xs: '80px', sm: '100px' }, // Smaller minimum width
+              fontSize: { xs: '0.8rem', sm: '0.9rem' }, // Slightly smaller text
             }}
             variant="outlined"
             endIcon={
               <svg
-                width="20"
-                height="20"
+                width="16" // Smaller icon
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -2805,7 +2835,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               </svg>
             }
           >
-            {t('common.next')}
+            <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('common.next')}</Box>
+            <Box sx={{ display: { xs: 'inline', sm: 'none' } }}>Next</Box>
           </Button>
         </div>
       )}
