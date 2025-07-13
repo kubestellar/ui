@@ -2118,7 +2118,7 @@
         "local": "Local Path",
         "github": "GitHub"
       },
-      "localPlaceholder": "Enter local plugin directory path",
+      "localPlaceholder": "Please select a file",
       "githubPlaceholder": "https://github.com/user/plugin-repo",
       "browse": "Browse",
       "installLocal": "Install from Local Path",

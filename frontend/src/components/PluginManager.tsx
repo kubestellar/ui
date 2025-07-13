@@ -52,7 +52,6 @@ export const PluginManager: React.FC = () => {
   const [installing, setInstalling] = useState(false);
   const [installMethod, setInstallMethod] = useState<'local' | 'github'>('local');
   const [githubUrl, setGithubUrl] = useState('');
-  const [localPath, setLocalPath] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmAction, setConfirmAction] = useState<{
     type: 'uninstall' | 'disable' | 'enable';
@@ -61,8 +60,8 @@ export const PluginManager: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [feedbackClick, setFeedbackClick] = useState<number | null>(null);
 
-  // Ref for the hidden directory input
-  const directoryInputRef = useRef<HTMLInputElement>(null);
+  // Ref for the hidden input
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const loadPluginData = useCallback(async () => {
     try {
       setLoading(true);
@@ -106,8 +105,8 @@ export const PluginManager: React.FC = () => {
   };
 
   const handleInstallPlugin = async () => {
-    const source = installMethod === 'local' ? localPath : githubUrl;
-    if (!source.trim()) {
+    const source = installMethod === 'local' ? selectedFile?.name : githubUrl;
+    if (installMethod === 'github' && !githubUrl.trim()) {
       toast.error('Please enter a plugin path or URL');
       return;
     }
@@ -116,18 +115,12 @@ export const PluginManager: React.FC = () => {
       setInstalling(true);
       console.log('Installing plugin from:', source);
 
-      const result = await pluginAPI.installPlugin(source);
+      const result = await pluginAPI.installPluginFile(selectedFile!);
       console.log('Installation result:', result);
 
       // Clear the input fields
-      setLocalPath('');
       setGithubUrl('');
       setSelectedFile(null);
-
-      // Reset directory input
-      if (directoryInputRef.current) {
-        directoryInputRef.current.value = '';
-      }
 
       // Reload plugin data
       await loadPluginData();
@@ -159,29 +152,11 @@ export const PluginManager: React.FC = () => {
     }
   };
 
-  const handleFileSelect = () => {
-    // Try to use directory picker first (for modern browsers)
-    if (directoryInputRef.current) {
-      directoryInputRef.current.click();
-    }
-  };
-
-  const handleDirectorySelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      // Get the first file and extract the directory path
       const firstFile = files[0];
       setSelectedFile(firstFile);
-
-      // Extract directory path from the file's webkitRelativePath
-      const relativePath = firstFile.webkitRelativePath;
-      if (relativePath) {
-        const directoryPath = relativePath.split('/')[0];
-        setLocalPath(directoryPath);
-      } else {
-        // Fallback to file path
-        setLocalPath(firstFile.name);
-      }
     }
   };
 
@@ -391,15 +366,9 @@ export const PluginManager: React.FC = () => {
                 <input
                   type="text"
                   placeholder={t('plugins.install.localPlaceholder')}
-                  value={localPath}
-                  onChange={e => {
-                    setLocalPath(e.target.value);
-                    // Clear selected file when manually typing
-                    if (selectedFile) {
-                      setSelectedFile(null);
-                    }
-                  }}
-                  className="w-full rounded-lg border px-4 py-3 outline-none transition-colors"
+                  value={selectedFile?.name}
+                  disabled={true}
+                  className="w-full cursor-not-allowed rounded-lg border px-4 py-3 outline-none transition-colors"
                   style={{
                     background: themeStyles.colors.bg.secondary,
                     borderColor: themeStyles.card.borderColor,
@@ -409,7 +378,11 @@ export const PluginManager: React.FC = () => {
               </div>
               <div className="flex gap-2">
                 <motion.button
-                  onClick={handleFileSelect}
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click();
+                    }
+                  }}
                   className="flex items-center gap-2 rounded-lg px-4 py-3 font-medium transition-all"
                   style={{
                     background: themeStyles.colors.bg.secondary,
@@ -455,7 +428,7 @@ export const PluginManager: React.FC = () => {
 
             <motion.button
               onClick={handleInstallPlugin}
-              disabled={!localPath.trim() || installing}
+              disabled={!selectedFile || installing}
               className="flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 background: themeStyles.button.primary.background,
@@ -472,17 +445,13 @@ export const PluginManager: React.FC = () => {
               {installing ? t('plugins.install.installing') : t('plugins.install.installLocal')}
             </motion.button>
 
-            {/* Hidden directory input for browsing */}
+            {/* Hidden input for browsing */}
             <input
-              ref={directoryInputRef}
               type="file"
-              // @ts-expect-error webkitdirectory is not in the TypeScript types but is a valid HTML attribute
-              webkitdirectory=""
-              directory=""
-              multiple
-              onChange={handleDirectorySelect}
+              ref={fileInputRef}
+              onChange={handleFileSelect}
               style={{ display: 'none' }}
-              accept=".js,.ts,.json"
+              accept=".js, .ts,.json, .gz"
             />
           </div>
         )}
