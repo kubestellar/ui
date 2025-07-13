@@ -2780,7 +2780,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
                 {filteredClusters.length} items
               </Box>
-              <Box sx={{ display: { xs: 'inline', sm: 'none' } }}>{filteredClusters.length} items</Box>
+              <Box sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                {filteredClusters.length} items
+              </Box>
             </Typography>
           </div>
 
