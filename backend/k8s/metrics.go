@@ -125,11 +125,11 @@ func GetClusterMetrics(c *gin.Context) {
 		wg.Add(1)
 		go func(server, contextName string) {
 			defer wg.Done()
-			
+
 			// Acquire semaphore
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
-			
+
 			log.LogDebug("Getting metrics for context", zap.String("context", contextName), zap.String("server", server))
 
 			clientset, _, err := GetClientSetWithContext(contextName)

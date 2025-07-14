@@ -333,8 +333,8 @@ func SetupMetricsRoutes(router *gin.Engine, logger *zap.Logger) {
 
 // GetPodHealthMetrics returns the percentage of healthy pods across all clusters/contexts
 var (
-	podHealthCache     *gin.H
-	podHealthCacheLock sync.RWMutex
+	podHealthCache      *gin.H
+	podHealthCacheLock  sync.RWMutex
 	podHealthLastUpdate time.Time
 	podHealthExpiration = 60 * time.Second // Cache valid for 60 seconds
 )
@@ -390,30 +390,30 @@ func GetPodHealthMetrics(c *gin.Context) {
 		wg.Add(1)
 		go func(contextName string) {
 			defer wg.Done()
-			
+
 			// Acquire semaphore
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
-			
+
 			fmt.Printf("Checking context: %s\n", contextName)
 			clientset, _, err := k8s.GetClientSetWithContext(contextName)
 			if err != nil {
 				fmt.Printf("Error getting client for context %s: %v\n", contextName, err)
 				return
 			}
-			
+
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			
+
 			nsList, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 			if err != nil {
 				fmt.Printf("Error listing namespaces in context %s: %v\n", contextName, err)
 				return
 			}
-			
+
 			localTotalPods := 0
 			localHealthyPods := 0
-			
+
 			for _, ns := range nsList.Items {
 				podList, err := clientset.CoreV1().Pods(ns.Name).List(ctx, metav1.ListOptions{})
 				if err != nil {
@@ -436,7 +436,7 @@ func GetPodHealthMetrics(c *gin.Context) {
 					}
 				}
 			}
-			
+
 			// Update the global counters with a lock
 			resultLock.Lock()
 			totalPods += localTotalPods
