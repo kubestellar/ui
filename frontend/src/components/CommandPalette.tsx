@@ -13,6 +13,7 @@ import {
   FiBox,
   FiLogOut,
   FiUsers,
+  FiBarChart2,
 } from 'react-icons/fi';
 import { useAuthActions, useAdminCheck } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -181,6 +182,30 @@ const CommandPalette: React.FC = () => {
         'bp',
         'rules',
         'configuration',
+      ],
+      section: t('commandPalette.sections.navigation'),
+    },
+    {
+      id: 'metrics-dashboard',
+      type: 'navigation',
+      icon: FiBarChart2,
+      title: t('commandPalette.commands.metricsDashboard.title') || 'Metrics Dashboard',
+      description:
+        t('commandPalette.commands.metricsDashboard.description') ||
+        'Monitor system performance and metrics',
+      action: () => navigate('/metrics'),
+      keywords: [
+        'metrics',
+        'dashboard',
+        'monitoring',
+        'performance',
+        'prometheus',
+        'analytics',
+        'stats',
+        'system health',
+        'cache',
+        'runtime',
+        'cluster',
       ],
       section: t('commandPalette.sections.navigation'),
     },
