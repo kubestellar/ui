@@ -298,7 +298,7 @@
   },
   "header": {
     "themeToggle": "Cambia tema",
-    "dashboard": "Cruscotto",
+    "dashboard": "Pannello di controllo",
     "clusters": "Cluster",
     "workloads": "Carichi di lavoro",
     "policies": "Politiche",
@@ -320,7 +320,7 @@
       "taglineEmphasis": "Costruito per il Futuro.",
       "fullscreen": "Attiva/disattiva schermo intero",
       "welcomeBack": "Bentornato",
-      "accessDashboard": "Accedi al tuo Cruscotto",
+      "accessDashboard": "Accedi al tuo Pannello di controllo",
       "enterCredentials": "Inserisci le tue credenziali qui sotto",
       "needHelp": "Hai bisogno di aiuto?",
       "contactSupport": "Contatta il supporto"
@@ -595,7 +595,7 @@
       "noClusterSelected": "Nessun cluster selezionato"
     },
     "dashboard": {
-      "title": "Cruscotto",
+      "title": "Pannello di controllo",
       "lastUpdatedJustNow": "Ultimo aggiornamento: proprio adesso",
       "status": "Stato: Ottimale",
       "other": "Altro",
@@ -606,7 +606,7 @@
       "healthScore": "Formula del punteggio di salute",
       "clusterHealth": "Salute complessiva del cluster",
       "clusterStatus": "Stato del cluster",
-      "welcome": "Benvenuto nel cruscotto di gestione di KubeStellar",
+      "welcome": "Benvenuto nel pannello di controllo di gestione di KubeStellar",
       "errorLoading": "Errore nel caricamento delle informazioni del cluster",
       "addCluster": "Aggiungi cluster",
       "notAvailable": "N/D",
@@ -669,7 +669,7 @@
         "critical": "Critico"
       },
       "guide": {
-        "title": "Guida al cruscotto",
+        "title": "Guida al pannello di controllo",
         "clusterStats": "Statistiche cluster",
         "clusterStatsDesc": "Mostra il numero totale e attivo dei cluster. Passa sopra le metriche per dettagli.",
         "healthMetrics": "Metriche di salute",
@@ -985,8 +985,8 @@
       "onboard": "Onboard Cluster",
       "back": "Indietro",
       "close": "Chiudi",
-      "openDashboard": "Apri Cruscotto Cluster",
-      "goToDashboard": "Vai al Cruscotto"
+      "openDashboard": "Apri Pannello di controllo Cluster",
+      "goToDashboard": "Vai al Pannello di controllo"
     },
     "success": {
       "title": "Cluster Onboardato con Successo",
@@ -997,7 +997,7 @@
       "nextSteps": {
         "viewManage": {
           "title": "Visualizza e Gestisci",
-          "description": "Accedi al cluster tramite il cruscotto per visualizzare risorse e stato"
+          "description": "Accedi al cluster tramite il pannello di controllo per visualizzare risorse e stato"
         },
         "deployApps": {
           "title": "Distribuisci Applicazioni",
@@ -1672,13 +1672,13 @@
     "clusters": {
       "edge": "Cluster Edge",
       "aiInference": "Cluster Inferenza AI",
-      "aiTraining": "Cluster Addestramento AI",
+      "aiTraining": "Cluster Formazione AI",
       "service": "Cluster di Servizi",
       "compute": "Cluster di Calcolo",
       "descriptions": {
         "edge": "Risorse di edge computing per elaborazioni a bassa latenza",
         "aiInference": "Servizi di inferenza e previsione di modelli AI in tempo reale",
-        "aiTraining": "Calcolo ad alte prestazioni per l'addestramento dei modelli AI",
+        "aiTraining": "Calcolo ad alte prestazioni per la formazione dei modelli AI",
         "service": "Microservizi principali e endpoint API",
         "compute": "Risorse di calcolo generiche"
       }
