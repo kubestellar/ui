@@ -672,14 +672,20 @@ export const PluginManager: React.FC = () => {
 
                   {/* Plugin Install Time */}
                   {plugin.createdAt && (
-                    <div className="mb-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    <div
+                      className="mb-1 text-xs"
+                      style={{ color: themeStyles.colors.text.secondary }}
+                    >
                       Installed: {new Date(plugin.createdAt).toLocaleString()}
                     </div>
                   )}
 
                   {/* Plugin Routes */}
                   {plugin.routes && plugin.routes.length > 0 && (
-                    <div className="mb-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    <div
+                      className="mb-1 text-xs"
+                      style={{ color: themeStyles.colors.text.secondary }}
+                    >
                       Routes:
                       <ul className="ml-2 list-disc">
                         {plugin.routes.map((route, idx) => (
@@ -691,7 +697,10 @@ export const PluginManager: React.FC = () => {
 
                   {/* Last Security Scan */}
                   {plugin.lastScanned && (
-                    <div className="mb-2 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    <div
+                      className="mb-2 text-xs"
+                      style={{ color: themeStyles.colors.text.secondary }}
+                    >
                       Last Scan: {new Date(plugin.lastScanned).toLocaleString()}
                     </div>
                   )}
