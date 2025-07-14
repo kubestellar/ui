@@ -42,21 +42,100 @@ type Plugin struct {
 }
 
 // PluginManifest defines the plugin.yml schema for plugin configuration.
+// This supports the full Kubernetes-like manifest structure with apiVersion, kind, metadata, and spec.
 type PluginManifest struct {
-	Name        string        `yaml:"name"`        // Unique name of the plugin (used to identify .wasm file)
-	Version     string        `yaml:"version"`     // Plugin version
-	Author      string        `yaml:"author"`      // Plugin author
-	Description string        `yaml:"description"` // Plugin description
-	Routes      []PluginRoute `yaml:"routes"`      // HTTP API routes the plugin exposes
-	Backend     bool          `yaml:"backend"`     // Whether plugin requires backend API exposure
-	Permissions []string      `yaml:"permissions"` // Required permissions
+	APIVersion string         `yaml:"apiVersion"` // API version
+	Kind       string         `yaml:"kind"`       // Resource kind (e.g., "Plugin")
+	Metadata   PluginMetadata `yaml:"metadata"`   // Plugin metadata
+	Spec       PluginSpec     `yaml:"spec"`       // Plugin specification
+}
+
+// PluginMetadata contains the plugin metadata information
+type PluginMetadata struct {
+	Name        string `yaml:"name"`        // Unique name of the plugin
+	Version     string `yaml:"version"`     // Plugin version
+	Author      string `yaml:"author"`      // Plugin author
+	Description string `yaml:"description"` // Plugin description
+}
+
+// PluginSpec contains the plugin specification
+type PluginSpec struct {
+	Wasm          *PluginWasmConfig      `yaml:"wasm,omitempty"`          // WASM binary configuration
+	Build         *PluginBuildConfig     `yaml:"build,omitempty"`         // Build configuration
+	Backend       *PluginBackendConfig   `yaml:"backend,omitempty"`       // Backend configuration
+	Permissions   []string               `yaml:"permissions,omitempty"`   // Required permissions - "kubestellar:read:clusters" "kubestellar:read:workloads"
+	Frontend      *PluginFrontendConfig  `yaml:"frontend,omitempty"`      // Frontend configuration
+	Navigation    []PluginNavigationItem `yaml:"navigation,omitempty"`    // Navigation integration
+	Widgets       []PluginWidgetConfig   `yaml:"widgets,omitempty"`       // Dashboard widgets
+	Routes        []PluginFrontendRoute  `yaml:"routes,omitempty"`        // Frontend routes
+	Configuration []PluginConfigItem     `yaml:"configuration,omitempty"` // Plugin configuration options
+}
+
+// PluginWasmConfig contains WASM binary information
+type PluginWasmConfig struct {
+	File        string `yaml:"file"`         // WASM file name
+	Entrypoint  string `yaml:"entrypoint"`   // Main function entry point
+	MemoryLimit string `yaml:"memory_limit"` // Memory limit (e.g., "64MB")
+}
+
+// PluginBuildConfig contains build information
+type PluginBuildConfig struct {
+	GoVersion     string `yaml:"go_version"`     // Go version used for building
+	TinyGoVersion string `yaml:"tinygo_version"` // TinyGo version used for WASM compilation
+}
+
+// PluginBackendConfig contains backend integration configuration
+type PluginBackendConfig struct {
+	Enabled bool          `yaml:"enabled"`          // Whether backend is enabled
+	Routes  []PluginRoute `yaml:"routes,omitempty"` // Backend API routes
 }
 
 // PluginRoute describes a single HTTP route exposed by a plugin.
 type PluginRoute struct {
-	Path    string `yaml:"path"`    // Route path (e.g., /hello)
-	Method  string `yaml:"method"`  // HTTP method (GET, POST, etc.)
-	Handler string `yaml:"handler"` // Name of the WASM function to call
+	Path    string   `yaml:"path"`    // Route path (e.g., "/status")
+	Methods []string `yaml:"methods"` // HTTP methods (["GET", "POST"], etc.)
+	Handler string   `yaml:"handler"` // Name of the WASM function to call
+}
+
+// PluginFrontendConfig contains frontend integration configuration
+type PluginFrontendConfig struct {
+	Enabled    bool                   `yaml:"enabled"`              // Whether frontend integration is enabled
+	Navigation []PluginNavigationItem `yaml:"navigation,omitempty"` // Navigation integration
+	Widgets    []PluginWidgetConfig   `yaml:"widgets,omitempty"`    // Dashboard widgets
+	Routes     []PluginFrontendRoute  `yaml:"routes,omitempty"`     // Frontend routes
+}
+
+// PluginNavigationItem describes a navigation menu item
+type PluginNavigationItem struct {
+	Label    string `yaml:"label"`    // Display label
+	Icon     string `yaml:"icon"`     // Icon identifier
+	Path     string `yaml:"path"`     // Route path
+	Position string `yaml:"position"` // Position in menu (e.g., "main")
+	Order    int    `yaml:"order"`    // Display order
+}
+
+// PluginWidgetConfig describes a dashboard widget
+type PluginWidgetConfig struct {
+	Name      string `yaml:"name"`      // Widget name
+	Title     string `yaml:"title"`     // Widget title
+	Size      string `yaml:"size"`      // Widget size (e.g., "medium")
+	Dashboard string `yaml:"dashboard"` // Target dashboard (e.g., "overview")
+	Component string `yaml:"component"` // React component name
+}
+
+// PluginFrontendRoute describes a frontend route definition
+type PluginFrontendRoute struct {
+	Path      string `yaml:"path"`      // Route path
+	Component string `yaml:"component"` // React component name
+	Exact     bool   `yaml:"exact"`     // Whether route matching should be exact
+}
+
+// PluginConfigItem describes a configuration option
+type PluginConfigItem struct {
+	Name        string      `yaml:"name"`        // Configuration name
+	Type        string      `yaml:"type"`        // Type (e.g., "integer", "string")
+	Default     interface{} `yaml:"default"`     // Default value
+	Description string      `yaml:"description"` // Description of the configuration
 }
 
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
