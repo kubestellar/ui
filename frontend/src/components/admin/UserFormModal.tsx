@@ -42,14 +42,14 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [formSubmitted, setFormSubmitted] = React.useState(false);
 
- useEffect(() => {
-   if (isAdmin) {
-     // Update all permissions at once
-     permissionComponents.forEach(component => {
-       setPermissionChange(component.id, 'write');
-     });
-   }
- }, [isAdmin]);
+  useEffect(() => {
+    if (isAdmin) {
+      // Update all permissions at once
+      permissionComponents.forEach(component => {
+        setPermissionChange(component.id, 'write');
+      });
+    }
+  }, [isAdmin]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
