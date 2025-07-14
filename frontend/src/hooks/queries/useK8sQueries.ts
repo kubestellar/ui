@@ -41,8 +41,17 @@ interface ClusterMetricsResponse {
   timestamp: string;
 }
 
+// Query options interface
+interface QueryOptions {
+  staleTime?: number;
+  cacheTime?: number;
+  refetchInterval?: number;
+  retry?: number | boolean;
+  enabled?: boolean;
+}
+
 export const useK8sQueries = () => {
-  const useK8sInfo = () => {
+  const useK8sInfo = (options?: QueryOptions) => {
     return useQuery({
       queryKey: ['k8s-info'],
       queryFn: async (): Promise<K8sResponse> => {
@@ -53,47 +62,59 @@ export const useK8sQueries = () => {
           currentContext: response.data.currentContext,
         };
       },
+      staleTime: options?.staleTime || 5000, // Default 5 seconds
+      gcTime: options?.cacheTime || 300000, // Default 5 minutes
+      refetchInterval: options?.refetchInterval,
+      retry: options?.retry !== undefined ? options?.retry : 1,
+      enabled: options?.enabled !== undefined ? options.enabled : true,
     });
   };
 
-  const usePodHealthQuery = () => {
+  const usePodHealthQuery = (options?: QueryOptions) => {
     return useQuery<PodHealthResponse, Error>({
       queryKey: ['pod-health'],
       queryFn: async () => {
         const response = await api.get('/api/metrics/pod-health');
         return response.data;
       },
-      staleTime: 10000, // 10 seconds
+      staleTime: options?.staleTime || 10000, // Default 10 seconds
+      gcTime: options?.cacheTime || 300000, // Default 5 minutes
+      refetchInterval: options?.refetchInterval,
+      retry: options?.retry !== undefined ? options?.retry : 1,
+      enabled: options?.enabled !== undefined ? options.enabled : true,
     });
   };
 
   // New hook for cluster resource metrics
-  const useClusterMetricsQuery = () => {
+  const useClusterMetricsQuery = (options?: QueryOptions) => {
     return useQuery<ClusterMetricsResponse, Error>({
       queryKey: ['cluster-metrics'],
       queryFn: async () => {
         const response = await api.get('/api/metrics/cluster-resources');
         return response.data;
       },
-      staleTime: 30000, // 30 seconds - metrics don't change as frequently
-      refetchInterval: 60000, // Refresh every minute
-      retry: 2,
+      staleTime: options?.staleTime || 30000, // Default 30 seconds
+      gcTime: options?.cacheTime || 300000, // Default 5 minutes
+      refetchInterval: options?.refetchInterval || 60000, // Default refresh every minute
+      retry: options?.retry !== undefined ? options?.retry : 2,
       retryDelay: 5000, // Wait 5 seconds between retries
+      enabled: options?.enabled !== undefined ? options.enabled : true,
     });
   };
 
   // Hook for specific cluster metrics
-  const useClusterMetricsForContext = (contextName: string) => {
+  const useClusterMetricsForContext = (contextName: string, options?: QueryOptions) => {
     return useQuery<ClusterMetrics, Error>({
       queryKey: ['cluster-metrics', contextName],
       queryFn: async () => {
         const response = await api.get(`/api/metrics/cluster-resources/${contextName}`);
         return response.data;
       },
-      enabled: !!contextName,
-      staleTime: 30000, // 30 seconds
-      refetchInterval: 60000, // Refresh every minute
-      retry: 2,
+      enabled: !!contextName && (options?.enabled !== false),
+      staleTime: options?.staleTime || 30000, // Default 30 seconds
+      gcTime: options?.cacheTime || 300000, // Default 5 minutes
+      refetchInterval: options?.refetchInterval || 60000, // Default refresh every minute
+      retry: options?.retry !== undefined ? options?.retry : 2,
       retryDelay: 5000,
     });
   };

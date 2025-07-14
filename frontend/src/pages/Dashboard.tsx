@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useK8sQueries } from '../hooks/queries/useK8sQueries';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,8 +29,10 @@ import useTheme from '../stores/themeStore';
 import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
-import ClusterDetailDialog from '../components/ClusterDetailDialog';
 import { useTranslation } from 'react-i18next';
+
+// Lazy load the ClusterDetailDialog component
+const ClusterDetailDialog = lazy(() => import('../components/ClusterDetailDialog'));
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
@@ -803,17 +805,38 @@ const K8sInfo = () => {
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
   const { useBindingPolicies } = useBPQueries();
+  
+  // Optimize queries with staleTime and cacheTime settings
   const {
     data: k8sData,
     error: k8sError,
-    isLoading: k8sLoading,
     refetch: refetchK8s,
   } = useK8sInfo();
-  const { data: clusterData, isLoading: clustersLoading } = useClusters(1);
-  const { data: workloadsData, isLoading: workloadsLoading } = useWorkloads();
-  const { data: bindingPoliciesData, isLoading: bpLoading } = useBindingPolicies();
-  const { data: podHealth, isLoading: podHealthLoading } = usePodHealthQuery();
-  const { data: clusterMetrics, isLoading: metricsLoading } = useClusterMetricsQuery();
+  
+  const { data: clusterData } = useClusters(1, {
+    staleTime: 60000, // 1 minute
+    cacheTime: 300000, // 5 minutes
+  });
+  
+  const { data: workloadsData } = useWorkloads({
+    staleTime: 60000, 
+    cacheTime: 300000,
+  });
+  
+  const { data: bindingPoliciesData } = useBindingPolicies({
+    staleTime: 60000,
+    cacheTime: 300000,
+  });
+  
+  const { data: podHealth } = usePodHealthQuery({
+    staleTime: 120000, // 2 minutes
+    cacheTime: 300000,
+  });
+  
+  const { data: clusterMetrics } = useClusterMetricsQuery({
+    staleTime: 60000,
+    cacheTime: 300000,
+  });
 
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
@@ -821,6 +844,7 @@ const K8sInfo = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Process and prepare clusters data from API
   const processedClusters = useMemo<ProcessedCluster[]>(() => {
@@ -952,6 +976,9 @@ const K8sInfo = () => {
         cpuUsage,
         memoryUsage,
       });
+      
+      // After initial data load is complete
+      setIsInitialLoad(false);
     }
   }, [k8sData, clusterData, workloadsData, processedClusters, bindingPoliciesData, clusterMetrics]);
 
@@ -986,8 +1013,8 @@ const K8sInfo = () => {
     }
   };
 
-  if (k8sLoading || clustersLoading || workloadsLoading || bpLoading || metricsLoading)
-    return <ClusterSkeleton />;
+  // Show skeleton during initial load
+  if (isInitialLoad) return <ClusterSkeleton />;
 
   if (k8sError)
     return (
@@ -1326,7 +1353,7 @@ const K8sInfo = () => {
 
             {/* Pod Health with OptimizedProgressBar */}
             <OptimizedProgressBar
-              value={podHealthLoading || !podHealth ? 0 : Math.round(podHealth.healthPercent)}
+              value={!podHealth ? 0 : Math.round(podHealth.healthPercent)}
               color="bg-gradient-to-br from-emerald-500 to-green-600"
               label={t('clusters.dashboard.pods.health')}
               icon={Layers}
@@ -1635,30 +1662,32 @@ const K8sInfo = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Add Cluster Detail Dialog */}
+      {/* Add Cluster Detail Dialog with Suspense */}
       {selectedCluster && (
-        <ClusterDetailDialog
-          open={selectedCluster !== null}
-          onClose={() => setSelectedCluster(null)}
-          clusterName={selectedCluster}
-          isDark={isDark}
-          colors={{
-            primary: '#2f86ff',
-            primaryLight: '#38bdf8',
-            primaryDark: '#1d4ed8',
-            secondary: '#10b981',
-            white: isDark ? '#1e293b' : '#ffffff',
-            background: isDark ? '#0f172a' : '#f8fafc',
-            paper: isDark ? '#1e293b' : '#ffffff',
-            text: isDark ? '#f1f5f9' : '#1e293b',
-            textSecondary: isDark ? '#94a3b8' : '#64748b',
-            border: isDark ? '#334155' : '#e2e8f0',
-            success: '#4ade80',
-            warning: '#facc15',
-            error: '#f43f5e',
-            disabled: isDark ? '#475569' : '#cbd5e1',
-          }}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/20 dark:bg-black/40 flex items-center justify-center">Loading...</div>}>
+          <ClusterDetailDialog
+            open={selectedCluster !== null}
+            onClose={() => setSelectedCluster(null)}
+            clusterName={selectedCluster}
+            isDark={isDark}
+            colors={{
+              primary: '#2f86ff',
+              primaryLight: '#38bdf8',
+              primaryDark: '#1d4ed8',
+              secondary: '#10b981',
+              white: isDark ? '#1e293b' : '#ffffff',
+              background: isDark ? '#0f172a' : '#f8fafc',
+              paper: isDark ? '#1e293b' : '#ffffff',
+              text: isDark ? '#f1f5f9' : '#1e293b',
+              textSecondary: isDark ? '#94a3b8' : '#64748b',
+              border: isDark ? '#334155' : '#e2e8f0',
+              success: '#4ade80',
+              warning: '#facc15',
+              error: '#f43f5e',
+              disabled: isDark ? '#475569' : '#cbd5e1',
+            }}
+          />
+        </Suspense>
       )}
     </motion.div>
   );
