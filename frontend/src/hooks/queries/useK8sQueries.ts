@@ -110,7 +110,7 @@ export const useK8sQueries = () => {
         const response = await api.get(`/api/metrics/cluster-resources/${contextName}`);
         return response.data;
       },
-      enabled: !!contextName && (options?.enabled !== false),
+      enabled: !!contextName && options?.enabled !== false,
       staleTime: options?.staleTime || 30000, // Default 30 seconds
       gcTime: options?.cacheTime || 300000, // Default 5 minutes
       refetchInterval: options?.refetchInterval || 60000, // Default refresh every minute

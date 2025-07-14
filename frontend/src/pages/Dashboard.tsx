@@ -805,34 +805,30 @@ const K8sInfo = () => {
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
   const { useBindingPolicies } = useBPQueries();
-  
+
   // Optimize queries with staleTime and cacheTime settings
-  const {
-    data: k8sData,
-    error: k8sError,
-    refetch: refetchK8s,
-  } = useK8sInfo();
-  
+  const { data: k8sData, error: k8sError, refetch: refetchK8s } = useK8sInfo();
+
   const { data: clusterData } = useClusters(1, {
     staleTime: 60000, // 1 minute
     cacheTime: 300000, // 5 minutes
   });
-  
+
   const { data: workloadsData } = useWorkloads({
-    staleTime: 60000, 
+    staleTime: 60000,
     cacheTime: 300000,
   });
-  
+
   const { data: bindingPoliciesData } = useBindingPolicies({
     staleTime: 60000,
     cacheTime: 300000,
   });
-  
+
   const { data: podHealth } = usePodHealthQuery({
     staleTime: 120000, // 2 minutes
     cacheTime: 300000,
   });
-  
+
   const { data: clusterMetrics } = useClusterMetricsQuery({
     staleTime: 60000,
     cacheTime: 300000,
@@ -976,7 +972,7 @@ const K8sInfo = () => {
         cpuUsage,
         memoryUsage,
       });
-      
+
       // After initial data load is complete
       setIsInitialLoad(false);
     }
@@ -1664,7 +1660,13 @@ const K8sInfo = () => {
 
       {/* Add Cluster Detail Dialog with Suspense */}
       {selectedCluster && (
-        <Suspense fallback={<div className="fixed inset-0 bg-black/20 dark:bg-black/40 flex items-center justify-center">Loading...</div>}>
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 flex items-center justify-center bg-black/20 dark:bg-black/40">
+              Loading...
+            </div>
+          }
+        >
           <ClusterDetailDialog
             open={selectedCluster !== null}
             onClose={() => setSelectedCluster(null)}
