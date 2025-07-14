@@ -51,6 +51,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     }
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setFormSubmitted(false);
+    }
+  }, [isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormSubmitted(true);
