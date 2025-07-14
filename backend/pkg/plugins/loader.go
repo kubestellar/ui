@@ -58,7 +58,12 @@ func (pl *PluginLoader) LoadPluginFromPath(pluginPath string) (*Plugin, error) {
 	}
 
 	// Load and validate the WASM file
-	wasmPath := filepath.Join(pluginPath, manifest.Name+".wasm")
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(pluginPath, wasmFileName)
 	_, err = pl.loadWasmFile(wasmPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load WASM file: %v", err)
@@ -116,7 +121,12 @@ func (pl *PluginLoader) ValidatePlugin(pluginPath string) (*PluginValidationResu
 	}
 
 	// Check WASM file
-	wasmPath := filepath.Join(pluginPath, manifest.Name+".wasm")
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(pluginPath, wasmFileName)
 	if _, err := os.Stat(wasmPath); os.IsNotExist(err) {
 		result.Valid = false
 		result.Errors = append(result.Errors, "WASM file not found")
@@ -215,37 +225,41 @@ func (pl *PluginLoader) validateManifest(manifest *PluginManifest) *PluginValida
 	}
 
 	// Check required fields
-	if manifest.Name == "" {
+	if manifest.Metadata.Name == "" {
 		result.Valid = false
 		result.Errors = append(result.Errors, "Plugin name is required")
 	}
 
-	if manifest.Version == "" {
+	if manifest.Metadata.Version == "" {
 		result.Valid = false
 		result.Errors = append(result.Errors, "Plugin version is required")
 	}
 
 	// Validate plugin name format
-	if !pl.isValidPluginName(manifest.Name) {
+	if !pl.isValidPluginName(manifest.Metadata.Name) {
 		result.Valid = false
 		result.Errors = append(result.Errors, "Invalid plugin name format")
 	}
 
 	// Validate version format
-	if !pl.isValidVersion(manifest.Version) {
+	if !pl.isValidVersion(manifest.Metadata.Version) {
 		result.Valid = false
 		result.Errors = append(result.Errors, "Invalid version format")
 	}
 
-	// Check for duplicate routes
-	routeMap := make(map[string]bool)
-	for _, route := range manifest.Routes {
-		routeKey := fmt.Sprintf("%s:%s", route.Method, route.Path)
-		if routeMap[routeKey] {
-			result.Valid = false
-			result.Errors = append(result.Errors, fmt.Sprintf("Duplicate route: %s %s", route.Method, route.Path))
+	// Check for duplicate backend routes
+	if manifest.Spec.Backend != nil {
+		routeMap := make(map[string]bool)
+		for _, route := range manifest.Spec.Backend.Routes {
+			for _, method := range route.Methods {
+				routeKey := fmt.Sprintf("%s:%s", method, route.Path)
+				if routeMap[routeKey] {
+					result.Valid = false
+					result.Errors = append(result.Errors, fmt.Sprintf("Duplicate route: %s %s", method, route.Path))
+				}
+				routeMap[routeKey] = true
+			}
 		}
-		routeMap[routeKey] = true
 	}
 
 	return result
