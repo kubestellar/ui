@@ -34,6 +34,8 @@ interface Plugin {
   loadTime?: Date;
   routes?: string[];
   id: number;
+  createdAt?: Date;
+  lastScanned?: Date;
 }
 
 export const PluginManager: React.FC = () => {
@@ -662,11 +664,37 @@ export const PluginManager: React.FC = () => {
 
                   {/* Plugin Description */}
                   <p
-                    className="mb-4 line-clamp-2 text-sm"
+                    className="mb-2 line-clamp-2 text-sm"
                     style={{ color: themeStyles.colors.text.secondary }}
                   >
                     {plugin.description}
                   </p>
+
+                  {/* Plugin Install Time */}
+                  {plugin.createdAt && (
+                    <div className="mb-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                      Installed: {new Date(plugin.createdAt).toLocaleString()}
+                    </div>
+                  )}
+
+                  {/* Plugin Routes */}
+                  {plugin.routes && plugin.routes.length > 0 && (
+                    <div className="mb-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                      Routes:
+                      <ul className="ml-2 list-disc">
+                        {plugin.routes.map((route, idx) => (
+                          <li key={idx}>{route}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Last Security Scan */}
+                  {plugin.lastScanned && (
+                    <div className="mb-2 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                      Last Scan: {new Date(plugin.lastScanned).toLocaleString()}
+                    </div>
+                  )}
 
                   {/* Plugin Actions */}
                   <div className="mt-auto grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
