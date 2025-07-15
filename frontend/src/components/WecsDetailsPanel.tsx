@@ -961,7 +961,12 @@ const WecsDetailsPanel = ({
         return;
       } catch (error: unknown) {
         let message = 'Failed to update cluster labels';
-        if (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string') {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof (error as { message?: string }).message === 'string'
+        ) {
           message = (error as { message?: string }).message as string;
         }
         setSnackbarMessage(message);
