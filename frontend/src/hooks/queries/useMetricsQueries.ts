@@ -1,201 +1,163 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 
-// Get Prometheus URL from environment variable with fallback
-const getPrometheusUrl = () => {
-  const url = import.meta.env.VITE_PROMETHEUS_URL;
-  return url ? url : 'http://localhost:9090';
-};
-
-// Prometheus API response types
-export interface PrometheusMetric {
-  metric: Record<string, string>;
-  value: [number, string];
-}
-
-export interface PrometheusResponse {
+export interface ComponentStatus {
   status: string;
-  data: {
-    resultType: string;
-    result: PrometheusMetric[];
-  };
+  last_checked: string;
+  error?: string;
+  details?: string;
 }
 
-// Cache metrics types
-export interface CacheMetrics {
-  hits: PrometheusMetric[];
-  misses: PrometheusMetric[];
-}
-
-// Cluster metrics types
-export interface ClusterMetrics {
-  onboardingDuration: PrometheusMetric[];
-  kubectlOperations: PrometheusMetric[];
-}
-
-// Runtime metrics types
 export interface RuntimeMetrics {
-  goroutines: PrometheusMetric[];
+  go_version: string;
+  goroutines: number;
+  memory_usage: string;
+  cpu_count: number;
+  gc_cycles: number;
+  heap_objects: number;
 }
 
-// Metrics summary
-export interface MetricsSummary {
-  cache: CacheMetrics;
-  cluster: ClusterMetrics;
+export interface SystemMetrics {
+  timestamp: string;
+  uptime: string;
+  version: string;
+  components: Record<string, ComponentStatus>;
   runtime: RuntimeMetrics;
+}
+
+export interface DeploymentStats {
+  github: {
+    count: number;
+    webhook: number;
+    manual: number;
+    failed: number;
+  };
+  helm: {
+    count: number;
+    active: number;
+    failed: number;
+    succeeded: number;
+  };
+  total: number;
+}
+
+export interface DeploymentsResponse {
+  stats: DeploymentStats;
   timestamp: string;
 }
 
-// Fetch cache metrics from Prometheus
-const fetchCacheMetrics = async (): Promise<CacheMetrics> => {
-  try {
-    const prometheusUrl = getPrometheusUrl();
-    const [hitsResponse, missesResponse] = await Promise.all([
-      api.get<PrometheusResponse>(
-        `${prometheusUrl}/api/v1/query?query=kubestellar_binding_policy_cache_hits_total`
-      ),
-      api.get<PrometheusResponse>(
-        `${prometheusUrl}/api/v1/query?query=kubestellar_binding_policy_cache_misses_total`
-      ),
-    ]);
-
-    return {
-      hits: hitsResponse.data.data.result || [],
-      misses: missesResponse.data.data.result || [],
-    };
-  } catch (error) {
-    console.error('Error fetching cache metrics:', error);
-    return { hits: [], misses: [] };
-  }
-};
-
-// Fetch cluster metrics from Prometheus
-const fetchClusterMetrics = async (): Promise<ClusterMetrics> => {
-  try {
-    const prometheusUrl = getPrometheusUrl();
-    const [onboardingResponse, kubectlResponse] = await Promise.all([
-      api.get<PrometheusResponse>(
-        `${prometheusUrl}/api/v1/query?query=cluster_onboarding_duration_seconds`
-      ),
-      api.get<PrometheusResponse>(`${prometheusUrl}/api/v1/query?query=kubectl_operations_total`),
-    ]);
-
-    return {
-      onboardingDuration: onboardingResponse.data.data.result || [],
-      kubectlOperations: kubectlResponse.data.data.result || [],
-    };
-  } catch (error) {
-    console.error('Error fetching cluster metrics:', error);
-    return { onboardingDuration: [], kubectlOperations: [] };
-  }
-};
-
-// Fetch runtime metrics from Prometheus
-const fetchRuntimeMetrics = async (): Promise<RuntimeMetrics> => {
-  try {
-    const prometheusUrl = getPrometheusUrl();
-    const response = await api.get<PrometheusResponse>(
-      `${prometheusUrl}/api/v1/query?query=go_goroutines`
-    );
-
-    return {
-      goroutines: response.data.data.result || [],
-    };
-  } catch (error) {
-    console.error('Error fetching runtime metrics:', error);
-    return { goroutines: [] };
-  }
-};
-
-// Fetch all metrics summary
-const fetchMetricsSummary = async (): Promise<MetricsSummary> => {
-  const [cache, cluster, runtime] = await Promise.all([
-    fetchCacheMetrics(),
-    fetchClusterMetrics(),
-    fetchRuntimeMetrics(),
-  ]);
-
-  return {
-    cache,
-    cluster,
-    runtime,
-    timestamp: new Date().toISOString(),
+export interface HealthResponse {
+  overall_status: string;
+  timestamp: string;
+  components: Record<string, ComponentStatus>;
+  summary: {
+    healthy_components: number;
+    total_components: number;
+    health_percentage: number;
   };
-};
+}
 
-// Custom hooks
-export const useMetricsQueries = () => {
-  const useCacheMetrics = (options = {}) =>
+export interface GitHubMetricsResponse {
+  statistics: DeploymentStats['github'];
+  configuration: Record<string, string>;
+  recent_deployments?: any[];
+  timestamp: string;
+}
+
+export interface HelmMetricsResponse {
+  statistics: DeploymentStats['helm'];
+  timestamp: string;
+}
+
+export interface RedisMetricsResponse {
+  status: ComponentStatus;
+  configuration: Record<string, any>;
+  timestamp: string;
+}
+
+export interface KubernetesMetricsResponse {
+  status: ComponentStatus;
+  config_maps: Record<string, string>;
+  timestamp: string;
+}
+
+export interface PodHealthMetricsResponse {
+  totalPods: number;
+  healthyPods: number;
+  healthPercent: number;
+}
+
+export const useSystemMetrics = (options = {}) =>
+  useQuery({
+    queryKey: ['system-metrics'],
+    queryFn: async () => (await api.get<SystemMetrics>('/api/metrics/system')).data,
+    ...options,
+  });
+
+export const useDeploymentsMetrics = (options = {}) =>
     useQuery({
-      queryKey: ['cache-metrics'],
-      queryFn: fetchCacheMetrics,
-      refetchInterval: 30000, // Refetch every 30 seconds
-      staleTime: 25000,
+    queryKey: ['deployments-metrics'],
+    queryFn: async () => (await api.get<DeploymentsResponse>('/api/metrics/deployments')).data,
       ...options,
     });
 
-  const useClusterMetrics = (options = {}) =>
+export const useHealthMetrics = (options = {}) =>
     useQuery({
-      queryKey: ['cluster-metrics'],
-      queryFn: fetchClusterMetrics,
-      refetchInterval: 30000,
-      staleTime: 25000,
+    queryKey: ['health-metrics'],
+    queryFn: async () => (await api.get<HealthResponse>('/api/metrics/health')).data,
       ...options,
     });
 
-  const useRuntimeMetrics = (options = {}) =>
+export const useGitHubMetrics = (options = {}) =>
     useQuery({
-      queryKey: ['runtime-metrics'],
-      queryFn: fetchRuntimeMetrics,
-      refetchInterval: 10000, // More frequent for runtime metrics
-      staleTime: 8000,
+    queryKey: ['github-metrics'],
+    queryFn: async () => (await api.get<GitHubMetricsResponse>('/api/metrics/github')).data,
       ...options,
     });
 
-  const useMetricsSummary = (options = {}) =>
+export const useHelmMetrics = (options = {}) =>
     useQuery({
-      queryKey: ['metrics-summary'],
-      queryFn: fetchMetricsSummary,
-      refetchInterval: 30000,
-      staleTime: 25000,
+    queryKey: ['helm-metrics'],
+    queryFn: async () => (await api.get<HelmMetricsResponse>('/api/metrics/helm')).data,
       ...options,
     });
 
-  return {
-    useCacheMetrics,
-    useClusterMetrics,
-    useRuntimeMetrics,
-    useMetricsSummary,
-  };
-};
+export const useRedisMetrics = (options = {}) =>
+  useQuery({
+    queryKey: ['redis-metrics'],
+    queryFn: async () => (await api.get<RedisMetricsResponse>('/api/metrics/redis')).data,
+    ...options,
+  });
 
-// Helper functions for processing metrics
-export const processMetricValue = (metric: PrometheusMetric): number => {
-  return parseFloat(metric.value[1]) || 0;
-};
+export const useKubernetesMetrics = (options = {}) =>
+  useQuery({
+    queryKey: ['kubernetes-metrics'],
+    queryFn: async () => (await api.get<KubernetesMetricsResponse>('/api/metrics/kubernetes')).data,
+    ...options,
+  });
 
-export const aggregateMetricsByLabel = (
-  metrics: PrometheusMetric[],
-  labelKey: string
-): Record<string, number> => {
-  return metrics.reduce(
-    (acc, metric) => {
-      const labelValue = metric.metric[labelKey] || 'unknown';
-      acc[labelValue] = (acc[labelValue] || 0) + processMetricValue(metric);
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-};
+export const usePodHealthMetrics = (options = {}) =>
+  useQuery({
+    queryKey: ['pod-health-metrics'],
+    queryFn: async () => (await api.get<PodHealthMetricsResponse>('/api/metrics/pod-health')).data,
+    ...options,
+  });
+  
+export const usePrometheusMetric = (metricName: string, options = {}) =>
+  useQuery({
+    queryKey: ['prometheus-metric', metricName],
+    queryFn: async () => (await api.get(`/api/v1/metrics?name=${metricName}`)).data,
+    ...options,
+  });
 
-export const calculateCacheHitRatio = (
-  hits: PrometheusMetric[],
-  misses: PrometheusMetric[]
-): number => {
-  const totalHits = hits.reduce((sum, metric) => sum + processMetricValue(metric), 0);
-  const totalMisses = misses.reduce((sum, metric) => sum + processMetricValue(metric), 0);
-  const total = totalHits + totalMisses;
-
-  if (total === 0) return 0;
-  return (totalHits / total) * 100;
-};
+export const useHTTPErrorCounter = (options = {}) => usePrometheusMetric('http_error_requests_total', options);
+export const useBindingPolicyCacheHits = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_cache_hits_total', options);
+export const useBindingPolicyCacheMisses = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_cache_misses_total', options);
+export const useBindingPolicyWatchEvents = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_watch_events_total', options);
+export const useBindingPolicyReconciliationDuration = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_reconciliation_duration_seconds', options);
+export const useBindingPolicyOperationsTotal = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_operations_total', options);
+export const useWebsocketConnectionsFailed = (options = {}) => usePrometheusMetric('websocket_connections_failed_total', options);
+export const useWebsocketConnectionsActive = (options = {}) => usePrometheusMetric('websocket_connections_active', options);
+export const useKubectlOperationsTotal = (options = {}) => usePrometheusMetric('kubectl_operations_total', options);
+export const useClusterOnboardingDuration = (options = {}) => usePrometheusMetric('cluster_onboarding_duration_seconds', options);
+export const useGoGoroutines = (options = {}) => usePrometheusMetric('go_goroutines', options);
