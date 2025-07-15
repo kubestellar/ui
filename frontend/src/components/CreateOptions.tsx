@@ -455,7 +455,7 @@ spec:
           toast.error('Deployment failed!');
         }
       } else {
-         toast.error('Deployment failed due to network error!');
+        toast.error('Deployment failed due to network error!');
       }
     }
   };
@@ -775,7 +775,7 @@ spec:
       setCredentialDialogOpen(false);
       toast.success(t('workloads.createOptions.notifications.credentialAddedSuccess'));
     } else {
-      showToast(t('workloads.createOptions.credentials.fillBoth'));
+      toast.error(t('workloads.createOptions.credentials.fillBoth'));
     }
   };
 
