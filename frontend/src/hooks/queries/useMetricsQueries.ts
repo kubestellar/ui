@@ -3,7 +3,8 @@ import { api } from '../../lib/api';
 
 // Get Prometheus URL from environment variable with fallback
 const getPrometheusUrl = () => {
-  return import.meta.env.VITE_PROMETHEUS_URL || 'http://localhost:9090';
+  const url = import.meta.env.VITE_PROMETHEUS_URL;
+  return url ? url : 'http://localhost:9090';
 };
 
 // Prometheus API response types

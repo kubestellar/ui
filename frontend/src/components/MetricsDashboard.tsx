@@ -220,12 +220,21 @@ const MetricsDashboard = () => {
 
   // State for dashboard controls
   const [autoRefresh, setAutoRefresh] = useState(() => {
-    const saved = localStorage.getItem('metrics-auto-refresh');
-    return saved !== null ? JSON.parse(saved) : true;
+    try {
+      const saved = localStorage.getItem('metrics-auto-refresh');
+      if (typeof saved === 'string') {
+        const parsed = JSON.parse(saved);
+        return typeof parsed === 'boolean' ? parsed : true;
+      }
+    } catch {
+      // ignore
+    }
+    return true;
   });
   const [refreshInterval, setRefreshInterval] = useState(() => {
     const saved = localStorage.getItem('metrics-refresh-interval');
-    return saved !== null ? parseInt(saved, 10) : 30;
+    const parsed = parseInt(saved ?? '', 10);
+    return !isNaN(parsed) && parsed > 0 ? parsed : 30;
   });
   const [visibleSections] = useState({
     cache: true,
