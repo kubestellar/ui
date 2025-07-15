@@ -37,6 +37,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';
+import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 
 interface WecsDetailsProps {
   namespace: string;
@@ -920,6 +921,9 @@ const WecsDetailsPanel = ({
     }
   };
 
+  const { useUpdateClusterLabels } = useClusterQueries();
+  const updateClusterLabelsMutation = useUpdateClusterLabels();
+
   const handleUpdate = async () => {
     if (!resource) return;
 
@@ -944,7 +948,7 @@ const WecsDetailsPanel = ({
         return;
       }
       try {
-        await api.patch('/api/managedclusters/labels', {
+        await updateClusterLabelsMutation.mutateAsync({
           contextName: resource.context || 'its1',
           clusterName: resource.name,
           labels, // send ALL labels
@@ -955,8 +959,12 @@ const WecsDetailsPanel = ({
         // Refetch cluster details after update
         await fetchClusterDetails();
         return;
-      } catch {
-        setSnackbarMessage('Failed to update cluster labels');
+      } catch (error: unknown) {
+        let message = 'Failed to update cluster labels';
+        if (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string') {
+          message = (error as { message?: string }).message as string;
+        }
+        setSnackbarMessage(message);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return;
