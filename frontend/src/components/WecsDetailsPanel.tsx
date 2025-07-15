@@ -37,6 +37,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';
+import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 
 interface WecsDetailsProps {
   namespace: string;
@@ -60,6 +61,8 @@ interface ResourceInfo {
   age: string;
   status: string;
   manifest: string;
+  context?: string;
+  labels?: Record<string, string>;
 }
 
 interface ClusterDetails {
@@ -181,6 +184,59 @@ const WecsDetailsPanel = ({
     [t]
   );
 
+  // Move fetchClusterDetails to component scope so it can be reused
+  const fetchClusterDetails = async () => {
+    try {
+      const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
+      const data = response.data;
+      setClusterDetails(data);
+
+      // Also create a manifest representation for the edit tab
+      const creationTime =
+        data.itsManagedClusters && data.itsManagedClusters.length > 0
+          ? data.itsManagedClusters[0].creationTime
+          : new Date().toISOString();
+
+      const clusterManifest = {
+        apiVersion: 'v1',
+        kind: 'Cluster',
+        metadata: {
+          name: data.clusterName,
+          creationTimestamp: creationTime,
+          labels:
+            data.itsManagedClusters && data.itsManagedClusters.length > 0
+              ? data.itsManagedClusters[0].labels
+              : {},
+        },
+        spec: {
+          context:
+            data.itsManagedClusters && data.itsManagedClusters.length > 0
+              ? data.itsManagedClusters[0].context
+              : '',
+        },
+      };
+
+      const resourceInfo: ResourceInfo = {
+        name: data.clusterName,
+        namespace: '',
+        kind: 'Cluster',
+        createdAt: creationTime,
+        age: calculateAge(creationTime),
+        status: t('wecsDetailsPanel.cluster.active'),
+        manifest: JSON.stringify(clusterManifest, null, 2),
+      };
+
+      setResource(resourceInfo);
+      setEditedManifest(resourceInfo.manifest);
+      setError(null);
+    } catch (err) {
+      console.error(`Error fetching cluster details:`, err);
+      setError(t('wecsDetailsPanel.errors.failedLoadClusterDetails'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
       setTabValue(initialTab);
@@ -224,58 +280,6 @@ const WecsDetailsPanel = ({
 
     // Handle cluster details
     if (type.toLowerCase() === 'cluster') {
-      const fetchClusterDetails = async () => {
-        try {
-          const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
-          const data = response.data;
-          setClusterDetails(data);
-
-          // Also create a manifest representation for the edit tab
-          const creationTime =
-            data.itsManagedClusters && data.itsManagedClusters.length > 0
-              ? data.itsManagedClusters[0].creationTime
-              : new Date().toISOString();
-
-          const clusterManifest = {
-            apiVersion: 'v1',
-            kind: 'Cluster',
-            metadata: {
-              name: data.clusterName,
-              creationTimestamp: creationTime,
-              labels:
-                data.itsManagedClusters && data.itsManagedClusters.length > 0
-                  ? data.itsManagedClusters[0].labels
-                  : {},
-            },
-            spec: {
-              context:
-                data.itsManagedClusters && data.itsManagedClusters.length > 0
-                  ? data.itsManagedClusters[0].context
-                  : '',
-            },
-          };
-
-          const resourceInfo: ResourceInfo = {
-            name: data.clusterName,
-            namespace: '',
-            kind: 'Cluster',
-            createdAt: creationTime,
-            age: calculateAge(creationTime),
-            status: t('wecsDetailsPanel.cluster.active'),
-            manifest: JSON.stringify(clusterManifest, null, 2),
-          };
-
-          setResource(resourceInfo);
-          setEditedManifest(resourceInfo.manifest);
-          setError(null);
-        } catch (err) {
-          console.error(`Error fetching cluster details:`, err);
-          setError(t('wecsDetailsPanel.errors.failedLoadClusterDetails'));
-        } finally {
-          setLoading(false);
-        }
-      };
-
       fetchClusterDetails();
       return;
     }
@@ -917,10 +921,60 @@ const WecsDetailsPanel = ({
     }
   };
 
+  const { useUpdateClusterLabels } = useClusterQueries();
+  const updateClusterLabelsMutation = useUpdateClusterLabels();
+
   const handleUpdate = async () => {
     if (!resource) return;
 
     const resourceName = resource.name;
+
+    if (resource.kind === 'Cluster') {
+      let labels = {};
+      try {
+        // Parse the edited manifest (YAML or JSON)
+        let manifestObj;
+        if (editFormat === 'yaml') {
+          manifestObj = jsyaml.load(editedManifest);
+        } else {
+          manifestObj = JSON.parse(editedManifest);
+        }
+        // Extract all labels from the manifest
+        labels = manifestObj?.metadata?.labels || {};
+      } catch {
+        setSnackbarMessage('Invalid manifest format');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        return;
+      }
+      try {
+        await updateClusterLabelsMutation.mutateAsync({
+          contextName: resource.context || 'its1',
+          clusterName: resource.name,
+          labels, // send ALL labels
+        });
+        setSnackbarMessage('Cluster labels updated successfully');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        // Refetch cluster details after update
+        await fetchClusterDetails();
+        return;
+      } catch (error: unknown) {
+        let message = 'Failed to update cluster labels';
+        if (
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof (error as { message?: string }).message === 'string'
+        ) {
+          message = (error as { message?: string }).message as string;
+        }
+        setSnackbarMessage(message);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        return;
+      }
+    }
 
     setSnackbarMessage(t('wecsDetailsPanel.errors.apiNotImplemented', { resourceName }));
     setSnackbarSeverity('error');
