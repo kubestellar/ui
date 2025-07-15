@@ -291,14 +291,13 @@ const MetricsDashboard = () => {
                 <thead className="bg-indigo-100 dark:bg-indigo-900/30">
                   <tr>
                     <th className="px-3 py-2 text-left">Policy</th>
-                    <th className="px-3 py-2 text-left">Sum (s)</th>
-                    <th className="px-3 py-2 text-left">Count</th>
+                    <th className="px-3 py-2 text-left">Seconds to Take Effect</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bpLoading ? (
                     <tr>
-                      <td colSpan={3} className="px-3 py-2 text-center">
+                      <td colSpan={2} className="px-3 py-2 text-center">
                         Loading...
                       </td>
                     </tr>
@@ -307,13 +306,6 @@ const MetricsDashboard = () => {
                       <tr key={bp.name} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/10">
                         <td className="px-3 py-2 font-medium">
                           <Fallback value={bp.name} isFallback={false} />
-                        </td>
-                        <td className="px-3 py-2 font-mono text-indigo-700 dark:text-indigo-300">
-                          <Fallback
-                            value={reconciliationHistogram.sum?.value}
-                            fallback="0"
-                            isFallback={!reconciliationHistogram.sum?.value}
-                          />
                         </td>
                         <td className="px-3 py-2 font-mono text-indigo-700 dark:text-indigo-300">
                           <Fallback
@@ -328,13 +320,6 @@ const MetricsDashboard = () => {
                     <tr>
                       <td className="px-3 py-2 font-medium">
                         <Fallback value="All Policies" isFallback={true} />
-                      </td>
-                      <td className="px-3 py-2 font-mono text-indigo-700 dark:text-indigo-300">
-                        <Fallback
-                          value={reconciliationHistogram.sum?.value}
-                          fallback="0"
-                          isFallback={true}
-                        />
                       </td>
                       <td className="px-3 py-2 font-mono text-indigo-700 dark:text-indigo-300">
                         <Fallback
