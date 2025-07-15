@@ -217,13 +217,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                   <FiUser size={14} />
                   {t('admin.users.form.username')}
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
                   <input
                     type="text"
                     id="username"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className={`w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                    className={`w-full rounded-lg border px-4 py-2.5 pr-10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
                       usernameError
                         ? 'border-red-500 focus:ring-red-500'
                         : username && !usernameError
@@ -250,7 +250,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 transform"
+                      className="absolute right-3 flex items-center justify-center"
+                      style={{ pointerEvents: 'none' }}
                     >
                       {usernameError ? (
                         <FiAlertCircle className="text-red-500" size={16} />
