@@ -52,13 +52,59 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   }, [isAdmin]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
       setFormSubmitted(false);
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (formError) {
+      setFormSubmitted(false);
+    }
+  }, [formError]);
+
+  const validateForm = () => {
+    if (!username.trim()) {
+      return { isValid: false, error: 'Username is required' };
+    }
+
+    if (showPasswordFields) {
+      // For Add User mode: password is required
+      if (!passwordOptional) {
+        if (!password) {
+          return { isValid: false, error: 'Password is required' };
+        }
+
+        if (password !== confirmPassword) {
+          return { isValid: false, error: 'Passwords do not match' };
+        }
+      }
+      // For Edit User mode: password is optional, but if provided, must match
+      else {
+        // If user provides password in edit mode, both fields must match
+        if (password || confirmPassword) {
+          if (password !== confirmPassword) {
+            return { isValid: false, error: 'Passwords do not match' };
+          }
+        }
+      }
+    }
+
+    return { isValid: true, error: null };
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validation = validateForm();
+
+    if (!validation.isValid) {
+      // Handle error (show message, set error state, etc.)
+      console.error('Validation failed:', validation.error);
+      return;
+    }
+
+    // Only execute if validation passes
     setFormSubmitted(true);
     onSubmit();
   };

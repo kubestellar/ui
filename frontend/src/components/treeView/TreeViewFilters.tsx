@@ -53,9 +53,7 @@ const TreeViewFilters = memo<TreeViewFiltersProps>(({ filteredContext }) => {
               color: theme === 'dark' ? '#90CAF9' : '#1976d2',
             }}
           >
-            {t('treeView.filteringContext', {
-              context: <strong>{filteredContext}</strong>,
-            })}
+            {t('treeView.filteringContext', { context: filteredContext })}
           </Typography>
         </Box>
       )}
