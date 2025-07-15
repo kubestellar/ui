@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiX,
@@ -38,9 +38,25 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   themeStyles,
 }) => {
   const { t } = useTranslation();
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-  const [formSubmitted, setFormSubmitted] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+
+  const validateUsername = (value: string) => {
+    if (!value.trim()) {
+      return null; // Don't show error for empty field until form submission
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+      return 'Username can only contain letters, numbers, underscore, and hyphen';
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const error = validateUsername(username);
+    setUsernameError(error);
+  }, [username]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -67,7 +83,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     if (!username.trim()) {
       return { isValid: false, error: 'Username is required' };
     }
-
+    if (!/^[a-zA-Z0-9_-]+$/.test(username.trim())) {
+      return {
+        isValid: false,
+        error: 'Username can only contain letters, numbers, underscore, and hyphen',
+      };
+    }
     if (showPasswordFields) {
       // For Add User mode: password is required
       if (!passwordOptional) {
@@ -202,10 +223,22 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                     id="username"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className="w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                    className={`w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                      usernameError
+                        ? 'border-red-500 focus:ring-red-500'
+                        : username && !usernameError
+                          ? 'border-green-500 focus:ring-green-500'
+                          : 'focus:ring-blue-500'
+                    }`}
                     style={{
                       background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(255, 255, 255, 0.8)',
-                      borderColor: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(226, 232, 240, 0.8)',
+                      borderColor: usernameError
+                        ? '#ef4444'
+                        : username && !usernameError
+                          ? '#10b981'
+                          : isDark
+                            ? 'rgba(75, 85, 99, 0.3)'
+                            : 'rgba(226, 232, 240, 0.8)',
                       color: themeStyles.colors.text.primary,
                       boxShadow: isDark ? 'none' : 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
                     }}
@@ -219,10 +252,36 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                       animate={{ scale: 1 }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 transform"
                     >
-                      <FiCheck className="text-green-500" size={16} />
+                      {usernameError ? (
+                        <FiAlertCircle className="text-red-500" size={16} />
+                      ) : (
+                        <FiCheck className="text-green-500" size={16} />
+                      )}
                     </motion.div>
                   )}
                 </div>
+
+                {/* Add validation feedback below the input */}
+                {username && usernameError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-1 flex items-center gap-1 text-xs text-red-500"
+                  >
+                    <FiAlertCircle size={12} />
+                    {usernameError}
+                  </motion.p>
+                )}
+                {username && !usernameError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-1 flex items-center gap-1 text-xs text-green-500"
+                  >
+                    <FiCheck size={12} />
+                    Username format is valid
+                  </motion.p>
+                )}
               </div>
 
               {showPasswordFields && (
