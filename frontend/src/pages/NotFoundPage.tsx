@@ -6,17 +6,18 @@ const NotFoundPage: React.FC = () => {
   const { t } = useTranslation();
   const [currentQuote, setCurrentQuote] = useState(0);
 
-  const quotes = t('notFoundPage.quotes', { returnObjects: true }) as Array<{
-    text: string;
-    author: string;
-  }>;
+  // Add fallback array if translation doesn't return expected array
+  const quotes = t('notFoundPage.quotes', { returnObjects: true });
+  const quotesArray = Array.isArray(quotes)
+    ? quotes
+    : [{ text: 'Page not found', author: 'System' }];
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentQuote(prev => (prev + 1) % quotes.length);
+      setCurrentQuote(prev => (prev + 1) % quotesArray.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [quotes.length]);
+  }, [quotesArray.length]);
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-base-200">
@@ -266,7 +267,7 @@ const NotFoundPage: React.FC = () => {
 
         {/* Quote Section */}
         <div className="relative h-24">
-          {quotes.map((quote, index) => (
+          {quotesArray.map((quote, index) => (
             <div
               key={index}
               className={`absolute w-full transition-all duration-500 ${
