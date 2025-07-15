@@ -455,7 +455,7 @@ spec:
           toast.error('Deployment failed!');
         }
       } else {
-        toast.error('Deployment failed due to network error!');
+        showToast('Deployment failed due to network error!');
       }
     }
   };
@@ -600,12 +600,12 @@ spec:
     console.log('Starting Artifact Hub deployment with formData:', formData);
 
     if (!formData || !formData.packageId) {
-      toast.error(t('workloads.createOptions.artifactHub.selectPackage'));
+      showToast(t('workloads.createOptions.artifactHub.selectPackage'));
       return;
     }
 
     if (!formData.releaseName) {
-      toast.error(t('workloads.createOptions.artifactHub.enterReleaseName'));
+      showToast(t('workloads.createOptions.artifactHub.enterReleaseName'));
       return;
     }
 
@@ -634,7 +634,7 @@ spec:
       console.log('Artifact Hub Deploy response:', response);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success(t('workloads.createOptions.notifications.artifactHubDeploySuccess'));
+        showToast(t('workloads.createOptions.notifications.artifactHubDeploySuccess'), 'success');
         setTimeout(() => window.location.reload(), 4000);
       } else {
         throw new Error('Unexpected response status: ' + response.status);
@@ -657,14 +657,14 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error('Deployment failed: failed to deploy to Artifact Hub!');
+          showToast('Deployment failed: failed to deploy to Artifact Hub!');
         } else if (err.response.status === 400) {
-          toast.error('Failed to deploy to Artifact Hub!');
+          showToast('Failed to deploy to Artifact Hub!');
         } else {
-          toast.error('Artifact Hub deployment failed!');
+          showToast('Artifact Hub deployment failed!');
         }
       } else {
-        toast.error('Artifact Hub deployment failed due to network error!');
+        showToast('Artifact Hub deployment failed due to network error!');
       }
     } finally {
       setLoading(false);
@@ -722,27 +722,27 @@ spec:
     const { repoName, repoUrl, chartName, releaseName, namespace } = helmFormData;
 
     if (!repoName) {
-      toast.error(t('workloads.createOptions.notifications.enterRepoName'));
+      showToast(t('workloads.createOptions.notifications.enterRepoName'));
       return false;
     }
 
     if (!repoUrl) {
-      toast.error(t('workloads.createOptions.notifications.enterRepoUrl'));
+      showToast(t('workloads.createOptions.notifications.enterRepoUrl'));
       return false;
     }
 
     if (!chartName) {
-      toast.error(t('workloads.createOptions.notifications.enterChartName'));
+      showToast(t('workloads.createOptions.notifications.enterChartName'));
       return false;
     }
 
     if (!releaseName) {
-      toast.error(t('workloads.createOptions.notifications.enterReleaseName'));
+      showToast(t('workloads.createOptions.notifications.enterReleaseName'));
       return false;
     }
 
     if (!namespace) {
-      toast.error(t('workloads.createOptions.notifications.enterNamespace'));
+      showToast(t('workloads.createOptions.notifications.enterNamespace'));
       return false;
     }
 
@@ -773,9 +773,9 @@ spec:
       localStorage.setItem('credentialsListData', JSON.stringify(storedCredentials));
 
       setCredentialDialogOpen(false);
-      toast.success(t('workloads.createOptions.notifications.credentialAddedSuccess'));
+      showToast(t('workloads.createOptions.notifications.credentialAddedSuccess'), 'success');
     } else {
-      toast.error(t('workloads.createOptions.credentials.fillBoth'));
+      showToast(t('workloads.createOptions.credentials.fillBoth'));
     }
   };
 
@@ -806,9 +806,9 @@ spec:
 
       setNewWebhook({ webhookUrl: '', personalAccessToken: '' });
       setWebhookDialogOpen(false);
-      toast.success(t('workloads.createOptions.notifications.webhookAddedSuccess'));
+      showToast(t('workloads.createOptions.notifications.webhookAddedSuccess'), 'success');
     } else {
-      toast.error(t('workloads.createOptions.webhook.fillBoth'));
+      showToast(t('workloads.createOptions.webhook.fillBoth'));
     }
   };
 
@@ -838,7 +838,7 @@ spec:
     ) {
       setSelectedFile(file);
     } else {
-      toast.error(t('workloads.createOptions.file.invalidFile'));
+      showToast(t('workloads.createOptions.file.invalidFile'));
     }
   };
 

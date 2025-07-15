@@ -8,6 +8,7 @@ import ToastProvider from './components/providers/ToastProvider.tsx';
 import { WebSocketProvider } from './context/WebSocketProvider.tsx';
 import { PluginProvider } from './plugins/PluginLoader.tsx';
 import './i18n.ts';
+import NetworkErrorToastManager from './components/NetworkErrorToastManager';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
         <PluginProvider>
           <ClientThemeWrapper>
             <ToastProvider>
+              <NetworkErrorToastManager />
               <App />
             </ToastProvider>
           </ClientThemeWrapper>
