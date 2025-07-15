@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"gopkg.in/yaml.v3"
 )
 
@@ -67,6 +68,11 @@ func NewPluginManager(router *gin.Engine) *PluginManager {
 	config := wazero.NewRuntimeConfigInterpreter()
 	runtime := wazero.NewRuntimeWithConfig(ctx, config)
 
+	// Instantiate WASI for plugins, returning error if instantiation fails
+	if _, err := wasi_snapshot_preview1.Instantiate(ctx, runtime); err != nil {
+		log.Fatalf("Failed to instantiate WASI: %v", err)
+	}
+
 	pm := &PluginManager{
 		runtime:          runtime,
 		plugins:          make(map[string]*Plugin),
@@ -110,7 +116,7 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 	}
 
 	// Create module config
-	moduleConfig := wazero.NewModuleConfig().WithName(manifest.Name)
+	moduleConfig := wazero.NewModuleConfig().WithName(manifest.Name).WithStartFunctions("main")
 
 	instance, err := pm.runtime.InstantiateModule(pm.ctx, compiledModule, moduleConfig)
 	if err != nil {
