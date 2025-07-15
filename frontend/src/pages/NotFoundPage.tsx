@@ -8,9 +8,9 @@ const NotFoundPage: React.FC = () => {
 
   // Add fallback array if translation doesn't return expected array
   const quotes = t('notFoundPage.quotes', { returnObjects: true });
-  const quotesArray = Array.isArray(quotes) 
-    ? quotes 
-    : [{ text: "Page not found", author: "System" }];
+  const quotesArray = Array.isArray(quotes)
+    ? quotes
+    : [{ text: 'Page not found', author: 'System' }];
 
   useEffect(() => {
     const timer = setInterval(() => {
