@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 
+// Get Prometheus URL from environment variable with fallback
+const getPrometheusUrl = () => {
+  const url = import.meta.env.VITE_PROMETHEUS_URL;
+  return url ? url : 'http://localhost:9090';
+};
+
 // Prometheus API response types
 export interface PrometheusMetric {
   metric: Record<string, string>;
@@ -43,12 +49,13 @@ export interface MetricsSummary {
 // Fetch cache metrics from Prometheus
 const fetchCacheMetrics = async (): Promise<CacheMetrics> => {
   try {
+    const prometheusUrl = getPrometheusUrl();
     const [hitsResponse, missesResponse] = await Promise.all([
       api.get<PrometheusResponse>(
-        'http://localhost:9090/api/v1/query?query=kubestellar_binding_policy_cache_hits_total'
+        `${prometheusUrl}/api/v1/query?query=kubestellar_binding_policy_cache_hits_total`
       ),
       api.get<PrometheusResponse>(
-        'http://localhost:9090/api/v1/query?query=kubestellar_binding_policy_cache_misses_total'
+        `${prometheusUrl}/api/v1/query?query=kubestellar_binding_policy_cache_misses_total`
       ),
     ]);
 
@@ -65,13 +72,12 @@ const fetchCacheMetrics = async (): Promise<CacheMetrics> => {
 // Fetch cluster metrics from Prometheus
 const fetchClusterMetrics = async (): Promise<ClusterMetrics> => {
   try {
+    const prometheusUrl = getPrometheusUrl();
     const [onboardingResponse, kubectlResponse] = await Promise.all([
       api.get<PrometheusResponse>(
-        'http://localhost:9090/api/v1/query?query=cluster_onboarding_duration_seconds'
+        `${prometheusUrl}/api/v1/query?query=cluster_onboarding_duration_seconds`
       ),
-      api.get<PrometheusResponse>(
-        'http://localhost:9090/api/v1/query?query=kubectl_operations_total'
-      ),
+      api.get<PrometheusResponse>(`${prometheusUrl}/api/v1/query?query=kubectl_operations_total`),
     ]);
 
     return {
@@ -87,8 +93,9 @@ const fetchClusterMetrics = async (): Promise<ClusterMetrics> => {
 // Fetch runtime metrics from Prometheus
 const fetchRuntimeMetrics = async (): Promise<RuntimeMetrics> => {
   try {
+    const prometheusUrl = getPrometheusUrl();
     const response = await api.get<PrometheusResponse>(
-      'http://localhost:9090/api/v1/query?query=go_goroutines'
+      `${prometheusUrl}/api/v1/query?query=go_goroutines`
     );
 
     return {
