@@ -60,7 +60,7 @@ export interface HealthResponse {
 export interface GitHubMetricsResponse {
   statistics: DeploymentStats['github'];
   configuration: Record<string, string>;
-  recent_deployments?: any[];
+  recent_deployments?: unknown[];
   timestamp: string;
 }
 
@@ -71,7 +71,7 @@ export interface HelmMetricsResponse {
 
 export interface RedisMetricsResponse {
   status: ComponentStatus;
-  configuration: Record<string, any>;
+  configuration: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -95,32 +95,32 @@ export const useSystemMetrics = (options = {}) =>
   });
 
 export const useDeploymentsMetrics = (options = {}) =>
-    useQuery({
+  useQuery({
     queryKey: ['deployments-metrics'],
     queryFn: async () => (await api.get<DeploymentsResponse>('/api/metrics/deployments')).data,
-      ...options,
-    });
+    ...options,
+  });
 
 export const useHealthMetrics = (options = {}) =>
-    useQuery({
+  useQuery({
     queryKey: ['health-metrics'],
     queryFn: async () => (await api.get<HealthResponse>('/api/metrics/health')).data,
-      ...options,
-    });
+    ...options,
+  });
 
 export const useGitHubMetrics = (options = {}) =>
-    useQuery({
+  useQuery({
     queryKey: ['github-metrics'],
     queryFn: async () => (await api.get<GitHubMetricsResponse>('/api/metrics/github')).data,
-      ...options,
-    });
+    ...options,
+  });
 
 export const useHelmMetrics = (options = {}) =>
-    useQuery({
+  useQuery({
     queryKey: ['helm-metrics'],
     queryFn: async () => (await api.get<HelmMetricsResponse>('/api/metrics/helm')).data,
-      ...options,
-    });
+    ...options,
+  });
 
 export const useRedisMetrics = (options = {}) =>
   useQuery({
@@ -142,7 +142,7 @@ export const usePodHealthMetrics = (options = {}) =>
     queryFn: async () => (await api.get<PodHealthMetricsResponse>('/api/metrics/pod-health')).data,
     ...options,
   });
-  
+
 export const usePrometheusMetric = (metricName: string, options = {}) =>
   useQuery({
     queryKey: ['prometheus-metric', metricName],
@@ -150,14 +150,24 @@ export const usePrometheusMetric = (metricName: string, options = {}) =>
     ...options,
   });
 
-export const useHTTPErrorCounter = (options = {}) => usePrometheusMetric('http_error_requests_total', options);
-export const useBindingPolicyCacheHits = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_cache_hits_total', options);
-export const useBindingPolicyCacheMisses = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_cache_misses_total', options);
-export const useBindingPolicyWatchEvents = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_watch_events_total', options);
-export const useBindingPolicyReconciliationDuration = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_reconciliation_duration_seconds', options);
-export const useBindingPolicyOperationsTotal = (options = {}) => usePrometheusMetric('kubestellar_binding_policy_operations_total', options);
-export const useWebsocketConnectionsFailed = (options = {}) => usePrometheusMetric('websocket_connections_failed_total', options);
-export const useWebsocketConnectionsActive = (options = {}) => usePrometheusMetric('websocket_connections_active', options);
-export const useKubectlOperationsTotal = (options = {}) => usePrometheusMetric('kubectl_operations_total', options);
-export const useClusterOnboardingDuration = (options = {}) => usePrometheusMetric('cluster_onboarding_duration_seconds', options);
+export const useHTTPErrorCounter = (options = {}) =>
+  usePrometheusMetric('http_error_requests_total', options);
+export const useBindingPolicyCacheHits = (options = {}) =>
+  usePrometheusMetric('kubestellar_binding_policy_cache_hits_total', options);
+export const useBindingPolicyCacheMisses = (options = {}) =>
+  usePrometheusMetric('kubestellar_binding_policy_cache_misses_total', options);
+export const useBindingPolicyWatchEvents = (options = {}) =>
+  usePrometheusMetric('kubestellar_binding_policy_watch_events_total', options);
+export const useBindingPolicyReconciliationDuration = (options = {}) =>
+  usePrometheusMetric('kubestellar_binding_policy_reconciliation_duration_seconds', options);
+export const useBindingPolicyOperationsTotal = (options = {}) =>
+  usePrometheusMetric('kubestellar_binding_policy_operations_total', options);
+export const useWebsocketConnectionsFailed = (options = {}) =>
+  usePrometheusMetric('websocket_connections_failed_total', options);
+export const useWebsocketConnectionsActive = (options = {}) =>
+  usePrometheusMetric('websocket_connections_active', options);
+export const useKubectlOperationsTotal = (options = {}) =>
+  usePrometheusMetric('kubectl_operations_total', options);
+export const useClusterOnboardingDuration = (options = {}) =>
+  usePrometheusMetric('cluster_onboarding_duration_seconds', options);
 export const useGoGoroutines = (options = {}) => usePrometheusMetric('go_goroutines', options);
