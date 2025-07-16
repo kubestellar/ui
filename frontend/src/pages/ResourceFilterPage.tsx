@@ -52,7 +52,7 @@ const ResourceFilterPage: React.FC = () => {
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
 
-  const { resourceKinds, namespaces, filteredResources, isLoading, error, applyFilters } =
+  const { resourceKinds = [], namespaces = [], filteredResources = [], isLoading, error, applyFilters } =
     useResourceFilters();
 
   const [selectedKind, setSelectedKind] = useState<string>('');
@@ -145,6 +145,9 @@ const ResourceFilterPage: React.FC = () => {
         };
     }
   };
+
+  // Filter out system namespaces (those starting with 'kube-')
+  const filteredNamespaces = namespaces.filter(ns => !ns.name.startsWith('kube-'));
 
   return (
     <Box
@@ -346,7 +349,7 @@ const ResourceFilterPage: React.FC = () => {
                     },
                   }}
                 >
-                  {namespaces.map(ns => (
+                  {filteredNamespaces.map(ns => (
                     <MenuItem
                       key={ns.name}
                       value={ns.name}
