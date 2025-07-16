@@ -42,24 +42,69 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [formSubmitted, setFormSubmitted] = React.useState(false);
 
-  // Set all permissions to 'write' when isAdmin is checked
   useEffect(() => {
     if (isAdmin) {
-      const updatedPermissions = { ...permissions };
-
-      permissionComponents.forEach(component => {
-        updatedPermissions[component.id] = 'write';
-      });
-
       // Update all permissions at once
       permissionComponents.forEach(component => {
         setPermissionChange(component.id, 'write');
       });
     }
-  }, [isAdmin, permissionComponents, setPermissionChange, permissions]);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormSubmitted(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (formError) {
+      setFormSubmitted(false);
+    }
+  }, [formError]);
+
+  const validateForm = () => {
+    if (!username.trim()) {
+      return { isValid: false, error: 'Username is required' };
+    }
+
+    if (showPasswordFields) {
+      // For Add User mode: password is required
+      if (!passwordOptional) {
+        if (!password) {
+          return { isValid: false, error: 'Password is required' };
+        }
+
+        if (password !== confirmPassword) {
+          return { isValid: false, error: 'Passwords do not match' };
+        }
+      }
+      // For Edit User mode: password is optional, but if provided, must match
+      else {
+        // If user provides password in edit mode, both fields must match
+        if (password || confirmPassword) {
+          if (password !== confirmPassword) {
+            return { isValid: false, error: 'Passwords do not match' };
+          }
+        }
+      }
+    }
+
+    return { isValid: true, error: null };
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validation = validateForm();
+
+    if (!validation.isValid) {
+      // Handle error (show message, set error state, etc.)
+      console.error('Validation failed:', validation.error);
+      return;
+    }
+
+    // Only execute if validation passes
     setFormSubmitted(true);
     onSubmit();
   };

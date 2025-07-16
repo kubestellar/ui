@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -44,8 +45,38 @@ type ClusterMetricsResponse struct {
 	Timestamp      string           `json:"timestamp"`
 }
 
+// Cache for cluster metrics
+var (
+	metricsCache     *ClusterMetricsResponse
+	metricsCacheLock sync.RWMutex
+	lastCacheUpdate  time.Time
+	cacheExpiration  = 30 * time.Second // Cache valid for 30 seconds
+)
+
 // GetClusterMetrics retrieves CPU and Memory usage metrics for all clusters
 func GetClusterMetrics(c *gin.Context) {
+	// Check if we have a valid cache
+	metricsCacheLock.RLock()
+	cacheValid := metricsCache != nil && time.Since(lastCacheUpdate) < cacheExpiration
+	metricsCacheLock.RUnlock()
+
+	if cacheValid {
+		log.LogDebug("Returning cached cluster metrics")
+		c.JSON(http.StatusOK, metricsCache)
+		return
+	}
+
+	// Cache is invalid or expired, fetch fresh metrics
+	metricsCacheLock.Lock()
+	defer metricsCacheLock.Unlock()
+
+	// Double-check if another request refreshed the cache while we were waiting
+	if metricsCache != nil && time.Since(lastCacheUpdate) < cacheExpiration {
+		log.LogDebug("Another request refreshed the cache, using it")
+		c.JSON(http.StatusOK, metricsCache)
+		return
+	}
+
 	// Load kubeconfig
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
@@ -84,40 +115,65 @@ func GetClusterMetrics(c *gin.Context) {
 	var totalCPUUsage, totalMemoryUsage float64
 	var activeClusters int
 
+	// Use a wait group to parallelize metrics collection
+	var wg sync.WaitGroup
+	metricsChan := make(chan ClusterMetrics, len(uniqueClusters))
+	semaphore := make(chan struct{}, 5) // Limit concurrency to 5 simultaneous requests
+
 	// Iterate through unique clusters only
 	for server, contextName := range uniqueClusters {
-		log.LogDebug("Getting metrics for context", zap.String("context", contextName), zap.String("server", server))
+		wg.Add(1)
+		go func(server, contextName string) {
+			defer wg.Done()
 
-		clientset, _, err := GetClientSetWithContext(contextName)
-		if err != nil {
-			log.LogWarn("Failed to get client for context", zap.String("context", contextName), zap.Error(err))
-			// Add error metric but continue with other clusters
-			allMetrics = append(allMetrics, ClusterMetrics{
-				ClusterName: contextName,
-				Error:       fmt.Sprintf("Failed to connect to cluster: %v", err),
-				Timestamp:   time.Now().Format(time.RFC3339),
-			})
-			continue
-		}
+			// Acquire semaphore
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
 
-		metrics, err := getClusterResourceMetrics(clientset, contextName)
-		if err != nil {
-			log.LogWarn("Failed to get metrics for context", zap.String("context", contextName), zap.Error(err))
-			allMetrics = append(allMetrics, ClusterMetrics{
-				ClusterName: contextName,
-				Error:       fmt.Sprintf("Failed to get metrics: %v", err),
-				Timestamp:   time.Now().Format(time.RFC3339),
-			})
-			continue
-		}
+			log.LogDebug("Getting metrics for context", zap.String("context", contextName), zap.String("server", server))
 
-		allMetrics = append(allMetrics, metrics)
+			clientset, _, err := GetClientSetWithContext(contextName)
+			if err != nil {
+				log.LogWarn("Failed to get client for context", zap.String("context", contextName), zap.Error(err))
+				// Add error metric but continue with other clusters
+				metricsChan <- ClusterMetrics{
+					ClusterName: contextName,
+					Error:       fmt.Sprintf("Failed to connect to cluster: %v", err),
+					Timestamp:   time.Now().Format(time.RFC3339),
+				}
+				return
+			}
+
+			metrics, err := getClusterResourceMetrics(clientset, contextName)
+			if err != nil {
+				log.LogWarn("Failed to get metrics for context", zap.String("context", contextName), zap.Error(err))
+				metricsChan <- ClusterMetrics{
+					ClusterName: contextName,
+					Error:       fmt.Sprintf("Failed to get metrics: %v", err),
+					Timestamp:   time.Now().Format(time.RFC3339),
+				}
+				return
+			}
+
+			metricsChan <- metrics
+		}(server, contextName)
+	}
+
+	// Wait for all goroutines to complete
+	go func() {
+		wg.Wait()
+		close(metricsChan)
+	}()
+
+	// Collect results
+	for metric := range metricsChan {
+		allMetrics = append(allMetrics, metric)
 
 		// Only count clusters without errors in overall calculations
-		if metrics.Error == "" {
+		if metric.Error == "" {
 			activeClusters++
-			totalCPUUsage += metrics.CPUUsage
-			totalMemoryUsage += metrics.MemoryUsage
+			totalCPUUsage += metric.CPUUsage
+			totalMemoryUsage += metric.MemoryUsage
 		}
 	}
 
@@ -137,6 +193,10 @@ func GetClusterMetrics(c *gin.Context) {
 		ActiveClusters: activeClusters,
 		Timestamp:      time.Now().Format(time.RFC3339),
 	}
+
+	// Update cache
+	metricsCache = &response
+	lastCacheUpdate = time.Now()
 
 	c.JSON(http.StatusOK, response)
 }

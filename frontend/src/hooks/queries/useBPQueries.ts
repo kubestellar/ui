@@ -173,7 +173,15 @@ export const useBPQueries = () => {
   const { t } = useTranslation();
 
   // GET /api/bp - Fetch all binding policies
-  const useBindingPolicies = () => {
+  interface QueryOptions {
+    staleTime?: number;
+    cacheTime?: number;
+    refetchInterval?: number;
+    retry?: number | boolean;
+    enabled?: boolean;
+  }
+
+  const useBindingPolicies = (options?: QueryOptions) => {
     const queryResult = useQuery<BindingPolicyInfo[], Error>({
       queryKey: ['binding-policies'],
       queryFn: async () => {
@@ -275,6 +283,11 @@ export const useBPQueries = () => {
           } as BindingPolicyInfo;
         });
       },
+      staleTime: options?.staleTime || 10000, // Default 10 seconds
+      gcTime: options?.cacheTime || 300000, // Default 5 minutes
+      refetchInterval: options?.refetchInterval,
+      retry: options?.retry !== undefined ? options?.retry : 1,
+      enabled: options?.enabled !== undefined ? options.enabled : true,
       // Default to empty array if there's an error
       placeholderData: [],
     });

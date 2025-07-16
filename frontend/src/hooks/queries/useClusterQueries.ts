@@ -129,7 +129,15 @@ export const useClusterQueries = () => {
   const { t } = useTranslation();
 
   // Fetch clusters with pagination
-  const useClusters = (page: number = 1) => {
+  interface QueryOptions {
+    staleTime?: number;
+    cacheTime?: number;
+    refetchInterval?: number;
+    retry?: number | boolean;
+    enabled?: boolean;
+  }
+
+  const useClusters = (page: number = 1, options?: QueryOptions) => {
     return useQuery({
       queryKey: ['clusters', page],
       queryFn: async (): Promise<ClusterResponse> => {
@@ -157,6 +165,11 @@ export const useClusterQueries = () => {
           itsData: response.data.itsData,
         };
       },
+      staleTime: options?.staleTime || 10000, // Default 10 seconds
+      gcTime: options?.cacheTime || 300000, // Default 5 minutes
+      refetchInterval: options?.refetchInterval,
+      retry: options?.retry !== undefined ? options?.retry : 1,
+      enabled: options?.enabled !== undefined ? options.enabled : true,
     });
   };
 

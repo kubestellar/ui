@@ -2209,5 +2209,34 @@
         "userDeleted": "Usuario eliminado exitosamente"
       }
     }
+  },
+  "notFoundPage": {
+    "logoAlt": "Logo de KubeStellar",
+    "mainTitle": "404 - Página no encontrada",
+    "description": "La página que busca puede haber sido eliminada, su nombre ha cambiado o no está disponible temporalmente.",
+    "returnHomeButton": "Volver al inicio",
+    "tryAgainButton": "Intentar de nuevo",
+    "quotes": [
+      {
+        "text": "En el vasto universo del código, a veces nos perdemos entre las estrellas.",
+        "author": "Desarrollador Anónimo"
+      },
+      {
+        "text": "El camino menos transitado a menudo no se encuentra por una razón.",
+        "author": "Explorador Web"
+      },
+      {
+        "text": "No todos los que deambulan están perdidos, pero esta página definitivamente lo está.",
+        "author": "J.R.R. Token"
+      },
+      {
+        "text": "El éxito no es definitivo, el 404 no es fatal: lo que cuenta es el valor para navegar.",
+        "author": "Winston Codehill"
+      },
+      {
+        "text": "La mejor manera de predecir el futuro es implementar un enrutamiento adecuado.",
+        "author": "Alan Turning"
+      }
+    ]
   }
 }

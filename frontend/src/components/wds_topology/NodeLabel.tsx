@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { FiMoreVertical } from 'react-icons/fi';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { ResourceItem } from '../TreeViewComponent';
+import { TreeResourceItem } from '../TreeViewComponent';
 import useTheme from '../../stores/themeStore';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import useZoomStore from '../../stores/zoomStore';
@@ -16,7 +16,7 @@ interface NodeLabelProps {
   timeAgo?: string;
   onClick: (e: React.MouseEvent) => void;
   onMenuClick: (e: React.MouseEvent) => void;
-  resourceData?: ResourceItem;
+  resourceData?: TreeResourceItem;
 }
 
 export const NodeLabel = memo<NodeLabelProps>(

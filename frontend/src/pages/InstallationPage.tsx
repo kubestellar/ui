@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   ExternalLink,
@@ -706,6 +706,9 @@ const InstallationPage = () => {
   );
 
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const lastToastLangRef = useRef<string | null>(null);
+  const toastIdRef = useRef<string | null>(null);
 
   // Initial status check
   useEffect(() => {
@@ -898,11 +901,19 @@ const InstallationPage = () => {
 
     // Only start the interval if we're not already checking
     if (!isChecking && !checkError) {
-      // Only show the message once when starting the interval
-      toast(t('installationPage.toasts.notInstalled'), {
-        icon: 'ℹ️',
-        duration: 5000,
-      });
+      // Only show the toast if the language has changed
+      if (lastToastLangRef.current !== i18n.language) {
+        // Dismiss previous toast if any
+        if (toastIdRef.current) {
+          toast.dismiss(toastIdRef.current);
+        }
+        // Show the toast in the current language
+        toastIdRef.current = toast(t('installationPage.toasts.notInstalled'), {
+          icon: 'ℹ️',
+          duration: 5000,
+        });
+        lastToastLangRef.current = i18n.language;
+      }
 
       // Start the interval
       intervalId = window.setInterval(checkStatus, 30000); // Check every 30 seconds
@@ -912,7 +923,7 @@ const InstallationPage = () => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [navigate, isChecking, checkError, t]);
+  }, [navigate, isChecking, checkError, t, i18n.language]);
 
   // Retry status check
   const retryStatusCheck = async () => {

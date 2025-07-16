@@ -86,7 +86,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 Clone the Repository
 
 ```bash
-git clone https://github.com/your-github-username/ui.git
+git clone https://github.com/kubestellar/ui.git
 
 cd ui
 ```

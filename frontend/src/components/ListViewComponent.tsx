@@ -5,6 +5,7 @@ import ListViewSkeleton from './skeleton/ListViewSkeleton';
 import { api } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';
+import ResourceFilters, { ResourceFilter } from './ResourceFilters';
 
 // Define the response interfaces
 export interface ResourceItem {
@@ -55,11 +56,13 @@ interface ListViewComponentProps {
     contextCounts: Record<string, number>;
     totalCount: number;
   }) => void;
+  initialResourceFilters?: ResourceFilter;
 }
 
 const ListViewComponent = ({
   filteredContext = 'all',
   onResourceDataChange,
+  initialResourceFilters = {},
 }: ListViewComponentProps) => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
@@ -76,6 +79,14 @@ const ListViewComponent = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(25);
   const [totalItems, setTotalItems] = useState<number>(0);
+
+  // Add resource filters state
+  const [resourceFilters, setResourceFilters] = useState<ResourceFilter>(initialResourceFilters);
+
+  // Initialize filters from props when they change
+  useEffect(() => {
+    setResourceFilters(initialResourceFilters);
+  }, [initialResourceFilters]);
 
   // Add useEffect to notify parent of resource data changes
   useEffect(() => {
@@ -97,26 +108,56 @@ const ListViewComponent = ({
     }
   }, [resources, filteredResources, onResourceDataChange]);
 
-  // Add effect to filter resources when filteredContext changes
+  // Add effect to filter resources when filteredContext or resourceFilters changes
   useEffect(() => {
-    if (filteredContext === 'all') {
-      setFilteredResources(resources);
-      setTotalItems(resources.length);
-    } else {
-      const filtered = resources.filter(resource => resource.context === filteredContext);
-      setFilteredResources(filtered);
-      setTotalItems(filtered.length);
+    let filtered = resources;
+
+    // First apply context filter
+    if (filteredContext !== 'all') {
+      filtered = filtered.filter(resource => resource.context === filteredContext);
     }
+
+    // Then apply resource filters
+    if (resourceFilters.kind) {
+      filtered = filtered.filter(resource => resource.kind === resourceFilters.kind);
+    }
+
+    if (resourceFilters.namespace) {
+      filtered = filtered.filter(resource => resource.namespace === resourceFilters.namespace);
+    }
+
+    if (resourceFilters.label) {
+      filtered = filtered.filter(
+        resource =>
+          resource.labels &&
+          resource.labels[resourceFilters.label!.key] === resourceFilters.label!.value
+      );
+    }
+
+    if (resourceFilters.searchQuery) {
+      const searchLower = resourceFilters.searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        resource =>
+          resource.name.toLowerCase().includes(searchLower) ||
+          resource.kind.toLowerCase().includes(searchLower) ||
+          resource.namespace.toLowerCase().includes(searchLower) ||
+          (resource.status && resource.status.toLowerCase().includes(searchLower))
+      );
+    }
+
+    setFilteredResources(filtered);
+    setTotalItems(filtered.length);
+
     // Log resources stats for debugging
     console.log(`[ListViewComponent] Resource counts: 
       - Total raw resources: ${totalRawResources}
       - Resources after processing: ${resources.length}
-      - Filtered resources (${filteredContext}): ${filteredContext === 'all' ? resources.length : resources.filter(r => r.context === filteredContext).length}
+      - Filtered resources (${filteredContext}): ${filtered.length}
     `);
 
     // Reset to first page when filter changes
     setCurrentPage(1);
-  }, [filteredContext, resources, totalRawResources]);
+  }, [filteredContext, resources, totalRawResources, resourceFilters]);
 
   // Function to format date strings properly
   const formatCreatedAt = (dateString: string): string => {
@@ -522,6 +563,11 @@ const ListViewComponent = ({
     window.location.reload();
   };
 
+  // Handle resource filter changes
+  const handleResourceFiltersChange = (filters: ResourceFilter) => {
+    setResourceFilters(filters);
+  };
+
   return (
     <Box
       sx={{
@@ -673,6 +719,15 @@ const ListViewComponent = ({
                 })}
               </Typography>
             </Box>
+          )}
+
+          {/* Add ResourceFilters component */}
+          {!isLoading && resources.length > 0 && (
+            <ResourceFilters
+              availableResources={resources}
+              activeFilters={resourceFilters}
+              onFiltersChange={handleResourceFiltersChange}
+            />
           )}
 
           <Box
@@ -1025,7 +1080,8 @@ const ListViewComponent = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            marginTop: '250px',
+            marginTop: '100px',
+            padding: 3,
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
@@ -1040,24 +1096,26 @@ const ListViewComponent = ({
                 color: theme === 'dark' ? '#94a3b8' : '#00000099',
                 fontSize: '17px',
                 mb: 2,
+                textAlign: 'center',
               }}
             >
-              {filteredContext !== 'all'
-                ? t('listView.noWorkloads.noResourcesForContext', { context: filteredContext })
-                : resources.length > 0
-                  ? t('listView.noWorkloads.resourcesFilteredOut')
-                  : t('listView.noWorkloads.getStarted')}
+              {Object.keys(resourceFilters).length > 0
+                ? t('listView.noWorkloads.noMatchingFilters')
+                : filteredContext !== 'all'
+                  ? t('listView.noWorkloads.noResourcesForContext', { context: filteredContext })
+                  : resources.length > 0
+                    ? t('listView.noWorkloads.resourcesFilteredOut')
+                    : t('listView.noWorkloads.getStarted')}
             </Typography>
             {resources.length > 0 && filteredResources.length === 0 && (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: theme === 'dark' ? '#90CAF9' : '#1976d2',
-                  fontSize: '0.85rem',
-                }}
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setResourceFilters({})}
+                sx={{ mt: 2 }}
               >
-                {t('listView.noWorkloads.resourcesAvailable', { count: resources.length })}
-              </Typography>
+                {t('resources.clearFilters')}
+              </Button>
             )}
           </Box>
         </Box>

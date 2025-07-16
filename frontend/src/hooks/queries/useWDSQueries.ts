@@ -111,15 +111,26 @@ export const useWDSQueries = () => {
   const { t } = useTranslation();
 
   // GET /api/wds/workloads
-  const useWorkloads = (): UseQueryResult<Workload[], Error> => {
+  interface QueryOptions {
+    staleTime?: number;
+    cacheTime?: number;
+    refetchInterval?: number;
+    retry?: number | boolean;
+    enabled?: boolean;
+  }
+
+  const useWorkloads = (options?: QueryOptions): UseQueryResult<Workload[], Error> => {
     const query = useQuery<Workload[], Error>({
       queryKey: ['workloads'],
       queryFn: async () => {
         const response = await api.get<Workload[]>('/api/wds/workloads');
         return response.data;
       },
-      staleTime: 5000,
-      gcTime: 300000,
+      staleTime: options?.staleTime || 5000, // Default 5 seconds
+      gcTime: options?.cacheTime || 300000, // Default 5 minutes
+      refetchInterval: options?.refetchInterval,
+      retry: options?.retry !== undefined ? options?.retry : 1,
+      enabled: options?.enabled !== undefined ? options.enabled : true,
     });
 
     if (query.error) {

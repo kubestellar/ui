@@ -1873,41 +1873,42 @@
     "loadingContent": "Loading content..."
   },
   "listView": {
-    "connecting": "Connecting to server...",
+    "connecting": "Connecting to the server...",
     "receivingWorkloads": "Receiving workloads...",
-    "receivedWorkloadsSoFar": "Received {{count}} workloads so far...",
+    "receivedWorkloadsSoFar": "Received {{count}} workloads so far",
     "allWorkloadsReceived": "All {{count}} workloads received",
-    "connectionLost": "Connection lost. Showing {{count}} received workloads.",
-    "connectionError": "Connection to server lost or failed. Trying fallback method...",
-    "fetchingFallback": "Fetching resources (fallback method)...",
+    "connectionLost": "Connection lost. Showing {{count}} workloads",
+    "connectionError": "Failed to connect to the server. Trying alternative method...",
+    "fetchingFallback": "Fetching workloads using alternative method...",
     "invalidResponseFormat": "Invalid response format from server",
-    "unknownError": "An unknown error occurred while fetching resources.",
-    "errorLoading": "Error Loading Resources",
-    "downloadLogs": "Download logs",
+    "unknownError": "An unknown error occurred while fetching workloads",
+    "errorLoading": "Error loading workloads",
     "namespace": "Namespace",
     "created": "Created",
-    "filteredByContext": "Filtered by context: {{context}}",
-    "showingResourceCount": "Showing {{showing}} of {{total}} total resources",
-    "resourceStats": "{{raw}} raw resources detected, {{processed}} processed",
+    "downloadLogs": "Download logs",
     "pagination": {
-      "prev": "Prev",
-      "next": "Next",
-      "showing": "Showing {{from}} to {{to}} of {{total}} entries",
-      "filtered": " (filtered by {{context}} context)"
+      "showing": "Showing {{from}}-{{to}} of {{total}}",
+      "filtered": " in {{context}} context",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "resourceStats": "{{raw}} raw resources processed into {{processed}} workloads",
+    "filteredByContext": "Filtered by context: {{context}}",
+    "showingResourceCount": "Showing {{showing}} of {{total}} resources",
+    "noWorkloads": {
+      "title": "No workloads found",
+      "noResourcesForContext": "No resources found for context: {{context}}",
+      "resourcesFilteredOut": "All resources have been filtered out",
+      "getStarted": "Create your first workload to get started",
+      "resourcesAvailable": "{{count}} resources available in other contexts",
+      "noMatchingFilters": "No resources match the current filters"
     },
     "troubleshooting": {
-      "title": "Try these troubleshooting steps:",
-      "step1": "1. Check that the backend server is running at http://localhost:4000",
-      "step2": "2. Verify the server's CORS configuration allows requests from http://localhost:5173",
-      "step3": "3. If the server uses wildcard (*) CORS, it can't accept requests with credentials",
-      "step4": "4. Check the browser console for detailed error messages"
-    },
-    "noWorkloads": {
-      "title": "No Workloads Found",
-      "noResourcesForContext": "No resources found for the {{context}} context",
-      "resourcesFilteredOut": "Resources are available but filtered out",
-      "getStarted": "Get started by creating your first workload",
-      "resourcesAvailable": "{{count}} total resources available, but none match the current filter"
+      "title": "Troubleshooting steps:",
+      "step1": "1. Check your network connection",
+      "step2": "2. Ensure the backend server is running",
+      "step3": "3. Verify your authentication credentials",
+      "step4": "4. Try refreshing the page"
     }
   },
   "kubeconfigImport": {
@@ -2081,6 +2082,10 @@
         "title": "Logout",
         "description": "Sign out of your account",
         "infoMessage": "You have been logged out successfully."
+      },
+      "metricsDashboard": {
+        "title": "Metrics Dashboard",
+        "description": "Monitor system performance and metrics"
       }
     },
     "sections": {
@@ -2104,6 +2109,7 @@
       "stagedWorkloads": "Staged Workloads",
       "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Deployed Workloads",
+      "resourceExplorer": "Resource Explorer",
       "pluginManager": "Plugin Manager",
       "userManagement": "User Management",
       "metricsDashboard": "Metrics Dashboard"
@@ -2224,5 +2230,58 @@
         "placeholder": "Any suggestions for Improvements ?"
       }
     }
+  },
+  "notFoundPage": {
+    "logoAlt": "KubeStellar Logo",
+    "mainTitle": "404 - Page Not Found",
+    "description": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "returnHomeButton": "Return to Home",
+    "tryAgainButton": "Try Again",
+    "quotes": [
+      {
+        "text": "In the vast universe of code, sometimes we get lost among the stars.",
+        "author": "Anonymous Developer"
+      },
+      {
+        "text": "The path less traveled is often not found for a reason.",
+        "author": "Web Explorer"
+      },
+      {
+        "text": "Not all who wander are lost, but this page definitely is.",
+        "author": "J.R.R. Token"
+      },
+      {
+        "text": "Success is not final, 404 is not fatal: it's the courage to navigate that counts.",
+        "author": "Winston Codehill"
+      },
+      {
+        "text": "The best way to predict the future is to implement proper routing.",
+        "author": "Alan Turning"
+      }
+    ]
+  },
+  "resources": {
+    "search": "Search resources...",
+    "kind": "Kind",
+    "namespace": "Namespace",
+    "status": "Status",
+    "labels": "Labels",
+    "filterByKind": "Filter by resource kind",
+    "filterByNamespace": "Filter by namespace",
+    "filterByStatus": "Filter by status",
+    "filterByLabel": "Filter by label",
+    "clearFilters": "Clear Filters",
+    "noLabelsFound": "No labels found",
+    "noMatchingFilters": "No resources match the current filters",
+    "title": "Resource Explorer",
+    "selectKind": "Select Resource Kind",
+    "selectNamespace": "Select Namespace",
+    "applyFilters": "Apply Filters",
+    "results": "Results",
+    "created": "Created",
+    "noResourcesFound": "No resources found matching the criteria",
+    "selectResourceAndNamespace": "Select a resource kind and namespace to begin",
+    "refresh": "Refresh",
+    "toggleFilters": "Toggle filters"
   }
 }
