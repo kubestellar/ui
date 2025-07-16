@@ -1,15 +1,31 @@
-name: "cluster-monitor"
-version: "1.0.0"
-author: "developer@company.com"
-description: "Simple cluster monitoring dashboard"
-backend: true
-routes:
-  - path: "/status"
-    method: "GET"
-    handler: "handle_status"
-  - path: "/data"
-    method: "GET"
-    handler: "handle_data"
-permissions:
-  - "kubestellar:read:clusters"
-  - "kubestellar:read:workloads" 
+apiVersion: cluster-monitor/v1
+kind: Plugin
+metadata:
+  name: "cluster-monitor"
+  version: "1.0.0"
+  author: "developer@company.com"
+  description: "Simple cluster monitoring dashboard"
+spec:
+  # Plugin binary information
+  wasm:
+    file: "cluster-monitor.wasm"
+    entrypoint: "main"
+    memory_limit: "64MB"
+  # Go-specific build information
+  build:
+    go_version: "1.21"
+    tinygo_version: "0.30.0"
+  # Backend integration
+  backend:
+    enabled: true
+    routes:
+      - path: "/status"
+        methods: ["GET"]
+        handler: "handle_status"
+      - path: "/data"
+        methods: ["GET"]
+        handler: "handle_data"
+  # Basic permissions
+  permissions:
+    - "kubestellar:read:clusters"
+    - "kubestellar:read:workloads"

@@ -105,12 +105,17 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 
 	// Check if WASM file exists
-	wasmPath := filepath.Join(dirPath, manifest.Name+".wasm")
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(dirPath, wasmFileName)
 	wasmInfo, err := os.Stat(wasmPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginInfo{
-				Name:         manifest.Name,
+				Name:         manifest.Metadata.Name,
 				Path:         dirPath,
 				ManifestPath: manifestPath,
 				WasmPath:     wasmPath,
@@ -125,15 +130,15 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 
 	// Determine status based on whether plugin is loaded
 	status := "discovered"
-	if _, loaded := pr.manager.GetPlugin(manifest.Name); loaded {
+	if _, loaded := pr.manager.GetPlugin(manifest.Metadata.Name); loaded {
 		status = "loaded"
 	}
 
 	return &PluginInfo{
-		Name:         manifest.Name,
-		Version:      manifest.Version,
-		Author:       manifest.Author,
-		Description:  manifest.Description,
+		Name:         manifest.Metadata.Name,
+		Version:      manifest.Metadata.Version,
+		Author:       manifest.Metadata.Author,
+		Description:  manifest.Metadata.Description,
 		Path:         dirPath,
 		ManifestPath: manifestPath,
 		WasmPath:     wasmPath,
