@@ -268,7 +268,7 @@ const ResourceFilterPage: React.FC = () => {
                       component: Paper,
                       elevation: 6,
                       sx: {
-                        backgroundColor: isDark ? darkTheme.element.card : lightTheme.element.card,
+                        backgroundColor: isDark ? '#1f2937' : '#fff', // Fully opaque
                         color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                         boxShadow: isDark
                           ? '0px 5px 15px rgba(0, 0, 0, 0.4)'
@@ -278,6 +278,7 @@ const ResourceFilterPage: React.FC = () => {
                         border: isDark
                           ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid rgba(0, 0, 0, 0.05)',
+                        opacity: 1,
                       },
                     },
                   }}
@@ -342,7 +343,7 @@ const ResourceFilterPage: React.FC = () => {
                       component: Paper,
                       elevation: 6,
                       sx: {
-                        backgroundColor: isDark ? darkTheme.element.card : lightTheme.element.card,
+                        backgroundColor: isDark ? '#1f2937' : '#fff', // Fully opaque
                         color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                         boxShadow: isDark
                           ? '0px 5px 15px rgba(0, 0, 0, 0.4)'
@@ -352,6 +353,7 @@ const ResourceFilterPage: React.FC = () => {
                         border: isDark
                           ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid rgba(0, 0, 0, 0.05)',
+                        opacity: 1,
                       },
                     },
                   }}
