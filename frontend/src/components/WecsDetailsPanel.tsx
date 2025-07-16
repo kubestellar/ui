@@ -31,7 +31,7 @@ import jsyaml from 'js-yaml';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
-import { ResourceItem } from './TreeViewComponent';
+import { TreeResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../lib/api';
@@ -43,7 +43,7 @@ interface WecsDetailsProps {
   namespace: string;
   name: string;
   type: string;
-  resourceData?: ResourceItem;
+  resourceData?: TreeResourceItem;
   onClose: () => void;
   isOpen: boolean;
   onSync?: () => void;
