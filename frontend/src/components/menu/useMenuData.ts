@@ -3,6 +3,7 @@ import {
   HiOutlineCommandLine,
   HiOutlinePuzzlePiece,
   HiOutlineUsers,
+  HiOutlineViewfinderCircle,
 } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
 import { BarChart3 } from 'lucide-react';
@@ -56,6 +57,12 @@ export const useMenuData = (): MenuItemData[] => {
           url: '/wecs/treeview',
           icon: MdAssuredWorkload,
           label: t('menu.items.deployedWorkloads'),
+        },
+        {
+          isLink: true,
+          url: '/resources',
+          icon: HiOutlineViewfinderCircle,
+          label: t('menu.items.resourceExplorer'),
         },
         {
           isLink: true,

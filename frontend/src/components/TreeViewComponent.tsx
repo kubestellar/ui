@@ -12,6 +12,7 @@ import TreeViewDeleteDialog from './treeView/TreeViewDeleteDialog';
 import { useTreeViewData } from './treeView/hooks/useTreeViewData';
 import { useTreeViewActions } from './treeView/hooks/useTreeViewActions';
 import { ResourceItem, CustomNode, CustomEdge } from './treeView/types';
+import { ResourceFilter } from './ResourceFilters';
 
 // Re-export types for other components to import
 export type { ResourceItem, CustomNode, CustomEdge } from './treeView/types';
@@ -37,6 +38,8 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [filteredContext, setFilteredContext] = useState<string>('all');
+  const [allResources] = useState<ResourceItem[]>([]);
+  const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +145,10 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     setIsExpanded(false);
   }, []);
 
+  const handleResourceFiltersChange = useCallback((filters: ResourceFilter) => {
+    setResourceFilters(filters);
+  }, []);
+
   // Update node styles when theme or highlighting changes
   useEffect(() => {
     if (nodes.length > 0) {
@@ -191,7 +198,11 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
           />
         )}
 
-        <TreeViewFilters filteredContext={filteredContext} />
+        <TreeViewFilters
+          filteredContext={filteredContext}
+          resources={allResources}
+          onResourceFiltersChange={handleResourceFiltersChange}
+        />
 
         <Box sx={{ width: '100%', height: 'calc(100% - 80px)', position: 'relative' }}>
           <TreeViewCanvas
@@ -208,6 +219,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             onCollapseAll={handleCollapseAll}
             isCollapsed={isCollapsed}
             containerRef={containerRef}
+            resourceFilters={resourceFilters}
           />
 
           <TreeViewContextMenu

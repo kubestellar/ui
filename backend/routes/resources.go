@@ -13,7 +13,6 @@ func setupResourceRoutes(router *gin.Engine) {
 	// TODO: add logic to check - is this is core API ? or not and based on this make request on it
 	api := router.Group("/api")
 	{
-
 		api.GET("/wds/context", func(ctx *gin.Context) {
 			wds.CreateWDSContextUsingCommand(ctx.Writer, ctx.Request, ctx)
 		})
@@ -26,5 +25,9 @@ func setupResourceRoutes(router *gin.Engine) {
 		api.GET("/:resourceKind/:namespace/:name", k8s.GetResource)       // Get a resource
 		api.PUT("/:resourceKind/:namespace/:name", k8s.UpdateResource)    // Update a resource
 		api.DELETE("/:resourceKind/:namespace/:name", k8s.DeleteResource) // Delete a resource
+		
+		// Add new endpoints for resource filtering
+		api.GET("/resources/kinds", k8s.GetResourceKinds)                 // Get all available resource kinds
+		api.GET("/resources/namespaces", k8s.GetNamespaces)                // Get all available namespaces
 	}
 }
