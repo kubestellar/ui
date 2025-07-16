@@ -25,9 +25,9 @@ func setupResourceRoutes(router *gin.Engine) {
 		api.GET("/:resourceKind/:namespace/:name", k8s.GetResource)       // Get a resource
 		api.PUT("/:resourceKind/:namespace/:name", k8s.UpdateResource)    // Update a resource
 		api.DELETE("/:resourceKind/:namespace/:name", k8s.DeleteResource) // Delete a resource
-		
+
 		// Add new endpoints for resource filtering
-		api.GET("/resources/kinds", k8s.GetResourceKinds)                 // Get all available resource kinds
-		api.GET("/resources/namespaces", k8s.GetNamespaces)                // Get all available namespaces
+		api.GET("/resources/kinds", k8s.GetResourceKinds)   // Get all available resource kinds
+		api.GET("/resources/namespaces", k8s.GetNamespaces) // Get all available namespaces
 	}
 }

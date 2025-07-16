@@ -62,7 +62,7 @@ const ResourceFilterPage: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Convert filteredResources to ResourceItem[] type with correct status type
-  const resources: ResourceItem[] = (filteredResources as Resource[]).map(resource => ({
+  const resources: ResourceItem[] = (filteredResources as unknown as Resource[]).map(resource => ({
     kind: resource.kind,
     name: resource.metadata?.name || '',
     namespace: resource.metadata?.namespace || '',
@@ -75,7 +75,7 @@ const ResourceFilterPage: React.FC = () => {
             ? 'Missing'
             : 'Synced'
       : undefined) as ResourceItem['status'],
-    createdAt: resource.metadata?.creationTimestamp || '',
+    createdAt: resource.metadata?.creationTimestamp?.toString() || '',
     labels: resource.labels || {},
     metadata: resource.metadata || {},
   }));
@@ -475,7 +475,7 @@ const ResourceFilterPage: React.FC = () => {
           ) : filteredResources.length > 0 ? (
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
               <Grid container spacing={2}>
-                {(filteredResources as Resource[]).map((resource, index) => {
+                {(filteredResources as unknown as Resource[]).map((resource, index) => {
                   const resourceStatus =
                     typeof resource.status === 'string'
                       ? resource.status === 'Running' || resource.status === 'Active'

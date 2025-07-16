@@ -352,12 +352,12 @@ func ListResources(c *gin.Context) {
 			if kindFilter != "" && item.GetKind() != kindFilter {
 				continue
 			}
-			
+
 			// Apply namespace filter if specified
 			if namespaceFilter != "" && item.GetNamespace() != namespaceFilter {
 				continue
 			}
-			
+
 			filteredItems = append(filteredItems, item)
 		}
 		result.Items = filteredItems
@@ -1214,7 +1214,7 @@ func GetResourceKinds(c *gin.Context) {
 
 	// Extract and organize resource kinds
 	resourceKinds := make([]map[string]interface{}, 0)
-	
+
 	for _, apiResourceList := range apiResourceLists {
 		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
 		if err != nil {
@@ -1226,20 +1226,20 @@ func GetResourceKinds(c *gin.Context) {
 			if strings.Contains(apiResource.Name, "/") {
 				continue
 			}
-			
+
 			// Skip if we can't list this resource
 			if !containsVerb(apiResource.Verbs, "list") {
 				continue
 			}
-			
+
 			resourceKind := map[string]interface{}{
-				"kind":      apiResource.Kind,
-				"name":      apiResource.Name,
-				"group":     gv.Group,
-				"version":   gv.Version,
+				"kind":       apiResource.Kind,
+				"name":       apiResource.Name,
+				"group":      gv.Group,
+				"version":    gv.Version,
 				"namespaced": apiResource.Namespaced,
 			}
-			
+
 			resourceKinds = append(resourceKinds, resourceKind)
 		}
 	}

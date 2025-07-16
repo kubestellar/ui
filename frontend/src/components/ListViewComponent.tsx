@@ -126,10 +126,6 @@ const ListViewComponent = ({
       filtered = filtered.filter(resource => resource.namespace === resourceFilters.namespace);
     }
 
-    if (resourceFilters.status) {
-      filtered = filtered.filter(resource => resource.status === resourceFilters.status);
-    }
-
     if (resourceFilters.label) {
       filtered = filtered.filter(
         resource =>
