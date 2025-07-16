@@ -134,12 +134,12 @@ func ListPluginsHandler(c *gin.Context) {
 		for _, p := range loadedPlugins {
 			if p.Manifest != nil {
 				pluginsList = append(pluginsList, PluginDetails{
-					ID:          p.Manifest.Name,
-					Name:        p.Manifest.Name,
-					Version:     p.Manifest.Version,
+					ID:          p.Manifest.Metadata.Name,
+					Name:        p.Manifest.Metadata.Name,
+					Version:     p.Manifest.Metadata.Version,
 					Enabled:     p.Status == "running",
-					Description: p.Manifest.Description,
-					Author:      p.Manifest.Author,
+					Description: p.Manifest.Metadata.Description,
+					Author:      p.Manifest.Metadata.Author,
 					CreatedAt:   p.LoadTime,
 					UpdatedAt:   p.LoadTime,
 					Routes:      extractPluginRoutesFromManifest(p.Manifest),
@@ -318,24 +318,29 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// Check if plugin already exists
-	if findPluginByID(manifest.Name) != nil {
+	if findPluginByID(manifest.Metadata.Name) != nil {
 		c.JSON(http.StatusConflict, gin.H{
-			"error": "Plugin already installed: " + manifest.Name,
+			"error": "Plugin already installed: " + manifest.Metadata.Name,
 		})
 		return
 	}
 
 	// Find WASM file
-	wasmPath := filepath.Join(extractDir, manifest.Name+".wasm")
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(extractDir, wasmFileName)
 	if _, err := os.Stat(wasmPath); os.IsNotExist(err) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "WASM file not found: " + manifest.Name + ".wasm",
+			"error": "WASM file not found: " + wasmFileName,
 		})
 		return
 	}
 
 	// Create plugin directory in plugins folder
-	pluginDir := filepath.Join("./plugins", manifest.Name)
+	pluginDir := filepath.Join("./plugins", manifest.Metadata.Name)
 	if err := os.MkdirAll(pluginDir, 0755); err != nil {
 		log.LogError("Failed to create plugin directory", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -353,7 +358,7 @@ func InstallPluginHandler(c *gin.Context) {
 		return
 	}
 
-	if err := copyFile(wasmPath, filepath.Join(pluginDir, manifest.Name+".wasm")); err != nil {
+	if err := copyFile(wasmPath, filepath.Join(pluginDir, wasmFileName)); err != nil {
 		log.LogError("Failed to copy WASM file", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to copy WASM file",
@@ -377,16 +382,16 @@ func InstallPluginHandler(c *gin.Context) {
 
 	if pluginManager != nil && pluginRegistry != nil {
 		// Load the plugin
-		if err := pluginRegistry.LoadPlugin(manifest.Name); err != nil {
+		if err := pluginRegistry.LoadPlugin(manifest.Metadata.Name); err != nil {
 			log.LogError("Failed to load plugin after installation",
-				zap.String("name", manifest.Name),
+				zap.String("name", manifest.Metadata.Name),
 				zap.Error(err))
 
 			// Return success for installation but warn about loading failure
 			c.JSON(http.StatusOK, gin.H{
 				"message": "Plugin installed successfully but failed to load",
-				"name":    manifest.Name,
-				"version": manifest.Version,
+				"name":    manifest.Metadata.Name,
+				"version": manifest.Metadata.Version,
 				"status":  "installed",
 				"path":    pluginDir,
 				"warning": "Plugin loaded with errors: " + err.Error(),
@@ -395,18 +400,18 @@ func InstallPluginHandler(c *gin.Context) {
 		}
 
 		log.LogInfo("Plugin installed and loaded successfully",
-			zap.String("name", manifest.Name),
-			zap.String("version", manifest.Version),
+			zap.String("name", manifest.Metadata.Name),
+			zap.String("version", manifest.Metadata.Version),
 			zap.String("path", pluginDir))
 	} else {
 		log.LogWarn("Plugin manager not available for dynamic loading",
-			zap.String("name", manifest.Name))
+			zap.String("name", manifest.Metadata.Name))
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin installed and loaded successfully",
-		"name":    manifest.Name,
-		"version": manifest.Version,
+		"name":    manifest.Metadata.Name,
+		"version": manifest.Metadata.Version,
 		"status":  "loaded",
 		"path":    pluginDir,
 	})
@@ -443,9 +448,9 @@ func UninstallPluginHandler(c *gin.Context) {
 			if plugin.Manifest != nil {
 				log.LogInfo("Plugin manifest details",
 					zap.String("id", pluginID),
-					zap.String("version", plugin.Manifest.Version),
-					zap.String("author", plugin.Manifest.Author),
-					zap.String("description", plugin.Manifest.Description))
+					zap.String("version", plugin.Manifest.Metadata.Version),
+					zap.String("author", plugin.Manifest.Metadata.Author),
+					zap.String("description", plugin.Manifest.Metadata.Description))
 			}
 
 			// Get registered routes before unloading
@@ -905,8 +910,12 @@ func extractPluginRoutes(p plugin.Plugin) []string {
 func extractPluginRoutesFromManifest(manifest *pkg.PluginManifest) []string {
 	routes := []string{}
 
-	for _, route := range manifest.Routes {
-		routes = append(routes, route.Method+" "+route.Path)
+	if manifest.Spec.Backend != nil {
+		for _, route := range manifest.Spec.Backend.Routes {
+			for _, method := range route.Methods {
+				routes = append(routes, method+" "+route.Path)
+			}
+		}
 	}
 
 	return routes
