@@ -20,13 +20,13 @@ const NotFoundPage: React.FC = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentQuote(prev => (prev + 1) % quotesArray.length);
+      setCurrentQuote(prev => (prev + 1) % quotes.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [quotesArray.length]);
+  }, [quotes.length]);
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-base-200">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-base-200">
       <style>
         {`
         layer base {
@@ -278,7 +278,7 @@ const NotFoundPage: React.FC = () => {
 
         {/* Quote Section */}
         <div className="relative h-24">
-          {quotesArray.map((quote, index) => (
+          {quotes.map((quote, index) => (
             <div
               key={index}
               className={`absolute w-full transition-all duration-500 ${
