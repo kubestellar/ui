@@ -71,7 +71,9 @@ api.interceptors.response.use(
     }
 
     if (!error.response) {
-      console.error('Axios Interceptor: Network error (no response). Setting global network error.');
+      console.error(
+        'Axios Interceptor: Network error (no response). Setting global network error.'
+      );
       setGlobalNetworkError(true);
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
