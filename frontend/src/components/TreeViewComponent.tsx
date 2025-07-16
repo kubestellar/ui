@@ -11,10 +11,12 @@ import TreeViewContextMenu from './treeView/TreeViewContextMenu';
 import TreeViewDeleteDialog from './treeView/TreeViewDeleteDialog';
 import { useTreeViewData } from './treeView/hooks/useTreeViewData';
 import { useTreeViewActions } from './treeView/hooks/useTreeViewActions';
-import { ResourceItem, CustomNode, CustomEdge } from './treeView/types';
+import { ResourceItem as TreeResourceItem, CustomNode, CustomEdge } from './treeView/types';
+import { ResourceFilter } from './ResourceFilters';
+import { ResourceItem as ListResourceItem } from './ListViewComponent';
 
 // Re-export types for other components to import
-export type { ResourceItem, CustomNode, CustomEdge } from './treeView/types';
+export type { ResourceItem as TreeResourceItem, CustomNode, CustomEdge } from './treeView/types';
 
 interface TreeViewComponentProps {
   onViewModeChange?: (viewMode: 'tiles' | 'list') => void;
@@ -30,13 +32,15 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     namespace: string;
     name: string;
     type: string;
-    resourceData?: ResourceItem;
+    resourceData?: TreeResourceItem;
     isGroup?: boolean;
-    groupItems?: ResourceItem[];
+    groupItems?: TreeResourceItem[];
   } | null>(null);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [filteredContext, setFilteredContext] = useState<string>('all');
+  const [allResources] = useState<ListResourceItem[]>([]);
+  const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,9 +50,9 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
       namespace: string;
       name: string;
       type: string;
-      resourceData?: ResourceItem;
+      resourceData?: TreeResourceItem;
       isGroup?: boolean;
-      groupItems?: ResourceItem[];
+      groupItems?: TreeResourceItem[];
     }) => {
       setSelectedNode(nodeData);
     },
@@ -142,6 +146,10 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     setIsExpanded(false);
   }, []);
 
+  const handleResourceFiltersChange = useCallback((filters: ResourceFilter) => {
+    setResourceFilters(filters);
+  }, []);
+
   // Update node styles when theme or highlighting changes
   useEffect(() => {
     if (nodes.length > 0) {
@@ -191,7 +199,11 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
           />
         )}
 
-        <TreeViewFilters filteredContext={filteredContext} />
+        <TreeViewFilters
+          filteredContext={filteredContext}
+          resources={allResources}
+          onResourceFiltersChange={handleResourceFiltersChange}
+        />
 
         <Box sx={{ width: '100%', height: 'calc(100% - 80px)', position: 'relative' }}>
           <TreeViewCanvas
@@ -208,6 +220,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             onCollapseAll={handleCollapseAll}
             isCollapsed={isCollapsed}
             containerRef={containerRef}
+            resourceFilters={resourceFilters}
           />
 
           <TreeViewContextMenu
