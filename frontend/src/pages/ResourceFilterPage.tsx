@@ -152,8 +152,9 @@ const ResourceFilterPage: React.FC = () => {
     }
   };
 
-  // Filter out system namespaces (those starting with 'kube-')
-  const filteredNamespaces = namespaces.filter(ns => !ns.name.startsWith('kube-'));
+  const filteredNamespaces = namespaces.filter(
+    ns => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
+  );
 
   return (
     <Box
