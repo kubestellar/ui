@@ -2228,5 +2228,34 @@
         "placeholder": "Any suggestions for Improvements ?"
       }
     }
+  },
+  "notFoundPage": {
+    "logoAlt": "KubeStellar Logo",
+    "mainTitle": "404 - Page Not Found",
+    "description": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "returnHomeButton": "Return to Home",
+    "tryAgainButton": "Try Again",
+    "quotes": [
+      {
+        "text": "In the vast universe of code, sometimes we get lost among the stars.",
+        "author": "Anonymous Developer"
+      },
+      {
+        "text": "The path less traveled is often not found for a reason.",
+        "author": "Web Explorer"
+      },
+      {
+        "text": "Not all who wander are lost, but this page definitely is.",
+        "author": "J.R.R. Token"
+      },
+      {
+        "text": "Success is not final, 404 is not fatal: it's the courage to navigate that counts.",
+        "author": "Winston Codehill"
+      },
+      {
+        "text": "The best way to predict the future is to implement proper routing.",
+        "author": "Alan Turning"
+      }
+    ]
   }
 }
