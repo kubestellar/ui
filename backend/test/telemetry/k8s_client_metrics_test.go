@@ -116,7 +116,7 @@ func TestK8sClientErrorCounter(t *testing.T) {
 	assert.True(t, found, "k8s_client_error_requests_total metric should be present")
 }
 
-func TestMetricLabels(t *testing.T) {
+func TestMetricLabelStructure(t *testing.T) {
 	// Test that all metrics accept the same label structure
 	labels := []string{"GET", "pods", "200"}
 
