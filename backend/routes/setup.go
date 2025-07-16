@@ -38,7 +38,7 @@ func SetupRoutes(router *gin.Engine) {
 	getWecsResources(router)
 	setupInstallerRoutes(router)
 	setupWdsCookiesRoute(router)
-	setupGitopsRoutes(router) 
+	setupGitopsRoutes(router)
 	setupHelmRoutes(router)
 	setupGitHubRoutes(router)
 	setupDeploymentHistoryRoutes(router)
