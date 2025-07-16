@@ -270,7 +270,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                     className="mt-1 flex items-center gap-1 text-xs text-red-500"
                   >
                     <FiAlertCircle size={12} />
-                    {usernameError}
+                    {t('admin.users.errors.invalidUsername')}
                   </motion.p>
                 )}
                 {username && !usernameError && (

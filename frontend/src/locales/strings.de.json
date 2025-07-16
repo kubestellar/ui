@@ -145,7 +145,8 @@
         "passwordMismatch": "Passwörter stimmen nicht überein",
         "addFailed": "Benutzer konnte nicht hinzugefügt werden",
         "updateFailed": "Benutzer konnte nicht aktualisiert werden",
-        "deleteFailed": "Benutzer konnte nicht gelöscht werden"
+        "deleteFailed": "Benutzer konnte nicht gelöscht werden",
+        "invalidUsername": "Der Benutzername darf nur Buchstaben, Zahlen, Unterstriche und Bindestriche enthalten"
       },
       "success": {
         "userAdded": "Benutzer erfolgreich hinzugefügt",

@@ -63,7 +63,8 @@
         "passwordMismatch": "As senhas não coincidem",
         "addFailed": "Falha ao adicionar usuário",
         "updateFailed": "Falha ao atualizar usuário",
-        "deleteFailed": "Falha ao excluir usuário"
+        "deleteFailed": "Falha ao excluir usuário",
+        "invalidUsername": "O nome de usuário pode conter apenas letras, números, underscore e hífen"
       },
       "success": {
         "userAdded": "Usuário adicionado com sucesso",

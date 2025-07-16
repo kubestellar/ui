@@ -145,7 +145,8 @@
         "passwordMismatch": "密码不匹配",
         "addFailed": "添加用户失败",
         "updateFailed": "更新用户失败",
-        "deleteFailed": "删除用户失败"
+        "deleteFailed": "删除用户失败",
+        "invalidUsername": "用户名只能包含字母、数字、下划线和连字符"
       },
       "success": {
         "userAdded": "用户添加成功",
