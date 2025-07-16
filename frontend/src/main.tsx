@@ -9,20 +9,26 @@ import { WebSocketProvider } from './context/WebSocketProvider.tsx';
 import { PluginProvider } from './plugins/PluginLoader.tsx';
 import './i18n.ts';
 import NetworkErrorToastManager from './components/NetworkErrorToastManager';
+import useBackendHealthCheck from './hooks/useBackendHealthCheck';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryProvider>
-      <WebSocketProvider>
-        <PluginProvider>
-          <ClientThemeWrapper>
-            <ToastProvider>
-              <NetworkErrorToastManager />
-              <App />
-            </ToastProvider>
-          </ClientThemeWrapper>
-        </PluginProvider>
-      </WebSocketProvider>
-    </QueryProvider>
-  </StrictMode>
-);
+const AppWrapper = () => {
+  useBackendHealthCheck();
+  return (
+    <StrictMode>
+      <QueryProvider>
+        <WebSocketProvider>
+          <PluginProvider>
+            <ClientThemeWrapper>
+              <ToastProvider>
+                <NetworkErrorToastManager />
+                <App />
+              </ToastProvider>
+            </ClientThemeWrapper>
+          </PluginProvider>
+        </WebSocketProvider>
+      </QueryProvider>
+    </StrictMode>
+  );
+};
+
+createRoot(document.getElementById('root')!).render(<AppWrapper />);

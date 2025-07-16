@@ -36,9 +36,14 @@ api.interceptors.request.use(
 
 // Add response interceptors with proper error typing
 api.interceptors.response.use(
-  response => response,
+  response => {
+    console.log('Axios Interceptor: Successful response. Clearing network error.');
+    setGlobalNetworkError(false);
+    return response;
+  },
   async (error: unknown) => {
     if (!axios.isAxiosError(error)) {
+      console.error('Axios Interceptor: An unknown error occurred.', error);
       toast.error('An unknown error occurred.');
       return Promise.reject(error);
     }
@@ -49,6 +54,7 @@ api.interceptors.response.use(
     const isAuthCheck = error.config?.url?.includes('/api/me');
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck) {
+      console.warn('Axios Interceptor: 401 Unauthorized. Attempting token refresh.');
       originalRequest._retry = true;
       const newToken = await refreshAccessToken(api);
       if (newToken) {
@@ -56,6 +62,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } else {
+        console.error('Axios Interceptor: Token refresh failed. Redirecting to login.');
         clearTokens();
         toast.error('Session expired. Please log in again.');
         window.location.href = '/login';
@@ -64,8 +71,10 @@ api.interceptors.response.use(
     }
 
     if (!error.response) {
+      console.error('Axios Interceptor: Network error (no response). Setting global network error.');
       setGlobalNetworkError(true);
     } else {
+      console.error('Axios Interceptor: API error response.', error.response);
       // For other errors, show toast but use a consistent ID to prevent duplicates
       const toastId = `api-error-${error.response?.status || 'unknown'}`;
       toast.error(errorMessage, { id: toastId });
