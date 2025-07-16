@@ -52,8 +52,14 @@ const ResourceFilterPage: React.FC = () => {
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
 
-  const { resourceKinds = [], namespaces = [], filteredResources = [], isLoading, error, applyFilters } =
-    useResourceFilters();
+  const {
+    resourceKinds = [],
+    namespaces = [],
+    filteredResources = [],
+    isLoading,
+    error,
+    applyFilters,
+  } = useResourceFilters();
 
   const [selectedKind, setSelectedKind] = useState<string>('');
   const [selectedNamespace, setSelectedNamespace] = useState<string>('');
