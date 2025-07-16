@@ -2057,6 +2057,10 @@
         "title": "वर्कलोड्स",
         "description": "क्लस्टर्स में वर्कलोड्स प्रबंधित करें"
       },
+      "resourceExplorer": {
+        "title": "रिसोर्स एक्सप्लोरर",
+        "description": "Kubernetes रिसोर्सेज खोजें और फ़िल्टर करें"
+      },
       "bindingPolicies": {
         "title": "Binding Policies",
         "description": "Binding policies प्रबंधित करें"

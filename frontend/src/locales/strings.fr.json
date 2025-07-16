@@ -1961,7 +1961,11 @@
       },
       "workloads": {
         "title": "Charges de travail",
-        "description": "Gérer les charges de travail sur les clusters"
+        "description": "Gérer les charges de travail entre clusters"
+      },
+      "resourceExplorer": {
+        "title": "Explorateur de Ressources",
+        "description": "Rechercher et filtrer les ressources Kubernetes"
       },
       "bindingPolicies": {
         "title": "Politiques d'assignation",
