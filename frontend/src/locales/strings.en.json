@@ -2058,6 +2058,10 @@
         "title": "Workloads",
         "description": "Manage workloads across clusters"
       },
+      "resourceExplorer": {
+        "title": "Resource Explorer",
+        "description": "Search and filter Kubernetes resources"
+      },
       "bindingPolicies": {
         "title": "Binding Policies",
         "description": "Manage binding policies"

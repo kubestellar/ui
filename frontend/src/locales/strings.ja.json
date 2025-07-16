@@ -1660,6 +1660,18 @@
         "enterYamlJson": "YAML または JSON の内容を入力してください。",
         "needMetadataName": "少なくとも 1 つのドキュメントに 'metadata.name' が必要です。"
       }
+    },
+    "workloads": {
+      "title": "ワークロード",
+      "description": "クラスター間のワークロードを管理する"
+    },
+    "resourceExplorer": {
+      "title": "リソースエクスプローラー",
+      "description": "Kubernetesリソースを検索およびフィルタリングする"
+    },
+    "bindingPolicies": {
+      "title": "バインディングポリシー",
+      "description": "ワークロードの分配に関するバインディングポリシーを作成・管理します"
     }
   },
   "visualization": {
@@ -2057,9 +2069,13 @@
         "title": "ワークロード",
         "description": "クラスタ間のワークロードを管理"
       },
+      "resourceExplorer": {
+        "title": "リソースエクスプローラー",
+        "description": "Kubernetesリソースを検索およびフィルタリングする"
+      },
       "bindingPolicies": {
         "title": "バインディングポリシー",
-        "description": "バインディングポリシーを構成"
+        "description": "ワークロードの分配に関するバインディングポリシーを作成・管理します"
       },
       "userManagement": {
         "title": "ユーザー管理",
