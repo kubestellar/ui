@@ -51,7 +51,7 @@ func AddOrUpdateUser(username, password string, permissions map[string]string) e
 	if err := utils.ValidateUsername(username); err != nil {
 		return fmt.Errorf("invalid username: %v", err)
 	}
-	
+
 	// Validate password if provided
 	if password != "" {
 		if err := utils.ValidatePassword(password); err != nil {
@@ -130,7 +130,7 @@ func RemoveUser(username string) error {
 	if err := utils.ValidateUsername(username); err != nil {
 		return fmt.Errorf("invalid username: %v", err)
 	}
-	
+
 	return models.DeleteUser(username)
 }
 
