@@ -52,8 +52,14 @@ const ResourceFilterPage: React.FC = () => {
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
 
-  const { resourceKinds, namespaces, filteredResources, isLoading, error, applyFilters } =
-    useResourceFilters();
+  const {
+    resourceKinds = [],
+    namespaces = [],
+    filteredResources = [],
+    isLoading,
+    error,
+    applyFilters,
+  } = useResourceFilters();
 
   const [selectedKind, setSelectedKind] = useState<string>('');
   const [selectedNamespace, setSelectedNamespace] = useState<string>('');
@@ -145,6 +151,10 @@ const ResourceFilterPage: React.FC = () => {
         };
     }
   };
+
+  const filteredNamespaces = namespaces.filter(
+    ns => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
+  );
 
   return (
     <Box
@@ -258,7 +268,7 @@ const ResourceFilterPage: React.FC = () => {
                       component: Paper,
                       elevation: 6,
                       sx: {
-                        backgroundColor: isDark ? darkTheme.element.card : lightTheme.element.card,
+                        backgroundColor: isDark ? '#1f2937' : '#fff', // Fully opaque
                         color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                         boxShadow: isDark
                           ? '0px 5px 15px rgba(0, 0, 0, 0.4)'
@@ -268,6 +278,7 @@ const ResourceFilterPage: React.FC = () => {
                         border: isDark
                           ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid rgba(0, 0, 0, 0.05)',
+                        opacity: 1,
                       },
                     },
                   }}
@@ -332,7 +343,7 @@ const ResourceFilterPage: React.FC = () => {
                       component: Paper,
                       elevation: 6,
                       sx: {
-                        backgroundColor: isDark ? darkTheme.element.card : lightTheme.element.card,
+                        backgroundColor: isDark ? '#1f2937' : '#fff', // Fully opaque
                         color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                         boxShadow: isDark
                           ? '0px 5px 15px rgba(0, 0, 0, 0.4)'
@@ -342,11 +353,12 @@ const ResourceFilterPage: React.FC = () => {
                         border: isDark
                           ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid rgba(0, 0, 0, 0.05)',
+                        opacity: 1,
                       },
                     },
                   }}
                 >
-                  {namespaces.map(ns => (
+                  {filteredNamespaces.map(ns => (
                     <MenuItem
                       key={ns.name}
                       value={ns.name}
