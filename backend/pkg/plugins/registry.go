@@ -18,6 +18,7 @@ type PluginRegistry struct {
 
 // PluginInfo contains metadata about a discovered plugin
 type PluginInfo struct {
+	ID           int       `json:"id"`
 	Name         string    `json:"name"`
 	Version      string    `json:"version"`
 	Author       string    `json:"author,omitempty"`
@@ -116,7 +117,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 				WasmPath:     wasmPath,
 				DiscoveredAt: time.Now(),
 				LastModified: manifestInfo.ModTime(),
-				Status:       "error",
+				Status:       "inactive",
 				Error:        "WASM file not found",
 			}, nil
 		}
@@ -124,9 +125,18 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 
 	// Determine status based on whether plugin is loaded
-	status := "discovered"
-	if _, loaded := pr.manager.GetPlugin(manifest.Name); loaded {
-		status = "loaded"
+	status := "inactive"
+	// if _, loaded := pr.manager.GetPlugin(manifest.Name); loaded {
+	// 	status = "loaded"
+	// }
+
+	// Check if the plugin is loaded and created in DB
+	exist, err := CheckPluginWithInfo(manifest.Name, manifest.Version, manifest.Description)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		status = "inactive"
 	}
 
 	return &PluginInfo{
@@ -157,20 +167,21 @@ func (pr *PluginRegistry) LoadPlugin(name string) error {
 	return pr.manager.LoadPlugin(pluginPath)
 }
 
-// UnloadPlugin unloads a plugin by name
-func (pr *PluginRegistry) UnloadPlugin(name string) error {
-	return pr.manager.UnloadPlugin(name)
+// UnloadPlugin unloads a plugin by ID
+func (pr *PluginRegistry) UnloadPlugin(ID int) error {
+	return pr.manager.UnloadPlugin(ID)
 }
 
 // ReloadPlugin reloads a plugin by name
-func (pr *PluginRegistry) ReloadPlugin(name string) error {
+func (pr *PluginRegistry) ReloadPlugin(pluginID int) error {
 	// First unload the plugin
-	if err := pr.UnloadPlugin(name); err != nil {
+	if err := pr.UnloadPlugin(pluginID); err != nil {
 		return fmt.Errorf("failed to unload plugin: %v", err)
 	}
 
+	pluginName := pr.manager.plugins[pluginID].Manifest.Name
 	// Then load it again
-	if err := pr.LoadPlugin(name); err != nil {
+	if err := pr.LoadPlugin(pluginName); err != nil {
 		return fmt.Errorf("failed to reload plugin: %v", err)
 	}
 

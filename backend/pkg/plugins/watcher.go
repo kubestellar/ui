@@ -2,14 +2,16 @@ package plugins
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/kubestellar/ui/backend/log"
+	"go.uber.org/zap"
 )
 
 // PluginWatcher monitors the plugins directory for changes and automatically reloads plugins
@@ -57,7 +59,7 @@ func (pw *PluginWatcher) Start() error {
 	// Start the watch loop in a goroutine
 	go pw.watchLoop()
 
-	log.Printf("Plugin watcher started for directory: %s", pw.registry.GetPluginsDirectory())
+	log.LogInfo("Plugin watcher started for directory", zap.String("directory", pw.registry.GetPluginsDirectory()))
 	return nil
 }
 
@@ -79,7 +81,7 @@ func (pw *PluginWatcher) Stop() error {
 	}
 
 	pw.running = false
-	log.Printf("Plugin watcher stopped")
+	log.LogInfo("Plugin watcher stopped")
 	return nil
 }
 
@@ -97,7 +99,7 @@ func (pw *PluginWatcher) watchLoop() {
 			if !ok {
 				return
 			}
-			log.Printf("Plugin watcher error: %v", err)
+			log.LogError("Plugin watcher error", zap.String("error", err.Error()))
 
 		case <-pw.stopChan:
 			return
@@ -112,11 +114,18 @@ func (pw *PluginWatcher) handleEvent(event fsnotify.Event) {
 		return
 	}
 
-	log.Printf("Plugin file changed: %s (operation: %s)", event.Name, event.Op)
+	log.LogInfo("Plugin file changed with operation", zap.String("file", event.Name), zap.String("operation", event.Op.String()))
 
-	// Determine the plugin name from the file path
-	pluginName := pw.getPluginNameFromPath(event.Name)
-	if pluginName == "" {
+	// Determine the plugin folder name (pluginKey) from the file path
+	pluginFolderName := pw.getPluginFolderName(event.Name)
+	if pluginFolderName == "" {
+		return
+	}
+
+	// The plugin folder name is a combination of the plugin's name and ID - e.g. myplugin-123
+	pluginID, err := extractPluginIDFromFolder(pluginFolderName)
+	if err != nil {
+		log.LogError("unable to extract plugin's ID from folder name", zap.String("error", err.Error()))
 		return
 	}
 
@@ -124,64 +133,65 @@ func (pw *PluginWatcher) handleEvent(event fsnotify.Event) {
 	switch event.Op {
 	case fsnotify.Write:
 		// File was modified - reload the plugin
-		pw.handlePluginModification(pluginName)
+		pw.handlePluginModification(pluginID)
 
 	case fsnotify.Create:
 		// New file was created - check if it's a new plugin
-		pw.handlePluginCreation(pluginName)
+		pw.handlePluginCreation(pluginID)
 
 	case fsnotify.Remove:
 		// File was removed - unload the plugin
-		pw.handlePluginRemoval(pluginName)
+		pw.handlePluginRemoval(pluginID)
 
 	case fsnotify.Rename:
 		// File was renamed - handle as removal and potential creation
-		pw.handlePluginRemoval(pluginName)
+		pw.handlePluginRemoval(pluginID)
 	}
 }
 
 // handlePluginModification handles when a plugin file is modified
-func (pw *PluginWatcher) handlePluginModification(pluginName string) {
-	log.Printf("Reloading plugin due to modification: %s", pluginName)
+func (pw *PluginWatcher) handlePluginModification(pluginID int) {
+	log.LogInfo("Reloading plugin due to modification", zap.String("plugin", strconv.Itoa(pluginID)))
 
 	// Add a small delay to ensure file operations are complete
 	time.Sleep(100 * time.Millisecond)
 
 	// Reload the plugin
-	if err := pw.registry.ReloadPlugin(pluginName); err != nil {
-		log.Printf("Failed to reload plugin %s: %v", pluginName, err)
+	if err := pw.registry.ReloadPlugin(pluginID); err != nil {
+		log.LogError("Failed to reload plugin", zap.String("plugin", strconv.Itoa(pluginID)), zap.String("error", err.Error()))
 	} else {
-		log.Printf("Successfully reloaded plugin: %s", pluginName)
+		log.LogInfo("Successfully reloaded plugin", zap.String("plugin", strconv.Itoa(pluginID)))
 	}
 }
 
 // handlePluginCreation handles when a new plugin is created
-func (pw *PluginWatcher) handlePluginCreation(pluginName string) {
-	log.Printf("New plugin detected: %s", pluginName)
+func (pw *PluginWatcher) handlePluginCreation(pluginID int) {
+	log.LogInfo("New plugin detected", zap.String("plugin", strconv.Itoa(pluginID)))
 
 	// Add a small delay to ensure all files are written
 	time.Sleep(500 * time.Millisecond)
 
+	pluginName := pw.registry.manager.plugins[pluginID].Manifest.Name
 	// Check if the plugin is complete (has both manifest and WASM file)
-	if pw.isPluginComplete(pluginName) {
+	if pw.isPluginComplete(pluginID) {
 		// Load the new plugin
 		if err := pw.registry.LoadPlugin(pluginName); err != nil {
-			log.Printf("Failed to load new plugin %s: %v", pluginName, err)
+			log.LogError("Failed to load plugin", zap.String("plugin", strconv.Itoa(pluginID)), zap.String("error", err.Error()))
 		} else {
-			log.Printf("Successfully loaded new plugin: %s", pluginName)
+			log.LogInfo("Successfully reloaded plugin", zap.String("plugin", strconv.Itoa(pluginID)))
 		}
 	}
 }
 
 // handlePluginRemoval handles when a plugin is removed
-func (pw *PluginWatcher) handlePluginRemoval(pluginName string) {
-	log.Printf("Plugin removed: %s", pluginName)
+func (pw *PluginWatcher) handlePluginRemoval(pluginID int) {
+	log.LogInfo("Plugin removed", zap.String("plugin", strconv.Itoa(pluginID)))
 
 	// Unload the plugin
-	if err := pw.registry.UnloadPlugin(pluginName); err != nil {
-		log.Printf("Failed to unload plugin %s: %v", pluginName, err)
+	if err := pw.registry.UnloadPlugin(pluginID); err != nil {
+		log.LogError("Failed to unload plugin", zap.String("plugin", strconv.Itoa(pluginID)), zap.String("error", err.Error()))
 	} else {
-		log.Printf("Successfully unloaded plugin: %s", pluginName)
+		log.LogInfo("Successfully unloaded plugin", zap.String("plugin", strconv.Itoa(pluginID)))
 	}
 }
 
@@ -191,8 +201,8 @@ func isPluginFile(filePath string) bool {
 	return fileName == "plugin.yml" || filepath.Ext(fileName) == ".wasm"
 }
 
-// getPluginNameFromPath extracts the plugin name from a file path
-func (pw *PluginWatcher) getPluginNameFromPath(filePath string) string {
+// getPluginFolderName extracts the plugin name from a file path
+func (pw *PluginWatcher) getPluginFolderName(filePath string) string {
 	// Get the directory name containing the file
 	dir := filepath.Dir(filePath)
 
@@ -216,8 +226,12 @@ func isSubdirectory(sub, parent string) bool {
 }
 
 // isPluginComplete checks if a plugin has all required files
-func (pw *PluginWatcher) isPluginComplete(pluginName string) bool {
-	pluginPath := filepath.Join(pw.registry.GetPluginsDirectory(), pluginName)
+func (pw *PluginWatcher) isPluginComplete(pluginID int) bool {
+	pluginName := pw.registry.manager.plugins[pluginID].Manifest.Name
+	pluginKey := fmt.Sprintf("%s-%d", pluginName, pluginID)
+
+	// path = /plugins/<pluginName>-<pluginID>
+	pluginPath := filepath.Join(pw.registry.GetPluginsDirectory(), pluginKey)
 
 	// Check for manifest file
 	manifestPath := filepath.Join(pluginPath, "plugin.yml")
@@ -232,4 +246,18 @@ func (pw *PluginWatcher) isPluginComplete(pluginName string) bool {
 	}
 
 	return true
+}
+
+func extractPluginIDFromFolder(pluginFolderName string) (int, error) {
+	parts := strings.Split(pluginFolderName, "-")
+	if len(parts) < 2 {
+		return 0, fmt.Errorf("invalid plugin folder name: %s", pluginFolderName)
+	}
+	idStr := parts[len(parts)-1]
+	pluginID, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0, fmt.Errorf("invalid plugin ID in folder name: %s", pluginFolderName)
+	}
+
+	return pluginID, nil
 }

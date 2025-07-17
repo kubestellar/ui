@@ -122,6 +122,15 @@ func main() {
 		logger.Info("Plugin system initialized successfully")
 	}
 
+	// DEVELOPMENT: Uninstall all plugins (for testing purposes)
+	defer func() {
+		if err := pluginManager.UninstallAllPlugins(); err != nil {
+			logger.Error("Failed to uninstall all plugins", zap.Error(err))
+		} else {
+			logger.Info("All plugins uninstalled successfully")
+		}
+	}()
+
 	// Add webhook endpoint (you may want to protect this with auth too)
 	router.POST("/api/webhook", api.GitHubWebhookHandler)
 
