@@ -1,6 +1,5 @@
 import {
   useSystemMetrics,
-  useDeploymentsMetrics,
   useHealthMetrics,
   useRedisMetrics,
   useKubernetesMetrics,
@@ -122,7 +121,6 @@ interface OperationCounterRow {
 
 const MetricsDashboard = () => {
   const { data: system, isLoading: loadingSystem } = useSystemMetrics();
-  const { data: deployments, isLoading: loadingDeployments } = useDeploymentsMetrics();
   const { data: health, isLoading: loadingHealth } = useHealthMetrics();
   const { data: redis } = useRedisMetrics();
   const { data: k8s } = useKubernetesMetrics();
@@ -168,12 +166,12 @@ const MetricsDashboard = () => {
     }
   }
 
-  if (loadingSystem && loadingDeployments && loadingHealth) {
+  if (loadingSystem && loadingHealth) {
     return <div className="p-8 text-center">Loading metrics...</div>;
   }
 
   // Error state
-  if (!system && !deployments && !health) {
+  if (!system && !health) {
     return (
       <div className="mx-auto w-full max-w-2xl p-4">
         <div className="rounded-xl border border-red-200 bg-white p-6 text-red-600 shadow-sm dark:border-red-900/30 dark:bg-gray-800 dark:text-red-400">
@@ -191,7 +189,6 @@ const MetricsDashboard = () => {
 
   // Fallback checks
   const isSystemFallback = !system;
-  const isDeploymentsFallback = !deployments;
   const isHealthFallback = !health;
   const isRedisFallback = !redis;
   const isK8sFallback = !k8s;
@@ -233,18 +230,6 @@ const MetricsDashboard = () => {
               value={redis?.status.status}
               fallback="Unknown"
               isFallback={isRedisFallback}
-            />
-          </div>
-        </div>
-        <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-purple-100 to-violet-50 p-6 shadow-sm dark:border-gray-700 dark:from-purple-900/20 dark:to-violet-900/10">
-          <div className="mb-2 flex items-center">
-            <BarChart3 className="mr-2 text-purple-500" /> Deployments
-          </div>
-          <div className="text-2xl font-bold">
-            <Fallback
-              value={deployments?.stats.total}
-              fallback="0"
-              isFallback={isDeploymentsFallback}
             />
           </div>
         </div>
