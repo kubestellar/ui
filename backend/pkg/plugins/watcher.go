@@ -171,7 +171,7 @@ func (pw *PluginWatcher) handlePluginCreation(pluginID int) {
 	// Add a small delay to ensure all files are written
 	time.Sleep(500 * time.Millisecond)
 
-	pluginName := pw.registry.manager.plugins[pluginID].Manifest.Name
+	pluginName := pw.registry.manager.plugins[pluginID].Manifest.Metadata.Name
 	// Check if the plugin is complete (has both manifest and WASM file)
 	if pw.isPluginComplete(pluginID) {
 		// Load the new plugin
@@ -227,7 +227,7 @@ func isSubdirectory(sub, parent string) bool {
 
 // isPluginComplete checks if a plugin has all required files
 func (pw *PluginWatcher) isPluginComplete(pluginID int) bool {
-	pluginName := pw.registry.manager.plugins[pluginID].Manifest.Name
+	pluginName := pw.registry.manager.plugins[pluginID].Manifest.Metadata.Name
 	pluginKey := fmt.Sprintf("%s-%d", pluginName, pluginID)
 
 	// path = /plugins/<pluginName>-<pluginID>

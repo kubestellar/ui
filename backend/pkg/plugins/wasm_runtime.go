@@ -229,7 +229,7 @@ func (pm *PluginManager) getPluginNameFromModule(m api.Module) string {
 
 	for _, plugin := range pm.plugins {
 		if plugin.Instance == m {
-			return plugin.Manifest.Name
+			return plugin.Manifest.Metadata.Name
 		}
 	}
 	return "unknown"

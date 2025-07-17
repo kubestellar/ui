@@ -19,6 +19,7 @@ import (
 	"github.com/kubestellar/ui/backend/log"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
@@ -47,20 +48,98 @@ type Plugin struct {
 
 // PluginManifest defines the plugin.yml schema for plugin configuration.
 type PluginManifest struct {
-	Name        string        `yaml:"name"`        // Unique name of the plugin (used to identify .wasm file)
-	Version     string        `yaml:"version"`     // Plugin version
-	Author      string        `yaml:"author"`      // Plugin author
-	Description string        `yaml:"description"` // Plugin description
-	Routes      []PluginRoute `yaml:"routes"`      // HTTP API routes the plugin exposes
-	Backend     bool          `yaml:"backend"`     // Whether plugin requires backend API exposure
-	Permissions []string      `yaml:"permissions"` // Required permissions
+	APIVersion string         `yaml:"apiVersion"` // API version
+	Kind       string         `yaml:"kind"`       // Resource kind (e.g., "Plugin")
+	Metadata   PluginMetadata `yaml:"metadata"`   // Plugin metadata
+	Spec       PluginSpec     `yaml:"spec"`       // Plugin specification
+}
+
+// PluginMetadata defines the plugin metadata information
+type PluginMetadata struct {
+	Name        string `yaml:"name"`        // Unique name of the plugin
+	Version     string `yaml:"version"`     // Plugin version
+	Author      string `yaml:"author"`      // Plugin author
+	Description string `yaml:"description"` // Plugin description
+}
+
+// PluginSpec contains the plugin specification
+type PluginSpec struct {
+	Wasm          *PluginWasmConfig      `yaml:"wasm,omitempty"`          // WASM binary configuration
+	Build         *PluginBuildConfig     `yaml:"build,omitempty"`         // Build configuration
+	Backend       *PluginBackendConfig   `yaml:"backend,omitempty"`       // Backend configuration
+	Permissions   []string               `yaml:"permissions,omitempty"`   // Required permissions - "kubestellar:read:clusters" "kubestellar:read:workloads"
+	Frontend      *PluginFrontendConfig  `yaml:"frontend,omitempty"`      // Frontend configuration
+	Navigation    []PluginNavigationItem `yaml:"navigation,omitempty"`    // Navigation integration
+	Widgets       []PluginWidgetConfig   `yaml:"widgets,omitempty"`       // Dashboard widgets
+	Routes        []PluginFrontendRoute  `yaml:"routes,omitempty"`        // Frontend routes
+	Configuration []PluginConfigItem     `yaml:"configuration,omitempty"` // Plugin configuration options
+}
+
+// PluginWasmConfig contains WASM binary information
+type PluginWasmConfig struct {
+	File        string `yaml:"file"`         // WASM file name
+	Entrypoint  string `yaml:"entrypoint"`   // Main function entry point
+	MemoryLimit string `yaml:"memory_limit"` // Memory limit (e.g., "64MB")
+}
+
+// PluginBuildConfig contains build information
+type PluginBuildConfig struct {
+	GoVersion     string `yaml:"go_version"`     // Go version used for building
+	TinyGoVersion string `yaml:"tinygo_version"` // TinyGo version used for WASM compilation
+}
+
+// PluginBackendConfig contains backend integration configuration
+type PluginBackendConfig struct {
+	Enabled bool          `yaml:"enabled"`          // Whether backend is enabled
+	Routes  []PluginRoute `yaml:"routes,omitempty"` // Backend API routes
 }
 
 // PluginRoute describes a single HTTP route exposed by a plugin.
 type PluginRoute struct {
-	Path    string `yaml:"path"`    // Route path (e.g., /hello)
-	Method  string `yaml:"method"`  // HTTP method (GET, POST, etc.)
-	Handler string `yaml:"handler"` // Name of the WASM function to call
+	Path    string   `yaml:"path"`    // Route path (e.g., "/status")
+	Methods []string `yaml:"methods"` // HTTP methods (["GET", "POST"], etc.)
+	Handler string   `yaml:"handler"` // Name of the WASM function to call
+}
+
+// PluginFrontendConfig contains frontend integration configuration
+type PluginFrontendConfig struct {
+	Enabled    bool                   `yaml:"enabled"`              // Whether frontend integration is enabled
+	Navigation []PluginNavigationItem `yaml:"navigation,omitempty"` // Navigation integration
+	Widgets    []PluginWidgetConfig   `yaml:"widgets,omitempty"`    // Dashboard widgets
+	Routes     []PluginFrontendRoute  `yaml:"routes,omitempty"`     // Frontend routes
+}
+
+// PluginNavigationItem describes a navigation menu item
+type PluginNavigationItem struct {
+	Label    string `yaml:"label"`    // Display label
+	Icon     string `yaml:"icon"`     // Icon identifier
+	Path     string `yaml:"path"`     // Route path
+	Position string `yaml:"position"` // Position in menu (e.g., "main")
+	Order    int    `yaml:"order"`    // Display order
+}
+
+// PluginWidgetConfig describes a dashboard widget
+type PluginWidgetConfig struct {
+	Name      string `yaml:"name"`      // Widget name
+	Title     string `yaml:"title"`     // Widget title
+	Size      string `yaml:"size"`      // Widget size (e.g., "medium")
+	Dashboard string `yaml:"dashboard"` // Target dashboard (e.g., "overview")
+	Component string `yaml:"component"` // React component name
+}
+
+// PluginFrontendRoute describes a frontend route definition
+type PluginFrontendRoute struct {
+	Path      string `yaml:"path"`      // Route path
+	Component string `yaml:"component"` // React component name
+	Exact     bool   `yaml:"exact"`     // Whether route matching should be exact
+}
+
+// PluginConfigItem describes a configuration option
+type PluginConfigItem struct {
+	Name        string      `yaml:"name"`        // Configuration name
+	Type        string      `yaml:"type"`        // Type (e.g., "integer", "string")
+	Default     interface{} `yaml:"default"`     // Default value
+	Description string      `yaml:"description"` // Description of the configuration
 }
 
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
@@ -70,6 +149,11 @@ func NewPluginManager(router *gin.Engine) *PluginManager {
 	// Configure runtime with WASI support
 	config := wazero.NewRuntimeConfigInterpreter()
 	runtime := wazero.NewRuntimeWithConfig(ctx, config)
+
+	// Instantiate WASI for plugins, returning error if instantiation fails
+	if _, err := wasi_snapshot_preview1.Instantiate(ctx, runtime); err != nil {
+		log.LogError("Failed to instantiate WASI", zap.Error(err))
+	}
 
 	pm := &PluginManager{
 		runtime:          runtime,
@@ -103,14 +187,18 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		return err
 	}
 
-	pluginID, err := GetPluginIdDB(manifest.Name, manifest.Version, manifest.Description)
+	pluginID, err := GetPluginIdDB(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
 	if err != nil {
 		log.LogError("error getting pluginID", zap.String("error", err.Error()))
 		return err
 	}
 
-	// only plugin's name
-	wasmPath := filepath.Join(pluginPath, manifest.Name+".wasm")
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(pluginPath, wasmFileName)
 	wasmBinary, err := os.ReadFile(wasmPath)
 	if err != nil {
 		log.LogError("error read file .wasm", zap.String("error", err.Error()))
@@ -124,7 +212,7 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 	}
 
 	// Create module config
-	moduleConfig := wazero.NewModuleConfig().WithName(manifest.Name)
+	moduleConfig := wazero.NewModuleConfig().WithName(manifest.Metadata.Name).WithStartFunctions(manifest.Spec.Wasm.Entrypoint)
 
 	pm.mu.Lock()
 	if existing, ok := pm.plugins[pluginID]; ok {
@@ -152,7 +240,7 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 	pm.plugins[pluginID] = plugin
 	pm.mu.Unlock()
 
-	if manifest.Backend {
+	if manifest.Spec.Backend != nil && manifest.Spec.Backend.Enabled {
 		pm.registerPluginRoutes(plugin)
 	}
 
@@ -168,22 +256,37 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 	pm.registeredRoutes[plugin.ID] = []string{}
 	pm.routeMutex.Unlock()
 
-	for _, route := range plugin.Manifest.Routes {
-		handler := pm.createPluginHandler(plugin, route.Handler)
-		routePath := route.Path
+	if plugin.Manifest.Spec.Backend != nil {
+		for _, route := range plugin.Manifest.Spec.Backend.Routes {
+			handler := pm.createPluginHandler(plugin, route.Handler)
+			routePath := route.Path
 
-		switch route.Method {
-		case "GET":
-			group.GET(routePath, handler)
-		case "POST":
-			group.POST(routePath, handler)
+			for _, method := range route.Methods {
+				switch method {
+				case "GET":
+					group.GET(routePath, handler)
+				case "POST":
+					group.POST(routePath, handler)
+				case "PUT":
+					group.PUT(routePath, handler)
+				case "DELETE":
+					group.DELETE(routePath, handler)
+				case "PATCH":
+					group.PATCH(routePath, handler)
+				}
+			}
+
+			// Track the registered route
+			// Track all methods for the same route path
+			pm.routeMutex.Lock()
+			for _, method := range route.Methods {
+				pm.registeredRoutes[plugin.ID] = append(
+					pm.registeredRoutes[plugin.ID],
+					fmt.Sprintf("%s %s", method, routePath),
+				)
+			}
+			pm.routeMutex.Unlock()
 		}
-
-		// Track the registered route
-		pm.routeMutex.Lock()
-		pm.registeredRoutes[plugin.ID] = append(pm.registeredRoutes[plugin.ID],
-			fmt.Sprintf("%s %s", route.Method, routePath))
-		pm.routeMutex.Unlock()
 	}
 }
 
@@ -311,7 +414,7 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
 	// check if the plugin is in database
 	// if not, add to database with status "active"
 	// if yes, update the status to "active"
-	exist, err := CheckPluginWithInfo(plugin.Manifest.Name, plugin.Manifest.Version, plugin.Manifest.Description)
+	exist, err := CheckPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description)
 	if err != nil {
 		log.LogError("Failed to check plugin existence", zap.Error(err))
 		return
@@ -319,12 +422,12 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
 
 	var pluginID int
 	if !exist {
-		pluginID, err = AddPluginToDB(plugin.Manifest.Name, plugin.Manifest.Version, true, plugin.Manifest.Description, 0, "active")
+		pluginID, err = AddPluginToDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, true, plugin.Manifest.Metadata.Description, 0, "active")
 		if err != nil {
 			log.LogError("Failed to add plugin to database", zap.Error(err))
 		}
 	} else {
-		pluginID, err = GetPluginIdDB(plugin.Manifest.Name, plugin.Manifest.Version, plugin.Manifest.Description)
+		pluginID, err = GetPluginIdDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description)
 		err := UpdatePluginStatusDB(pluginID, "active")
 		if err != nil {
 			log.LogError("Failed to update plugin status in database", zap.Error(err))
@@ -338,7 +441,7 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
 	defer pm.mu.Unlock()
 
 	if _, exists := pm.plugins[plugin.ID]; exists {
-		log.LogWarn("Plugin already registered", zap.String("plugin", plugin.Manifest.Name))
+		log.LogWarn("Plugin already registered", zap.String("plugin", plugin.Manifest.Metadata.Name))
 		return
 	}
 
@@ -349,7 +452,7 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
 	// 	pm.registerPluginRoutes(plugin)
 	// }
 
-	log.LogInfo("Plugin registered successfully", zap.String("plugin", plugin.Manifest.Name))
+	log.LogInfo("Plugin registered successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
 }
 
 func (pm *PluginManager) DeregisterPlugin(plugin *Plugin) {
@@ -400,7 +503,7 @@ func (pm *PluginManager) EnablePlugin(pluginID int) error {
 	// 	pm.registerPluginRoutes(plugin)
 	// }
 
-	log.LogInfo("Plugin enabled successfully", zap.String("plugin", plugin.Manifest.Name))
+	log.LogInfo("Plugin enabled successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
 	return nil
 }
 
@@ -430,7 +533,7 @@ func (pm *PluginManager) DisablePlugin(pluginID int) error {
 	// 	pm.routeMutex.Unlock()
 	// }
 
-	log.LogInfo("Plugin disabled successfully", zap.String("plugin", plugin.Manifest.Name))
+	log.LogInfo("Plugin disabled successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
 	return nil
 }
 
@@ -456,7 +559,7 @@ func (pm *PluginManager) UninstallAllPlugins() error {
 		delete(pm.registeredRoutes, id)
 		pm.routeMutex.Unlock()
 
-		log.LogInfo("Plugin uninstalled successfully", zap.String("plugin", plugin.Manifest.Name))
+		log.LogInfo("Plugin uninstalled successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
 	}
 
 	return nil

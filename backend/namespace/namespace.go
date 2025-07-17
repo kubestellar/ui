@@ -417,6 +417,20 @@ func getFilteredNamespacedResourcesWithContext(clientset kubernetes.Interface) (
 				res.Name == "leases" || res.Name == "replicationcontrollers" {
 				continue
 			}
+
+			// Add additional metadata to resources for better filtering
+			if res.Verbs != nil {
+				// Ensure we can list this resource
+				if !containsVerb(res.Verbs, "list") {
+					continue
+				}
+
+				// Skip subresources (contains slash)
+				if strings.Contains(res.Name, "/") {
+					continue
+				}
+			}
+
 			filteredAPIResources = append(filteredAPIResources, res)
 		}
 

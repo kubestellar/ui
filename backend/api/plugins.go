@@ -131,8 +131,7 @@ func ListPluginsHandler(c *gin.Context) {
 		})
 		return
 	}
-
-	// Get all loaded plugins from the manager
+	// Get all loaded plugins
 	loadedPlugins := pluginManager.GetPluginList()
 
 	// Convert to API response format
@@ -140,11 +139,11 @@ func ListPluginsHandler(c *gin.Context) {
 		if p.Manifest != nil {
 			pluginsList = append(pluginsList, PluginDetails{
 				ID:          p.ID,
-				Name:        p.Manifest.Name,
-				Version:     p.Manifest.Version,
+				Name:        p.Manifest.Metadata.Name,
+				Version:     p.Manifest.Metadata.Version,
 				Enabled:     p.Status == "active",
-				Description: p.Manifest.Description,
-				Author:      p.Manifest.Author,
+				Description: p.Manifest.Metadata.Description,
+				Author:      p.Manifest.Metadata.Author,
 				CreatedAt:   p.LoadTime,
 				UpdatedAt:   p.LoadTime,
 				Routes:      extractPluginRoutesFromManifest(p.Manifest),
@@ -175,15 +174,15 @@ func GetPluginDetailsHandler(c *gin.Context) {
 	if plugin != nil {
 		details := PluginDetails{
 			ID:          pluginID,
-			Name:        plugin.Manifest.Name,
-			Version:     plugin.Manifest.Version,
+			Name:        plugin.Manifest.Metadata.Name,
+			Version:     plugin.Manifest.Metadata.Version,
 			Enabled:     true,
-			Description: plugin.Manifest.Description,
-			Author:      plugin.Manifest.Author,
+			Description: plugin.Manifest.Metadata.Description,
+			Author:      plugin.Manifest.Metadata.Author,
 			CreatedAt:   plugin.LoadTime,
 			UpdatedAt:   plugin.LoadTime,
 			Status:      "active",
-			Routes:      extractPluginRoutes(*plugin),
+			Routes:      extractPluginRoutesFromManifest(plugin.Manifest),
 		}
 		c.JSON(http.StatusOK, details)
 		return
@@ -283,47 +282,52 @@ func InstallPluginHandler(c *gin.Context) {
 		return
 	}
 
-	existed, err := pkg.CheckPluginWithInfo(manifest.Name, manifest.Version, manifest.Description)
+	existed, err := pkg.CheckPluginWithInfo(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Error checking plugin exists: " + manifest.Name,
+			"error": "Error checking plugin exists: " + manifest.Metadata.Name,
 		})
 		log.LogError("error checking plugin exists", zap.String("error", err.Error()))
 		return
 	}
 	if existed {
 		c.JSON(http.StatusConflict, gin.H{
-			"error": "Plugin already installed: " + manifest.Name,
+			"error": "Plugin already installed: " + manifest.Metadata.Name,
 		})
-		log.LogInfo("plugin already installed", zap.String("plugin", manifest.Name))
+		log.LogInfo("plugin already installed", zap.String("plugin", manifest.Metadata.Name))
 		return
 	}
 
 	// get author's ID from DB
-	author, err := models.GetUserByUsername(manifest.Author)
+	author, err := models.GetUserByUsername(manifest.Metadata.Author)
 	log.LogInfo("author ID", zap.Any("id", author.ID))
 
 	// plugin not existed - add to database and retrieve the ID
-	pluginID, err := pkg.AddPluginToDB(manifest.Name, manifest.Version, false, manifest.Description, author.ID, "inactive")
+	pluginID, err := pkg.AddPluginToDB(manifest.Metadata.Name, manifest.Metadata.Version, false, manifest.Metadata.Description, author.ID, "inactive")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Unable to add plugin to database " + manifest.Name,
+			"error": "Unable to add plugin to database " + manifest.Metadata.Name,
 		})
 		log.LogError("unable to add plugin to database", zap.String("error", err.Error()))
 		return
 	}
 
 	// Find WASM file
-	wasmPath := filepath.Join(extractDir, manifest.Name+".wasm")
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(extractDir, wasmFileName)
 	if _, err := os.Stat(wasmPath); os.IsNotExist(err) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "WASM file not found: " + manifest.Name + ".wasm",
+			"error": "WASM file not found: " + wasmFileName,
 		})
 		return
 	}
 
 	// combine the plugin name and the ID to make it readable and unique for plugin's Folder
-	pluginKey := fmt.Sprintf("%s-%d", manifest.Name, pluginID) // e.g. myplugin-123
+	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginID) // e.g. myplugin-123
 
 	// Create plugin directory in plugins folder
 	pluginDir := filepath.Join("./plugins", pluginKey)
@@ -344,7 +348,7 @@ func InstallPluginHandler(c *gin.Context) {
 		return
 	}
 
-	if err := copyFile(wasmPath, filepath.Join(pluginDir, manifest.Name+".wasm")); err != nil {
+	if err := copyFile(wasmPath, filepath.Join(pluginDir, wasmFileName)); err != nil {
 		log.LogError("Failed to copy WASM file", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to copy WASM file",
@@ -370,14 +374,14 @@ func InstallPluginHandler(c *gin.Context) {
 		// Load the plugin from the recent created folder
 		if err := pluginRegistry.LoadPlugin(pluginKey); err != nil {
 			log.LogError("Failed to load plugin after installation",
-				zap.String("name", manifest.Name),
+				zap.String("name", manifest.Metadata.Name),
 				zap.Error(err))
 
 			// Return success for installation but warn about loading failure
 			c.JSON(http.StatusOK, gin.H{
 				"message": "Plugin installed successfully but failed to load",
-				"name":    manifest.Name,
-				"version": manifest.Version,
+				"name":    manifest.Metadata.Name,
+				"version": manifest.Metadata.Version,
 				"status":  "installed",
 				"path":    pluginDir,
 				"warning": "Plugin loaded with errors: " + err.Error(),
@@ -386,18 +390,18 @@ func InstallPluginHandler(c *gin.Context) {
 		}
 
 		log.LogInfo("Plugin installed and loaded successfully",
-			zap.String("name", manifest.Name),
-			zap.String("version", manifest.Version),
+			zap.String("name", manifest.Metadata.Name),
+			zap.String("version", manifest.Metadata.Version),
 			zap.String("path", pluginDir))
 	} else {
 		log.LogWarn("Plugin manager not available for dynamic loading",
-			zap.String("name", manifest.Name))
+			zap.String("name", manifest.Metadata.Name))
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin installed and loaded successfully",
-		"name":    manifest.Name,
-		"version": manifest.Version,
+		"name":    manifest.Metadata.Name,
+		"version": manifest.Metadata.Version,
 		"status":  "loaded",
 		"path":    pluginDir,
 	})
@@ -443,9 +447,9 @@ func UninstallPluginHandler(c *gin.Context) {
 			if plugin.Manifest != nil {
 				log.LogInfo("Plugin manifest details",
 					zap.String("id", strconv.Itoa(pluginID)),
-					zap.String("version", plugin.Manifest.Version),
-					zap.String("author", plugin.Manifest.Author),
-					zap.String("description", plugin.Manifest.Description))
+					zap.String("version", plugin.Manifest.Metadata.Version),
+					zap.String("author", plugin.Manifest.Metadata.Author),
+					zap.String("description", plugin.Manifest.Metadata.Description))
 			}
 
 			// Get registered routes before unloading
@@ -479,7 +483,7 @@ func UninstallPluginHandler(c *gin.Context) {
 		log.LogWarn("Plugin not found in filesystem for uninstallation", zap.String("id", strconv.Itoa(pluginID)))
 	} else {
 		// get plugin's name
-		pluginName := plugin.Manifest.Name
+		pluginName := plugin.Manifest.Metadata.Name
 		pluginFolder := fmt.Sprintf("%s-%d", pluginName, pluginID)
 		pluginDir := filepath.Join("./plugins", pluginFolder)
 
@@ -694,11 +698,11 @@ func GetPluginStatusHandler(c *gin.Context) {
 	if plugin != nil {
 		status := gin.H{
 			"id":      pluginID,
-			"name":    plugin.Manifest.Name,
-			"version": plugin.Manifest.Version,
+			"name":    plugin.Manifest.Metadata.Name,
+			"version": plugin.Manifest.Metadata.Version,
 			"enabled": true,
 			"status":  "active",
-			"routes":  extractPluginRoutes(*plugin),
+			"routes":  extractPluginRoutesFromManifest(plugin.Manifest),
 		}
 		c.JSON(http.StatusOK, status)
 		return
@@ -888,23 +892,16 @@ func getPluginStatus(p pkg.Plugin) string {
 	return "active" // If plugin is registered, it's active
 }
 
-// extractPluginRoutes extracts the routes of a plugin
-func extractPluginRoutes(p pkg.Plugin) []string {
-	routes := []string{}
-
-	for _, route := range p.Manifest.Routes {
-		routes = append(routes, route.Method+" "+route.Path)
-	}
-
-	return routes
-}
-
 // extractPluginRoutesFromManifest extracts routes from a plugin manifest
 func extractPluginRoutesFromManifest(manifest *pkg.PluginManifest) []string {
 	routes := []string{}
 
-	for _, route := range manifest.Routes {
-		routes = append(routes, route.Method+" "+route.Path)
+	if manifest.Spec.Backend != nil {
+		for _, route := range manifest.Spec.Backend.Routes {
+			for _, method := range route.Methods {
+				routes = append(routes, method+" "+route.Path)
+			}
+		}
 	}
 
 	return routes

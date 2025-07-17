@@ -20,6 +20,7 @@ const InstallationPageLazy = lazy(() => import('../pages/InstallationPage'));
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Dashboard'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
 const MetricsDashboardLazy = lazy(() => import('../components/MetricsDashboard'));
+const ResourceFilterPageLazy = lazy(() => import('../pages/ResourceFilterPage'));
 
 export const routesConfig: RouteObject[] = [
   {
@@ -144,6 +145,16 @@ export const routesConfig: RouteObject[] = [
           <ProtectedRoute>
             <Suspense fallback={<LoadingFallback message="Loading metrics..." size="medium" />}>
               <MetricsDashboardLazy />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'resources',
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback message="Loading resources..." size="medium" />}>
+              <ResourceFilterPageLazy />
             </Suspense>
           </ProtectedRoute>
         ),

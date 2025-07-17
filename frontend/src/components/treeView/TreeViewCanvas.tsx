@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { ReactFlowProvider } from 'reactflow';
 import { Plus } from 'lucide-react';
@@ -7,34 +7,25 @@ import useTheme from '../../stores/themeStore';
 import { FlowCanvas } from '../wds_topology/FlowCanvas';
 import { ZoomControls } from '../wds_topology/ZoomControls';
 import FullScreenToggle from '../skeleton/FullScreenToggle';
-import ListViewComponent from '../ListViewComponent';
+import ListViewComponent, { ResourceItem as ListViewResourceItem } from '../ListViewComponent';
 import ListViewSkeleton from '../skeleton/ListViewSkeleton';
 import TreeViewSkeleton from '../skeleton/TreeViewSkeleton';
-import {
-  CustomNode,
-  CustomEdge,
-  ResourceDataChangeEvent,
-  ResourceItem as TreeViewResourceItem,
-} from './types';
+import { darkTheme, lightTheme } from '../../lib/theme-utils';
+import { CustomNode, CustomEdge, ResourceDataChangeEvent, ResourceItem } from './types';
+import { ResourceFilter } from '../ResourceFilters';
 
-// Import the ListViewComponent ResourceItem type
-import type { ResourceItem as ListViewResourceItem } from '../ListViewComponent';
-
-// Type adapter to convert ListViewComponent ResourceItem to TreeView ResourceItem
-const adaptResourceItem = (listViewItem: ListViewResourceItem): TreeViewResourceItem => {
+// Helper function to adapt resource items
+const adaptResourceItem = (item: ListViewResourceItem): ResourceItem => {
   return {
-    apiVersion: 'v1', // Default value since ListViewComponent doesn't have this
-    kind: listViewItem.kind,
+    apiVersion: item.version || '',
+    kind: item.kind,
     metadata: {
-      name: listViewItem.name,
-      namespace: listViewItem.namespace,
-      creationTimestamp: listViewItem.createdAt,
-      labels: listViewItem.labels || {},
-      uid: listViewItem.uid,
+      name: item.name,
+      namespace: item.namespace,
+      creationTimestamp: item.createdAt,
+      labels: item.labels,
+      uid: item.uid,
     },
-    // Add other required fields with default values
-    spec: {},
-    status: {},
   };
 };
 
@@ -52,6 +43,7 @@ interface TreeViewCanvasProps {
   onCollapseAll: () => void;
   isCollapsed: boolean;
   containerRef: React.RefObject<HTMLDivElement>;
+  resourceFilters?: ResourceFilter;
 }
 
 const TreeViewCanvas = memo<TreeViewCanvasProps>(
@@ -69,6 +61,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
     onCollapseAll,
     isCollapsed,
     containerRef,
+    resourceFilters,
   }) => {
     const { t } = useTranslation();
     const theme = useTheme(state => state.theme);
@@ -107,6 +100,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
         <ListViewComponent
           filteredContext={filteredContext}
           onResourceDataChange={handleResourceDataChange}
+          initialResourceFilters={resourceFilters}
         />
       );
     }
@@ -135,14 +129,15 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                   alignItems: 'center',
                   gap: 1,
                   backgroundColor:
-                    theme === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                    theme === 'dark' ? darkTheme.element.card : lightTheme.element.card,
                   padding: 4,
                   borderRadius: 2,
+                  boxShadow: theme === 'dark' ? darkTheme.shadow.md : lightTheme.shadow.md,
                 }}
               >
                 <Typography
                   sx={{
-                    color: theme === 'dark' ? '#fff' : '#333',
+                    color: theme === 'dark' ? darkTheme.text.primary : lightTheme.text.primary,
                     fontWeight: 500,
                     fontSize: '22px',
                   }}
@@ -152,7 +147,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                 <Typography
                   variant="body2"
                   sx={{
-                    color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#00000099',
+                    color: theme === 'dark' ? darkTheme.text.secondary : lightTheme.text.secondary,
                     fontSize: '17px',
                     mb: 2,
                   }}
@@ -164,9 +159,16 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                   startIcon={<Plus size={20} />}
                   onClick={onCreateWorkload}
                   sx={{
-                    backgroundColor: '#2f86ff',
+                    backgroundColor:
+                      theme === 'dark' ? darkTheme.brand.primary : lightTheme.brand.primary,
                     color: '#fff',
-                    '&:hover': { backgroundColor: '#1f76e5' },
+                    '&:hover': {
+                      backgroundColor:
+                        theme === 'dark'
+                          ? darkTheme.brand.primaryDark
+                          : lightTheme.brand.primaryDark,
+                    },
+                    boxShadow: theme === 'dark' ? darkTheme.shadow.md : lightTheme.shadow.md,
                   }}
                 >
                   {t('treeView.createWorkload')}

@@ -9,16 +9,16 @@ import {
   TableRow,
   IconButton,
 } from '@mui/material';
-import { ResourceItem } from './TreeViewComponent';
+import { TreeResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
 import { useTranslation } from 'react-i18next';
 
 interface GroupPanelProps {
   namespace: string;
   groupType: string;
-  groupItems: ResourceItem[];
+  groupItems: TreeResourceItem[];
   onClose: () => void;
-  onItemSelect: (item: ResourceItem) => void;
+  onItemSelect: (item: TreeResourceItem) => void;
   isOpen?: boolean; // Add isOpen prop
 }
 
@@ -31,7 +31,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
-  const [selectedItem, setSelectedItem] = useState<ResourceItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<TreeResourceItem | null>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isPanelVisible, setIsPanelVisible] = useState(false);
 
@@ -53,7 +53,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
     }
   }, [isOpen, groupType, groupItems]);
 
-  const handleItemClick = (item: ResourceItem) => {
+  const handleItemClick = (item: TreeResourceItem) => {
     setSelectedItem(item);
   };
 

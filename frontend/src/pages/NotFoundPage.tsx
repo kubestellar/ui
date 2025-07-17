@@ -6,10 +6,17 @@ const NotFoundPage: React.FC = () => {
   const { t } = useTranslation();
   const [currentQuote, setCurrentQuote] = useState(0);
 
-  const quotes = t('notFoundPage.quotes', { returnObjects: true }) as Array<{
-    text: string;
-    author: string;
-  }>;
+  // Get quotes from translation with fallback
+  const translatedQuotes = t('notFoundPage.quotes', { returnObjects: true });
+  const quotes =
+    Array.isArray(translatedQuotes) && translatedQuotes.length > 0
+      ? translatedQuotes
+      : [
+          {
+            text: 'Page not found',
+            author: 'System',
+          },
+        ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -19,7 +26,7 @@ const NotFoundPage: React.FC = () => {
   }, [quotes.length]);
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-base-200">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-base-200">
       <style>
         {`
         layer base {
@@ -261,7 +268,12 @@ const NotFoundPage: React.FC = () => {
           <h2 className="text-2xl font-semibold text-base-content md:text-3xl">
             {t('notFoundPage.mainTitle')}
           </h2>
-          <p className="mx-auto max-w-md text-base-content/70">{t('notFoundPage.description')}</p>
+          <p className="mx-auto max-w-md text-base-content/70">
+            {t(
+              'notFoundPage.description',
+              'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.'
+            )}
+          </p>
         </div>
 
         {/* Quote Section */}

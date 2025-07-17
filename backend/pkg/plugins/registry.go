@@ -106,12 +106,17 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 
 	// Check if WASM file exists
-	wasmPath := filepath.Join(dirPath, manifest.Name+".wasm")
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(dirPath, wasmFileName)
 	wasmInfo, err := os.Stat(wasmPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginInfo{
-				Name:         manifest.Name,
+				Name:         manifest.Metadata.Name,
 				Path:         dirPath,
 				ManifestPath: manifestPath,
 				WasmPath:     wasmPath,
@@ -131,7 +136,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	// }
 
 	// Check if the plugin is loaded and created in DB
-	exist, err := CheckPluginWithInfo(manifest.Name, manifest.Version, manifest.Description)
+	exist, err := CheckPluginWithInfo(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
 	if err != nil {
 		return nil, err
 	}
@@ -140,10 +145,10 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 
 	return &PluginInfo{
-		Name:         manifest.Name,
-		Version:      manifest.Version,
-		Author:       manifest.Author,
-		Description:  manifest.Description,
+		Name:         manifest.Metadata.Name,
+		Version:      manifest.Metadata.Version,
+		Author:       manifest.Metadata.Author,
+		Description:  manifest.Metadata.Description,
 		Path:         dirPath,
 		ManifestPath: manifestPath,
 		WasmPath:     wasmPath,
@@ -179,7 +184,7 @@ func (pr *PluginRegistry) ReloadPlugin(pluginID int) error {
 		return fmt.Errorf("failed to unload plugin: %v", err)
 	}
 
-	pluginName := pr.manager.plugins[pluginID].Manifest.Name
+	pluginName := pr.manager.plugins[pluginID].Manifest.Metadata.Name
 	// Then load it again
 	if err := pr.LoadPlugin(pluginName); err != nil {
 		return fmt.Errorf("failed to reload plugin: %v", err)

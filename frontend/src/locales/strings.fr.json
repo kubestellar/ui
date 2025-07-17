@@ -1961,7 +1961,11 @@
       },
       "workloads": {
         "title": "Charges de travail",
-        "description": "Gérer les charges de travail sur les clusters"
+        "description": "Gérer les charges de travail entre clusters"
+      },
+      "resourceExplorer": {
+        "title": "Explorateur de Ressources",
+        "description": "Rechercher et filtrer les ressources Kubernetes"
       },
       "bindingPolicies": {
         "title": "Politiques d'assignation",
@@ -2211,5 +2215,34 @@
         "userDeleted": "Utilisateur supprimé avec succès"
       }
     }
+  },
+  "notFoundPage": {
+    "logoAlt": "Logo KubeStellar",
+    "mainTitle": "404 - Page non trouvée",
+    "description": "La page que vous recherchez a peut-être été supprimée, son nom a été modifié ou elle est temporairement indisponible.",
+    "returnHomeButton": "Retour à l'accueil",
+    "tryAgainButton": "Réessayer",
+    "quotes": [
+      {
+        "text": "Dans le vaste univers du code, parfois nous nous perdons parmi les étoiles.",
+        "author": "Développeur Anonyme"
+      },
+      {
+        "text": "Le chemin moins fréquenté n'est souvent pas trouvé pour une raison.",
+        "author": "Explorateur Web"
+      },
+      {
+        "text": "Tous ceux qui errent ne sont pas perdus, mais cette page l'est certainement.",
+        "author": "J.R.R. Token"
+      },
+      {
+        "text": "Le succès n'est pas définitif, le 404 n'est pas fatal: c'est le courage de naviguer qui compte.",
+        "author": "Winston Codehill"
+      },
+      {
+        "text": "La meilleure façon de prédire l'avenir est d'implémenter un routage approprié.",
+        "author": "Alan Turning"
+      }
+    ]
   }
 }
