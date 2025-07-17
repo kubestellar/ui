@@ -1,18 +1,18 @@
 package wecs_test
 
 import (
-	"testing"
 	"github.com/kubestellar/ui/backend/wecs"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestResourceDataStruct(t *testing.T) {
 	r := wecs.ResourceData{
-		Name: "test",
-		Kind: "Pod",
-		Raw: []byte(`{"foo":"bar"}`),
+		Name:        "test",
+		Kind:        "Pod",
+		Raw:         []byte(`{"foo":"bar"}`),
 		ReplicaSets: nil,
-		Pods: nil,
+		Pods:        nil,
 	}
 	assert.Equal(t, "test", r.Name)
 	assert.Equal(t, "Pod", r.Kind)
@@ -21,7 +21,7 @@ func TestResourceDataStruct(t *testing.T) {
 
 func TestClusterDataStruct(t *testing.T) {
 	c := wecs.ClusterData{
-		Name: "cluster1",
+		Name:       "cluster1",
 		Namespaces: nil,
 	}
 	assert.Equal(t, "cluster1", c.Name)
