@@ -75,8 +75,8 @@ const WecsTreeview = () => {
     setIsExpanded,
     setIsTransforming,
     stateRef,
-    data => transformDataToTree(data as WecsCluster[]),
-    wecsData
+    data => transformDataToTree(data),
+    wecsData as WecsCluster[] | null
   );
   const { handleCancelCreateOptions, handleCreateWorkloadClick } = useCreateOptionsHandlers(
     setShowCreateOptions,

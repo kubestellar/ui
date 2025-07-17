@@ -23,7 +23,7 @@ interface CreateNodeParams {
   edgeCache: React.MutableRefObject<Map<string, CustomEdge>>;
   edgeIdCounter: React.MutableRefObject<number>;
   stateRef: React.MutableRefObject<{ isCollapsed: boolean; isExpanded: boolean }>;
-  t: (key: string, options?: any) => string;
+  t: (key: string, options?: { count?: number }) => string;
   setSelectedNode: (node: SelectedNode | null) => void;
   handleClosePanel: () => void;
   handleMenuOpen: (event: React.MouseEvent, nodeId: string) => void;

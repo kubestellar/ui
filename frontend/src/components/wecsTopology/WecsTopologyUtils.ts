@@ -92,7 +92,7 @@ export const getNodeConfig = (type: string) => {
 
 export const getTimeAgo = (
   timestamp: string | undefined,
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: { count?: number }) => string
 ): string => {
   if (!timestamp) return 'Unknown';
   const now = new Date();

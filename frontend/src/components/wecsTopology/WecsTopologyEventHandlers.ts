@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { CustomNode, SelectedNode, ContextMenuState } from './WecsTopologyInterfaces';
+import { CustomNode, SelectedNode, ContextMenuState, WecsCluster } from './WecsTopologyInterfaces';
 import { parseNodeId } from './WecsTopologyUtils';
 
 export const useContextMenuHandlers = (
@@ -116,15 +116,17 @@ export const useViewToggleHandlers = (
   setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>,
   setIsTransforming: React.Dispatch<React.SetStateAction<boolean>>,
   stateRef: React.MutableRefObject<{ isCollapsed: boolean; isExpanded: boolean }>,
-  transformDataToTree: (data: any) => void,
-  wecsData: any
+  transformDataToTree: (data: WecsCluster[]) => void,
+  wecsData: WecsCluster[] | null
 ) => {
   const handleToggleCollapse = useCallback(() => {
     setIsCollapsed(prev => {
       const newCollapsed = !prev;
       stateRef.current.isCollapsed = newCollapsed;
       setIsTransforming(true);
-      transformDataToTree(wecsData);
+      if (wecsData) {
+        transformDataToTree(wecsData);
+      }
       return newCollapsed;
     });
   }, [wecsData, transformDataToTree, setIsCollapsed, setIsTransforming, stateRef]);
@@ -134,7 +136,9 @@ export const useViewToggleHandlers = (
       const newExpanded = true;
       stateRef.current.isExpanded = newExpanded;
       setIsTransforming(true);
-      transformDataToTree(wecsData);
+      if (wecsData) {
+        transformDataToTree(wecsData);
+      }
       return newExpanded;
     });
   }, [wecsData, transformDataToTree, setIsExpanded, setIsTransforming, stateRef]);
@@ -144,7 +148,9 @@ export const useViewToggleHandlers = (
       const newExpanded = false;
       stateRef.current.isExpanded = newExpanded;
       setIsTransforming(true);
-      transformDataToTree(wecsData);
+      if (wecsData) {
+        transformDataToTree(wecsData);
+      }
       return newExpanded;
     });
   }, [wecsData, transformDataToTree, setIsExpanded, setIsTransforming, stateRef]);

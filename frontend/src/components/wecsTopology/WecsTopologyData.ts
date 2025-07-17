@@ -2,9 +2,36 @@ import { useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
 import { api } from '../../lib/api';
-import { CustomNode, CustomEdge, WecsCluster, ResourceItem } from './WecsTopologyInterfaces';
+import {
+  CustomNode,
+  CustomEdge,
+  WecsCluster,
+  ResourceItem,
+  WecsResource,
+  WecsResourceType,
+  WecsNamespace,
+  SelectedNode,
+} from './WecsTopologyInterfaces';
 import { createNode } from './WecsTopologyNodeHandling';
 import { getLayoutedElements } from './WecsTopologyLayout';
+
+interface PodData {
+  name: string;
+  raw: ResourceItem;
+  creationTimestamp?: string;
+}
+
+interface ReplicaSetData {
+  name: string;
+  raw: ResourceItem;
+  pods?: PodData[];
+  creationTimestamp?: string;
+}
+
+interface ClusterData {
+  cluster: string;
+  namespaces: WecsNamespace[];
+}
 
 interface TransformDataParams {
   setNodes: React.Dispatch<React.SetStateAction<CustomNode[]>>;
@@ -21,8 +48,8 @@ interface TransformDataParams {
   stateRef: React.MutableRefObject<{ isCollapsed: boolean; isExpanded: boolean }>;
   nodes: CustomNode[];
   edges: CustomEdge[];
-  t: (key: string, options?: any) => string;
-  setSelectedNode: (node: any) => void;
+  t: (key: string, options?: { count?: number }) => string;
+  setSelectedNode: (node: SelectedNode | null) => void;
   handleClosePanel: () => void;
   handleMenuOpen: (event: React.MouseEvent, nodeId: string) => void;
 }
@@ -236,8 +263,8 @@ const processExpandedView = async (
 };
 
 const processCollapsedResources = (
-  cluster: any,
-  namespace: any,
+  cluster: ClusterData,
+  namespace: WecsNamespace,
   namespaceId: string,
   newNodes: CustomNode[],
   newEdges: CustomEdge[],
@@ -245,11 +272,11 @@ const processCollapsedResources = (
 ) => {
   const resourceGroups: Record<string, ResourceItem[]> = {};
 
-  namespace.resourceTypes.forEach((resourceType: any) => {
+  namespace.resourceTypes.forEach((resourceType: WecsResourceType) => {
     // Skip Event type resources
     if (resourceType.kind.toLowerCase() === 'event') return;
 
-    resourceType.resources.forEach((resource: any) => {
+    resourceType.resources.forEach((resource: WecsResource) => {
       const kindLower = resourceType.kind.toLowerCase();
       if (!resourceGroups[kindLower]) {
         resourceGroups[kindLower] = [];
@@ -292,8 +319,8 @@ const processCollapsedResources = (
 };
 
 const processExpandedResources = (
-  cluster: any,
-  namespace: any,
+  cluster: ClusterData,
+  namespace: WecsNamespace,
   namespaceId: string,
   newNodes: CustomNode[],
   newEdges: CustomEdge[],
@@ -302,11 +329,11 @@ const processExpandedResources = (
   // First collect all ReplicaSet names that are children of deployments
   const childReplicaSets = new Set<string>();
 
-  namespace.resourceTypes.forEach((resourceType: any) => {
+  namespace.resourceTypes.forEach((resourceType: WecsResourceType) => {
     if (resourceType.kind.toLowerCase() === 'deployment') {
-      resourceType.resources.forEach((resource: any) => {
+      resourceType.resources.forEach((resource: WecsResource) => {
         if (resource && resource.replicaSets && Array.isArray(resource.replicaSets)) {
-          resource.replicaSets.forEach((rs: any) => {
+          resource.replicaSets.forEach((rs: ReplicaSetData) => {
             if (rs && rs.name) {
               childReplicaSets.add(rs.name);
             }
@@ -317,13 +344,13 @@ const processExpandedResources = (
   });
 
   // Now process all resources while filtering ReplicaSets that are children
-  namespace.resourceTypes.forEach((resourceType: any) => {
+  namespace.resourceTypes.forEach((resourceType: WecsResourceType) => {
     // Skip Event type resources
     if (resourceType.kind.toLowerCase() === 'event') return;
 
     const kindLower = resourceType.kind.toLowerCase();
 
-    resourceType.resources.forEach((resource: any, index: number) => {
+    resourceType.resources.forEach((resource: WecsResource, index: number) => {
       if (!resource || typeof resource !== 'object' || !resource.raw) return;
       const rawResource = resource.raw;
       if (
@@ -384,18 +411,22 @@ const processExpandedResources = (
 };
 
 const processResourceChildren = (
-  resource: any,
+  resource: WecsResource,
   resourceId: string,
   kindLower: string,
-  rawResource: any,
+  rawResource: ResourceItem,
   status: string,
-  cluster: any,
-  namespace: any,
+  cluster: ClusterData,
+  namespace: WecsNamespace,
   newNodes: CustomNode[],
   newEdges: CustomEdge[],
   params: TransformDataParams
 ) => {
-  const createChildNode = (childData: any, childType: string, parentId: string) => {
+  const createChildNode = (
+    childData: PodData | ReplicaSetData | { name: string; raw: ResourceItem },
+    childType: string,
+    parentId: string
+  ) => {
     createNode({
       id: `${childType}:${cluster.cluster}:${namespace.namespace}:${childData.name}:${Math.random()}`,
       label: childData.name,
@@ -424,12 +455,12 @@ const processResourceChildren = (
 
   if (kindLower === 'deployment' && rawResource.spec) {
     if (resource.replicaSets && Array.isArray(resource.replicaSets)) {
-      resource.replicaSets.forEach((rs: any, rsIndex: number) => {
+      resource.replicaSets.forEach((rs: ReplicaSetData, rsIndex: number) => {
         const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rs.name}:${rsIndex}`;
         createChildNode(rs, 'replicaset', resourceId);
 
         if (rs.pods && Array.isArray(rs.pods)) {
-          rs.pods.forEach((pod: any) => {
+          rs.pods.forEach((pod: PodData) => {
             createChildNode(pod, 'pod', replicaSetId);
           });
         }
@@ -440,7 +471,7 @@ const processResourceChildren = (
     rawResource.spec
   ) {
     if (resource.pods && Array.isArray(resource.pods)) {
-      resource.pods.forEach((pod: any) => {
+      resource.pods.forEach((pod: PodData) => {
         createChildNode(pod, 'pod', resourceId);
       });
     }
@@ -452,7 +483,7 @@ const processResourceChildren = (
     ) {
       const pods = resource.replicaSets[0].pods;
       if (pods && Array.isArray(pods)) {
-        pods.forEach((pod: any) => {
+        pods.forEach((pod: PodData) => {
           createChildNode(pod, 'pod', resourceId);
         });
       }
