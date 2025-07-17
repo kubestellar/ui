@@ -11,7 +11,7 @@ const WDSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/WDS'));
 const BPLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/BP'));
 const NotFoundPageLazy = lazy(() => import('../pages/NotFoundPage'));
 const TreeViewLazy = lazy(() => import('../components/TreeViewComponent'));
-const WecsTreeviewLazy = lazy(() => import('../components/WecsTopology'));
+const WecsTreeviewLazy = lazy(() => import('../components/wecsTopology/WecsTopology'));
 const PluginManagerLazy = lazy(() =>
   import('../components/PluginManager').then(module => ({ default: module.PluginManager }))
 );
