@@ -41,6 +41,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   const [error, setError] = useState<string | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const isUnmountedRef = useRef(false);
 
   // Auto-scroll to bottom of logs
   useEffect(() => {
@@ -51,7 +52,9 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
 
   // Connect to WebSocket
   useEffect(() => {
+    isUnmountedRef.current = false;
     const connectWebSocket = () => {
+      if (isUnmountedRef.current) return null;
       try {
         const encodedClusterName = encodeURIComponent(clusterName);
         const baseUrl = process.env.VITE_BASE_URL || 'http://localhost:4000';
@@ -63,12 +66,14 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
         wsRef.current = ws;
 
         ws.onopen = () => {
+          if (isUnmountedRef.current) return;
           console.log('WebSocket connection established');
           setConnected(true);
           setError(null);
         };
 
         ws.onmessage = event => {
+          if (isUnmountedRef.current) return;
           try {
             const data = JSON.parse(event.data) as LogMessage;
             setLogs(prevLogs => [...prevLogs, data]);
@@ -88,6 +93,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
               }, 1000);
             }
           } catch (err) {
+            if (isUnmountedRef.current) return;
             console.error('Error parsing WebSocket message:', err);
             setOnboardingStatus('failed');
             setOnboardingError('Failed to parse response');
@@ -96,11 +102,13 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
         };
 
         ws.onclose = () => {
+          if (isUnmountedRef.current) return;
           console.log('WebSocket connection closed');
           setConnected(false);
         };
 
         ws.onerror = error => {
+          if (isUnmountedRef.current) return;
           console.error('WebSocket error:', error);
           setError(t('onboardingLogs.errors.websocketFailed'));
           setConnected(false);
@@ -108,6 +116,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
 
         return ws;
       } catch (error) {
+        if (isUnmountedRef.current) return null;
         console.error('Error creating WebSocket:', error);
         setError(t('onboardingLogs.errors.connectionFailed'));
         return null;
@@ -117,6 +126,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
     const ws = connectWebSocket();
 
     return () => {
+      isUnmountedRef.current = true;
       if (ws) {
         ws.close();
       }
