@@ -2,8 +2,6 @@ import {
   useSystemMetrics,
   useDeploymentsMetrics,
   useHealthMetrics,
-  useGitHubMetrics,
-  useHelmMetrics,
   useRedisMetrics,
   useKubernetesMetrics,
   usePodHealthMetrics,
@@ -126,8 +124,6 @@ const MetricsDashboard = () => {
   const { data: system, isLoading: loadingSystem } = useSystemMetrics();
   const { data: deployments, isLoading: loadingDeployments } = useDeploymentsMetrics();
   const { data: health, isLoading: loadingHealth } = useHealthMetrics();
-  const { data: github } = useGitHubMetrics();
-  const { data: helm } = useHelmMetrics();
   const { data: redis } = useRedisMetrics();
   const { data: k8s } = useKubernetesMetrics();
   const { data: podHealth } = usePodHealthMetrics();
@@ -197,8 +193,6 @@ const MetricsDashboard = () => {
   const isSystemFallback = !system;
   const isDeploymentsFallback = !deployments;
   const isHealthFallback = !health;
-  const isGithubFallback = !github;
-  const isHelmFallback = !helm;
   const isRedisFallback = !redis;
   const isK8sFallback = !k8s;
   const isPodHealthFallback = !podHealth;
@@ -494,64 +488,6 @@ const MetricsDashboard = () => {
               value={podHealth?.totalPods}
               fallback="-"
               isFallback={!podHealth?.totalPods}
-            />
-          </div>
-        </div>
-        {/* GitHub Section */}
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="mb-2 flex items-center">
-            <BarChart3 className="mr-2 text-purple-500" /> GitHub Deployments
-          </div>
-          <div className="mb-2 text-lg font-semibold">
-            <Fallback value={github?.statistics.count} fallback="-" isFallback={isGithubFallback} />
-          </div>
-          <div className="text-xs text-gray-500">
-            Webhooks:{' '}
-            <Fallback
-              value={github?.statistics.webhook}
-              fallback="-"
-              isFallback={!github?.statistics.webhook}
-            />
-            , Manual:{' '}
-            <Fallback
-              value={github?.statistics.manual}
-              fallback="-"
-              isFallback={!github?.statistics.manual}
-            />
-            , Failed:{' '}
-            <Fallback
-              value={github?.statistics.failed}
-              fallback="-"
-              isFallback={!github?.statistics.failed}
-            />
-          </div>
-        </div>
-        {/* Helm Section */}
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="mb-2 flex items-center">
-            <BarChart3 className="mr-2 text-purple-500" /> Helm Deployments
-          </div>
-          <div className="mb-2 text-lg font-semibold">
-            <Fallback value={helm?.statistics.count} fallback="-" isFallback={isHelmFallback} />
-          </div>
-          <div className="text-xs text-gray-500">
-            Active:{' '}
-            <Fallback
-              value={helm?.statistics.active}
-              fallback="-"
-              isFallback={!helm?.statistics.active}
-            />
-            , Failed:{' '}
-            <Fallback
-              value={helm?.statistics.failed}
-              fallback="-"
-              isFallback={!helm?.statistics.failed}
-            />
-            , Succeeded:{' '}
-            <Fallback
-              value={helm?.statistics.succeeded}
-              fallback="-"
-              isFallback={!helm?.statistics.succeeded}
             />
           </div>
         </div>
