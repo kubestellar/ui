@@ -19,6 +19,7 @@ import {
   Activity,
   TrendingUp,
 } from 'lucide-react';
+import MetricsPieCharts from './MetricsPieCharts';
 
 const useHistogramMetric = (baseName: string) => {
   const bucket = usePrometheusMetric(`${baseName}_bucket`);
@@ -423,6 +424,20 @@ const MetricsDashboard = () => {
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* HTTP Metrics Pie Charts */}
+      <motion.div
+        className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, type: 'spring', delay: 0.1 }}
+      >
+        <h2 className="mb-6 flex items-center text-2xl font-bold text-blue-700 dark:text-blue-300">
+          <BarChart3 className="mr-2 text-blue-500" />
+          HTTP Metrics
+        </h2>
+        <MetricsPieCharts />
       </motion.div>
 
       {/* Detailed Sections */}

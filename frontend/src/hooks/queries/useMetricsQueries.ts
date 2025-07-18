@@ -87,6 +87,16 @@ export interface PodHealthMetricsResponse {
   healthPercent: number;
 }
 
+export interface HttpRequestMetric {
+  labels: Record<string, string>;
+  value: number;
+}
+
+export interface HttpErrorRequestMetric {
+  labels: Record<string, string>;
+  value: number;
+}
+
 export const useSystemMetrics = (options = {}) =>
   useQuery({
     queryKey: ['system-metrics'],
@@ -171,3 +181,47 @@ export const useKubectlOperationsTotal = (options = {}) =>
 export const useClusterOnboardingDuration = (options = {}) =>
   usePrometheusMetric('cluster_onboarding_duration_seconds', options);
 export const useGoGoroutines = (options = {}) => usePrometheusMetric('go_goroutines', options);
+
+const fetchHttpRequestsTotal = async (): Promise<HttpRequestMetric[]> => {
+  try {
+    const response = await api.get('/api/v1/metrics?name=http_requests_total');
+    return (Array.isArray(response.data) ? response.data : []).map((item: { labels: Record<string, string>; value: number | string }) => ({
+      labels: item.labels || {},
+      value: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
+    }));
+  } catch (error) {
+    console.error('Error fetching http_requests_total:', error);
+    return [];
+  }
+};
+
+const fetchHttpErrorRequestsTotal = async (): Promise<HttpErrorRequestMetric[]> => {
+  try {
+    const response = await api.get('/api/v1/metrics?name=http_error_requests_total');
+    return (Array.isArray(response.data) ? response.data : []).map((item: { labels: Record<string, string>; value: number | string }) => ({
+      labels: item.labels || {},
+      value: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
+    }));
+  } catch (error) {
+    console.error('Error fetching http_error_requests_total:', error);
+    return [];
+  }
+};
+
+export const useHttpRequestsTotal = (options = {}) =>
+  useQuery<HttpRequestMetric[]>({
+    queryKey: ['http-requests-total'],
+    queryFn: fetchHttpRequestsTotal,
+    refetchInterval: 30000,
+    staleTime: 25000,
+    ...options,
+  });
+
+export const useHttpErrorRequestsTotal = (options = {}) =>
+  useQuery<HttpErrorRequestMetric[]>({
+    queryKey: ['http-error-requests-total'],
+    queryFn: fetchHttpErrorRequestsTotal,
+    refetchInterval: 30000,
+    staleTime: 25000,
+    ...options,
+  });
