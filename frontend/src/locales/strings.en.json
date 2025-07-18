@@ -154,7 +154,8 @@
         "passwordMismatch": "Passwords do not match",
         "addFailed": "Failed to add user",
         "updateFailed": "Failed to update user",
-        "deleteFailed": "Failed to delete user"
+        "deleteFailed": "Failed to delete user",
+        "invalidUsername": "Username can only contain letters, numbers, underscore, and hyphen"
       },
       "success": {
         "userAdded": "User added successfully",

@@ -154,7 +154,8 @@
         "passwordMismatch": "Le password non corrispondono",
         "addFailed": "Aggiunta utente fallita",
         "updateFailed": "Aggiornamento utente fallito",
-        "deleteFailed": "Eliminazione utente fallita"
+        "deleteFailed": "Eliminazione utente fallita",
+        "invalidUsername": "Il nome utente può contenere solo lettere, numeri, underscore e trattini"
       },
       "success": {
         "userAdded": "Utente aggiunto con successo",
