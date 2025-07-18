@@ -197,7 +197,7 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	version := c.Query("version")
 
 	if version == "" {
-		version = "0.27.2" // newer version
+		version = "0.28.0" // newer version
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

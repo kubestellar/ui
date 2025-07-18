@@ -162,7 +162,7 @@ func TestCreateWDSContextUsingCommand(t *testing.T) {
 	}))
 	defer server.Close()
 
-	req := httptest.NewRequest("GET", "/create-wds?context=test-wds&version=0.27.2", nil)
+	req := httptest.NewRequest("GET", "/create-wds?context=test-wds&version=0.28.0", nil)
 	w := httptest.NewRecorder()
 
 	// Since this function requires WebSocket upgrade, we expect it to fail in unit test
