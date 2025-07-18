@@ -1,17 +1,42 @@
-package api_test
+package plugins_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/pkg/plugins"
+	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/tetratelabs/wazero"
 )
+
+func TestMain(m *testing.M) {
+	// Setup: initialize the global plugin manager and registry for all tests
+	manager := plugins.NewPluginManager(nil)
+	registry := plugins.NewPluginRegistry("./test_plugins", manager)
+	api.SetGlobalPluginManager(manager, registry)
+
+	// Run tests
+	code := m.Run()
+
+	// Optional teardown logic can go here
+	os.RemoveAll("./test_plugins") // Clean up test plugins directory
+
+	// Exit with the code from the tests
+	os.Exit(code)
+}
 
 func TestListPluginsHandler(t *testing.T) {
 	tests := []struct {
@@ -165,47 +190,108 @@ func TestInstallPluginHandler(t *testing.T) {
 }
 
 func TestUninstallPluginHandler(t *testing.T) {
-	tests := []struct {
-		name           string
-		pluginID       int
-		expectedStatus int
-		expectedError  string
-	}{
-		{
-			name:           "Valid plugin uninstallation",
-			pluginID:       123456789,
-			expectedStatus: http.StatusOK, // Plugin uninstalled successfully
-			expectedError:  "",
+	testDB, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer testDB.Close()
+
+	database.DB = testDB
+
+	gin.SetMode(gin.TestMode)
+	router := gin.Default()
+
+	prevManager := api.GetGlobalPluginManager()
+	prevRegistry := api.GetGlobalPluginRegistry()
+
+	testManager := plugins.NewPluginManager(router)
+	testRegistry := plugins.NewPluginRegistry("./test_plugins", testManager)
+	api.SetGlobalPluginManager(testManager, testRegistry)
+
+	// Set up a real wazero runtime and module
+	runtime := wazero.NewRuntime(context.Background())
+
+	// Create a dummy module using wazero's minimal WASM binary for testing
+	wasmBytes := []byte{
+		0x00, 0x61, 0x73, 0x6d, // WASM binary magic
+		0x01, 0x00, 0x00, 0x00, // WASM binary version
+	}
+	compiledModule, err := runtime.CompileModule(context.Background(), wasmBytes)
+	require.NoError(t, err)
+	testModule, err := runtime.InstantiateModule(context.Background(), compiledModule, wazero.NewModuleConfig())
+	require.NoError(t, err)
+
+	// Cleanup
+	t.Cleanup(func() {
+		api.SetGlobalPluginManager(prevManager, prevRegistry)
+		os.RemoveAll("./test_plugins")
+
+		_ = runtime.Close(context.Background()) // ensure cleanup
+	})
+
+	// Set up route
+	router.DELETE("/api/plugins/:id", api.UninstallPluginHandler)
+
+	plugin := &plugins.Plugin{
+		ID: 0, // will be assigned after RegisterPlugin
+		Manifest: &plugins.PluginManifest{
+			Metadata: plugins.PluginMetadata{
+				Name:        "TestPlugin",
+				Version:     "v0.1.0",
+				Description: "Temporary test plugin",
+			},
 		},
+		Instance: testModule,
+		Status:   "active",
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			gin.SetMode(gin.TestMode)
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
+	// --- MOCKING DB BEHAVIOR ---
 
-			// Set plugin ID in URL params
-			c.Params = []gin.Param{
-				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
-			}
+	// 1. Mock CheckPluginWithInfo
+	mock.ExpectQuery(`SELECT EXISTS\s+\(.*FROM plugin.*\)`).
+		WithArgs(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
-			// Create a mock request
-			req, _ := http.NewRequest(http.MethodDelete, "/plugins/"+strconv.Itoa(tt.pluginID), nil)
-			c.Request = req
+	// 2. Mock AddPluginToDB to return ID = 9999
+	mock.ExpectQuery(`INSERT INTO plugin .* RETURNING id`).
+		WithArgs(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, true, plugin.Manifest.Metadata.Description, 0, "active").
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(9999))
 
-			// Call the handler
-			api.UninstallPluginHandler(c)
+	// Register plugin
+	testManager.RegisterPlugin(plugin)
+	plugin.ID = 9999
 
-			// Assertions
-			assert.Equal(t, tt.expectedStatus, w.Code)
+	// Create dummy plugin directory to simulate plugin files
+	pluginFolder := fmt.Sprintf("%s-%d", plugin.Manifest.Metadata.Name, plugin.ID)
+	pluginDir := filepath.Join(testRegistry.GetPluginsDirectory(), pluginFolder)
+	err = os.MkdirAll(pluginDir, 0755)
+	require.NoError(t, err)
 
-			if tt.expectedError != "" {
-				assert.Contains(t, w.Body.String(), tt.expectedError)
-			}
-		})
-	}
+	// Create a dummy plugin.wasm file
+	wasmFilePath := filepath.Join(pluginDir, "plugin.wasm")
+	err = os.WriteFile(wasmFilePath, []byte("dummy wasm content"), 0644)
+	require.NoError(t, err)
+
+	// 3. Mock actual DELETE FROM plugin
+	mock.ExpectExec(`DELETE FROM plugin WHERE id = \$1`).
+		WithArgs(9999).
+		WillReturnResult(sqlmock.NewResult(0, 1)) // pretend one row was affected
+
+	// Send DELETE request
+	req, err := http.NewRequest(http.MethodDelete, "/api/plugins/9999", nil)
+	require.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// Assert response
+	require.Equal(t, http.StatusOK, w.Code)
+	require.JSONEq(t, `{"message": "Plugin uninstalled successfully"}`, w.Body.String())
+
+	// Check plugin removed from manager
+	_, exists := testManager.GetPlugin(9999)
+	require.False(t, exists)
+
+	// Verify all SQL expectations were met
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestEnablePluginHandler(t *testing.T) {
@@ -513,14 +599,14 @@ func TestSubmitPluginFeedbackHandler(t *testing.T) {
 		expectedError  string
 	}{
 		{
-			name: "Valid feedback submission",
+			name: "Valid feedback submission to nonexistent plugin",
 			requestBody: map[string]interface{}{
 				"pluginId": 123456789,
 				"rating":   4.5,
 				"comments": "Great plugin!",
 			},
-			expectedStatus: http.StatusBadRequest, // Invalid feedback data format
-			expectedError:  "Invalid feedback data",
+			expectedStatus: http.StatusNotFound,
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Invalid request body",

@@ -1,0 +1,39 @@
+apiVersion: tenancy.kflex.kubestellar.org/v1alpha1
+kind: ControlPlane
+metadata:
+  creationTimestamp: '2025-06-16T09:52:52Z'
+  finalizers:
+    - kflex.kubestellar.org/finalizer
+  generation: 1
+  labels:
+    kflex.kubestellar.io/cptype: wds
+  name: wds1
+  resourceVersion: '2288'
+  uid: d8fbfd3f-4640-4a2b-bcd4-a582243a05e0
+spec:
+  backend: shared
+  postCreateHook: kubestellar
+  tokenExpirationSeconds: 31536000
+  type: k8s
+status:
+  conditions:
+    - lastTransitionTime: '2025-06-16T09:53:26Z'
+      lastUpdateTime: '2025-06-16T09:53:26Z'
+      message: ''
+      reason: Available
+      status: 'True'
+      type: Ready
+    - lastTransitionTime: '2025-06-16T09:53:26Z'
+      lastUpdateTime: '2025-06-16T09:53:26Z'
+      message: ''
+      reason: ReconcileSuccess
+      status: 'True'
+      type: Synced
+  observedGeneration: 1
+  postCreateHooks:
+    kubestellar: true
+  secretRef:
+    inClusterKey: kubeconfig-incluster
+    key: kubeconfig
+    name: admin-kubeconfig
+    namespace: wds1-system

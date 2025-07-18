@@ -436,44 +436,42 @@ func UninstallPluginHandler(c *gin.Context) {
 	var successMessages []string
 
 	// Step 1: Handle new WASM-based plugin system
-	if pluginManager != nil && pluginRegistry != nil {
-		log.LogInfo("Processing WASM plugin uninstallation", zap.String("id", strconv.Itoa(pluginID)))
+	log.LogInfo("Processing WASM plugin uninstallation", zap.String("id", strconv.Itoa(pluginID)))
 
-		// Check if plugin exists in the WASM manager
-		if plugin, exists := pluginManager.GetPlugin(pluginID); exists {
-			log.LogInfo("Found WASM plugin, unloading", zap.String("id", strconv.Itoa(pluginID)))
+	// Check if plugin exists in the WASM manager
+	if plugin, exists := pluginManager.GetPlugin(pluginID); exists {
+		log.LogInfo("Found WASM plugin, unloading", zap.String("id", strconv.Itoa(pluginID)))
 
-			// Log plugin details before unloading
-			if plugin.Manifest != nil {
-				log.LogInfo("Plugin manifest details",
-					zap.String("id", strconv.Itoa(pluginID)),
-					zap.String("version", plugin.Manifest.Metadata.Version),
-					zap.String("author", plugin.Manifest.Metadata.Author),
-					zap.String("description", plugin.Manifest.Metadata.Description))
-			}
-
-			// Get registered routes before unloading
-			registeredRoutes := pluginManager.GetRegisteredRoutes(pluginID)
-			if len(registeredRoutes) > 0 {
-				successMessages = append(successMessages, fmt.Sprintf("Found %d registered routes", len(registeredRoutes)))
-				log.LogInfo("Found registered routes", zap.String("id", strconv.Itoa(pluginID)), zap.Strings("routes", registeredRoutes))
-			}
-
-			// Unload the plugin from the manager (this closes WASM instance and removes routes)
-			if err := pluginManager.UnloadPlugin(pluginID); err != nil {
-				uninstallErrors = append(uninstallErrors, fmt.Sprintf("Failed to unload WASM plugin: %v", err))
-				log.LogError("Failed to unload WASM plugin", zap.String("id", strconv.Itoa(pluginID)), zap.Error(err))
-			} else {
-				successMessages = append(successMessages, "WASM plugin unloaded successfully")
-				if len(registeredRoutes) > 0 {
-					successMessages = append(successMessages, "Plugin routes removed from router")
-				}
-				log.LogInfo("WASM plugin unloaded successfully", zap.String("id", strconv.Itoa(pluginID)))
-			}
-		} else {
-			uninstallErrors = append(uninstallErrors, fmt.Sprintf("WASM plugin not found: %d", pluginID))
-			log.LogWarn("WASM plugin not found for uninstallation", zap.String("id", strconv.Itoa(pluginID)))
+		// Log plugin details before unloading
+		if plugin.Manifest != nil {
+			log.LogInfo("Plugin manifest details",
+				zap.String("id", strconv.Itoa(pluginID)),
+				zap.String("version", plugin.Manifest.Metadata.Version),
+				zap.String("author", plugin.Manifest.Metadata.Author),
+				zap.String("description", plugin.Manifest.Metadata.Description))
 		}
+
+		// Get registered routes before unloading
+		registeredRoutes := pluginManager.GetRegisteredRoutes(pluginID)
+		if len(registeredRoutes) > 0 {
+			successMessages = append(successMessages, fmt.Sprintf("Found %d registered routes", len(registeredRoutes)))
+			log.LogInfo("Found registered routes", zap.String("id", strconv.Itoa(pluginID)), zap.Strings("routes", registeredRoutes))
+		}
+
+		// Unload the plugin from the manager (this closes WASM instance and removes routes)
+		if err := pluginManager.UnloadPlugin(pluginID); err != nil {
+			uninstallErrors = append(uninstallErrors, fmt.Sprintf("Failed to unload WASM plugin: %v", err))
+			log.LogError("Failed to unload WASM plugin", zap.String("id", strconv.Itoa(pluginID)), zap.Error(err))
+		} else {
+			successMessages = append(successMessages, "WASM plugin unloaded successfully")
+			if len(registeredRoutes) > 0 {
+				successMessages = append(successMessages, "Plugin routes removed from router")
+			}
+			log.LogInfo("WASM plugin unloaded successfully", zap.String("id", strconv.Itoa(pluginID)))
+		}
+	} else {
+		uninstallErrors = append(uninstallErrors, fmt.Sprintf("WASM plugin not found: %d", pluginID))
+		log.LogWarn("WASM plugin not found for uninstallation", zap.String("id", strconv.Itoa(pluginID)))
 	}
 
 	// Step 2: Remove plugin files from filesystem
@@ -569,6 +567,7 @@ func ReloadPluginHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Plugin manager not available",
 		})
+		log.LogError("Plugin manager not available for reloading plugin", zap.String("id", strconv.Itoa(pluginID)))
 		return
 	}
 
@@ -604,7 +603,7 @@ func EnablePluginHandler(c *gin.Context) {
 			"message": "Plugin not found",
 			"id":      pluginID,
 		})
-		log.LogInfo("Plugin not found for enabling", zap.String("id", strconv.Itoa(pluginID)))
+		log.LogWarn("Plugin not found for enabling", zap.String("id", strconv.Itoa(pluginID)))
 		return
 	}
 
@@ -722,9 +721,10 @@ func GetPluginSystemMetricsHandler(c *gin.Context) {
 	disabledCount := 0
 
 	for _, plugin := range allPlugins {
-		if plugin.Status == "active" {
+		switch plugin.Status {
+		case "active":
 			enabledCount++
-		} else if plugin.Status == "inactive" {
+		case "inactive":
 			disabledCount++
 		}
 	}
@@ -885,11 +885,6 @@ func findPluginByID(id int) *pkg.Plugin {
 		}
 	}
 	return nil
-}
-
-// getPluginStatus returns the status of a plugin (this is now simplified since we manage enabled/disabled state)
-func getPluginStatus(p pkg.Plugin) string {
-	return "active" // If plugin is registered, it's active
 }
 
 // extractPluginRoutesFromManifest extracts routes from a plugin manifest

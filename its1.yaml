@@ -1,0 +1,39 @@
+apiVersion: tenancy.kflex.kubestellar.org/v1alpha1
+kind: ControlPlane
+metadata:
+  creationTimestamp: '2025-06-16T09:46:56Z'
+  finalizers:
+    - kflex.kubestellar.org/finalizer
+  generation: 1
+  labels:
+    kflex.kubestellar.io/cptype: its
+  name: its1
+  resourceVersion: '1736'
+  uid: 15090a91-855a-4aa8-b9b6-6e8dd4cf7e78
+spec:
+  backend: shared
+  postCreateHook: ocm
+  tokenExpirationSeconds: 31536000
+  type: vcluster
+status:
+  conditions:
+    - lastTransitionTime: '2025-06-16T09:47:45Z'
+      lastUpdateTime: '2025-06-16T09:47:45Z'
+      message: ''
+      reason: Available
+      status: 'True'
+      type: Ready
+    - lastTransitionTime: '2025-06-16T09:47:45Z'
+      lastUpdateTime: '2025-06-16T09:47:45Z'
+      message: ''
+      reason: ReconcileSuccess
+      status: 'True'
+      type: Synced
+  observedGeneration: 1
+  postCreateHooks:
+    ocm: true
+  secretRef:
+    inClusterKey: config-incluster
+    key: config
+    name: vc-vcluster
+    namespace: its1-system

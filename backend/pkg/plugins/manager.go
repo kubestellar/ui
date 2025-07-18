@@ -17,6 +17,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/models"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
@@ -385,7 +386,9 @@ func (pm *PluginManager) UnloadPlugin(pluginID int) error {
 	}
 
 	// Close the WASM instance
-	plugin.Instance.Close(pm.ctx)
+	if plugin.Instance != nil {
+		plugin.Instance.Close(pm.ctx)
+	}
 
 	// Remove from plugins map
 	delete(pm.plugins, pluginID)
@@ -422,7 +425,18 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
 
 	var pluginID int
 	if !exist {
-		pluginID, err = AddPluginToDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, true, plugin.Manifest.Metadata.Description, 0, "active")
+		// Get userID
+		user, err := models.GetUserByUsername(plugin.Manifest.Metadata.Author)
+		if err != nil {
+			log.LogError("Failed to get user ID", zap.Error(err))
+			return
+		}
+		if user == nil {
+			log.LogError("User not found for plugin registration", zap.String("author", plugin.Manifest.Metadata.Author))
+			return
+		}
+		// Add plugin to database
+		pluginID, err = AddPluginToDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, true, plugin.Manifest.Metadata.Description, user.ID, "active")
 		if err != nil {
 			log.LogError("Failed to add plugin to database", zap.Error(err))
 		}
