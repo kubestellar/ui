@@ -26,6 +26,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [hasValidData, setHasValidData] = useState(false);
   const [hasValidWecsData, setHasValidWecsData] = useState(false);
   const [wecsData, setWecsData] = useState<WecsCluster[] | null>(null); // Updated from WecsClusterData[] to WecsCluster[]
+  const isUnmountedRef = useRef(false);
 
   // Get excluded namespaces from translations
   const excludedNamespaces = useMemo(
@@ -171,7 +172,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         ref.current = null;
         if (isWecs) setWecsIsConnected(false);
         else setIsConnected(false);
-        reconnectFunc();
+        // Only reconnect if not unmounted
+        if (!isUnmountedRef.current) {
+          reconnectFunc();
+        }
       };
 
       return ws;
@@ -216,6 +220,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   };
 
   useEffect(() => {
+    isUnmountedRef.current = false;
     const token = localStorage.getItem('jwtToken');
     // const currentRenderStartTime = renderStartTime.current;
 
@@ -240,6 +245,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     );
 
     return () => {
+      isUnmountedRef.current = true;
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -249,6 +255,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   }, [shouldConnect, connectWebSocket, reconnectWebSocket]);
 
   useEffect(() => {
+    isUnmountedRef.current = false;
     if (!shouldConnectWecs) return;
 
     // const currentRenderStartTime = renderStartTime.current;
@@ -260,6 +267,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     );
 
     return () => {
+      isUnmountedRef.current = true;
       if (wecsWsRef.current) {
         wecsWsRef.current.close();
         wecsWsRef.current = null;
