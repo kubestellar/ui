@@ -3,12 +3,21 @@ import { TextField, InputAdornment, Typography, IconButton, SxProps, Theme } fro
 import { Search } from 'lucide-react';
 import CloseIcon from '@mui/icons-material/Close';
 
-interface ColorScheme {
+interface ColorTheme {
   primary: string;
   primaryLight?: string;
+  primaryDark?: string;
+  secondary?: string;
+  white?: string;
+  background?: string;
+  paper?: string;
   text: string;
   textSecondary: string;
   border: string;
+  success?: string;
+  warning?: string;
+  error?: string;
+  disabled?: string;
   [key: string]: string | undefined;
 }
 
@@ -16,7 +25,7 @@ interface SearchComponentProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  colors: ColorScheme;
+  colors: ColorTheme;
   isDark: boolean;
   sx?: SxProps<Theme>;
   autoFocus?: boolean;

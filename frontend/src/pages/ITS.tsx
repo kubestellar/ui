@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
-import ClustersTable from '../components/ClustersTable';
+import ClustersTable from '../components/clusterTable/ClustersTable';
 import { useLocation } from 'react-router-dom';
 
 const ITS = () => {
   const { useClusters } = useClusterQueries();
-  const [currentPage, setCurrentPage] = useState(1);
-  const { data, error, isLoading } = useClusters(currentPage);
+  const { data, error, isLoading } = useClusters(1);
   const [openImportDialog, setOpenImportDialog] = useState(false);
   const location = useLocation();
 
@@ -51,7 +50,6 @@ const ITS = () => {
     );
 
   const clusters = data?.clusters || [];
-  const totalPages = Math.ceil((data?.count || 0) / 10);
 
   const formattedClusters = clusters.map(cluster => ({
     ...cluster,
@@ -64,9 +62,6 @@ const ITS = () => {
         <div className="p-4">
           <ClustersTable
             clusters={formattedClusters}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={page => setCurrentPage(page)}
             isLoading={isLoading}
             initialShowCreateOptions={openImportDialog}
             initialActiveOption="kubeconfig"
