@@ -185,10 +185,12 @@ export const useGoGoroutines = (options = {}) => usePrometheusMetric('go_gorouti
 const fetchHttpRequestsTotal = async (): Promise<HttpRequestMetric[]> => {
   try {
     const response = await api.get('/api/v1/metrics?name=http_requests_total');
-    return (Array.isArray(response.data) ? response.data : []).map((item: { labels: Record<string, string>; value: number | string }) => ({
-      labels: item.labels || {},
-      value: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
-    }));
+    return (Array.isArray(response.data) ? response.data : []).map(
+      (item: { labels: Record<string, string>; value: number | string }) => ({
+        labels: item.labels || {},
+        value: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
+      })
+    );
   } catch (error) {
     console.error('Error fetching http_requests_total:', error);
     return [];
@@ -198,10 +200,12 @@ const fetchHttpRequestsTotal = async (): Promise<HttpRequestMetric[]> => {
 const fetchHttpErrorRequestsTotal = async (): Promise<HttpErrorRequestMetric[]> => {
   try {
     const response = await api.get('/api/v1/metrics?name=http_error_requests_total');
-    return (Array.isArray(response.data) ? response.data : []).map((item: { labels: Record<string, string>; value: number | string }) => ({
-      labels: item.labels || {},
-      value: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
-    }));
+    return (Array.isArray(response.data) ? response.data : []).map(
+      (item: { labels: Record<string, string>; value: number | string }) => ({
+        labels: item.labels || {},
+        value: typeof item.value === 'number' ? item.value : Number(item.value) || 0,
+      })
+    );
   } catch (error) {
     console.error('Error fetching http_error_requests_total:', error);
     return [];
