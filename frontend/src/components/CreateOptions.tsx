@@ -587,7 +587,7 @@ spec:
           if (errorMessage.includes('cannot re-use a name')) {
             toast.error('Release name already exists. Please choose a different release name.');
           } else {
-          toast.error(t('workloads.createOptions.notifications.helmDeployFailed'));
+            toast.error(t('workloads.createOptions.notifications.helmDeployFailed'));
           }
         } else if (err.response.status === 400) {
           toast.error('Failed to deploy Helm chart!');

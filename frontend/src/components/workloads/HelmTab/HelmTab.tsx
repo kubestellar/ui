@@ -123,7 +123,7 @@ export const HelmTab = ({
         repoURL: 'https://charts.bitnami.com/bitnami',
         chartName: selectedChart,
         releaseName: uniqueReleaseName, // Use unique release name to prevent conflicts
-        namespace: selectedChart, 
+        namespace: selectedChart,
         workloadLabel: formData.workload_label,
       };
 
