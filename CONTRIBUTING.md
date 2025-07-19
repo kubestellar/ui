@@ -482,6 +482,10 @@ make lint
 
 ## Issue Assignment Guide
 
+This repository enforces a **maximum of 1 assignee per issue** to ensure clear ownership and accountability.
+
+### Using Comment Commands
+
 To manage issue assignments using GitHub comments:
 
 - **To assign yourself to an issue**, comment:
@@ -492,7 +496,6 @@ To manage issue assignments using GitHub comments:
 
 `/unassign`
 
----
 
 
 

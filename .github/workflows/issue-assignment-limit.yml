@@ -1,0 +1,94 @@
+name: 'Enforce Maximum 1 Assignee Per Issue'
+
+on:
+  issues:
+    types: [assigned, unassigned]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  enforce-assignment-limit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        run: |
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources/list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh
+
+      - name: Get current issue details
+        id: issue-details
+        run: |
+          # Wait a moment for the assignment action to complete
+          sleep 2
+          
+          # Get current assignees for the issue
+          assignees=$(gh issue view ${{ github.event.issue.number }} --json assignees --jq '.assignees[].login' | tr '\n' ' ' | sed 's/ $//')
+          echo "assignees=$assignees" >> $GITHUB_OUTPUT
+          
+          # Count assignees
+          assignee_count=$(echo "$assignees" | wc -w)
+          echo "assignee_count=$assignee_count" >> $GITHUB_OUTPUT
+          
+          echo "Current assignees: $assignees"
+          echo "Assignee count: $assignee_count"
+
+      - name: Check if more than 1 assignee
+        id: check-multiple-assignees
+        run: |
+          assignee_count=${{ steps.issue-details.outputs.assignee_count }}
+          
+          if [ "$assignee_count" -gt 1 ]; then
+            echo "multiple_assignees=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Issue has $assignee_count assignees, but only 1 assignee is allowed"
+          else
+            echo "multiple_assignees=false" >> $GITHUB_OUTPUT
+            echo "✅ Issue assignment is within limits (1 or 0 assignees)"
+          fi
+
+      - name: Remove excess assignees (keep only the most recent)
+        if: steps.check-multiple-assignees.outputs.multiple_assignees == 'true'
+        run: |
+          # Get all assignees
+          assignees=$(gh issue view ${{ github.event.issue.number }} --json assignees --jq '.assignees[].login' | tr '\n' ' ')
+          
+          # Keep only the first assignee (most recently assigned)
+          first_assignee=$(echo "$assignees" | awk '{print $1}')
+          
+          echo "Keeping assignee: $first_assignee"
+          echo "Removing other assignees..."
+          
+          # Remove all assignees first
+          gh issue edit ${{ github.event.issue.number }} --remove-assignee "*"
+          
+          # Add back only the first assignee
+          gh issue edit ${{ github.event.issue.number }} --add-assignee "$first_assignee"
+          
+          echo "✅ Removed excess assignees. Only $first_assignee remains assigned."
+
+      - name: Comment on issue about assignment limit
+        if: steps.check-multiple-assignees.outputs.multiple_assignees == 'true'
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "⚠️ **Assignment Limit Enforced**
+
+          This repository enforces a maximum of **1 assignee per issue** to ensure clear ownership and accountability.
+
+          Additional assignees have been automatically removed. Only the most recently assigned person remains.
+
+          If you need to change the assignee, please unassign the current person first, then assign the new person.
+
+          ---
+          *This action was performed automatically by the issue assignment workflow.*"
+
+      - name: Log assignment status
+        run: |
+          echo "Issue #${{ github.event.issue.number }} assignment check completed"
+          echo "Event type: ${{ github.event.action }}"
+          echo "Assignee count: ${{ steps.issue-details.outputs.assignee_count }}"
+          echo "Multiple assignees: ${{ steps.check-multiple-assignees.outputs.multiple_assignees }}" 
