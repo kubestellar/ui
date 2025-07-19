@@ -296,17 +296,106 @@ const WecsDetailsPanel = ({
 
   // Handle update
   const handleUpdate = useCallback(async () => {
-    try {
-      // TODO: Implement actual update logic
-      setSnackbarMessage('Update functionality not yet implemented');
-      setSnackbarSeverity('info');
+    if (!editedManifest.trim()) {
+      setSnackbarMessage(t('wecsDetailsPanel.errors.emptyManifest'));
+      setSnackbarSeverity('warning');
       setSnackbarOpen(true);
-    } catch {
-      setSnackbarMessage('Failed to update resource');
+      return;
+    }
+
+    try {
+      let manifestData;
+      
+      // Parse the manifest based on format
+      if (editFormat === 'json') {
+        manifestData = JSON.parse(editedManifest);
+      } else {
+        // For YAML, we'll convert it to JSON for the API
+        // In a real implementation, you'd use a proper YAML parser
+        try {
+          manifestData = JSON.parse(editedManifest);
+        } catch {
+          setSnackbarMessage(t('wecsDetailsPanel.errors.invalidManifest'));
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          return;
+        }
+      }
+
+      // Validate required fields
+      if (!manifestData.metadata?.name || !manifestData.kind) {
+        setSnackbarMessage(t('wecsDetailsPanel.errors.invalidManifest'));
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        return;
+      }
+
+      // Determine the API endpoint based on resource type
+      let endpoint: string;
+      const method: 'PUT' | 'PATCH' = 'PUT';
+
+      if (type.toLowerCase() === 'cluster') {
+        endpoint = `/api/cluster/${encodeURIComponent(name)}`;
+      } else {
+        if (!namespace) {
+          setSnackbarMessage(t('wecsDetailsPanel.errors.namespaceRequired'));
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+          return;
+        }
+        endpoint = `/api/${type.toLowerCase()}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+      }
+
+      // Add cluster context if available
+      const params = cluster ? { cluster } : {};
+
+      // Make the API call
+      const response = await api.request({
+        method,
+        url: endpoint,
+        data: manifestData,
+        params,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        setSnackbarMessage(t('wecsDetailsPanel.success.manifestUpdated'));
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        
+        // Refresh the manifest data
+        if (tabValue === 1) {
+          // Trigger a re-fetch of the manifest
+          const event = new Event('manifest-updated');
+          window.dispatchEvent(event);
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error: unknown) {
+      console.error('Failed to update manifest:', error);
+      
+      let errorMessage = t('wecsDetailsPanel.errors.failedUpdate');
+      
+      const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+      
+      if (axiosError.response?.status === 404) {
+        errorMessage = t('wecsDetailsPanel.errors.resourceNotFound');
+      } else if (axiosError.response?.status === 403) {
+        errorMessage = t('wecsDetailsPanel.errors.permissionDenied');
+      } else if (axiosError.response?.status === 422) {
+        errorMessage = t('wecsDetailsPanel.errors.invalidManifest');
+      } else if (axiosError.response?.data?.message) {
+        errorMessage = axiosError.response.data.message;
+      }
+      
+      setSnackbarMessage(errorMessage);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  }, []);
+  }, [editedManifest, editFormat, type, name, namespace, cluster, tabValue, t]);
 
   // Handle logs container change
   const handleLogsContainerChange = useCallback((event: SelectChangeEvent<string>) => {
