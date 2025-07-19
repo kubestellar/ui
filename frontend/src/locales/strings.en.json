@@ -2279,7 +2279,7 @@
     "noLabelsFound": "No labels found",
     "noMatchingFilters": "No resources match the current filters",
     "title": "Resource Explorer",
-    "selectKind": "Select Resource Kind",
+    "selectKind": "Select Kind / Object",
     "selectNamespace": "Select Namespace",
     "applyFilters": "Apply Filters",
     "results": "Results",
