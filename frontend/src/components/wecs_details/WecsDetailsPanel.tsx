@@ -120,8 +120,6 @@ const WecsDetailsPanel = ({
   const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
   const [logs, setLogs] = useState<string[]>([]); // Used by LogsTab internally
 
-
-
   // Missing state variables from original code
   const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
   const [isLogsContainerSelectActive, setIsLogsContainerSelectActive] = useState<boolean>(false);
@@ -144,7 +142,7 @@ const WecsDetailsPanel = ({
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => setTabValue(newValue);
   const handleSnackbarClose = () => setSnackbarOpen(false);
-  
+
   // Add a new effect to reset tab if logs tab is selected but unavailable
   useEffect(() => {
     // If the logs tab (index 2) is selected, but this is not a deployment/job pod, switch to summary tab
@@ -186,10 +184,10 @@ const WecsDetailsPanel = ({
   const handleClickOutside = useCallback(
     (event: MouseEvent) => {
       if (isOpen && !event.target) return;
-      
+
       const target = event.target as Node;
       const panelElement = document.querySelector('[data-testid="wecs-details-panel"]');
-      
+
       if (isOpen && panelElement && !panelElement.contains(target)) {
         handleClose();
       }
@@ -235,7 +233,9 @@ const WecsDetailsPanel = ({
 
             if (type.toLowerCase() === 'cluster') {
               const response = await api.get(`/api/cluster/${encodeURIComponent(name)}`);
-              manifestData = response.data ? JSON.stringify(response.data, null, 2) : t('wecsDetailsPanel.noManifest');
+              manifestData = response.data
+                ? JSON.stringify(response.data, null, 2)
+                : t('wecsDetailsPanel.noManifest');
             } else {
               if (!namespace) {
                 setError(t('wecsDetailsPanel.errors.namespaceRequired'));
@@ -245,7 +245,9 @@ const WecsDetailsPanel = ({
                 `/api/${type.toLowerCase()}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
                 { params: cluster ? { cluster } : {} }
               );
-              manifestData = response.data ? JSON.stringify(response.data, null, 2) : t('wecsDetailsPanel.noManifest');
+              manifestData = response.data
+                ? JSON.stringify(response.data, null, 2)
+                : t('wecsDetailsPanel.noManifest');
             }
 
             setEditedManifest(manifestData);
@@ -481,11 +483,11 @@ const WecsDetailsPanel = ({
                 metadata: {
                   name: clusterData.clusterName,
                   creationTimestamp: clusterData.itsManagedClusters?.[0]?.creationTime,
-                  labels: clusterData.itsManagedClusters?.[0]?.labels || {}
+                  labels: clusterData.itsManagedClusters?.[0]?.labels || {},
                 },
                 spec: {
-                  context: clusterData.itsManagedClusters?.[0]?.context
-                }
+                  context: clusterData.itsManagedClusters?.[0]?.context,
+                },
               };
               setEditedManifest(JSON.stringify(formattedCluster, null, 2));
             } else {
@@ -527,8 +529,8 @@ const WecsDetailsPanel = ({
                   labels: clusterDetails.itsManagedClusters?.[0]?.labels || {},
                 },
                 spec: {
-                  context: clusterDetails.itsManagedClusters?.[0]?.context
-                }
+                  context: clusterDetails.itsManagedClusters?.[0]?.context,
+                },
               },
               null,
               2
@@ -648,7 +650,7 @@ const WecsDetailsPanel = ({
           setSnackbarOpen(true);
           return;
         }
-        
+
         try {
           await updateClusterLabelsMutation.mutateAsync({
             contextName: manifestData.spec?.context || 'its1',
@@ -741,7 +743,17 @@ const WecsDetailsPanel = ({
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  }, [editedManifest, editFormat, type, name, namespace, cluster, tabValue, t, updateClusterLabelsMutation]);
+  }, [
+    editedManifest,
+    editFormat,
+    type,
+    name,
+    namespace,
+    cluster,
+    tabValue,
+    t,
+    updateClusterLabelsMutation,
+  ]);
 
   // Convert to useCallback to memoize it
   const connectWebSocket = useCallback(() => {
@@ -851,10 +863,6 @@ const WecsDetailsPanel = ({
     setSelectedLogsContainer(event.target.value);
   }, []);
 
-
-
-
-
   // Handle container selection change
   const handleContainerChange = (event: SelectChangeEvent<string>) => {
     // Just use stopPropagation without checking for nativeEvent
@@ -904,11 +912,9 @@ const WecsDetailsPanel = ({
     }
   }, [name, type]);
 
-
-
   return (
-    <Box 
-      sx={getPanelStyles(theme, isOpen)} 
+    <Box
+      sx={getPanelStyles(theme, isOpen)}
       onClick={e => e.stopPropagation()}
       data-testid="wecs-details-panel"
     >

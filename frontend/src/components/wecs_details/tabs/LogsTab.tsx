@@ -357,16 +357,11 @@ const LogsTab: React.FC<LogsTabProps> = ({
                 height: '36px',
                 px: 2,
                 '&:hover': {
-                  backgroundColor: showPreviousLogs
-                    ? '#1565c0'
-                    : 'rgba(47, 134, 255, 0.08)',
+                  backgroundColor: showPreviousLogs ? '#1565c0' : 'rgba(47, 134, 255, 0.08)',
                 },
               }}
             >
-              <span
-                className="fas fa-history"
-                style={{ marginRight: '6px', fontSize: '11px' }}
-              />
+              <span className="fas fa-history" style={{ marginRight: '6px', fontSize: '11px' }} />
               {t('wecsDetailsPanel.logs.previousLogs')}
             </Button>
           </Box>
@@ -389,10 +384,7 @@ const LogsTab: React.FC<LogsTabProps> = ({
           overflow: 'auto',
         }}
       >
-        <div
-          ref={terminalRef}
-          style={{ height: '100%', width: '100%', overflow: 'auto' }}
-        />
+        <div ref={terminalRef} style={{ height: '100%', width: '100%', overflow: 'auto' }} />
       </Box>
     </>
   );

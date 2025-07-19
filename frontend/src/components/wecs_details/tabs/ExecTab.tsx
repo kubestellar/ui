@@ -274,16 +274,7 @@ const ExecTab: React.FC<ExecTabProps> = ({
       clearTimeout(timeoutId);
       if (cleanupFn) cleanupFn();
     };
-  }, [
-    theme,
-    type,
-    name,
-    namespace,
-    cluster,
-    selectedContainer,
-    execTerminalKey,
-    t,
-  ]);
+  }, [theme, type, name, namespace, cluster, selectedContainer, execTerminalKey, t]);
 
   // Use available containers if containers prop is empty
   const containersToUse = containers.length > 0 ? containers : [];
@@ -455,11 +446,7 @@ const ExecTab: React.FC<ExecTabProps> = ({
                 >
                   <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="body2">{container.ContainerName}</Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontSize: '11px' }}
-                    >
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '11px' }}>
                       {container.Image.length > 40
                         ? container.Image.substring(0, 37) + '...'
                         : container.Image}
@@ -490,8 +477,7 @@ const ExecTab: React.FC<ExecTabProps> = ({
                 color: theme === 'dark' ? '#CCC' : '#666',
                 padding: '2px',
                 '&:hover': {
-                  backgroundColor:
-                    theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                 },
               }}
             >
@@ -513,16 +499,11 @@ const ExecTab: React.FC<ExecTabProps> = ({
                 color: theme === 'dark' ? '#CCC' : '#666',
                 padding: '2px',
                 '&:hover': {
-                  backgroundColor:
-                    theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                 },
               }}
             >
-              {isTerminalMaximized ? (
-                <FiMinimize2 size={16} />
-              ) : (
-                <FiMaximize2 size={16} />
-              )}
+              {isTerminalMaximized ? <FiMinimize2 size={16} /> : <FiMaximize2 size={16} />}
             </IconButton>
           </Tooltip>
         </Box>
