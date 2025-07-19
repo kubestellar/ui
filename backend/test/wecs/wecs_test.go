@@ -1,9 +1,9 @@
 package wecs_test
 
 import (
-	"testing"
 	"github.com/kubestellar/ui/backend/wecs"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestResourceDataStruct(t *testing.T) {
