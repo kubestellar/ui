@@ -20,7 +20,7 @@ import EditTab from './tabs/EditTab';
 import LogsTab from './tabs/LogsTab';
 import ExecTab from './tabs/ExecTab';
 import { getPanelStyles, getContentBoxStyles } from './WecsDetailsStyles';
-import { api } from '../../lib/api';
+import { api, getWebSocketUrl } from '../../lib/api';
 import * as YAML from 'yaml';
 import { useClusterQueries } from '../../hooks/queries/useClusterQueries';
 
@@ -118,13 +118,9 @@ const WecsDetailsPanel = ({
   const [selectedLogsContainer, setSelectedLogsContainer] = useState<string>('');
   const [loadingLogsContainers, setLoadingLogsContainers] = useState<boolean>(false);
   const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
-  const [logs] = useState<string[]>([]); // Used by LogsTab internally
+  const [logs, setLogs] = useState<string[]>([]); // Used by LogsTab internally
 
-  // State for exec functionality
-  const [execContainers, setExecContainers] = useState<ContainerInfo[]>([]);
-  const [selectedExecContainer, setSelectedExecContainer] = useState<string>('');
-  const [loadingExecContainers, setLoadingExecContainers] = useState<boolean>(false);
-  const [isExecTerminalMaximized, setIsExecTerminalMaximized] = useState<boolean>(false);
+
 
   // Missing state variables from original code
   const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
@@ -132,6 +128,14 @@ const WecsDetailsPanel = ({
   const [isClosing, setIsClosing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  const wsParamsRef = useRef<{ cluster: string; namespace: string; pod: string } | null>(null);
+  const hasShownConnectedMessageRef = useRef<boolean>(false);
+  const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
+  const [containers, setContainers] = useState<ContainerInfo[]>([]);
+  const [selectedContainer, setSelectedContainer] = useState<string>('');
+  const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
   const previousNodeRef = useRef<{ name: string; namespace: string; type: string }>({
     name: '',
     namespace: '',
@@ -177,6 +181,93 @@ const WecsDetailsPanel = ({
       onClose();
     }, 400);
   }, [isContainerSelectActive, isLogsContainerSelectActive, onClose]);
+
+  // Add click outside handling
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (isOpen && !event.target) return;
+      
+      const target = event.target as Node;
+      const panelElement = document.querySelector('[data-testid="wecs-details-panel"]');
+      
+      if (isOpen && panelElement && !panelElement.contains(target)) {
+        handleClose();
+      }
+    },
+    [isOpen, handleClose]
+  );
+
+  // Add keyboard shortcut handling
+  const handleEsc = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    },
+    [isOpen, handleClose]
+  );
+
+  // Add event listeners for click outside and escape key
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('keydown', handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, handleClickOutside, handleEsc]);
+
+  // Add manifest update event listener
+  useEffect(() => {
+    const handleManifestUpdate = () => {
+      // Refresh manifest data when manifest is updated
+      if (tabValue === 1) {
+        // Trigger a re-fetch of the manifest
+        const fetchResourceManifest = async () => {
+          if (!name || !type) return;
+
+          setLoadingManifest(true);
+          try {
+            let manifestData: string;
+
+            if (type.toLowerCase() === 'cluster') {
+              const response = await api.get(`/api/cluster/${encodeURIComponent(name)}`);
+              manifestData = response.data ? JSON.stringify(response.data, null, 2) : t('wecsDetailsPanel.noManifest');
+            } else {
+              if (!namespace) {
+                setError(t('wecsDetailsPanel.errors.namespaceRequired'));
+                return;
+              }
+              const response = await api.get(
+                `/api/${type.toLowerCase()}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
+                { params: cluster ? { cluster } : {} }
+              );
+              manifestData = response.data ? JSON.stringify(response.data, null, 2) : t('wecsDetailsPanel.noManifest');
+            }
+
+            setEditedManifest(manifestData);
+            setError(null);
+          } catch (error) {
+            console.error('Failed to refresh manifest:', error);
+            setError(t('wecsDetailsPanel.errors.failedLoadDetails', { type }));
+          } finally {
+            setLoadingManifest(false);
+          }
+        };
+
+        fetchResourceManifest();
+      }
+    };
+
+    window.addEventListener('manifest-updated', handleManifestUpdate);
+
+    return () => {
+      window.removeEventListener('manifest-updated', handleManifestUpdate);
+    };
+  }, [tabValue, name, type, namespace, cluster, t]);
 
   // Calculate age function
   const calculateAge = useCallback(
@@ -339,28 +430,30 @@ const WecsDetailsPanel = ({
     const fetchContainers = async () => {
       if (type.toLowerCase() === 'pod' && name && namespace && cluster) {
         setLoadingLogsContainers(true);
-        setLoadingExecContainers(true);
+        setLoadingContainers(true);
         try {
-          const response = await api.get(`/api/pod/${namespace}/${name}/containers`, {
-            params: { cluster },
-          });
-          const containers = response.data.containers || [];
-          setLogsContainers(containers);
-          setExecContainers(containers);
+          const response = await api.get(
+            `/list/container/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}?context=${encodeURIComponent(cluster)}`
+          );
+          if (response.data && response.data.data) {
+            const containers = response.data.data;
+            setLogsContainers(containers);
+            setContainers(containers);
 
-          // Auto-select first container if available
-          if (containers.length > 0) {
-            setSelectedLogsContainer(containers[0].ContainerName);
-            setSelectedExecContainer(containers[0].ContainerName);
+            // Auto-select first container if available
+            if (containers.length > 0) {
+              setSelectedLogsContainer(containers[0].ContainerName);
+              setSelectedContainer(containers[0].ContainerName);
+            }
           }
         } catch (error) {
           console.error('Failed to fetch containers:', error);
-          setSnackbarMessage(t('wecsDetailsPanel.errors.failedFetchContainers'));
+          setSnackbarMessage('Failed to fetch container list');
           setSnackbarSeverity('error');
           setSnackbarOpen(true);
         } finally {
           setLoadingLogsContainers(false);
-          setLoadingExecContainers(false);
+          setLoadingContainers(false);
         }
       }
     };
@@ -368,7 +461,7 @@ const WecsDetailsPanel = ({
     if (isOpen) {
       fetchContainers();
     }
-  }, [type, name, namespace, cluster, isOpen, t]);
+  }, [type, name, namespace, cluster, isOpen]);
 
   // Fetch resource manifest when Edit tab is selected
   useEffect(() => {
@@ -650,25 +743,175 @@ const WecsDetailsPanel = ({
     }
   }, [editedManifest, editFormat, type, name, namespace, cluster, tabValue, t, updateClusterLabelsMutation]);
 
+  // Convert to useCallback to memoize it
+  const connectWebSocket = useCallback(() => {
+    if (!wsParamsRef.current || !isOpen) return;
+
+    const { cluster, namespace, pod } = wsParamsRef.current;
+    // Build WebSocket URL with container and previous logs parameters
+    let wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`);
+
+    // Add container parameter if selected
+    if (selectedLogsContainer) {
+      wsUrl += `&container=${encodeURIComponent(selectedLogsContainer)}`;
+    }
+
+    // Add previous parameter if showPreviousLogs is true
+    if (showPreviousLogs) {
+      wsUrl += `&previous=true`;
+    }
+
+    setLogs(prev => [
+      ...prev,
+      `\x1b[33m[Connecting] WebSocket Request\x1b[0m`,
+      `URL: ${wsUrl}`,
+      `Container: ${selectedLogsContainer || 'default'}`,
+      `Previous Logs: ${showPreviousLogs ? 'Yes' : 'No'}`,
+      `Timestamp: ${new Date().toISOString()}`,
+      `-----------------------------------`,
+    ]);
+
+    const socket = new WebSocket(wsUrl);
+    wsRef.current = socket;
+
+    socket.onopen = () => {
+      setLogs(prev => [
+        ...prev,
+        `\x1b[32m[Connected] WebSocket Connection Established\x1b[0m`,
+        `Status: OPEN`,
+        `Container: ${selectedLogsContainer || 'default'}`,
+        `Previous Logs: ${showPreviousLogs ? 'Yes' : 'No'}`,
+        `Timestamp: ${new Date().toISOString()}`,
+        `-----------------------------------`,
+      ]);
+      hasShownConnectedMessageRef.current = true;
+    };
+
+    socket.onmessage = event => {
+      const messageLines = event.data.split('\n').filter((line: string) => line.trim() !== '');
+      const messageLog = messageLines.map((line: string) => line.trim());
+      messageLog.push(`Timestamp: ${new Date().toISOString()}`);
+      messageLog.push(`-----------------------------------`);
+      setLogs(prev => [...prev, ...messageLog]);
+    };
+
+    socket.onerror = event => {
+      setLogs(prev => [
+        ...prev,
+        `\x1b[31m[Error] WebSocket Connection Failed\x1b[0m`,
+        `Details: ${JSON.stringify(event)}`,
+        `Timestamp: ${new Date().toISOString()}`,
+        `-----------------------------------`,
+      ]);
+    };
+
+    socket.onclose = () => {
+      setLogs(prev => [
+        ...prev,
+        `\x1b[31m[Closed] WebSocket Connection Terminated\x1b[0m`,
+        `Timestamp: ${new Date().toISOString()}`,
+        `-----------------------------------`,
+      ]);
+      wsRef.current = null;
+    };
+  }, [isOpen, selectedLogsContainer, showPreviousLogs]); // Add new dependencies
+
+  // Initialize WebSocket connection only once when the panel opens
+  useEffect(() => {
+    if (!isOpen || type.toLowerCase() !== 'pod') {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      setLogs([]);
+      hasShownConnectedMessageRef.current = false;
+      return;
+    }
+
+    // Close existing connection if container or previous logs selection changes
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    if (wsParamsRef.current) {
+      connectWebSocket();
+    }
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [isOpen, type, connectWebSocket, selectedLogsContainer, showPreviousLogs]); // Add new dependencies
+
   // Handle logs container change
   const handleLogsContainerChange = useCallback((event: SelectChangeEvent<string>) => {
     setSelectedLogsContainer(event.target.value);
   }, []);
 
-  // Handle previous logs toggle
-  const handlePreviousLogsToggle = useCallback(() => {
-    setShowPreviousLogs(!showPreviousLogs);
-  }, [showPreviousLogs]);
 
-  // Handle exec container change
-  const handleExecContainerChange = useCallback((event: SelectChangeEvent<string>) => {
-    setSelectedExecContainer(event.target.value);
-  }, []);
+
+
+
+  // Handle container selection change
+  const handleContainerChange = (event: SelectChangeEvent<string>) => {
+    // Just use stopPropagation without checking for nativeEvent
+    event.stopPropagation();
+
+    // Set the selected container
+    setSelectedContainer(event.target.value);
+  };
+
+  // Handle previous logs toggle
+  const handlePreviousLogsToggle = () => {
+    setShowPreviousLogs(!showPreviousLogs);
+  };
+
+  // Also make sure the container is still selected after switching tabs
+  useEffect(() => {
+    // If we're going to the exec tab and we have containers but no container selected,
+    // select the first one
+    if (
+      tabValue === 3 &&
+      type.toLowerCase() === 'pod' &&
+      containers.length > 0 &&
+      !selectedContainer
+    ) {
+      setSelectedContainer(containers[0].ContainerName);
+    }
+  }, [tabValue, type, containers, selectedContainer]);
+
+  // Add a useEffect that resets container selection when the pod changes
+  useEffect(() => {
+    // Reset container selection and containers list when pod changes
+    if (type.toLowerCase() === 'pod') {
+      // console.log(`Pod changed to ${name}, resetting container selection`);
+      setSelectedContainer('');
+      setContainers([]);
+    }
+  }, [name, type]);
+
+  // Add a useEffect that resets logs container selection when the pod changes
+  useEffect(() => {
+    // Reset logs container selection and containers list when pod changes
+    if (type.toLowerCase() === 'pod') {
+      // console.log(`Pod changed to ${name}, resetting logs container selection`);
+      setSelectedLogsContainer('');
+      setLogsContainers([]);
+      setShowPreviousLogs(false);
+    }
+  }, [name, type]);
 
 
 
   return (
-    <Box sx={getPanelStyles(theme, isOpen)} onClick={e => e.stopPropagation()}>
+    <Box 
+      sx={getPanelStyles(theme, isOpen)} 
+      onClick={e => e.stopPropagation()}
+      data-testid="wecs-details-panel"
+    >
       {isClosing ? (
         <Box sx={{ height: '100%', width: '100%' }} />
       ) : loading ? (
@@ -782,15 +1025,15 @@ const WecsDetailsPanel = ({
                 theme={theme}
                 t={t}
                 name={name}
-                containers={execContainers}
-                selectedContainer={selectedExecContainer}
-                loadingContainers={loadingExecContainers}
-                isTerminalMaximized={isExecTerminalMaximized}
+                containers={containers}
+                selectedContainer={selectedContainer}
+                loadingContainers={loadingContainers}
+                isTerminalMaximized={isTerminalMaximized}
                 execTerminalRef={execTerminalRef}
                 execTerminalKey={execTerminalKey}
-                handleContainerChange={handleExecContainerChange}
+                handleContainerChange={handleContainerChange}
                 setIsContainerSelectActive={setIsContainerSelectActive}
-                setIsTerminalMaximized={setIsExecTerminalMaximized}
+                setIsTerminalMaximized={setIsTerminalMaximized}
                 cluster={cluster}
                 namespace={namespace}
                 type={type}
