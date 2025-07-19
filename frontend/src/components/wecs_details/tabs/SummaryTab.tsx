@@ -55,6 +55,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({
   t,
   calculateAge,
 }) => {
+  // Handle cluster type with cluster details
   if (type.toLowerCase() === 'cluster' && clusterDetails) {
     const clusterInfo =
       clusterDetails.itsManagedClusters && clusterDetails.itsManagedClusters.length > 0
@@ -176,7 +177,105 @@ const SummaryTab: React.FC<SummaryTabProps> = ({
       </Box>
     );
   }
+
+  // Handle case where resource is null but resourceData is available
+  if (!resource && resourceData) {
+    const metadata = resourceData.metadata;
+    
+    return (
+      <Box>
+        <Table sx={{ borderRadius: 1, mb: 2 }}>
+          <TableBody>
+            {[
+              { label: t('wecsDetailsPanel.table.kind'), value: type },
+              { label: t('wecsDetailsPanel.table.name'), value: metadata?.name || t('wecsDetailsPanel.common.unknown') },
+              { label: t('wecsDetailsPanel.table.namespace'), value: metadata?.namespace || t('wecsDetailsPanel.common.unknown') },
+              {
+                label: t('wecsDetailsPanel.table.createdAt'),
+                value: metadata?.creationTimestamp
+                  ? `${new Date(metadata.creationTimestamp).toLocaleString()} (${calculateAge(metadata.creationTimestamp)})`
+                  : t('wecsDetailsPanel.common.unknown'),
+              },
+            ].map((row, index) => (
+              <TableRow key={index}>
+                <TableCell
+                  sx={{
+                    borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                    color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    width: '150px',
+                    padding: '10px 16px',
+                  }}
+                >
+                  {row.label}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                    color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                    fontSize: '14px',
+                    padding: '10px 16px',
+                  }}
+                >
+                  {row.value}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {metadata?.labels && Object.keys(metadata.labels).length > 0 && (
+          <Table sx={{ borderRadius: 1 }}>
+            <TableBody>
+              <TableRow>
+                <TableCell
+                  sx={{
+                    borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                    color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    width: '150px',
+                    padding: '10px 16px',
+                    verticalAlign: 'top',
+                  }}
+                >
+                  {t('wecsDetailsPanel.table.labels')}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                    color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                    fontSize: '14px',
+                    padding: '10px 16px',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {Object.entries(metadata.labels).map(([key, value], index) => (
+                      <Chip
+                        key={index}
+                        label={`${key}: ${value}`}
+                        size="small"
+                        sx={{
+                          mr: 1,
+                          mb: 1,
+                          backgroundColor: theme === 'dark' ? '#334155' : undefined,
+                          color: theme === 'dark' ? '#fff' : undefined,
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        )}
+      </Box>
+    );
+  }
+
+  // Handle case where resource is available
   if (!resource) return null;
+  
   const summaryTable = (
     <Table sx={{ borderRadius: 1 }}>
       <TableBody>
@@ -214,53 +313,52 @@ const SummaryTab: React.FC<SummaryTabProps> = ({
             </TableCell>
           </TableRow>
         ))}
-        {resourceData?.metadata?.labels &&
-          Object.keys(resourceData.metadata.labels).length > 0 && (
-            <TableRow>
-              <TableCell
-                sx={{
-                  borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
-                  color: theme === 'dark' ? '#D4D4D4' : '#333333',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  width: '150px',
-                  padding: '10px 16px',
-                  verticalAlign: 'top',
-                }}
-              >
-                {t('wecsDetailsPanel.table.labels')}
-              </TableCell>
-              <TableCell
-                sx={{
-                  borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
-                  color: theme === 'dark' ? '#D4D4D4' : '#333333',
-                  fontSize: '14px',
-                  padding: '10px 16px',
-                }}
-              >
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {resourceData.metadata.labels &&
-                    (Object.entries(resourceData.metadata.labels).map(([key, value], index) => (
-                      <Chip
-                        key={index}
-                        label={`${key}: ${value}`}
-                        size="small"
-                        sx={{
-                          mr: 1,
-                          mb: 1,
-                          backgroundColor: theme === 'dark' ? '#334155' : undefined,
-                          color: theme === 'dark' ? '#fff' : undefined,
-                        }}
-                      />
-                    )) as React.ReactNode[])}
-                </Box>
-              </TableCell>
-            </TableRow>
-          )}
+        {resourceData?.metadata?.labels && Object.keys(resourceData.metadata.labels).length > 0 && (
+          <TableRow>
+            <TableCell
+              sx={{
+                borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                fontSize: '14px',
+                fontWeight: 500,
+                width: '150px',
+                padding: '10px 16px',
+                verticalAlign: 'top',
+              }}
+            >
+              {t('wecsDetailsPanel.table.labels')}
+            </TableCell>
+            <TableCell
+              sx={{
+                borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                fontSize: '14px',
+                padding: '10px 16px',
+              }}
+            >
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {resourceData.metadata.labels &&
+                  (Object.entries(resourceData.metadata.labels).map(([key, value], index) => (
+                    <Chip
+                      key={index}
+                      label={`${key}: ${value}`}
+                      size="small"
+                      sx={{
+                        mr: 1,
+                        mb: 1,
+                        backgroundColor: theme === 'dark' ? '#334155' : undefined,
+                        color: theme === 'dark' ? '#fff' : undefined,
+                      }}
+                    />
+                  )) as React.ReactNode[])}
+              </Box>
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
   return summaryTable;
 };
 
-export default SummaryTab; 
+export default SummaryTab;

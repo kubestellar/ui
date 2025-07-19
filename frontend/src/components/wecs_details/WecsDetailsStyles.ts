@@ -180,4 +180,4 @@ export const getResponsiveChipStyles = (theme: string) => ({
   },
   flexShrink: 0,
   minWidth: 0,
-}); 
+});

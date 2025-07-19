@@ -47,7 +47,9 @@ export class LogsWebSocket {
       this.socket = null;
     }
 
-    let wsUrl = getWebSocketUrl(`/ws/logs?cluster=${config.cluster}&namespace=${config.namespace}&pod=${config.pod}`);
+    let wsUrl = getWebSocketUrl(
+      `/ws/logs?cluster=${config.cluster}&namespace=${config.namespace}&pod=${config.pod}`
+    );
 
     if (config.container) {
       wsUrl += `&container=${encodeURIComponent(config.container)}`;
@@ -60,7 +62,7 @@ export class LogsWebSocket {
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = this.onOpen;
-    this.socket.onmessage = (event) => this.onMessage(event.data);
+    this.socket.onmessage = event => this.onMessage(event.data);
     this.socket.onerror = this.onError;
     this.socket.onclose = this.onClose;
   }
@@ -114,7 +116,7 @@ export class ExecWebSocket {
       this.startPingInterval();
     };
 
-    this.socket.onmessage = (event) => {
+    this.socket.onmessage = event => {
       try {
         const msg = JSON.parse(event.data);
         if (msg.Op === 'stdout') {
@@ -184,4 +186,4 @@ export const createExecWebSocket = (
   onClose: () => void
 ): ExecWebSocket => {
   return new ExecWebSocket(terminal, onOpen, onError, onClose);
-}; 
+};

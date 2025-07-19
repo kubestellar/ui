@@ -5,7 +5,7 @@ import { StyledTab } from './WecsDetailsStyles';
 interface WecsDetailsTabsProps {
   tabValue: number;
   type: string;
-  isDeploymentOrJobPod?: boolean;
+  isDeploymentOrJobPod?: boolean; // Kept for backward compatibility
   theme: string;
   t: (key: string, options?: Record<string, unknown>) => string;
   onTabChange: (event: React.SyntheticEvent, newValue: number) => void;
@@ -14,7 +14,6 @@ interface WecsDetailsTabsProps {
 const WecsDetailsTabs: React.FC<WecsDetailsTabsProps> = ({
   tabValue,
   type,
-  isDeploymentOrJobPod,
   theme,
   t,
   onTabChange,
@@ -49,20 +48,18 @@ const WecsDetailsTabs: React.FC<WecsDetailsTabsProps> = ({
           </span>
         }
       />
-      {/* Only show logs tab for deployment/job pods */}
-      {type.toLowerCase() === 'pod' &&
-        isDeploymentOrJobPod &&
-        type.toLowerCase() !== 'cluster' && (
-          <StyledTab
-            label={
-              <span>
-                <i className="fa fa-align-left" style={{ marginRight: '8px' }}></i>
-                {t('wecsDetailsPanel.tabs.logs')}
-              </span>
-            }
-          />
-        )}
-      {/* Only show Exec Pods tab for pod resources */}
+      {/* Show logs tab for all pods */}
+      {type.toLowerCase() === 'pod' && (
+        <StyledTab
+          label={
+            <span>
+              <i className="fa fa-align-left" style={{ marginRight: '8px' }}></i>
+              {t('wecsDetailsPanel.tabs.logs')}
+            </span>
+          }
+        />
+      )}
+      {/* Show Exec Pods tab for pod resources */}
       {type.toLowerCase() === 'pod' && (
         <StyledTab
           label={
@@ -77,4 +74,4 @@ const WecsDetailsTabs: React.FC<WecsDetailsTabsProps> = ({
   );
 };
 
-export default WecsDetailsTabs; 
+export default WecsDetailsTabs;
