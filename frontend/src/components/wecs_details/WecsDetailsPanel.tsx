@@ -91,11 +91,13 @@ const WecsDetailsPanel = ({
   const [tabValue, setTabValue] = useState(initialTab ?? 0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info' | 'warning'>('success');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    'success' | 'error' | 'info' | 'warning'
+  >('success');
   const terminalRef = useRef<HTMLDivElement>(null);
   const execTerminalRef = useRef<HTMLDivElement>(null);
   const [execTerminalKey] = useState<string>(`${cluster}-${namespace}-${name}`);
-  
+
   // State for cluster details and resource data
   const [clusterDetails, setClusterDetails] = useState<ClusterDetails | null>(null);
   const [resource] = useState<ResourceInfo | null>(null);
@@ -149,12 +151,12 @@ const WecsDetailsPanel = ({
         setLoadingExecContainers(true);
         try {
           const response = await api.get(`/api/pod/${namespace}/${name}/containers`, {
-            params: { cluster }
+            params: { cluster },
           });
           const containers = response.data.containers || [];
           setLogsContainers(containers);
           setExecContainers(containers);
-          
+
           // Auto-select first container if available
           if (containers.length > 0) {
             setSelectedLogsContainer(containers[0].ContainerName);
@@ -197,7 +199,7 @@ const WecsDetailsPanel = ({
               throw new Error('Namespace is required for non-cluster resources');
             }
             const response = await api.get(`/api/${type.toLowerCase()}/${namespace}/${name}`);
-            
+
             // The API returns the resource directly, convert it to JSON string
             if (response.data) {
               setEditedManifest(JSON.stringify(response.data, null, 2));
@@ -209,40 +211,48 @@ const WecsDetailsPanel = ({
           }
         } catch (error) {
           console.error('Failed to fetch resource manifest:', error);
-          
+
           // Create a basic manifest from available data
           let basicManifest = '';
-          
+
           if (resourceData) {
             basicManifest = JSON.stringify(resourceData, null, 2);
           } else if (type.toLowerCase() === 'cluster' && clusterDetails) {
             // For clusters, create a basic manifest from cluster details
-            basicManifest = JSON.stringify({
-              apiVersion: 'cluster.open-cluster-management.io/v1',
-              kind: 'ManagedCluster',
-              metadata: {
-                name: clusterDetails.clusterName,
-                labels: clusterDetails.itsManagedClusters?.[0]?.labels || {}
+            basicManifest = JSON.stringify(
+              {
+                apiVersion: 'cluster.open-cluster-management.io/v1',
+                kind: 'ManagedCluster',
+                metadata: {
+                  name: clusterDetails.clusterName,
+                  labels: clusterDetails.itsManagedClusters?.[0]?.labels || {},
+                },
+                spec: {},
+                status: {},
               },
-              spec: {},
-              status: {}
-            }, null, 2);
+              null,
+              2
+            );
           } else {
             // Create a minimal manifest structure
-            basicManifest = JSON.stringify({
-              apiVersion: 'v1',
-              kind: type,
-              metadata: {
-                name: name,
-                namespace: namespace || 'default'
+            basicManifest = JSON.stringify(
+              {
+                apiVersion: 'v1',
+                kind: type,
+                metadata: {
+                  name: name,
+                  namespace: namespace || 'default',
+                },
+                spec: {},
+                status: {},
               },
-              spec: {},
-              status: {}
-            }, null, 2);
+              null,
+              2
+            );
           }
-          
+
           setEditedManifest(basicManifest);
-          
+
           // Show appropriate error message based on the error
           const axiosError = error as { response?: { status?: number } };
           if (axiosError.response?.status === 404) {
@@ -262,20 +272,23 @@ const WecsDetailsPanel = ({
   }, [tabValue, isOpen, name, namespace, type, cluster, resourceData, clusterDetails, t]);
 
   // Calculate age function
-  const calculateAge = useCallback((creationTimestamp: string | undefined): string => {
-    if (!creationTimestamp) return t('wecsDetailsPanel.common.unknown');
-    
-    const now = new Date();
-    const created = new Date(creationTimestamp);
-    const diffMs = now.getTime() - created.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return t('wecsDetailsPanel.common.today');
-    } else {
-      return t('wecsDetailsPanel.common.daysAgo', { count: diffDays });
-    }
-  }, [t]);
+  const calculateAge = useCallback(
+    (creationTimestamp: string | undefined): string => {
+      if (!creationTimestamp) return t('wecsDetailsPanel.common.unknown');
+
+      const now = new Date();
+      const created = new Date(creationTimestamp);
+      const diffMs = now.getTime() - created.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        return t('wecsDetailsPanel.common.today');
+      } else {
+        return t('wecsDetailsPanel.common.daysAgo', { count: diffDays });
+      }
+    },
+    [t]
+  );
 
   // JSON to YAML conversion function
   const jsonToYaml = useCallback((jsonString: string): string => {
@@ -307,8 +320,6 @@ const WecsDetailsPanel = ({
     setEditedManifest(value || '');
   }, []);
 
-
-
   // Handle update
   const handleUpdate = useCallback(async () => {
     if (!editedManifest.trim()) {
@@ -320,7 +331,7 @@ const WecsDetailsPanel = ({
 
     try {
       let manifestData;
-      
+
       // Parse the manifest based on format
       if (editFormat === 'json') {
         manifestData = JSON.parse(editedManifest);
@@ -378,7 +389,7 @@ const WecsDetailsPanel = ({
         setSnackbarMessage(t('wecsDetailsPanel.success.manifestUpdated'));
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
-        
+
         // Refresh the manifest data
         if (tabValue === 1) {
           // Trigger a re-fetch of the manifest
@@ -390,11 +401,11 @@ const WecsDetailsPanel = ({
       }
     } catch (error: unknown) {
       console.error('Failed to update manifest:', error);
-      
+
       let errorMessage = t('wecsDetailsPanel.errors.failedUpdate');
-      
+
       const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
-      
+
       if (axiosError.response?.status === 404) {
         errorMessage = t('wecsDetailsPanel.errors.resourceNotFound');
       } else if (axiosError.response?.status === 403) {
@@ -404,7 +415,7 @@ const WecsDetailsPanel = ({
       } else if (axiosError.response?.data?.message) {
         errorMessage = axiosError.response.data.message;
       }
-      
+
       setSnackbarMessage(errorMessage);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

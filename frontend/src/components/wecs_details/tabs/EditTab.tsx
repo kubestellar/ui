@@ -46,7 +46,9 @@ const EditTab: React.FC<EditTabProps> = ({
       setValidationError(null);
       return true;
     } catch (error) {
-      setValidationError(`Invalid ${format.toUpperCase()} format: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setValidationError(
+        `Invalid ${format.toUpperCase()} format: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       return false;
     }
   };
@@ -63,10 +65,10 @@ const EditTab: React.FC<EditTabProps> = ({
   // Handle format switching
   const handleFormatChange = (newFormat: 'yaml' | 'json') => {
     if (newFormat === editFormat) return;
-    
+
     try {
       let convertedContent: string;
-      
+
       if (newFormat === 'yaml') {
         // Convert from JSON to YAML
         convertedContent = jsonToYaml(editedManifest);
@@ -74,14 +76,16 @@ const EditTab: React.FC<EditTabProps> = ({
         // Convert from YAML to JSON
         convertedContent = yamlToJson(editedManifest);
       }
-      
+
       // Update the editor content with converted format
       handleEditorChange(convertedContent);
       setEditFormat(newFormat);
       setValidationError(null);
     } catch (error) {
       console.error('Error converting format:', error);
-      setValidationError(`Failed to convert to ${newFormat.toUpperCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setValidationError(
+        `Failed to convert to ${newFormat.toUpperCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   };
 
@@ -136,7 +140,14 @@ const EditTab: React.FC<EditTabProps> = ({
 
       <Box sx={{ overflow: 'auto', maxHeight: '500px' }}>
         {loadingManifest ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '500px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '500px',
+            }}
+          >
             <CircularProgress />
           </Box>
         ) : (

@@ -65,7 +65,7 @@ const LogsTab: React.FC<LogsTabProps> = ({
         setLoadingContainers(true);
         try {
           const response = await api.get(`/api/pod/${namespace}/${name}/containers`, {
-            params: { cluster }
+            params: { cluster },
           });
           setAvailableContainers(response.data.containers || []);
         } catch (error) {
@@ -88,11 +88,11 @@ const LogsTab: React.FC<LogsTabProps> = ({
         setLogsError(null);
         try {
           const response = await api.get(`/api/pod/${namespace}/${name}/logs`, {
-            params: { 
+            params: {
               cluster,
               container: selectedLogsContainer,
-              previous: showPreviousLogs
-            }
+              previous: showPreviousLogs,
+            },
           });
           setActualLogs(response.data.logs || []);
         } catch (error) {
@@ -306,15 +306,22 @@ const LogsTab: React.FC<LogsTabProps> = ({
         }}
       >
         {loadingLogs ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '200px',
+            }}
+          >
             <CircularProgress />
           </Box>
         ) : (
-          <div 
-            ref={terminalRef} 
-            style={{ 
-              height: '100%', 
-              width: '100%', 
+          <div
+            ref={terminalRef}
+            style={{
+              height: '100%',
+              width: '100%',
               overflow: 'auto',
               fontFamily: 'monospace',
               fontSize: '12px',
@@ -322,8 +329,8 @@ const LogsTab: React.FC<LogsTabProps> = ({
               backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
               padding: '8px',
               whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word'
-            }} 
+              wordBreak: 'break-word',
+            }}
           />
         )}
       </Box>

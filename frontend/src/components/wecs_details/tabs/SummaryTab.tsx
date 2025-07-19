@@ -181,15 +181,21 @@ const SummaryTab: React.FC<SummaryTabProps> = ({
   // Handle case where resource is null but resourceData is available
   if (!resource && resourceData) {
     const metadata = resourceData.metadata;
-    
+
     return (
       <Box>
         <Table sx={{ borderRadius: 1, mb: 2 }}>
           <TableBody>
             {[
               { label: t('wecsDetailsPanel.table.kind'), value: type },
-              { label: t('wecsDetailsPanel.table.name'), value: metadata?.name || t('wecsDetailsPanel.common.unknown') },
-              { label: t('wecsDetailsPanel.table.namespace'), value: metadata?.namespace || t('wecsDetailsPanel.common.unknown') },
+              {
+                label: t('wecsDetailsPanel.table.name'),
+                value: metadata?.name || t('wecsDetailsPanel.common.unknown'),
+              },
+              {
+                label: t('wecsDetailsPanel.table.namespace'),
+                value: metadata?.namespace || t('wecsDetailsPanel.common.unknown'),
+              },
               {
                 label: t('wecsDetailsPanel.table.createdAt'),
                 value: metadata?.creationTimestamp
@@ -275,7 +281,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({
 
   // Handle case where resource is available
   if (!resource) return null;
-  
+
   const summaryTable = (
     <Table sx={{ borderRadius: 1 }}>
       <TableBody>

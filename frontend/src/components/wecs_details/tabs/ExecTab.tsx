@@ -68,7 +68,7 @@ const ExecTab: React.FC<ExecTabProps> = ({
         setLoadingAvailableContainers(true);
         try {
           const response = await api.get(`/api/pod/${namespace}/${name}/containers`, {
-            params: { cluster }
+            params: { cluster },
           });
           setAvailableContainers(response.data.containers || []);
         } catch (error) {
@@ -92,18 +92,20 @@ const ExecTab: React.FC<ExecTabProps> = ({
           // Initialize WebSocket connection for exec
           const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/pod/${namespace}/${name}/exec`;
           const ws = new WebSocket(wsUrl);
-          
+
           ws.onopen = () => {
             setIsExecConnected(true);
             // Send container selection
-            ws.send(JSON.stringify({
-              action: 'connect',
-              container: selectedContainer,
-              cluster: cluster
-            }));
+            ws.send(
+              JSON.stringify({
+                action: 'connect',
+                container: selectedContainer,
+                cluster: cluster,
+              })
+            );
           };
 
-          ws.onmessage = (event) => {
+          ws.onmessage = event => {
             const data = JSON.parse(event.data);
             if (data.type === 'output' && execTerminalRef.current) {
               // Append output to terminal
@@ -112,7 +114,7 @@ const ExecTab: React.FC<ExecTabProps> = ({
             }
           };
 
-          ws.onerror = (error) => {
+          ws.onerror = error => {
             console.error('WebSocket error:', error);
             setExecError(t('wecsDetailsPanel.errors.failedConnectExec'));
             setIsExecConnected(false);
@@ -123,7 +125,8 @@ const ExecTab: React.FC<ExecTabProps> = ({
           };
 
           // Store WebSocket reference for cleanup
-          (execTerminalRef as React.RefObject<HTMLDivElement & { ws?: WebSocket }>).current!.ws = ws;
+          (execTerminalRef as React.RefObject<HTMLDivElement & { ws?: WebSocket }>).current!.ws =
+            ws;
 
           return () => {
             ws.close();
