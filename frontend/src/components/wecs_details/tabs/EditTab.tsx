@@ -10,6 +10,7 @@ interface EditTabProps {
   theme: string;
   t: (key: string, options?: Record<string, unknown>) => string;
   jsonToYaml: (jsonString: string) => string;
+  yamlToJson: (yamlString: string) => string;
   handleEditorChange: (value: string | undefined) => void;
   loadingManifest?: boolean;
 }
@@ -22,6 +23,7 @@ const EditTab: React.FC<EditTabProps> = ({
   theme,
   t,
   jsonToYaml,
+  yamlToJson,
   handleEditorChange,
   loadingManifest = false,
 }) => {
@@ -38,12 +40,8 @@ const EditTab: React.FC<EditTabProps> = ({
       if (format === 'json') {
         JSON.parse(content);
       } else {
-        // For YAML, we'll do basic validation
-        // In a real implementation, you'd use a YAML parser
-        if (content.includes('{') && content.includes('}')) {
-          // This is a very basic check - in production you'd use a proper YAML parser
-          JSON.parse(jsonToYaml(content));
-        }
+        // For YAML, use the YAML parser for validation
+        yamlToJson(content); // This will throw an error if YAML is invalid
       }
       setValidationError(null);
       return true;
@@ -62,6 +60,31 @@ const EditTab: React.FC<EditTabProps> = ({
     }
   };
 
+  // Handle format switching
+  const handleFormatChange = (newFormat: 'yaml' | 'json') => {
+    if (newFormat === editFormat) return;
+    
+    try {
+      let convertedContent: string;
+      
+      if (newFormat === 'yaml') {
+        // Convert from JSON to YAML
+        convertedContent = jsonToYaml(editedManifest);
+      } else {
+        // Convert from YAML to JSON
+        convertedContent = yamlToJson(editedManifest);
+      }
+      
+      // Update the editor content with converted format
+      handleEditorChange(convertedContent);
+      setEditFormat(newFormat);
+      setValidationError(null);
+    } catch (error) {
+      console.error('Error converting format:', error);
+      setValidationError(`Failed to convert to ${newFormat.toUpperCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const handleUpdateWithValidation = () => {
     if (validateContent(editedManifest, editFormat)) {
       handleUpdate();
@@ -73,7 +96,7 @@ const EditTab: React.FC<EditTabProps> = ({
       <Stack direction="row" spacing={4} mb={3} ml={4}>
         <Button
           variant={editFormat === 'yaml' ? 'contained' : 'outlined'}
-          onClick={() => setEditFormat('yaml')}
+          onClick={() => handleFormatChange('yaml')}
           sx={{
             textTransform: 'none',
             backgroundColor: editFormat === 'yaml' ? '#2F86FF' : 'transparent',
@@ -89,7 +112,7 @@ const EditTab: React.FC<EditTabProps> = ({
         </Button>
         <Button
           variant={editFormat === 'json' ? 'contained' : 'outlined'}
-          onClick={() => setEditFormat('json')}
+          onClick={() => handleFormatChange('json')}
           sx={{
             textTransform: 'none',
             backgroundColor: editFormat === 'json' ? '#2F86FF' : 'transparent',
@@ -121,7 +144,7 @@ const EditTab: React.FC<EditTabProps> = ({
             <MonacoEditor
               height="500px"
               language={editFormat}
-              value={editFormat === 'yaml' ? jsonToYaml(editedManifest) : editedManifest}
+              value={editedManifest}
               onChange={handleEditorChangeWithValidation}
               theme={theme === 'dark' ? 'vs-dark' : 'light'}
               options={{

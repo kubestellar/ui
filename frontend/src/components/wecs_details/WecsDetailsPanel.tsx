@@ -20,6 +20,7 @@ import LogsTab from './tabs/LogsTab';
 import ExecTab from './tabs/ExecTab';
 import { getPanelStyles, getContentBoxStyles } from './WecsDetailsStyles';
 import { api } from '../../lib/api';
+import * as YAML from 'yaml';
 
 // Import the ResourceInfo interface from SummaryTab
 interface ResourceInfo {
@@ -281,11 +282,23 @@ const WecsDetailsPanel = ({
     try {
       if (!jsonString) return '';
       const obj = JSON.parse(jsonString);
-      // Simple YAML conversion - in a real implementation, you'd use a proper YAML library
-      return JSON.stringify(obj, null, 2);
+      // Convert JSON object to YAML format
+      return YAML.stringify(obj, { indent: 2 });
     } catch (error) {
       console.error('Error converting JSON to YAML:', error);
       return jsonString;
+    }
+  }, []);
+
+  // YAML to JSON conversion function
+  const yamlToJson = useCallback((yamlString: string): string => {
+    try {
+      if (!yamlString) return '';
+      const obj = YAML.parse(yamlString);
+      return JSON.stringify(obj, null, 2);
+    } catch (error) {
+      console.error('Error converting YAML to JSON:', error);
+      return yamlString;
     }
   }, []);
 
@@ -293,6 +306,8 @@ const WecsDetailsPanel = ({
   const handleEditorChange = useCallback((value: string | undefined) => {
     setEditedManifest(value || '');
   }, []);
+
+
 
   // Handle update
   const handleUpdate = useCallback(async () => {
@@ -310,10 +325,9 @@ const WecsDetailsPanel = ({
       if (editFormat === 'json') {
         manifestData = JSON.parse(editedManifest);
       } else {
-        // For YAML, we'll convert it to JSON for the API
-        // In a real implementation, you'd use a proper YAML parser
+        // For YAML, convert it to JSON for the API
         try {
-          manifestData = JSON.parse(editedManifest);
+          manifestData = YAML.parse(editedManifest);
         } catch {
           setSnackbarMessage(t('wecsDetailsPanel.errors.invalidManifest'));
           setSnackbarSeverity('error');
@@ -493,6 +507,7 @@ const WecsDetailsPanel = ({
               theme={theme}
               t={t}
               jsonToYaml={jsonToYaml}
+              yamlToJson={yamlToJson}
               handleEditorChange={handleEditorChange}
               loadingManifest={loadingManifest}
             />
