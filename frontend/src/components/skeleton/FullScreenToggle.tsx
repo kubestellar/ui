@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RxEnterFullScreen, RxExitFullScreen } from 'react-icons/rx';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
+import getThemeStyles from '../../lib/theme-utils';
 
 // Define interfaces for browser-specific fullscreen APIs
 interface FullscreenElement extends HTMLElement {
@@ -24,7 +27,6 @@ interface FullScreenToggleProps {
   iconSize?: number;
   position?: 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left' | 'inline';
   tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
-  tooltipText?: string;
   onFullScreenChange?: (isFullScreen: boolean) => void;
 }
 
@@ -34,13 +36,35 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
   iconSize = 24,
   position = 'top-right',
   tooltipPosition = 'bottom',
-  tooltipText = 'Toggle fullscreen',
   onFullScreenChange,
 }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const themeStyles = getThemeStyles(isDark);
+
+  // Icon animation variants
+  const iconVariants = {
+    rest: {
+      rotate: 0,
+      scale: 1,
+    },
+    hover: {
+      rotate: 15,
+      scale: 1.1,
+      transition: {
+        type: 'spring',
+        stiffness: 400,
+        damping: 8,
+      },
+    },
+    tap: {
+      rotate: 0,
+      scale: 0.9,
+    },
+  };
 
   const handleFullScreenChange = useCallback(() => {
     const doc = document as FullscreenDocument;
@@ -96,7 +120,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
         } else if (element.msRequestFullscreen) {
           await element.msRequestFullscreen();
         } else {
-          throw new Error('Fullscreen API is not supported in this browser');
+          throw new Error(t('errors.fullscreenNotSupported'));
         }
       } else {
         // Exit full screen
@@ -111,7 +135,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
         }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to toggle fullscreen';
+      const errorMessage = err instanceof Error ? err.message : t('errors.fullscreenFailed');
       setError(errorMessage);
       console.error('Error toggling fullscreen:', err);
     }
@@ -134,89 +158,88 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
     right: 'tooltip-right',
   };
 
-  // Button styles based on theme and state
-  const buttonStyles = {
-    base: `
-      btn btn-circle 
-      transition-all duration-300 ease-in-out
-      transform hover:scale-110 active:scale-95
-      shadow-lg hover:shadow-xl
-      backdrop-blur-sm
-      border border-opacity-20
-      focus:outline-none focus:ring-2 focus:ring-offset-2
-    `,
-    dark: `
-      bg-gray-800/80 hover:bg-gray-700/90
-      border-gray-600
-      focus:ring-blue-500
-      ${error ? 'ring-2 ring-red-500' : ''}
-    `,
-    light: `
-      bg-white/90 hover:bg-gray-50/95
-      border-gray-200
-      focus:ring-blue-400
-      ${error ? 'ring-2 ring-red-500' : ''}
-    `,
-  };
-
-  // Icon styles based on theme and state
-  const iconStyles = {
-    base: `
-      transition-all duration-300 ease-in-out
-      ${isHovered ? 'scale-110' : 'scale-100'}
-    `,
-    dark: `
-      text-gray-200 group-hover:text-white
-    `,
-    light: `
-      text-gray-700 group-hover:text-gray-900
-    `,
-  };
+  const tooltipText = isFullScreen ? t('header.exitFullscreen') : t('header.enterFullscreen');
 
   return (
-    <div
+    <motion.div
       className={`
-        tooltip 
+        tooltip font-normal
         ${tooltipClasses[tooltipPosition]} 
         ${position !== 'inline' ? positionClasses[position] : ''} 
         ${className}
-        group
+        relative
       `}
+      initial="rest"
+      whileHover="hover"
+      whileTap="tap"
       data-tip={error || tooltipText}
     >
-      <button
+      <motion.button
         onClick={toggleFullScreen}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className={`
-          ${buttonStyles.base}
-          ${theme === 'dark' ? buttonStyles.dark : buttonStyles.light}
-        `}
+        className="btn btn-circle relative transition-all duration-300"
+        style={{
+          color: themeStyles.colors.text.primary,
+          background: themeStyles.button.secondary.background,
+          boxShadow: themeStyles.colors.shadow.sm,
+          overflow: 'hidden',
+        }}
         aria-label={error || tooltipText}
         aria-pressed={isFullScreen}
         role="switch"
       >
-        {isFullScreen ? (
-          <RxExitFullScreen
-            size={iconSize}
-            className={`
-              ${iconStyles.base}
-              ${theme === 'dark' ? iconStyles.dark : iconStyles.light}
-            `}
-            aria-hidden="true"
-          />
-        ) : (
-          <RxEnterFullScreen
-            size={iconSize}
-            className={`
-              ${iconStyles.base}
-              ${theme === 'dark' ? iconStyles.dark : iconStyles.light}
-            `}
-            aria-hidden="true"
-          />
-        )}
-      </button>
-    </div>
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{
+            background: isDark
+              ? 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 70%)'
+              : 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
+          }}
+        />
+        <motion.div className="relative z-10 flex items-center justify-center">
+          <motion.div variants={iconVariants}>
+            <AnimatePresence mode="wait">
+              {isFullScreen ? (
+                <motion.div
+                  key="exit"
+                  initial={{ opacity: 0, rotate: -30 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 30 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <RxExitFullScreen
+                    size={iconSize}
+                    style={{
+                      color: isDark
+                        ? themeStyles.colors.brand.primaryLight
+                        : themeStyles.colors.brand.primary,
+                    }}
+                    aria-hidden="true"
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="enter"
+                  initial={{ opacity: 0, rotate: 30 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: -30 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <RxEnterFullScreen
+                    size={iconSize}
+                    style={{
+                      color: isDark
+                        ? themeStyles.colors.brand.primaryLight
+                        : themeStyles.colors.brand.primary,
+                    }}
+                    aria-hidden="true"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </motion.div>
+      </motion.button>
+    </motion.div>
   );
 };
 

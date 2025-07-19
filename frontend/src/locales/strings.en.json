@@ -311,7 +311,12 @@
     "goToHome": "Go to home page",
     "logoAlt": "KubeStellar Logo",
     "themeToggleTip": "Alt+Q to toggle theme",
-    "switchTheme": "Switch to {{mode}} mode"
+    "switchTheme": "Switch to {{mode}} mode",
+    "switchLanguage": "Switch language",
+    "selectLanguage": "Select Language",
+    "enterFullscreen": "Enter fullscreen mode",
+    "exitFullscreen": "Exit fullscreen mode",
+    "fullscreen": "Toggle fullscreen mode"
   },
   "login": {
     "controlPlane": "Control Plane",
