@@ -31,12 +31,19 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const handleCopyName = (clusterName: string) => {
-    navigator.clipboard.writeText(clusterName);
-    onClose();
-    toast.success(`Cluster name copied to clipboard: ${clusterName}`, {
-      duration: 2000,
-    });
+  const handleCopyName = async (clusterName: string) => {
+    try {
+      await navigator.clipboard.writeText(clusterName);
+      onClose();
+      toast.success(`Cluster name copied to clipboard: ${clusterName}`, {
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      toast.error('Failed to copy cluster name to clipboard', {
+        duration: 2000,
+      });
+    }
   };
 
   return (
