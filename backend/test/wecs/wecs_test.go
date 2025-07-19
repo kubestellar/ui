@@ -1,9 +1,9 @@
 package wecs_test
 
 import (
+	"testing"
 	"github.com/kubestellar/ui/backend/wecs"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestResourceDataStruct(t *testing.T) {
@@ -22,7 +22,7 @@ func TestResourceDataStruct(t *testing.T) {
 func TestClusterDataStruct(t *testing.T) {
 	c := wecs.ClusterData{
 		Name:       "cluster1",
-		Namespaces: nil,
+		Namespaces: []wecs.NamespaceData{},
 	}
 	assert.Equal(t, "cluster1", c.Name)
 }
