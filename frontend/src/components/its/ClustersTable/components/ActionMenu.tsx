@@ -1,11 +1,4 @@
-import {
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-} from '@mui/material';
+import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LabelIcon from '@mui/icons-material/Label';
@@ -126,4 +119,4 @@ export const ActionButton: React.FC<{
   </IconButton>
 );
 
-export default ActionMenu; 
+export default ActionMenu;

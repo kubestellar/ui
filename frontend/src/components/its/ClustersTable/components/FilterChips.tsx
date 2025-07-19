@@ -162,4 +162,4 @@ const FilterChips: React.FC<FilterChipsProps> = ({
   );
 };
 
-export default FilterChips; 
+export default FilterChips;

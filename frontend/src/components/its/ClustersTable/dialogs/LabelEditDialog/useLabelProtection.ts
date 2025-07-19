@@ -1,6 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ManagedClusterInfo } from '../../types';
 
+interface MatchExpression {
+  key: string;
+  operator?: string;
+  values?: string[];
+}
+
+interface ClusterSelector {
+  matchLabels?: Record<string, string>;
+  matchExpressions?: MatchExpression[];
+}
+
+interface BindingPolicySpec {
+  clusterSelectors?: ClusterSelector[];
+}
+
+interface BindingPolicy {
+  spec?: BindingPolicySpec;
+  clusterSelectors?: Record<string, string>[];
+  clusters?: string[];
+  yaml?: string;
+}
+
+interface BindingPoliciesResponse {
+  bindingPolicies?: BindingPolicy[];
+}
+
 export const useLabelProtection = (open: boolean, cluster: ManagedClusterInfo | null) => {
   const [protectedLabels, setProtectedLabels] = useState<Set<string>>(new Set());
 
@@ -38,18 +64,18 @@ export const useLabelProtection = (open: boolean, cluster: ManagedClusterInfo | 
         try {
           const response = await fetch('/api/bp');
           if (response.ok) {
-            const data = await response.json();
+            const data: BindingPoliciesResponse = await response.json();
             const usedLabels = new Set<string>();
 
-            data.bindingPolicies?.forEach((bp: any) => {
+            data.bindingPolicies?.forEach(bp => {
               // From spec.clusterSelectors.matchLabels
-              bp.spec?.clusterSelectors?.forEach((selector: any) => {
-                Object.keys(selector.matchLabels || {}).forEach((key: string) => {
+              bp.spec?.clusterSelectors?.forEach(selector => {
+                Object.keys(selector.matchLabels || {}).forEach(key => {
                   usedLabels.add(key);
                 });
 
                 // From matchExpressions
-                selector.matchExpressions?.forEach((expr: any) => {
+                selector.matchExpressions?.forEach(expr => {
                   if (expr.key) {
                     usedLabels.add(expr.key);
                   }
@@ -57,14 +83,14 @@ export const useLabelProtection = (open: boolean, cluster: ManagedClusterInfo | 
               });
 
               // From stored clusterSelectors
-              bp.clusterSelectors?.forEach((selector: any) => {
-                Object.keys(selector || {}).forEach((key: string) => {
+              bp.clusterSelectors?.forEach(selector => {
+                Object.keys(selector || {}).forEach(key => {
                   usedLabels.add(key);
                 });
               });
 
               // From clusters array
-              bp.clusters?.forEach((cluster: string) => {
+              bp.clusters?.forEach(cluster => {
                 if (cluster.includes('=')) {
                   const key = cluster.split('=')[0].trim();
                   if (key) usedLabels.add(key);
@@ -79,7 +105,7 @@ export const useLabelProtection = (open: boolean, cluster: ManagedClusterInfo | 
                 const yamlLines = bp.yaml.split('\n');
                 let inMatchLabels = false;
 
-                yamlLines.forEach((line: string) => {
+                yamlLines.forEach(line => {
                   const trimmed = line.trim();
                   if (trimmed.includes('matchlabels:')) {
                     inMatchLabels = true;
@@ -108,4 +134,4 @@ export const useLabelProtection = (open: boolean, cluster: ManagedClusterInfo | 
   }, [open, cluster]);
 
   return { protectedLabels, isLabelProtected };
-}; 
+};

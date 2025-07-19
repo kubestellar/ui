@@ -8,4 +8,4 @@ export interface DetachClusterDialogProps {
   isLoading: boolean;
   isDark: boolean;
   colors: ColorTheme;
-} 
+}

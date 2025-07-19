@@ -25,6 +25,7 @@ export interface ColorTheme {
   warning: string;
   error: string;
   disabled: string;
+  [key: string]: string;
 }
 
 export interface StatusFilterItem {
@@ -54,4 +55,4 @@ export interface ClustersTableProps {
   isLoading?: boolean;
   initialShowCreateOptions?: boolean;
   initialActiveOption?: string;
-} 
+}

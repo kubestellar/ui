@@ -20,17 +20,10 @@ const LabelChip: React.FC<LabelChipProps> = ({
   onFilterClick,
 }) => {
   const { t } = useTranslation();
-  const isFiltered = filterByLabel.some(
-    item => item.key === labelKey && item.value === value
-  );
+  const isFiltered = filterByLabel.some(item => item.key === labelKey && item.value === value);
 
   return (
-    <Tooltip
-      title={t('clusters.filteredByLabel')}
-      arrow
-      placement="top"
-      TransitionComponent={Zoom}
-    >
+    <Tooltip title={t('clusters.filteredByLabel')} arrow placement="top" TransitionComponent={Zoom}>
       <span
         onClick={() => onFilterClick(labelKey, value)}
         style={{
@@ -60,4 +53,4 @@ const LabelChip: React.FC<LabelChipProps> = ({
   );
 };
 
-export default LabelChip; 
+export default LabelChip;

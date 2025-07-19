@@ -87,9 +87,7 @@ const TablePagination: React.FC<TablePaginationProps> = ({
             backgroundColor: isDark ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
             borderRadius: '8px',
             border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'}`,
-            boxShadow: isDark
-              ? '0 2px 4px rgba(0, 0, 0, 0.1)'
-              : '0 2px 4px rgba(0, 0, 0, 0.05)',
+            boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.1)' : '0 2px 4px rgba(0, 0, 0, 0.05)',
             minWidth: { xs: '100px', sm: '120px' },
           }}
         >
@@ -204,4 +202,4 @@ const TablePagination: React.FC<TablePaginationProps> = ({
   );
 };
 
-export default TablePagination; 
+export default TablePagination;

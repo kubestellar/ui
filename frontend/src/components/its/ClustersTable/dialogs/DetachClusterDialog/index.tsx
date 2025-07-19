@@ -161,4 +161,4 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
   );
 };
 
-export default DetachClusterDialog; 
+export default DetachClusterDialog;

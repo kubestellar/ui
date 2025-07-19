@@ -27,11 +27,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, available, isDark, co
           : isDark
             ? 'rgba(103, 192, 115, 0.2)'
             : 'rgba(103, 192, 115, 0.1)',
-      color: isUnavailable
-        ? colors.error
-        : isPending
-          ? colors.warning
-          : colors.success,
+      color: isUnavailable ? colors.error : isPending ? colors.warning : colors.success,
       border: isUnavailable
         ? `1px solid ${isDark ? 'rgba(255, 107, 107, 0.4)' : 'rgba(255, 107, 107, 0.3)'}`
         : isPending
@@ -68,4 +64,4 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, available, isDark, co
   );
 };
 
-export default StatusBadge; 
+export default StatusBadge;

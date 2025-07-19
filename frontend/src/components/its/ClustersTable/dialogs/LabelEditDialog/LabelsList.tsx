@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Typography,
-  TextField,
-  IconButton,
-  Tooltip,
-  Zoom,
-} from '@mui/material';
+import { Typography, TextField, IconButton, Tooltip, Zoom } from '@mui/material';
 import { Tag } from 'lucide-react';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
@@ -33,7 +27,7 @@ interface LabelsListProps {
   onEditKeyDown: (e: React.KeyboardEvent) => void;
   editKeyInputRef: React.RefObject<HTMLInputElement>;
   editValueInputRef: React.RefObject<HTMLInputElement>;
-  t: (key: string, options?: any) => string;
+  t: (key: string, options?: Record<string, string | number>) => string;
 }
 
 export const LabelsList: React.FC<LabelsListProps> = ({
@@ -310,4 +304,4 @@ export const LabelsList: React.FC<LabelsListProps> = ({
       </div>
     </div>
   );
-}; 
+};

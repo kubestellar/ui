@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,15 +15,13 @@ import {
   Zoom,
   InputAdornment,
 } from '@mui/material';
-import { Tag, Tags } from 'lucide-react';
+import { Tag } from 'lucide-react';
 import LabelIcon from '@mui/icons-material/Label';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
-import LockIcon from '@mui/icons-material/Lock';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { ColorTheme, ManagedClusterInfo } from '../../types';
 import CancelButton from '../../../../../components/common/CancelButton';
 import { LabelItem, LabelEditDialogProps } from './types';
 import { useLabelProtection } from './useLabelProtection';
@@ -55,14 +53,16 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const editKeyInputRef = useRef<HTMLInputElement>(null);
   const editValueInputRef = useRef<HTMLInputElement>(null);
 
-  const { protectedLabels, isLabelProtected } = useLabelProtection(open, cluster);
+  const { isLabelProtected } = useLabelProtection(open, cluster);
 
-  const filteredLabels = labelSearch.trim() === ''
-    ? labels
-    : labels.filter(label =>
-        label.key.toLowerCase().includes(labelSearch.toLowerCase()) ||
-        label.value.toLowerCase().includes(labelSearch.toLowerCase())
-      );
+  const filteredLabels =
+    labelSearch.trim() === ''
+      ? labels
+      : labels.filter(
+          label =>
+            label.key.toLowerCase().includes(labelSearch.toLowerCase()) ||
+            label.value.toLowerCase().includes(labelSearch.toLowerCase())
+        );
 
   useEffect(() => {
     if (cluster && open) {
@@ -478,7 +478,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             isDark={isDark}
             colors={colors}
             isLabelProtected={isLabelProtected}
-            onLabelClick={(index) => setSelectedLabelIndex(selectedLabelIndex === index ? null : index)}
+            onLabelClick={index =>
+              setSelectedLabelIndex(selectedLabelIndex === index ? null : index)
+            }
             onStartEdit={handleStartEdit}
             onSaveEdit={handleSaveEdit}
             onCancelEdit={handleCancelEdit}
@@ -526,4 +528,4 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   );
 };
 
-export default LabelEditDialog; 
+export default LabelEditDialog;

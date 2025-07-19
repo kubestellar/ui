@@ -5,4 +5,4 @@ export { default as FilterChips } from './FilterChips';
 export { default as ActionMenu } from './ActionMenu';
 export { default as StatusBadge } from './StatusBadge';
 export { default as LabelChip } from './LabelChip';
-export { default as EmptyState } from './EmptyState'; 
+export { default as EmptyState } from './EmptyState';

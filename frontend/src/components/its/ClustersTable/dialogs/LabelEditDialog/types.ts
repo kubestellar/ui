@@ -17,4 +17,4 @@ export interface LabelEditDialogProps {
   ) => void;
   isDark: boolean;
   colors: ColorTheme;
-} 
+}

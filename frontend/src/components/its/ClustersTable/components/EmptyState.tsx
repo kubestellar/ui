@@ -57,11 +57,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       <Typography variant="h5" style={{ color: colors.text }} className="mb-3 font-semibold">
         {t('clusters.noClustersFound')}
       </Typography>
-      <Typography
-        variant="body1"
-        style={{ color: colors.textSecondary }}
-        className="mb-6 max-w-md"
-      >
+      <Typography variant="body1" style={{ color: colors.textSecondary }} className="mb-6 max-w-md">
         {query && filter
           ? t('clusters.noClustersMatchBoth')
           : query
@@ -151,4 +147,4 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   );
 };
 
-export default EmptyState; 
+export default EmptyState;

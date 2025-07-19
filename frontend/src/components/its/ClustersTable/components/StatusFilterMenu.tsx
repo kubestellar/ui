@@ -1,11 +1,4 @@
-import {
-  Menu,
-  MenuItem,
-  Typography,
-  Box,
-  Fade,
-} from '@mui/material';
-import { useTranslation } from 'react-i18next';
+import { Menu, MenuItem, Typography, Box, Fade } from '@mui/material';
 import { ColorTheme, StatusFilterItem } from '../types';
 
 interface StatusFilterMenuProps {
@@ -29,8 +22,6 @@ const StatusFilterMenu: React.FC<StatusFilterMenuProps> = ({
   isDark,
   colors,
 }) => {
-  const { t } = useTranslation();
-
   return (
     <Menu
       id="status-filter-menu"
@@ -119,4 +110,4 @@ const StatusFilterMenu: React.FC<StatusFilterMenuProps> = ({
   );
 };
 
-export default StatusFilterMenu; 
+export default StatusFilterMenu;

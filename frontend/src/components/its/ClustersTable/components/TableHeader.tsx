@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  Button,
-  Box,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Chip,
-} from '@mui/material';
+import { Button, Box, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { Filter, Plus, Tag } from 'lucide-react';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PostAddIcon from '@mui/icons-material/PostAdd';
@@ -92,8 +84,14 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           <Button
             variant="outlined"
             onClick={handleStatusFilterClick}
-            startIcon={<Filter size={16} style={{ color: filter ? colors.primary : colors.textSecondary }} />}
-            endIcon={<KeyboardArrowDownIcon style={{ color: filter ? colors.primary : colors.textSecondary }} />}
+            startIcon={
+              <Filter size={16} style={{ color: filter ? colors.primary : colors.textSecondary }} />
+            }
+            endIcon={
+              <KeyboardArrowDownIcon
+                style={{ color: filter ? colors.primary : colors.textSecondary }}
+              />
+            }
             sx={{
               color: filter ? colors.primary : colors.textSecondary,
               borderColor: filter ? colors.primary : colors.border,
@@ -268,4 +266,4 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   );
 };
 
-export default TableHeader; 
+export default TableHeader;

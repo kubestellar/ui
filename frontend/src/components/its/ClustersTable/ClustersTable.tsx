@@ -84,9 +84,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     // Apply search filter
     if (query.trim()) {
       const searchTerm = query.toLowerCase();
-      filtered = filtered.filter(cluster =>
-        cluster.name.toLowerCase().includes(searchTerm)
-      );
+      filtered = filtered.filter(cluster => cluster.name.toLowerCase().includes(searchTerm));
     }
 
     // Apply status filter
@@ -108,9 +106,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     // Apply label filters
     if (filterByLabel.length > 0) {
       filtered = filtered.filter(cluster =>
-        filterByLabel.every(
-          ({ key, value }) => cluster.labels?.[key] === value
-        )
+        filterByLabel.every(({ key, value }) => cluster.labels?.[key] === value)
       );
     }
 
@@ -164,7 +160,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
   const handleCheckboxChange = (clusterName: string) => {
     setSelectedClusters(prev =>
-      prev.includes(clusterName) ? prev.filter(name => name !== clusterName) : [...prev, clusterName]
+      prev.includes(clusterName)
+        ? prev.filter(name => name !== clusterName)
+        : [...prev, clusterName]
     );
   };
 
@@ -224,7 +222,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     labels: { [key: string]: string },
     deletedLabels?: string[]
   ) => {
-    const isBulkOperation = selectedClusters.length > 1 && clusterName.includes('selected clusters');
+    const isBulkOperation =
+      selectedClusters.length > 1 && clusterName.includes('selected clusters');
     setLoadingClusterEdit(isBulkOperation ? 'bulk' : clusterName);
 
     if (isBulkOperation) {
@@ -274,29 +273,29 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
       processNextCluster();
     } else {
-    updateLabelsMutation.mutate(
-      {
+      updateLabelsMutation.mutate(
+        {
           contextName,
           clusterName,
           labels,
           deletedLabels,
-      },
-      {
-        onSuccess: () => {
-            toast.success('Labels updated successfully', { icon: '🏷️' });
-          setLoadingClusterEdit(null);
-          setEditDialogOpen(false);
         },
-        onError: error => {
+        {
+          onSuccess: () => {
+            toast.success('Labels updated successfully', { icon: '🏷️' });
+            setLoadingClusterEdit(null);
+            setEditDialogOpen(false);
+          },
+          onError: error => {
             toast.error('Error updating labels. Please try again.', {
               icon: '❌',
               duration: 5000,
             });
-          console.error('Error updating cluster labels:', error);
-          setLoadingClusterEdit(null);
-        },
-      }
-    );
+            console.error('Error updating cluster labels:', error);
+            setLoadingClusterEdit(null);
+          },
+        }
+      );
     }
   };
 
@@ -330,13 +329,19 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         onFilterChange={setFilter}
         hasSelectedClusters={selectedClusters.length > 0}
         selectedCount={selectedClusters.length}
-        onBulkLabels={() => handleEditLabels({ name: `${selectedClusters.length} selected clusters`, context: 'bulk-operation', labels: {} })}
+        onBulkLabels={() =>
+          handleEditLabels({
+            name: `${selectedClusters.length} selected clusters`,
+            context: 'bulk-operation',
+            labels: {},
+          })
+        }
         onShowCreateOptions={() => {
           setShowCreateOptions(true);
           setActiveOption('quickconnect');
         }}
         statusFilterItems={statusFilterItems}
-            isDark={isDark}
+        isDark={isDark}
         colors={colors}
       />
 
@@ -347,7 +352,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         statusFilterItems={statusFilterItems}
         onClearQuery={() => setQuery('')}
         onClearFilter={() => setFilter('')}
-        onClearLabelFilter={(index) => {
+        onClearLabelFilter={index => {
           setFilterByLabel(prev => prev.filter((_, i) => i !== index));
           toast.success('Label filter removed', { duration: 2000 });
         }}
@@ -394,10 +399,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         />
       )}
 
-              {showCreateOptions && (
-                <CreateOptions
-                  activeOption={activeOption}
-                  setActiveOption={setActiveOption}
+      {showCreateOptions && (
+        <CreateOptions
+          activeOption={activeOption}
+          setActiveOption={setActiveOption}
           onCancel={() => setShowCreateOptions(false)}
         />
       )}

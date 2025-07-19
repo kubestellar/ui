@@ -242,7 +242,7 @@ const TableContent: React.FC<TableContentProps> = ({
                 <TableCell>
                   <div className="flex justify-end">
                     <ActionButton
-                      onClick={(event) => onActionsClick(event, cluster.name)}
+                      onClick={event => onActionsClick(event, cluster.name)}
                       colors={colors}
                       isDark={isDark}
                     />
@@ -257,4 +257,4 @@ const TableContent: React.FC<TableContentProps> = ({
   );
 };
 
-export default TableContent; 
+export default TableContent;
