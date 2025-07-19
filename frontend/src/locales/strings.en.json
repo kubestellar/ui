@@ -154,7 +154,8 @@
         "passwordMismatch": "Passwords do not match",
         "addFailed": "Failed to add user",
         "updateFailed": "Failed to update user",
-        "deleteFailed": "Failed to delete user"
+        "deleteFailed": "Failed to delete user",
+        "invalidUsername": "Username can only contain letters, numbers, underscore, and hyphen"
       },
       "success": {
         "userAdded": "User added successfully",
@@ -2291,7 +2292,7 @@
     "noLabelsFound": "No labels found",
     "noMatchingFilters": "No resources match the current filters",
     "title": "Resource Explorer",
-    "selectKind": "Select Resource Kind",
+    "selectKind": "Select Kind / Object",
     "selectNamespace": "Select Namespace",
     "applyFilters": "Apply Filters",
     "results": "Results",

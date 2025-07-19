@@ -2207,7 +2207,8 @@
         "passwordMismatch": "Les mots de passe ne correspondent pas",
         "addFailed": "Échec de l'ajout de l'utilisateur",
         "updateFailed": "Échec de la mise à jour de l'utilisateur",
-        "deleteFailed": "Échec de la suppression de l'utilisateur"
+        "deleteFailed": "Échec de la suppression de l'utilisateur",
+        "invalidUsername": "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres, des tirets bas et des tirets."
       },
       "success": {
         "userAdded": "Utilisateur ajouté avec succès",

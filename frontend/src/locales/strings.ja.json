@@ -154,7 +154,8 @@
         "passwordMismatch": "パスワードが一致しません",
         "addFailed": "ユーザーの追加に失敗しました",
         "updateFailed": "ユーザーの更新に失敗しました",
-        "deleteFailed": "ユーザーの削除に失敗しました"
+        "deleteFailed": "ユーザーの削除に失敗しました",
+        "invalidUsername": "ユーザー名には英字、数字、アンダースコア、ハイフンのみ使用できます"
       },
       "success": {
         "userAdded": "ユーザーが正常に追加されました",

@@ -25,6 +25,9 @@ spec:
       - path: "/data"
         methods: ["GET"]
         handler: "handle_data"
+      - path: "/read"
+        methods: ["POST"]
+        handler: "read_data"
   # Basic permissions
   permissions:
     - "kubestellar:read:clusters"
