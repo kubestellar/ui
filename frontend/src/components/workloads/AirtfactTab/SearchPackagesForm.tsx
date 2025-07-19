@@ -384,7 +384,7 @@ export const SearchPackagesForm = ({
               '& .MuiInputBase-input': {
                 padding: '10px 14px',
                 fontSize: '0.875rem',
-                color: theme === 'dark' ? '#d4d4d4' : '#666',
+                color: theme === 'dark' ? '#fff' : '#666',
               },
               '& .MuiInputLabel-root': {
                 color: theme === 'dark' ? '#90caf9' : '#1976d2',
@@ -620,7 +620,7 @@ export const SearchPackagesForm = ({
                 <Typography
                   variant="body2"
                   sx={{
-                    color: theme === 'dark' ? '#bbb' : '#666',
+                    color: theme === 'dark' ? '#fff' : '#666',
                     mb: 0.5,
                     fontWeight: 500,
                     fontSize: '0.8rem',
@@ -643,6 +643,9 @@ export const SearchPackagesForm = ({
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
+                    },
+                    '& .MuiInputBase-input': {
+                      color: theme === 'dark' ? '#fff' : '#666',
                     },
                   }}
                 />
@@ -697,7 +700,7 @@ export const SearchPackagesForm = ({
                     <Typography
                       variant="body2"
                       sx={{
-                        color: theme === 'dark' ? '#bbb' : '#666',
+                        color: theme === 'dark' ? '#fff' : '#666',
                         mb: 0.5,
                         fontWeight: 500,
                         fontSize: '0.8rem',
@@ -722,6 +725,13 @@ export const SearchPackagesForm = ({
                         sx={{
                           borderRadius: '4px',
                           fontSize: '0.875rem',
+                          color: theme === 'dark' ? '#fff' : '#333',
+                          '& .MuiSelect-select': {
+                            color: theme === 'dark' ? '#fff' : '#333',
+                          },
+                          '& .MuiSelect-icon': {
+                            color: theme === 'dark' ? '#fff' : '#333', // Make dropdown arrow white in dark mode
+                          },
                         }}
                       >
                         <MenuItem value="ClusterIP">ClusterIP</MenuItem>
@@ -735,7 +745,7 @@ export const SearchPackagesForm = ({
                     <Typography
                       variant="body2"
                       sx={{
-                        color: theme === 'dark' ? '#bbb' : '#666',
+                        color: theme === 'dark' ? '#fff' : '#666',
                         mb: 0.5,
                         fontWeight: 500,
                         fontSize: '0.8rem',
@@ -756,6 +766,9 @@ export const SearchPackagesForm = ({
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: theme === 'dark' ? '#fff' : '#666',
                         },
                       }}
                     />
@@ -860,40 +873,11 @@ export const SearchPackagesForm = ({
                     </Box>
                   }
                   secondary={
-                    <Box sx={{ mt: 0.5 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: theme === 'dark' ? '#bbb' : '#666',
-                          display: 'flex',
-                          alignItems: 'center',
-                          mb: 0.5,
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            width: '60px',
-                            color: theme === 'dark' ? '#999' : '#777',
-                            fontWeight: 500,
-                          }}
-                        >
-                          Repo:
-                        </span>
-                        {result.repository.display_name || result.repository.name}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: theme === 'dark' ? '#bbb' : '#666',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {result.description}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                      <StarIcon sx={{ color: '#FFC107', fontSize: '0.875rem', mr: 0.5 }} />
+                      <Typography variant="body2" sx={{ color: theme === 'dark' ? '#ddd' : '#666' }}>
+                        {result.stars}{' '}
+                        {t('workloads.artifactHub.searchPackagesForm.packageDetails.stars')}
                       </Typography>
                     </Box>
                   }
@@ -901,7 +885,21 @@ export const SearchPackagesForm = ({
               </ListItem>
             ))}
           </List>
-        ) : null}
+        ) : (
+          // Show no results message
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100px',
+              color: theme === 'dark' ? '#90caf9' : '#1976d2',
+              fontSize: '1rem',
+            }}
+          >
+            {t('workloads.artifactHub.searchPackagesForm.noResultsMessage')}
+          </Box>
+        )}
       </Box>
     </Box>
   );

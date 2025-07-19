@@ -262,7 +262,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           sx={{
             fontWeight: 600,
             fontSize: '13px',
-            color: theme === 'dark' ? '#d4d4d4' : '#333',
+            color: theme === 'dark' ? '#fff' : '#333',
             mb: 1,
             display: 'flex',
             alignItems: 'center',
@@ -302,7 +302,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             '& .MuiInputBase-input': {
               padding: '12px 14px',
               fontSize: '0.875rem',
-              color: theme === 'dark' ? '#d4d4d4' : '#666',
+              color: theme === 'dark' ? '#fff' : '#666',
             },
             '& .MuiInputBase-input::placeholder': {
               color: theme === 'dark' ? '#858585' : '#666',
