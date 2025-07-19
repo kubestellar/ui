@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
   FormControl,
@@ -8,10 +8,12 @@ import {
   CircularProgress,
   Typography,
   SelectChangeEvent,
-  Alert,
 } from '@mui/material';
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import 'xterm/css/xterm.css';
 import DownloadLogsButton from '../../DownloadLogsButton';
-import { api } from '../../../lib/api';
+import { getWebSocketUrl } from '../../../lib/api';
 
 interface ContainerInfo {
   ContainerName: string;
@@ -27,10 +29,11 @@ interface LogsTabProps {
   selectedLogsContainer: string;
   loadingLogsContainers: boolean;
   showPreviousLogs: boolean;
-  logs: string[]; // This prop is kept for backward compatibility but we use actualLogs internally
+  logs: string[];
   cluster: string;
   namespace: string;
   name: string;
+  isOpen: boolean;
   handleLogsContainerChange: (event: SelectChangeEvent<string>) => void;
   handlePreviousLogsToggle: () => void;
   setIsLogsContainerSelectActive: (active: boolean) => void;
@@ -48,75 +51,165 @@ const LogsTab: React.FC<LogsTabProps> = ({
   cluster,
   namespace,
   name,
+  isOpen,
   handleLogsContainerChange,
   handlePreviousLogsToggle,
   setIsLogsContainerSelectActive,
 }) => {
   const [actualLogs, setActualLogs] = useState<string[]>([]);
-  const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
-  const [logsError, setLogsError] = useState<string | null>(null);
-  const [availableContainers, setAvailableContainers] = useState<ContainerInfo[]>([]);
-  const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
+  const terminalInstance = useRef<Terminal | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const hasShownConnectedMessageRef = useRef<boolean>(false);
 
-  // Fetch containers for the pod
+  // Initialize terminal
   useEffect(() => {
-    const fetchContainers = async () => {
-      if (type.toLowerCase() === 'pod' && name && namespace) {
-        setLoadingContainers(true);
-        try {
-          const response = await api.get(`/api/pod/${namespace}/${name}/containers`, {
-            params: { cluster },
-          });
-          setAvailableContainers(response.data.containers || []);
-        } catch (error) {
-          console.error('Failed to fetch containers:', error);
-          setLogsError(t('wecsDetailsPanel.errors.failedFetchContainers'));
-        } finally {
-          setLoadingContainers(false);
-        }
-      }
-    };
+    if (!terminalRef.current || type.toLowerCase() !== 'pod') return;
 
-    fetchContainers();
-  }, [type, name, namespace, cluster, t]);
-
-  // Fetch logs when container or previous logs setting changes
-  useEffect(() => {
-    const fetchLogs = async () => {
-      if (type.toLowerCase() === 'pod' && name && namespace && selectedLogsContainer) {
-        setLoadingLogs(true);
-        setLogsError(null);
-        try {
-          const response = await api.get(`/api/pod/${namespace}/${name}/logs`, {
-            params: {
-              cluster,
-              container: selectedLogsContainer,
-              previous: showPreviousLogs,
-            },
-          });
-          setActualLogs(response.data.logs || []);
-        } catch (error) {
-          console.error('Failed to fetch logs:', error);
-          setLogsError(t('wecsDetailsPanel.errors.failedLoadDetails', { type: 'logs' }));
-        } finally {
-          setLoadingLogs(false);
-        }
-      }
-    };
-
-    fetchLogs();
-  }, [type, name, namespace, cluster, selectedLogsContainer, showPreviousLogs, t]);
-
-  // Display logs in the terminal ref
-  useEffect(() => {
-    if (terminalRef.current && actualLogs.length > 0) {
-      terminalRef.current.innerHTML = actualLogs.join('\n');
+    // Skip re-initialization if terminal already exists
+    if (terminalInstance.current) {
+      // Update existing terminal with latest logs instead of re-creating it
+      const term = terminalInstance.current;
+      const lastLogIndex = term.buffer.active.length - 1; // Approximate last written log
+      const newLogs = actualLogs.slice(lastLogIndex > 0 ? lastLogIndex : 0);
+      newLogs.forEach(log => {
+        term.writeln(log);
+      });
+      return;
     }
-  }, [actualLogs, terminalRef]);
+
+    const term = new Terminal({
+      theme: {
+        background: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+        foreground: theme === 'dark' ? '#D4D4D4' : '#222222',
+        cursor: '#00FF00',
+      },
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: 'monospace',
+      scrollback: 1000,
+      disableStdin: true,
+    });
+
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(terminalRef.current);
+
+    setTimeout(() => fitAddon.fit(), 100);
+    terminalInstance.current = term;
+    term.clear();
+    actualLogs.forEach(log => {
+      term.writeln(log);
+    });
+
+    return () => {
+      term.dispose();
+      terminalInstance.current = null;
+    };
+  }, [theme, type, actualLogs, terminalRef]);
+
+  // Connect WebSocket for real-time logs
+  const connectWebSocket = useCallback(() => {
+    if (!isOpen || type.toLowerCase() !== 'pod') return;
+
+    // Build WebSocket URL with container and previous logs parameters
+    let wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${name}`);
+
+    // Add container parameter if selected
+    if (selectedLogsContainer) {
+      wsUrl += `&container=${encodeURIComponent(selectedLogsContainer)}`;
+    }
+
+    // Add previous parameter if showPreviousLogs is true
+    if (showPreviousLogs) {
+      wsUrl += `&previous=true`;
+    }
+
+    setActualLogs(prev => [
+      ...prev,
+      `\x1b[33m[Connecting] WebSocket Request\x1b[0m`,
+      `URL: ${wsUrl}`,
+      `Container: ${selectedLogsContainer || 'default'}`,
+      `Previous Logs: ${showPreviousLogs ? 'Yes' : 'No'}`,
+      `Timestamp: ${new Date().toISOString()}`,
+      `-----------------------------------`,
+    ]);
+
+    const socket = new WebSocket(wsUrl);
+    wsRef.current = socket;
+
+    socket.onopen = () => {
+      setActualLogs(prev => [
+        ...prev,
+        `\x1b[32m[Connected] WebSocket Connection Established\x1b[0m`,
+        `Status: OPEN`,
+        `Container: ${selectedLogsContainer || 'default'}`,
+        `Previous Logs: ${showPreviousLogs ? 'Yes' : 'No'}`,
+        `Timestamp: ${new Date().toISOString()}`,
+        `-----------------------------------`,
+      ]);
+      hasShownConnectedMessageRef.current = true;
+    };
+
+    socket.onmessage = event => {
+      const messageLines = event.data.split('\n').filter((line: string) => line.trim() !== '');
+      const messageLog = messageLines.map((line: string) => line.trim());
+      messageLog.push(`Timestamp: ${new Date().toISOString()}`);
+      messageLog.push(`-----------------------------------`);
+      setActualLogs(prev => [...prev, ...messageLog]);
+    };
+
+    socket.onerror = event => {
+      setActualLogs(prev => [
+        ...prev,
+        `\x1b[31m[Error] WebSocket Connection Failed\x1b[0m`,
+        `Details: ${JSON.stringify(event)}`,
+        `Timestamp: ${new Date().toISOString()}`,
+        `-----------------------------------`,
+      ]);
+    };
+
+    socket.onclose = () => {
+      setActualLogs(prev => [
+        ...prev,
+        `\x1b[31m[Closed] WebSocket Connection Terminated\x1b[0m`,
+        `Timestamp: ${new Date().toISOString()}`,
+        `-----------------------------------`,
+      ]);
+      wsRef.current = null;
+    };
+  }, [isOpen, type, cluster, namespace, name, selectedLogsContainer, showPreviousLogs]);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (!isOpen || type.toLowerCase() !== 'pod') {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      setActualLogs([]);
+      hasShownConnectedMessageRef.current = false;
+      return;
+    }
+
+    // Close existing connection if container or previous logs selection changes
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    connectWebSocket();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [isOpen, type, connectWebSocket, selectedLogsContainer, showPreviousLogs]);
 
   // Use available containers if logsContainers is empty
-  const containersToUse = logsContainers.length > 0 ? logsContainers : availableContainers;
-  const isLoadingContainers = loadingLogsContainers || loadingContainers;
+  const containersToUse = logsContainers.length > 0 ? logsContainers : [];
+  const isLoadingContainers = loadingLogsContainers;
 
   return (
     <>
@@ -246,13 +339,6 @@ const LogsTab: React.FC<LogsTabProps> = ({
                     </Box>
                   </MenuItem>
                 ))}
-                {containersToUse.length === 0 && !isLoadingContainers && (
-                  <MenuItem disabled>
-                    <Typography variant="body2">
-                      {t('wecsDetailsPanel.containers.noContainersFound')}
-                    </Typography>
-                  </MenuItem>
-                )}
               </Select>
             </FormControl>
 
@@ -271,11 +357,16 @@ const LogsTab: React.FC<LogsTabProps> = ({
                 height: '36px',
                 px: 2,
                 '&:hover': {
-                  backgroundColor: showPreviousLogs ? '#1565c0' : 'rgba(47, 134, 255, 0.08)',
+                  backgroundColor: showPreviousLogs
+                    ? '#1565c0'
+                    : 'rgba(47, 134, 255, 0.08)',
                 },
               }}
             >
-              <span className="fas fa-history" style={{ marginRight: '6px', fontSize: '11px' }} />
+              <span
+                className="fas fa-history"
+                style={{ marginRight: '6px', fontSize: '11px' }}
+              />
               {t('wecsDetailsPanel.logs.previousLogs')}
             </Button>
           </Box>
@@ -289,13 +380,6 @@ const LogsTab: React.FC<LogsTabProps> = ({
           />
         </Box>
       )}
-
-      {logsError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {logsError}
-        </Alert>
-      )}
-
       <Box
         sx={{
           maxHeight: '500px',
@@ -305,34 +389,10 @@ const LogsTab: React.FC<LogsTabProps> = ({
           overflow: 'auto',
         }}
       >
-        {loadingLogs ? (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '200px',
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        ) : (
-          <div
-            ref={terminalRef}
-            style={{
-              height: '100%',
-              width: '100%',
-              overflow: 'auto',
-              fontFamily: 'monospace',
-              fontSize: '12px',
-              color: theme === 'dark' ? '#fff' : '#000',
-              backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
-              padding: '8px',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          />
-        )}
+        <div
+          ref={terminalRef}
+          style={{ height: '100%', width: '100%', overflow: 'auto' }}
+        />
       </Box>
     </>
   );
