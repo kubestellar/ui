@@ -10,6 +10,7 @@ import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
+import { FaRocket } from 'react-icons/fa';
 
 export const useMenuData = (): MenuItemData[] => {
   const { t } = useTranslation();
@@ -82,6 +83,12 @@ export const useMenuData = (): MenuItemData[] => {
           url: '/plugins/manage',
           icon: HiOutlinePuzzlePiece,
           label: t('menu.items.pluginManager'),
+        },
+        {
+          isLink: true,
+          url: '/plugins/marketplace',
+          icon: FaRocket,
+          label: t('menu.items.galaxyMarketplace'),
         },
       ],
     },

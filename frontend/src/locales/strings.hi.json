@@ -2086,6 +2086,10 @@
         "title": "लॉगआउट",
         "description": "अपने खाते से साइन आउट करें",
         "infoMessage": "आपको सफलतापूर्वक लॉग आउट कर दिया गया है।"
+      },
+      "galaxyMarketplace": {
+        "title": "Galaxy Marketplace",
+        "description": "Galaxy Marketplace से Plugin खोजें और इंस्टॉल करें"
       }
     },
     "sections": {
@@ -2111,7 +2115,8 @@
       "deployedWorkloads": "Deployed Workloads",
       "pluginManager": "Plugin Manager",
       "userManagement": "User Management",
-      "metricsDashboard": "Metrics Dashboard"
+      "metricsDashboard": "Metrics Dashboard",
+      "galaxyMarketplace": "Galaxy Marketplace"
     }
   },
   "plugins": {

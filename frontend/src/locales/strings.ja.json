@@ -2098,6 +2098,10 @@
         "title": "ログアウト",
         "description": "アカウントからサインアウト",
         "infoMessage": "正常にログアウトしました。"
+      },
+      "galaxyMarketplace": {
+        "title": "ギャラクシーマーケットプレイス",
+        "description": "ギャラクシーマーケットプレイスからプラグインを見つけてインストールしましょう"
       }
     }
   },
@@ -2115,7 +2119,8 @@
       "bindingPolicies": "バインディングポリシー",
       "deployedWorkloads": "デプロイ済みワークロード",
       "pluginManager": "プラグインマネージャー",
-      "userManagement": "ユーザー管理"
+      "userManagement": "ユーザー管理",
+      "galaxyMarketplace": "ギャラクシーマーケットプレイス"
     }
   },
   "plugins": {

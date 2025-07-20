@@ -21,6 +21,7 @@ const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Das
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
 const MetricsDashboardLazy = lazy(() => import('../components/MetricsDashboard'));
 const ResourceFilterPageLazy = lazy(() => import('../pages/ResourceFilterPage'));
+const GalaxyMarketplaceLazy = lazy(() => import('../pages/GalaxyMarketplace'));
 
 export const routesConfig: RouteObject[] = [
   {
@@ -155,6 +156,18 @@ export const routesConfig: RouteObject[] = [
           <ProtectedRoute>
             <Suspense fallback={<LoadingFallback message="Loading resources..." size="medium" />}>
               <ResourceFilterPageLazy />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins/marketplace',
+        element: (
+          <ProtectedRoute>
+            <Suspense
+              fallback={<LoadingFallback message="Loading Galaxy Marketplace..." size="medium" />}
+            >
+              <GalaxyMarketplaceLazy />
             </Suspense>
           </ProtectedRoute>
         ),
