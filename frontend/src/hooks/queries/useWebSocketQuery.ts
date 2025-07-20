@@ -55,6 +55,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
   const queryClient = useQueryClient();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const isUnmountedRef = useRef(false);
   const [wsState, setWsState] = useState<WebSocketState>({
     isConnected: false,
     error: null,
@@ -112,9 +113,11 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
       wsRef.current = null;
       onDisconnect?.(event);
 
-      if (autoReconnect && enabled) {
+      if (autoReconnect && enabled && !isUnmountedRef.current) {
         reconnectTimeoutRef.current = window.setTimeout(() => {
-          connectWebSocket();
+          if (!isUnmountedRef.current) {
+            connectWebSocket();
+          }
         }, reconnectInterval);
       }
     };
@@ -164,6 +167,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
   }, [t]);
 
   useEffect(() => {
+    isUnmountedRef.current = false;
     if (enabled) {
       connectWebSocket();
     } else {
@@ -171,6 +175,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     }
 
     return () => {
+      isUnmountedRef.current = true;
       disconnect();
     };
   }, [enabled, url, connectWebSocket, disconnect]);

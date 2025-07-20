@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/kubestellar/ui/backend/models"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 // InitializeAdminUser creates default admin user if no users exist
@@ -46,6 +47,18 @@ func InitializeAdminUser() error {
 
 // AddOrUpdateUser creates or updates a user with permissions
 func AddOrUpdateUser(username, password string, permissions map[string]string) error {
+	// Validate username
+	if err := utils.ValidateUsername(username); err != nil {
+		return fmt.Errorf("invalid username: %v", err)
+	}
+
+	// Validate password if provided
+	if password != "" {
+		if err := utils.ValidatePassword(password); err != nil {
+			return fmt.Errorf("invalid password: %v", err)
+		}
+	}
+
 	existingUser, err := models.GetUserByUsername(username)
 	if err != nil {
 		return err
@@ -84,6 +97,11 @@ func AddOrUpdateUser(username, password string, permissions map[string]string) e
 
 // GetUserByUsername retrieves user configuration
 func GetUserByUsername(username string) (*UserConfig, bool, error) {
+	// Validate username before querying
+	if err := utils.ValidateUsername(username); err != nil {
+		return nil, false, fmt.Errorf("invalid username: %v", err)
+	}
+
 	user, err := models.GetUserByUsername(username)
 	if err != nil {
 		return nil, false, err
@@ -108,6 +126,11 @@ func GetUserByUsername(username string) (*UserConfig, bool, error) {
 
 // RemoveUser deletes a user
 func RemoveUser(username string) error {
+	// Validate username before deletion
+	if err := utils.ValidateUsername(username); err != nil {
+		return fmt.Errorf("invalid username: %v", err)
+	}
+
 	return models.DeleteUser(username)
 }
 

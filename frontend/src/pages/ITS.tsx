@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
-import ClustersTable from '../components/ClustersTable';
-import Header from '../components/Header';
+import ClustersTable from '../components/its/ClustersTable/ClustersTable';
 import { useLocation } from 'react-router-dom';
 
 const ITS = () => {
@@ -61,7 +60,6 @@ const ITS = () => {
 
   return (
     <div className="w-full p-4">
-      <Header isLoading={isLoading} />
       <div className="overflow-hidden rounded-lg bg-base-100 shadow-xl">
         <div className="p-4">
           <ClustersTable

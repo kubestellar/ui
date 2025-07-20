@@ -160,7 +160,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="relative flex min-h-[60vh] w-full items-center justify-center p-4 md:h-screen md:w-[30%] md:p-8">
+      <div className="relative flex h-screen flex-1 flex-col items-center justify-center overflow-y-auto p-4 pt-10 md:h-screen md:w-[480px] md:flex-none md:flex-shrink-0 md:justify-center md:p-8">
         {/* Enhanced background with more depth */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Base gradient background */}

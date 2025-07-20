@@ -2205,7 +2205,8 @@
         "passwordMismatch": "Las contraseñas no coinciden",
         "addFailed": "Error al añadir usuario",
         "updateFailed": "Error al actualizar usuario",
-        "deleteFailed": "Error al eliminar usuario"
+        "deleteFailed": "Error al eliminar usuario",
+        "invalidUsername": "El nombre de usuario solo puede contener letras, números, guiones bajos y guiones."
       },
       "success": {
         "userAdded": "Usuario añadido exitosamente",

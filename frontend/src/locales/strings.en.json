@@ -154,7 +154,8 @@
         "passwordMismatch": "Passwords do not match",
         "addFailed": "Failed to add user",
         "updateFailed": "Failed to update user",
-        "deleteFailed": "Failed to delete user"
+        "deleteFailed": "Failed to delete user",
+        "invalidUsername": "Username can only contain letters, numbers, underscore, and hyphen"
       },
       "success": {
         "userAdded": "User added successfully",
@@ -310,7 +311,12 @@
     "goToHome": "Go to home page",
     "logoAlt": "KubeStellar Logo",
     "themeToggleTip": "Alt+Q to toggle theme",
-    "switchTheme": "Switch to {{mode}} mode"
+    "switchTheme": "Switch to {{mode}} mode",
+    "switchLanguage": "Switch language",
+    "selectLanguage": "Select Language",
+    "enterFullscreen": "Enter fullscreen mode",
+    "exitFullscreen": "Exit fullscreen mode",
+    "fullscreen": "Toggle fullscreen mode"
   },
   "login": {
     "controlPlane": "Control Plane",
@@ -2278,7 +2284,7 @@
     "noLabelsFound": "No labels found",
     "noMatchingFilters": "No resources match the current filters",
     "title": "Resource Explorer",
-    "selectKind": "Select Resource Kind",
+    "selectKind": "Select Kind / Object",
     "selectNamespace": "Select Namespace",
     "applyFilters": "Apply Filters",
     "results": "Results",

@@ -36,6 +36,7 @@
     "@xyflow/react": "^12.4.4",
     "axios": "^1.8.2",
     "dagre": "^0.8.5",
+    "date-fns": "^4.1.0",
     "elkjs": "^0.10.0",
     "estimo": "^3.0.3",
     "framer-motion": "^12.5.0",
