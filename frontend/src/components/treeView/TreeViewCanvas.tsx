@@ -179,7 +179,6 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
               containerRef={containerRef}
               position="top-right"
               tooltipPosition="left"
-              tooltipText={t('treeView.fullscreen.toggle')}
             />
           </ReactFlowProvider>
         </Box>
@@ -201,7 +200,6 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
             containerRef={containerRef}
             position="top-right"
             tooltipPosition="left"
-            tooltipText={t('treeView.fullscreen.toggle')}
           />
         </ReactFlowProvider>
       </Box>
