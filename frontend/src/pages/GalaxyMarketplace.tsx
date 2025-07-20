@@ -35,6 +35,19 @@ interface PluginData {
   lastUpdated: Date;
 }
 
+// Define the base plugin structure from the API
+interface BasePluginData {
+  id: number;
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  enabled: boolean;
+  status?: 'active' | 'inactive' | 'loading' | 'error' | 'installed';
+  loadTime?: Date;
+  routes?: string[];
+}
+
 const GalaxyMarketplace: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -75,7 +88,7 @@ const GalaxyMarketplace: React.FC = () => {
         const pluginList = await pluginAPI.getPluginList();
 
         // Enhance plugin data with mock categories and ratings for demo
-        const enhancedPlugins: PluginData[] = pluginList.map((plugin: any) => ({
+        const enhancedPlugins: PluginData[] = pluginList.map((plugin: BasePluginData) => ({
           ...plugin,
           category: ['monitoring', 'security', 'development', 'networking', 'storage', 'tools'][
             Math.floor(Math.random() * 6)
