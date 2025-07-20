@@ -644,6 +644,9 @@ export const SearchPackagesForm = ({
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
                     },
+                    '& .MuiInputBase-input': {
+                      color: theme === 'dark' ? '#f1f5f9' : '#222',
+                    },
                   }}
                 />
               </Box>
@@ -712,6 +715,9 @@ export const SearchPackagesForm = ({
                         '& .MuiOutlinedInput-root': {
                           backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
                         },
+                        '& .MuiSelect-select': {
+                          color: theme === 'dark' ? '#f1f5f9' : '#222',
+                        },
                       }}
                     >
                       <Select
@@ -722,6 +728,10 @@ export const SearchPackagesForm = ({
                         sx={{
                           borderRadius: '4px',
                           fontSize: '0.875rem',
+                          color: theme === 'dark' ? '#f1f5f9' : '#222',
+                          '& .MuiSelect-icon': {
+                            color: theme === 'dark' ? '#f1f5f9' : '#222',
+                          },
                         }}
                       >
                         <MenuItem value="ClusterIP">ClusterIP</MenuItem>
@@ -756,6 +766,9 @@ export const SearchPackagesForm = ({
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: theme === 'dark' ? '#f1f5f9' : '#222',
                         },
                       }}
                     />
