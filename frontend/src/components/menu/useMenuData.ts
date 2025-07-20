@@ -11,7 +11,6 @@ import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
-import { FaRocket } from 'react-icons/fa';
 
 export const useMenuData = (): MenuItemData[] => {
   const { t } = useTranslation();
