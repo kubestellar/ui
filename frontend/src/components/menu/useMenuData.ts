@@ -91,12 +91,6 @@ export const useMenuData = (): MenuItemData[] => {
           icon: HiOutlinePuzzlePiece,
           label: t('menu.items.pluginManager'),
         },
-        {
-          isLink: true,
-          url: '/plugins/marketplace',
-          icon: FaRocket,
-          label: t('menu.items.galaxyMarketplace'),
-        },
       ],
     },
   ];
