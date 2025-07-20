@@ -656,8 +656,8 @@ const WecsDetailsPanel = ({
       execSocketRef.current = null;
     }
 
-    // Small delay to ensure the DOM is ready with the new terminal div
-    setTimeout(() => {
+    let cleanupFn: (() => void) | undefined;
+    const timeoutId = setTimeout(() => {
       if (!execTerminalRef.current) {
         console.error('Terminal reference is null after timeout');
         return;
@@ -815,8 +815,7 @@ const WecsDetailsPanel = ({
         return true;
       });
 
-      return () => {
-        // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
+      cleanupFn = () => {
         clearInterval(pingInterval);
 
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -832,6 +831,11 @@ const WecsDetailsPanel = ({
         execTerminalInstance.current = null;
       };
     }, 50); // Small delay to ensure DOM is ready
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (cleanupFn) cleanupFn();
+    };
   }, [
     tabValue,
     theme,

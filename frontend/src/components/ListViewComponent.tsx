@@ -74,6 +74,7 @@ const ListViewComponent = ({
   const [error, setError] = useState<string | null>(null);
   const resourcesRef = useRef<ResourceItem[]>([]);
   const [totalRawResources, setTotalRawResources] = useState<number>(0); // Track raw resources count
+  const isUnmountedRef = useRef(false);
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -193,6 +194,7 @@ const ListViewComponent = ({
   useEffect(() => {
     let isMounted = true;
     let eventSource: EventSource | null = null;
+    isUnmountedRef.current = false;
 
     const processCompleteData = (data: CompleteEventData): ResourceItem[] => {
       const resourceList: ResourceItem[] = [];
@@ -272,6 +274,7 @@ const ListViewComponent = ({
     };
 
     const fetchDataWithSSE = () => {
+      if (isUnmountedRef.current) return;
       setIsLoading(true);
       setInitialLoading(true);
       setLoadingMessage(t('listView.connecting'));
@@ -288,6 +291,7 @@ const ListViewComponent = ({
 
         // Handle connection open
         eventSource.onopen = () => {
+          if (isUnmountedRef.current) return;
           if (isMounted) {
             setLoadingMessage(t('listView.receivingWorkloads'));
             // Keep isLoading true, but set initialLoading to false so we can show the items as they arrive
@@ -297,6 +301,7 @@ const ListViewComponent = ({
 
         // Handle progress events
         eventSource.addEventListener('progress', (event: MessageEvent) => {
+          if (isUnmountedRef.current) return;
           if (!isMounted) return;
 
           try {
@@ -348,6 +353,7 @@ const ListViewComponent = ({
 
         // Handle complete event
         eventSource.addEventListener('complete', (event: MessageEvent) => {
+          if (isUnmountedRef.current) return;
           if (!isMounted) return;
 
           try {
@@ -423,6 +429,7 @@ const ListViewComponent = ({
 
         // Handle errors
         eventSource.onerror = err => {
+          if (isUnmountedRef.current) return;
           console.error('SSE connection error', err);
 
           if (isMounted) {
@@ -455,6 +462,7 @@ const ListViewComponent = ({
           }
         };
       } catch (error: unknown) {
+        if (isUnmountedRef.current) return;
         // Fall back to regular API if SSE fails
         console.error('SSE connection establishment error', error);
         fetchFallbackData();
@@ -462,6 +470,7 @@ const ListViewComponent = ({
     };
 
     const fetchFallbackData = async () => {
+      if (isUnmountedRef.current) return;
       // Regular API fallback in case SSE doesn't work
       setInitialLoading(true);
       setLoadingMessage(t('listView.fetchingFallback'));
@@ -509,6 +518,7 @@ const ListViewComponent = ({
     fetchDataWithSSE();
 
     return () => {
+      isUnmountedRef.current = true;
       isMounted = false;
       if (eventSource) {
         eventSource.close();

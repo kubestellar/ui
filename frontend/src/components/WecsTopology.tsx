@@ -1598,7 +1598,6 @@ const WecsTreeview = () => {
                   containerRef={containerRef}
                   position="top-right"
                   tooltipPosition="left"
-                  tooltipText={t('wecsTopology.fullscreen.toggle')}
                 />
               </ReactFlowProvider>
             </Box>

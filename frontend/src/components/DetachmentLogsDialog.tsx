@@ -68,6 +68,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const websocketRef = useRef<WebSocket | null>(null);
+  const isUnmountedRef = useRef(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Format date for display
@@ -94,6 +95,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
 
   // Connect to WebSocket when dialog opens
   useEffect(() => {
+    isUnmountedRef.current = false;
     if (open && clusterName) {
       // Close any existing connection
       if (websocketRef.current) {
@@ -109,11 +111,13 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
       const ws = new WebSocket(websocketUrl);
 
       ws.onopen = () => {
+        if (isUnmountedRef.current) return;
         setIsConnected(true);
         console.log('WebSocket connection established for detachment logs');
       };
 
       ws.onmessage = event => {
+        if (isUnmountedRef.current) return;
         try {
           const data = JSON.parse(event.data) as DetachmentLog;
           setLogs(prev => [...prev, data]);
@@ -123,16 +127,19 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
             setIsCompleted(true);
           }
         } catch (err) {
+          if (isUnmountedRef.current) return;
           console.error('Failed to parse WebSocket message:', err);
         }
       };
 
       ws.onerror = event => {
+        if (isUnmountedRef.current) return;
         console.error('WebSocket error:', event);
         setError('Connection error. Please try again.');
       };
 
       ws.onclose = () => {
+        if (isUnmountedRef.current) return;
         setIsConnected(false);
         console.log('WebSocket connection closed for detachment logs');
       };
@@ -141,6 +148,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
 
       // Clean up on unmount
       return () => {
+        isUnmountedRef.current = true;
         if (websocketRef.current) {
           websocketRef.current.close();
         }

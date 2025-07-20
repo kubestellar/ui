@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
-import ClustersTable from '../components/ClustersTable';
+import ClustersTable from '../components/its/ClustersTable/ClustersTable';
 import { useLocation } from 'react-router-dom';
 
 const ITS = () => {
