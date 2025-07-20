@@ -39,6 +39,12 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	clientCacheLock.Lock()
 	defer clientCacheLock.Unlock()
 
+	// Skip client creation in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping BP client initialization")
+		return nil, nil
+	}
+
 	// Return cached client if available
 	if clientCache != nil {
 		return clientCache, nil
@@ -324,7 +330,14 @@ func contentTypeValid(t string) bool {
 
 // watches on all binding policy resources , PROTOTYPE just for now
 func watchOnBps() {
-	c, err := getClientForBp()
+	// Skip watching in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping BP watching")
+		return
+	}
+
+	// Create client for BP
+	client, err := getClientForBp()
 	if err != nil {
 		log.LogError("failed to watch on BP", zap.String("error", err.Error()))
 		return
@@ -332,7 +345,7 @@ func watchOnBps() {
 
 	for {
 
-		w, err := c.BindingPolicies().Watch(context.TODO(), v1.ListOptions{})
+		w, err := client.BindingPolicies().Watch(context.TODO(), v1.ListOptions{})
 		if err != nil {
 			log.LogError("failed to watch on BP", zap.String("error", err.Error()))
 			return
@@ -444,6 +457,12 @@ func watchOnBps() {
 
 // forces a refresh of all binding policies in the cache
 func RefreshBindingPolicyCache() error {
+	// Skip refresh in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping binding policy cache refresh")
+		return nil
+	}
+
 	log.LogInfo("Refreshing binding policy cache from Kubernetes")
 	start := time.Now()
 	defer func() {
@@ -512,6 +531,12 @@ func RefreshBindingPolicyCache() error {
 }
 
 func init() {
+	// Skip initialization in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping BP initialization")
+		return
+	}
+
 	go watchOnBps()
 
 	// Refresh the cache on startup after a short delay to allow Redis to be ready

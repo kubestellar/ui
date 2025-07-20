@@ -23,6 +23,12 @@ func homeDir() string {
 
 // GetClientSet retrieves a Kubernetes clientset and dynamic client
 func GetClientSet() (*kubernetes.Clientset, dynamic.Interface, error) {
+	// Skip Kubernetes client initialization in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping Kubernetes client initialization")
+		return nil, nil, nil
+	}
+
 	log.LogInfo("Getting Kubernetes client set")
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
@@ -81,6 +87,12 @@ func GetClientSet() (*kubernetes.Clientset, dynamic.Interface, error) {
 
 // GetClientSetWithContext retrieves a Kubernetes clientset and dynamic client for a specified context
 func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic.Interface, error) {
+	// Skip Kubernetes client initialization in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping Kubernetes client initialization with context", zap.String("context", contextName))
+		return nil, nil, nil
+	}
+
 	log.LogInfo("Getting Kubernetes client set with context", zap.String("context", contextName))
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
@@ -138,6 +150,12 @@ func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic
 }
 
 func GetClientSetWithConfigContext(contextName string) (*kubernetes.Clientset, *rest.Config, error) {
+	// Skip Kubernetes client initialization in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping Kubernetes client initialization with config context", zap.String("context", contextName))
+		return nil, nil, nil
+	}
+
 	log.LogInfo("Getting Kubernetes client set with config context", zap.String("context", contextName))
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
