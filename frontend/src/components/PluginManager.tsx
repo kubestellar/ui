@@ -17,7 +17,9 @@ import {
   HiOutlineFolder,
   HiOutlineCodeBracket,
   HiChatBubbleLeftEllipsis,
+  HiOutlineRocketLaunch,
 } from 'react-icons/hi2';
+import { Link } from 'react-router-dom';
 import { usePlugins } from '../plugins/PluginLoader';
 import { PluginAPI } from '../plugins/PluginAPI';
 import useTheme from '../stores/themeStore';
@@ -230,25 +232,40 @@ export const PluginManager: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="rounded-xl p-3"
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div
+              className="rounded-xl p-3"
+              style={{
+                background: themeStyles.effects.glassMorphism.background,
+                border: `1px solid ${themeStyles.card.borderColor}`,
+              }}
+            >
+              <HiOutlinePuzzlePiece
+                className="h-6 w-6"
+                style={{ color: themeStyles.colors.brand.primary }}
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: themeStyles.colors.text.primary }}>
+                {t('plugins.title')}
+              </h1>
+              <p style={{ color: themeStyles.colors.text.secondary }}>{t('plugins.description')}</p>
+            </div>
+          </div>
+
+          <Link
+            to="/plugins/marketplace"
+            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm"
             style={{
-              background: themeStyles.effects.glassMorphism.background,
+              background: themeStyles.button.primary.background,
+              color: themeStyles.button.primary.color,
               border: `1px solid ${themeStyles.card.borderColor}`,
             }}
           >
-            <HiOutlinePuzzlePiece
-              className="h-6 w-6"
-              style={{ color: themeStyles.colors.brand.primary }}
-            />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: themeStyles.colors.text.primary }}>
-              {t('plugins.title')}
-            </h1>
-            <p style={{ color: themeStyles.colors.text.secondary }}>{t('plugins.description')}</p>
-          </div>
+            <HiOutlineRocketLaunch className="h-5 w-5" />
+            {t('plugins.visitMarketplace', 'Visit Galaxy Marketplace')}
+          </Link>
         </div>
 
         {/* Stats */}
