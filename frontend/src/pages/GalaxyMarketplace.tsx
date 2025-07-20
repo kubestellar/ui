@@ -303,7 +303,7 @@ const GalaxyMarketplace: React.FC = () => {
       />
 
       {/* Static spaceship in background */}
-      <div className="pointer-events-none absolute bottom-[15%] right-[10%] z-1 opacity-40">
+      <div className="z-1 pointer-events-none absolute bottom-[15%] right-[10%] opacity-40">
         <FaSpaceShuttle
           className="h-48 w-48 text-gray-400"
           style={{
@@ -316,12 +316,12 @@ const GalaxyMarketplace: React.FC = () => {
       </div>
 
       {/* Static decorative elements */}
-      <div className="pointer-events-none absolute right-10 top-20 z-1 opacity-50">
+      <div className="z-1 pointer-events-none absolute right-10 top-20 opacity-50">
         <FaGlobeAsia className="h-12 w-12 text-purple-300" />
       </div>
 
       {/* Header */}
-      <div className="relative z-1 flex flex-col gap-2 p-6 pb-0">
+      <div className="z-1 relative flex flex-col gap-2 p-6 pb-0">
         <div className="mb-4 flex items-center gap-3">
           <div
             className="relative rounded-xl p-3"
