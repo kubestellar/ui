@@ -431,8 +431,10 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 	logger.Info("Discovered plugins", zap.Int("count", len(pluginInfos)))
 
 	// Load each discovered plugin
+	// We need to fetch the plugin ID as well
 	for _, pluginInfo := range pluginInfos {
 		logger.Info("Loading plugin",
+			zap.Int("id", pluginInfo.ID),
 			zap.String("name", pluginInfo.Name),
 			zap.String("version", pluginInfo.Version),
 			zap.String("status", pluginInfo.Status))
@@ -445,7 +447,8 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 		}
 
 		// Load the plugin
-		if err := registry.LoadPlugin(pluginInfo.Name); err != nil {
+		pluginFolderName := fmt.Sprintf("%s-%d", pluginInfo.Name, pluginInfo.ID)
+		if err := registry.LoadPlugin(pluginFolderName); err != nil {
 			logger.Error("Failed to load plugin",
 				zap.String("name", pluginInfo.Name),
 				zap.Error(err))

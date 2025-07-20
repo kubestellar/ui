@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -113,9 +115,33 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 	wasmPath := filepath.Join(dirPath, wasmFileName)
 	wasmInfo, err := os.Stat(wasmPath)
+
+	// Get plugin ID from the database if it exists
+	pluginIdDB, err := GetPluginIdDB(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get plugin ID: %v", err)
+	}
+
+	// Get plugin ID from the folder name
+	parts := strings.Split(filepath.Base(dirPath), "-")
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("invalid plugin folder name: %s", filepath.Base(dirPath))
+	}
+	pluginIdStr := parts[len(parts)-1]
+	pluginIdFolder, err := strconv.Atoi(pluginIdStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid plugin ID in folder name: %s", filepath.Base(dirPath))
+	}
+
+	// Check if the plugin ID from the database matches the folder name
+	if pluginIdDB != pluginIdFolder {
+		return nil, fmt.Errorf("plugin ID mismatch: DB ID %d, folder ID %d", pluginIdDB, pluginIdFolder)
+	}
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginInfo{
+				ID:           pluginIdDB,
 				Name:         manifest.Metadata.Name,
 				Path:         dirPath,
 				ManifestPath: manifestPath,
@@ -145,6 +171,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 
 	return &PluginInfo{
+		ID:           pluginIdDB,
 		Name:         manifest.Metadata.Name,
 		Version:      manifest.Metadata.Version,
 		Author:       manifest.Metadata.Author,
