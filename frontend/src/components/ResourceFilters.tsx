@@ -37,13 +37,6 @@ interface ResourceFiltersProps {
   activeFilters: ResourceFilter;
 }
 
-// Utility to safely render values as strings
-function safeString(val: unknown): string {
-  if (val == null) return '';
-  if (typeof val === 'string' || typeof val === 'number') return String(val);
-  return JSON.stringify(val);
-}
-
 const ResourceFilters: React.FC<ResourceFiltersProps> = ({
   onFiltersChange,
   availableResources,
@@ -400,8 +393,8 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
                 </Typography>
                 {Array.from(values).map(value => (
                   <MenuItem
-                    key={`${key}-${safeString(value)}`}
-                    onClick={() => handleLabelSelect(key, value as string)}
+                    key={`${key}-${value}`}
+                    onClick={() => handleLabelSelect(key, value)}
                     selected={
                       activeFilters.label?.key === key && activeFilters.label?.value === value
                     }
@@ -430,7 +423,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
                     }}
                   >
                     <Typography variant="body2" sx={{ pl: 2 }}>
-                      {safeString(value)}
+                      {value}
                     </Typography>
                   </MenuItem>
                 ))}
@@ -519,7 +512,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
           )}
           {activeFilters.label && (
             <Chip
-              label={`${activeFilters.label.key}: ${safeString(activeFilters.label.value)}`}
+              label={`${activeFilters.label.key}: ${activeFilters.label.value}`}
               onDelete={() => handleRemoveFilter('label')}
               color="primary"
               variant="outlined"

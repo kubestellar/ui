@@ -47,13 +47,6 @@ interface Resource {
   [key: string]: unknown; // Changed from 'any' to 'unknown'
 }
 
-// Utility to safely render values as strings
-function safeString(val: unknown): string {
-  if (val == null) return '';
-  if (typeof val === 'string' || typeof val === 'number') return String(val);
-  return JSON.stringify(val);
-}
-
 const ResourceFilterPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
@@ -561,7 +554,7 @@ const ResourceFilterPage: React.FC = () => {
                               />
                               {resource.status && (
                                 <Chip
-                                  label={safeString(resourceStatus || resource.status)}
+                                  label={resourceStatus || resource.status}
                                   size="small"
                                   sx={{
                                     backgroundColor: statusColors.bg,
@@ -651,8 +644,8 @@ const ResourceFilterPage: React.FC = () => {
                                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                                     {Object.entries(resource.labels).map(([key, value]) => (
                                       <Chip
-                                        key={`${key}-${safeString(value)}`}
-                                        label={`${key}: ${safeString(value)}`}
+                                        key={`${key}-${value}`}
+                                        label={`${key}: ${value}`}
                                         size="small"
                                         sx={{
                                           backgroundColor: isDark
