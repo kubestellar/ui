@@ -27,7 +27,6 @@ interface FullScreenToggleProps {
   iconSize?: number;
   position?: 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left' | 'inline';
   tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
-  tooltipText?: string;
   onFullScreenChange?: (isFullScreen: boolean) => void;
 }
 
@@ -37,7 +36,6 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
   iconSize = 24,
   position = 'top-right',
   tooltipPosition = 'bottom',
-  tooltipText: tooltipTextProp,
   onFullScreenChange,
 }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -160,8 +158,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
     right: 'tooltip-right',
   };
 
-  const tooltipText =
-    tooltipTextProp ?? (isFullScreen ? t('header.exitFullscreen') : t('header.enterFullscreen'));
+  const tooltipText = isFullScreen ? t('header.exitFullscreen') : t('header.enterFullscreen');
 
   return (
     <motion.div
