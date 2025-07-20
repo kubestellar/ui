@@ -40,6 +40,14 @@ func CheckPrerequisitesHandler(c *gin.Context) {
 
 // InstallHandler handles the KubeStellar installation request
 func InstallHandler(c *gin.Context) {
+	// Validate Content-Type header
+	contentType := c.GetHeader("Content-Type")
+	if contentType != "application/json" {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/install", "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Content-Type must be application/json"})
+		return
+	}
+
 	var req InstallationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/install", "400").Inc()
