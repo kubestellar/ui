@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -12,9 +13,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	// Set test mode
+	os.Setenv("TEST_MODE", "true")
+	gin.SetMode(gin.TestMode)
+}
+
 // TestInstallerRoutesStandalone tests the installer routes without the full routes setup
 func TestInstallerRoutesStandalone(t *testing.T) {
-	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
 	// Setup only installer routes manually
@@ -157,7 +163,6 @@ func TestInstallerRoutesStandalone(t *testing.T) {
 }
 
 func TestInstallerRoutesMethodHandlingStandalone(t *testing.T) {
-	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
 	// Setup only installer routes manually
@@ -234,7 +239,6 @@ func TestInstallerRoutesMethodHandlingStandalone(t *testing.T) {
 }
 
 func TestInstallerRoutesContentTypeHandlingStandalone(t *testing.T) {
-	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
 	// Setup only installer routes manually

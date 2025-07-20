@@ -152,6 +152,12 @@ func GetallBpCmd() ([]string, error) {
 
 // intializes redis client
 func init() {
+	// Skip Redis initialization in test mode
+	if os.Getenv("TEST_MODE") == "true" {
+		log.LogInfo("Running in test mode, skipping Redis initialization")
+		return
+	}
+
 	redisHost := os.Getenv("REDIS_HOST")
 	if redisHost == "" {
 		redisHost = "localhost"
@@ -174,6 +180,19 @@ func init() {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.LogWarn("pls check if redis is runnnig", zap.String("err", err.Error()))
 	}
+}
+
+// GetClient returns the Redis client instance
+func GetClient() *redis.Client {
+	return rdb
+}
+
+// IsConnected checks if Redis is connected and available
+func IsConnected() bool {
+	if rdb == nil {
+		return false
+	}
+	return rdb.Ping(ctx).Err() == nil
 }
 
 // SetJSONValue sets a JSON value in Redis with an optional expiration
