@@ -61,6 +61,9 @@ export function Layout() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(280); // Default expanded width
+  const [isResizing, setIsResizing] = useState(false);
+  const [lastSidebarWidth, setLastSidebarWidth] = useState(280); // To remember last expanded width
   const location = useLocation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -84,11 +87,6 @@ export function Layout() {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Toggle sidebar collapsed state
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
-
   // Toggle mobile menu state
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -105,6 +103,49 @@ export function Layout() {
       backgroundPosition: '0 0',
     };
   };
+
+  // Sidebar resize handlers
+  const minSidebarWidth = 80;
+  const maxSidebarWidth = 480;
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    // Calculate new width based on mouse X position
+    const sidebarLeft = document.getElementById('sidebar')?.getBoundingClientRect().left || 0;
+    let newWidth = e.clientX - sidebarLeft;
+    newWidth = Math.max(minSidebarWidth, Math.min(maxSidebarWidth, newWidth));
+    setSidebarWidth(newWidth);
+    setLastSidebarWidth(newWidth);
+    if (isSidebarCollapsed && newWidth > minSidebarWidth) {
+      setIsSidebarCollapsed(false);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  // Determine collapsed state based on width
+  const effectiveCollapsed = sidebarWidth <= minSidebarWidth;
 
   return (
     <div
@@ -124,16 +165,20 @@ export function Layout() {
         <div className="relative mb-auto flex w-full gap-0 pt-14 xl:pt-[76px] 2xl:pt-[88px]">
           {/* Sidebar/Menu - Desktop */}
           <motion.aside
+            id="sidebar"
             className="sticky mt-1 hidden overflow-visible px-3 py-3 transition-all duration-300 xl:block"
             style={{
               height: 'calc(100vh - 76px)',
               top: '76px',
               borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.2)' : 'rgba(226, 232, 240, 0.5)'}`,
+              width: isSidebarCollapsed ? 80 : sidebarWidth,
+              minWidth: 80,
+              maxWidth: maxSidebarWidth,
+              transition: isResizing ? 'none' : 'width 0.25s ease-in-out',
+              userSelect: isResizing ? 'none' : 'auto',
+              position: 'relative',
             }}
-            animate={{
-              width: isSidebarCollapsed ? '80px' : '280px',
-              transition: { duration: 0.25, ease: 'easeInOut' },
-            }}
+            animate={false}
             initial={false}
           >
             <div className="mb-3 flex justify-end">
@@ -142,8 +187,16 @@ export function Layout() {
                 data-tip={isSidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
               >
                 <motion.button
-                  onClick={toggleSidebar}
-                  className={`rounded-lg border-2 p-2 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${isSidebarCollapsed ? 'mr-2' : ''}`}
+                  onClick={() => {
+                    if (effectiveCollapsed) {
+                      setIsSidebarCollapsed(false);
+                      setSidebarWidth(lastSidebarWidth > minSidebarWidth ? lastSidebarWidth : 280);
+                    } else {
+                      setIsSidebarCollapsed(true);
+                      setSidebarWidth(minSidebarWidth);
+                    }
+                  }}
+                  className={`rounded-lg border-2 p-2 shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${effectiveCollapsed ? 'mr-2' : ''}`}
                   style={{
                     background: isDark
                       ? 'linear-gradient(to bottom right, #3b82f6, #2563eb)'
@@ -152,8 +205,8 @@ export function Layout() {
                     boxShadow: isDark
                       ? '0 4px 10px rgba(37, 99, 235, 0.4)'
                       : '0 4px 10px rgba(37, 99, 235, 0.2)',
-                    outline: 'none', // Remove default focus outline
-                    WebkitTapHighlightColor: 'transparent', // Remove mobile tap highlight
+                    outline: 'none',
+                    WebkitTapHighlightColor: 'transparent',
                   }}
                   whileHover={{
                     scale: 1.05,
@@ -176,9 +229,7 @@ export function Layout() {
                 >
                   <div
                     className="flex h-5 w-5 items-center justify-center"
-                    style={{
-                      color: '#ffffff',
-                    }}
+                    style={{ color: '#ffffff' }}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -191,7 +242,7 @@ export function Layout() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       style={{
-                        transform: isSidebarCollapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transform: effectiveCollapsed ? 'rotate(180deg)' : 'rotate(0deg)',
                         transition: 'transform 0.3s ease',
                       }}
                     >
@@ -201,11 +252,31 @@ export function Layout() {
                 </motion.button>
               </div>
             </div>
-            <motion.div key={isSidebarCollapsed ? 'collapsed' : 'expanded'}>
+            <motion.div key={effectiveCollapsed ? 'collapsed' : 'expanded'}>
               <Suspense fallback={<LoadingPlaceholder />}>
-                <Menu collapsed={isSidebarCollapsed} />
+                <Menu collapsed={effectiveCollapsed} />
               </Suspense>
             </motion.div>
+            {/* Draggable resize handle - always visible */}
+            <div
+              onMouseDown={handleMouseDown}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                width: '6px',
+                height: '100%',
+                cursor: 'ew-resize',
+                zIndex: 10,
+                background: isResizing
+                  ? isDark
+                    ? 'rgba(59,130,246,0.2)'
+                    : 'rgba(59,130,246,0.08)'
+                  : 'transparent',
+                transition: 'background 0.2s',
+              }}
+              aria-label="Resize sidebar"
+            />
           </motion.aside>
 
           {/* Mobile Menu - Overlay */}
