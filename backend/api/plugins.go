@@ -599,7 +599,7 @@ func EnablePluginHandler(c *gin.Context) {
 	// Check if plugin is already enabled
 	plugin := findPluginByID(pluginID)
 	if plugin == nil {
-		c.JSON(http.StatusOK, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"message": "Plugin not found",
 			"id":      pluginID,
 		})
