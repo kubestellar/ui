@@ -2288,5 +2288,8 @@
     "selectResourceAndNamespace": "Select a resource kind and namespace to begin",
     "refresh": "Refresh",
     "toggleFilters": "Toggle filters"
+  },
+  "validation": {
+    "missingRequiredFields": "Missing required fields"
   }
 }

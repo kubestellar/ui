@@ -2245,5 +2245,8 @@
         "author": "Alan Turning"
       }
     ]
+  },
+  "validation": {
+    "missingRequiredFields": "Champs obligatoires manquants"
   }
 }

@@ -2256,5 +2256,8 @@
         "author": "アラン・ターニング"
       }
     ]
+  },
+  "validation": {
+    "missingRequiredFields": "必須フィールドがありません"
   }
 }

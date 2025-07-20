@@ -175,5 +175,8 @@
       "pluginManager": "Plugin-Manager",
       "userManagement": "Benutzerverwaltung"
     }
+  },
+  "validation": {
+    "missingRequiredFields": "Fehlende Pflichtfelder"
   }
 }

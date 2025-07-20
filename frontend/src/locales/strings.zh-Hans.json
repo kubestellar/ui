@@ -2051,5 +2051,8 @@
     "tokenLabel": "个人访问令牌 (PAT) *",
     "tokenPlaceholder": "例如：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tokenTip": "输入您的 GitHub 个人访问令牌"
+  },
+  "validation": {
+    "missingRequiredFields": "缺少必填字段"
   }
 }

@@ -11,6 +11,7 @@ import { api } from '../../../lib/api';
 import WorkloadLabelInput from '../WorkloadLabelInput';
 import CancelButton from '../../common/CancelButton';
 import { useTranslation } from 'react-i18next';
+import ButtonTooltip from '../../common/ButtonTooltip';
 
 export interface HelmFormData {
   repoName: string;
@@ -249,42 +250,52 @@ export const HelmTab = ({
           >
             {t('workloads.helm.buttons.cancel')}
           </CancelButton>
-          <Button
-            variant="contained"
-            onClick={() => {
-              if (selectedOption === 'createOwn') {
-                if (validateForm()) handleDeploy();
-              } else {
-                handlePopularHelmDeploy();
-              }
-            }}
+          <ButtonTooltip
+            tooltip={t('validation.missingRequiredFields')}
             disabled={
               (selectedOption === 'createOwn' && (!hasChanges || loading)) ||
               (selectedOption === 'popularCharts' && (!selectedChart || popularLoading)) ||
               (selectedOption === 'userCharts' && (!selectedChart || userLoading))
             }
-            sx={{
-              textTransform: 'none',
-              fontWeight: '600',
-              backgroundColor: '#1976d2',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: '#1565c0',
-              },
-              '&:disabled': {
-                backgroundColor: '#b0bec5',
-                color: '#fff',
-              },
-            }}
+            placement="top"
           >
-            {(selectedOption === 'createOwn' && loading) ||
-            (selectedOption === 'popularCharts' && popularLoading) ||
-            (selectedOption === 'userCharts' && userLoading)
-              ? t('workloads.helm.buttons.deploying')
-              : t('workloads.helm.buttons.apply')}
-          </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (selectedOption === 'createOwn') {
+                  if (validateForm()) handleDeploy();
+                } else {
+                  handlePopularHelmDeploy();
+                }
+              }}
+              disabled={
+                (selectedOption === 'createOwn' && (!hasChanges || loading)) ||
+                (selectedOption === 'popularCharts' && (!selectedChart || popularLoading)) ||
+                (selectedOption === 'userCharts' && (!selectedChart || userLoading))
+              }
+              sx={{
+                textTransform: 'none',
+                fontWeight: '600',
+                backgroundColor: '#1976d2',
+                color: '#fff',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                '&:hover': {
+                  backgroundColor: '#1565c0',
+                },
+                '&:disabled': {
+                  backgroundColor: '#b0bec5',
+                  color: '#fff',
+                },
+              }}
+            >
+              {(selectedOption === 'createOwn' && loading) ||
+              (selectedOption === 'popularCharts' && popularLoading) ||
+              (selectedOption === 'userCharts' && userLoading)
+                ? t('workloads.helm.buttons.deploying')
+                : t('workloads.helm.buttons.apply')}
+            </Button>
+          </ButtonTooltip>
         </Box>
       </Box>
     </StyledContainer>
