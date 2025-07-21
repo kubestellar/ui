@@ -866,6 +866,31 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 	})
 }
 
+// GetPluginReviewsHandler returns all reviews/ratings for a specific plugin
+func GetPluginReviewsHandler(c *gin.Context) {
+	pluginID := c.Param("id")
+	if pluginID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Plugin ID is required"})
+		return
+	}
+
+	feedbackMutex.RLock()
+	defer feedbackMutex.RUnlock()
+
+	reviews := []PluginFeedback{}
+	for _, feedback := range pluginFeedbacks {
+		if feedback.PluginID == pluginID {
+			reviews = append(reviews, feedback)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"pluginId": pluginID,
+		"reviews": reviews,
+		"count":   len(reviews),
+	})
+}
+
 // Helper functions
 
 // getRegisteredPlugins returns all registered plugins

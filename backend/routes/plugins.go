@@ -29,5 +29,6 @@ func setupPluginRoutes(router *gin.Engine) {
 
 		// Feedback
 		plugins.POST("/feedback", api.SubmitPluginFeedbackHandler)
+		plugins.GET("/:id/reviews", api.GetPluginReviewsHandler)
 	}
 }
