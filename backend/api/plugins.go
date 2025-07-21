@@ -13,15 +13,15 @@ import (
 	"sync"
 	"time"
 
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/models"
 	pkg "github.com/kubestellar/ui/backend/pkg/plugins"
 	"github.com/kubestellar/ui/backend/plugin"
 	"github.com/kubestellar/ui/backend/plugin/plugins"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
-	"github.com/kubestellar/ui/backend/models"
-	"database/sql"
 )
 
 // Global plugin manager and registry for dynamic plugin loading

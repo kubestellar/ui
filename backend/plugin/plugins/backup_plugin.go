@@ -131,27 +131,27 @@ func createBackupJob(c *kubernetes.Clientset) error {
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						corev1.Container{
+						{
 							Name:    "pg-jobc",
 							Image:   "postgres:16",
 							Command: []string{"/bin/sh", "-c"},
 							Args:    []string{"pg_dumpall -U $user -h $host  -f /mnt/backup-vol/pgdump.sql  && ls /mnt/backup-vol/"},
 							Env: []corev1.EnvVar{
-								corev1.EnvVar{
+								{
 									Name:  "PGPASSWORD",
 									Value: password,
 								},
-								corev1.EnvVar{
+								{
 									Name:  "host",
 									Value: "postgres-postgresql.kubeflex-system.svc.cluster.local",
 								},
-								corev1.EnvVar{
+								{
 									Name:  "user",
 									Value: "postgres",
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
-								corev1.VolumeMount{
+								{
 									Name:      "backup-vol",
 									MountPath: "/mnt/backup-vol",
 								},
@@ -159,7 +159,7 @@ func createBackupJob(c *kubernetes.Clientset) error {
 						},
 					},
 					Volumes: []corev1.Volume{
-						corev1.Volume{
+						{
 							Name: "backup-vol",
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
