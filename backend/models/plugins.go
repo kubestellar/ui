@@ -43,3 +43,11 @@ type PluginRoute struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type PluginVersionHistory struct {
+	ID        int       `json:"id"`
+	PluginID  int       `json:"plugin_id"`
+	Version   string    `json:"version"`
+	Changelog string    `json:"changelog,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+}

@@ -16,6 +16,7 @@ func setupPluginRoutes(router *gin.Engine) {
 		plugins.DELETE("/:id", api.UninstallPluginHandler)
 		plugins.POST("/:id/reload", api.ReloadPluginHandler)
 		plugins.GET("/manifests", api.GetAllPluginManifestsHandler)
+		plugins.GET("/:id/versions", api.GetPluginVersionsHandler)
 
 		// Plugin Control
 		plugins.POST("/:id/enable", api.EnablePluginHandler)

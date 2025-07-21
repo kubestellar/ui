@@ -20,6 +20,8 @@ import (
 	"github.com/kubestellar/ui/backend/plugin/plugins"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
+	"github.com/kubestellar/ui/backend/models"
+	"database/sql"
 )
 
 // Global plugin manager and registry for dynamic plugin loading
@@ -864,6 +866,41 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 		"status": "success",
 		"data":   manifests,
 	})
+}
+
+// GetPluginVersionsHandler returns version history and changelog for a plugin
+func GetPluginVersionsHandler(c *gin.Context) {
+	pluginID := c.Param("id")
+	if pluginID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Plugin ID is required"})
+		return
+	}
+
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection error"})
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT id, plugin_id, version, changelog, created_at FROM plugin_version_history WHERE plugin_id = $1 ORDER BY created_at DESC`, pluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch version history"})
+		return
+	}
+	defer rows.Close()
+
+	var history []models.PluginVersionHistory
+	for rows.Next() {
+		var v models.PluginVersionHistory
+		if err := rows.Scan(&v.ID, &v.PluginID, &v.Version, &v.Changelog, &v.CreatedAt); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse version history"})
+			return
+		}
+		history = append(history, v)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"versions": history})
 }
 
 // Helper functions
