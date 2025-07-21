@@ -20,7 +20,7 @@ import (
 	pkg "github.com/kubestellar/ui/backend/pkg/plugins"
 	"github.com/kubestellar/ui/backend/plugin"
 	"github.com/kubestellar/ui/backend/plugin/plugins"
-	"github.com/kubestellar/ui/backend/postgresql/Database"
+	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
@@ -731,7 +731,7 @@ func GetPluginStatsHandler(c *gin.Context) {
 
 	// Check if plugin exists (enabled or disabled)
 	var dbPluginID int
-	err := Database.DB.QueryRow("SELECT id FROM plugin WHERE name = $1", pluginID).Scan(&dbPluginID)
+	err := database.DB.QueryRow("SELECT id FROM plugin WHERE name = $1", pluginID).Scan(&dbPluginID)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
 		return
@@ -743,7 +743,7 @@ func GetPluginStatsHandler(c *gin.Context) {
 	// Query plugin_stats
 	var usageCount int
 	var lastUsed sql.NullTime
-	err = Database.DB.QueryRow("SELECT usage_count, last_used FROM plugin_stats WHERE plugin_id = $1", dbPluginID).Scan(&usageCount, &lastUsed)
+	err = database.DB.QueryRow("SELECT usage_count, last_used FROM plugin_stats WHERE plugin_id = $1", dbPluginID).Scan(&usageCount, &lastUsed)
 	if err == sql.ErrNoRows {
 		usageCount = 0
 		lastUsed = sql.NullTime{}
@@ -754,7 +754,7 @@ func GetPluginStatsHandler(c *gin.Context) {
 
 	// Compute avg_rating from plugin_feedback
 	var avgRating sql.NullFloat64
-	err = Database.DB.QueryRow("SELECT AVG(rating) FROM plugin_feedback WHERE plugin_id = $1", dbPluginID).Scan(&avgRating)
+	err = database.DB.QueryRow("SELECT AVG(rating) FROM plugin_feedback WHERE plugin_id = $1", dbPluginID).Scan(&avgRating)
 	if err != nil && err != sql.ErrNoRows {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
 		return
