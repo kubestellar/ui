@@ -193,6 +193,11 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		log.LogError("error getting pluginID", zap.String("error", err.Error()))
 		return err
 	}
+	pluginStatus, err := GetPluginStatusDB(pluginID)
+	if err != nil {
+		log.LogError("error getting plugin status", zap.String("error", err.Error()))
+		return err
+	}
 
 	// Determine WASM file name
 	wasmFileName := manifest.Metadata.Name + ".wasm"
@@ -233,7 +238,7 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		Manifest: &manifest,
 		Module:   compiledModule,
 		Instance: instance,
-		Status:   "active",
+		Status:   pluginStatus,
 		LoadTime: time.Now(),
 	}
 

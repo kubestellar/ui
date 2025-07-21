@@ -91,6 +91,26 @@ func UpdatePluginStatusDB(pluginID int, status string) error {
 	return nil
 }
 
+func GetPluginStatusDB(pluginID int) (string, error) {
+	query := `
+		SELECT status FROM plugin
+		WHERE id = $1
+	`
+
+	var status string
+	row := database.DB.QueryRow(query, pluginID)
+	if err := row.Scan(&status); err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return "", fmt.Errorf("plugin not found: %w", err)
+		default:
+			return "", err
+		}
+	}
+
+	return status, nil
+}
+
 func UninstallPluginFromDB(pluginID int) error {
 	query := `
 		DELETE FROM plugin

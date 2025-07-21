@@ -107,15 +107,6 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, fmt.Errorf("failed to parse manifest: %v", err)
 	}
 
-	// Check if WASM file exists
-	// Determine WASM file name
-	wasmFileName := manifest.Metadata.Name + ".wasm"
-	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
-		wasmFileName = manifest.Spec.Wasm.File
-	}
-	wasmPath := filepath.Join(dirPath, wasmFileName)
-	wasmInfo, err := os.Stat(wasmPath)
-
 	// Get plugin ID from the database if it exists
 	pluginIdDB, err := GetPluginIdDB(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
 	if err != nil {
@@ -138,6 +129,15 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, fmt.Errorf("plugin ID mismatch: DB ID %d, folder ID %d", pluginIdDB, pluginIdFolder)
 	}
 
+	// Check if WASM file exists
+	// Determine WASM file name
+	wasmFileName := manifest.Metadata.Name + ".wasm"
+	if manifest.Spec.Wasm != nil && manifest.Spec.Wasm.File != "" {
+		wasmFileName = manifest.Spec.Wasm.File
+	}
+	wasmPath := filepath.Join(dirPath, wasmFileName)
+	wasmInfo, err := os.Stat(wasmPath)
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginInfo{
@@ -155,11 +155,12 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, err
 	}
 
-	// Determine status based on whether plugin is loaded
-	status := "inactive"
+	// // Determine status based on whether plugin is loaded
 	// if _, loaded := pr.manager.GetPlugin(manifest.Name); loaded {
 	// 	status = "loaded"
 	// }
+
+	status := "inactive" // Default status if not loaded
 
 	// Check if the plugin is loaded and created in DB
 	exist, err := CheckPluginWithInfo(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
@@ -167,7 +168,10 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, err
 	}
 	if exist {
-		status = "inactive"
+		status, err = GetPluginStatusDB(pluginIdDB)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get plugin status: %v", err)
+		}
 	}
 
 	return &PluginInfo{

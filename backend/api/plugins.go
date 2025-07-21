@@ -176,12 +176,12 @@ func GetPluginDetailsHandler(c *gin.Context) {
 			ID:          pluginID,
 			Name:        plugin.Manifest.Metadata.Name,
 			Version:     plugin.Manifest.Metadata.Version,
-			Enabled:     true,
+			Enabled:     plugin.Status == "active",
 			Description: plugin.Manifest.Metadata.Description,
 			Author:      plugin.Manifest.Metadata.Author,
 			CreatedAt:   plugin.LoadTime,
 			UpdatedAt:   plugin.LoadTime,
-			Status:      "active",
+			Status:      plugin.Status,
 			Routes:      extractPluginRoutesFromManifest(plugin.Manifest),
 		}
 		c.JSON(http.StatusOK, details)
@@ -700,7 +700,7 @@ func GetPluginStatusHandler(c *gin.Context) {
 			"name":    plugin.Manifest.Metadata.Name,
 			"version": plugin.Manifest.Metadata.Version,
 			"enabled": true,
-			"status":  "active",
+			"status":  plugin.Status,
 			"routes":  extractPluginRoutesFromManifest(plugin.Manifest),
 		}
 		c.JSON(http.StatusOK, status)
