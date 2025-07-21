@@ -69,7 +69,7 @@ type PluginSpec struct {
 	Widgets       []PluginWidgetConfig   `yaml:"widgets,omitempty"`       // Dashboard widgets
 	Routes        []PluginFrontendRoute  `yaml:"routes,omitempty"`        // Frontend routes
 	Configuration []PluginConfigItem     `yaml:"configuration,omitempty"` // Plugin configuration options
-	Categories    []string               `yaml:"categories,omitempty"` // Plugin categories (enabled for testing)
+	Categories    []string               `yaml:"categories,omitempty"`    // Plugin categories (enabled for testing)
 	// To enable plugin categories, uncomment the above line and update extractCategoriesFromManifest in api/plugins.go
 }
 
