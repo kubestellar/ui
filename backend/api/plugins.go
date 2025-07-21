@@ -886,8 +886,8 @@ func GetPluginReviewsHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"pluginId": pluginID,
-		"reviews": reviews,
-		"count":   len(reviews),
+		"reviews":  reviews,
+		"count":    len(reviews),
 	})
 }
 
