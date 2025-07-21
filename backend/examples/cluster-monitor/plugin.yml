@@ -32,3 +32,11 @@ spec:
   permissions:
     - "kubestellar:read:clusters"
     - "kubestellar:read:workloads"
+  # Plugin dependencies
+  dependencies:
+    - name: "core-logger"
+      version: ">=1.0.0"
+      optional: false
+    - name: "metrics-exporter"
+      version: ">=0.5.0"
+      optional: true

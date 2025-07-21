@@ -58,6 +58,15 @@ type PluginMetadata struct {
 	Description string `yaml:"description"` // Plugin description
 }
 
+// PluginDependency describes a dependency on another plugin
+// Optional: if true, the dependency is not required for basic operation
+// Version: version constraint (e.g., ">=1.0.0")
+type PluginDependency struct {
+	Name     string `yaml:"name" json:"name"`         // Name of the dependency plugin
+	Version  string `yaml:"version" json:"version"`   // Version constraint
+	Optional bool   `yaml:"optional" json:"optional"` // Whether this dependency is optional
+}
+
 // PluginSpec contains the plugin specification
 type PluginSpec struct {
 	Wasm          *PluginWasmConfig      `yaml:"wasm,omitempty"`          // WASM binary configuration
@@ -69,6 +78,7 @@ type PluginSpec struct {
 	Widgets       []PluginWidgetConfig   `yaml:"widgets,omitempty"`       // Dashboard widgets
 	Routes        []PluginFrontendRoute  `yaml:"routes,omitempty"`        // Frontend routes
 	Configuration []PluginConfigItem     `yaml:"configuration,omitempty"` // Plugin configuration options
+	Dependencies  []PluginDependency     `yaml:"dependencies,omitempty" json:"dependencies,omitempty"` // Plugin dependencies
 }
 
 // PluginWasmConfig contains WASM binary information

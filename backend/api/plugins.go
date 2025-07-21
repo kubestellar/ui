@@ -718,6 +718,48 @@ func GetPluginStatusHandler(c *gin.Context) {
 	})
 }
 
+// GetPluginDependenciesHandler returns the dependencies (required and optional) for a plugin
+func GetPluginDependenciesHandler(c *gin.Context) {
+	pluginID := c.Param("id")
+	if pluginID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Plugin ID is required"})
+		return
+	}
+
+	pluginManager := GetGlobalPluginManager()
+	if pluginManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Plugin manager not initialized"})
+		return
+	}
+
+	plugin, ok := pluginManager.GetPlugin(pluginID)
+	if !ok || plugin == nil || plugin.Manifest == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
+		return
+	}
+
+	dependencies := plugin.Manifest.Spec.Dependencies
+	required := []interface{}{}
+	optional := []interface{}{}
+	for _, dep := range dependencies {
+		depObj := gin.H{
+			"name":     dep.Name,
+			"version":  dep.Version,
+			"optional": dep.Optional,
+		}
+		if dep.Optional {
+			optional = append(optional, depObj)
+		} else {
+			required = append(required, depObj)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"required": required,
+		"optional": optional,
+	})
+}
+
 // GetPluginSystemMetricsHandler returns system-wide metrics for plugins
 func GetPluginSystemMetricsHandler(c *gin.Context) {
 	enabledPlugins := getRegisteredPlugins()
