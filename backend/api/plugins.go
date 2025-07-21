@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -863,6 +865,135 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
 		"data":   manifests,
+	})
+}
+
+// SearchPluginsHandler provides advanced search with filtering, sorting, and pagination for plugins
+func SearchPluginsHandler(c *gin.Context) {
+	// Query parameters
+	name := c.Query("name")
+	enabled := c.Query("enabled")               // "true" or "false" or empty
+	sortBy := c.DefaultQuery("sort_by", "name") // name, createdAt, updatedAt
+	order := c.DefaultQuery("order", "asc")     // asc or desc
+	limitStr := c.DefaultQuery("limit", "20")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 20
+	}
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	// Get all plugins (same as ListPluginsHandler)
+	pluginsList := []PluginDetails{}
+	pluginManager := GetGlobalPluginManager()
+	pluginRegistry := GetGlobalPluginRegistry()
+
+	if pluginManager != nil && pluginRegistry != nil {
+		loadedPlugins := pluginManager.GetPluginList()
+		for _, p := range loadedPlugins {
+			if p.Manifest != nil {
+				pluginsList = append(pluginsList, PluginDetails{
+					ID:          p.Manifest.Metadata.Name,
+					Name:        p.Manifest.Metadata.Name,
+					Version:     p.Manifest.Metadata.Version,
+					Enabled:     p.Status == "running",
+					Description: p.Manifest.Metadata.Description,
+					Author:      p.Manifest.Metadata.Author,
+					CreatedAt:   p.LoadTime,
+					UpdatedAt:   p.LoadTime,
+					Routes:      extractPluginRoutesFromManifest(p.Manifest),
+					Status:      p.Status,
+				})
+			}
+		}
+	} else {
+		enabledPlugins := getRegisteredPlugins()
+		for _, p := range enabledPlugins {
+			pluginsList = append(pluginsList, PluginDetails{
+				ID:      p.Name(),
+				Name:    p.Name(),
+				Version: p.Version(),
+				Enabled: true,
+				Status:  "active",
+				Routes:  extractPluginRoutes(p),
+			})
+		}
+		disabledPluginsMutex.RLock()
+		for _, p := range disabledPlugins {
+			pluginsList = append(pluginsList, PluginDetails{
+				ID:      p.Name(),
+				Name:    p.Name(),
+				Version: p.Version(),
+				Enabled: false,
+				Status:  "inactive",
+				Routes:  extractPluginRoutes(p),
+			})
+		}
+		disabledPluginsMutex.RUnlock()
+	}
+
+	// Filtering
+	filtered := make([]PluginDetails, 0, len(pluginsList))
+	for _, p := range pluginsList {
+		if name != "" && !strings.Contains(strings.ToLower(p.Name), strings.ToLower(name)) {
+			continue
+		}
+		if enabled != "" {
+			wantEnabled := enabled == "true"
+			if p.Enabled != wantEnabled {
+				continue
+			}
+		}
+		filtered = append(filtered, p)
+	}
+
+	// Sorting
+	switch sortBy {
+	case "name":
+		sort.Slice(filtered, func(i, j int) bool {
+			if order == "desc" {
+				return filtered[i].Name > filtered[j].Name
+			}
+			return filtered[i].Name < filtered[j].Name
+		})
+	case "createdAt":
+		sort.Slice(filtered, func(i, j int) bool {
+			if order == "desc" {
+				return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
+			}
+			return filtered[i].CreatedAt.Before(filtered[j].CreatedAt)
+		})
+	case "updatedAt":
+		sort.Slice(filtered, func(i, j int) bool {
+			if order == "desc" {
+				return filtered[i].UpdatedAt.After(filtered[j].UpdatedAt)
+			}
+			return filtered[i].UpdatedAt.Before(filtered[j].UpdatedAt)
+		})
+	}
+
+	total := len(filtered)
+	// Pagination
+	start := offset
+	if start > total {
+		start = total
+	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	paginated := filtered[start:end]
+
+	c.JSON(http.StatusOK, gin.H{
+		"plugins": paginated,
+		"count":   len(paginated),
+		"total":   total,
+		"limit":   limit,
+		"offset":  offset,
 	})
 }
 

@@ -560,3 +560,77 @@ func TestSubmitPluginFeedbackHandler(t *testing.T) {
 		})
 	}
 }
+
+type pluginSearchResponse struct {
+	Plugins []interface{} `json:"plugins"`
+	Count   int           `json:"count"`
+	Total   int           `json:"total"`
+	Limit   int           `json:"limit"`
+	Offset  int           `json:"offset"`
+}
+
+func setupPluginsTestRouter() *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.GET("/api/plugins/search", api.SearchPluginsHandler)
+	return r
+}
+
+func TestSearchPluginsHandler_BasicPagination(t *testing.T) {
+	r := setupPluginsTestRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/plugins/search?limit=1&offset=0", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	var resp pluginSearchResponse
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.LessOrEqual(t, resp.Count, 1)
+	assert.True(t, resp.Total >= resp.Count)
+}
+
+func TestSearchPluginsHandler_FilterByName(t *testing.T) {
+	r := setupPluginsTestRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/plugins/search?name=test", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	var resp pluginSearchResponse
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	for _, p := range resp.Plugins {
+		pluginMap := p.(map[string]interface{})
+		assert.Contains(t, pluginMap["name"].(string), "test")
+	}
+}
+
+func TestSearchPluginsHandler_FilterByEnabled(t *testing.T) {
+	r := setupPluginsTestRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/plugins/search?enabled=true", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	var resp pluginSearchResponse
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	for _, p := range resp.Plugins {
+		pluginMap := p.(map[string]interface{})
+		assert.Equal(t, true, pluginMap["enabled"])
+	}
+}
+
+func TestSearchPluginsHandler_Sorting(t *testing.T) {
+	r := setupPluginsTestRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/plugins/search?sort_by=name&order=asc", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	var resp pluginSearchResponse
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	prev := ""
+	for _, p := range resp.Plugins {
+		pluginMap := p.(map[string]interface{})
+		name := pluginMap["name"].(string)
+		if prev != "" {
+			assert.LessOrEqual(t, prev, name)
+		}
+		prev = name
+	}
+}
