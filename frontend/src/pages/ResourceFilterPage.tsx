@@ -647,7 +647,7 @@ const ResourceFilterPage: React.FC = () => {
                                     {t('resources.labels')}
                                   </Typography>
                                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                    {Object.entries(resource.labels).map(([key, value]) => (
+                                    {Object.entries(resource.labels).map(([key, value]) =>
                                       isRenderable(value) ? (
                                         <Chip
                                           key={`${key}-${value}`}
@@ -666,7 +666,7 @@ const ResourceFilterPage: React.FC = () => {
                                           }}
                                         />
                                       ) : null
-                                    ))}
+                                    )}
                                   </Box>
                                 </Box>
                               </>

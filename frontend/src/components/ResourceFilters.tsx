@@ -396,7 +396,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
                 >
                   {key}
                 </Typography>
-                {Array.from(values).map(value => (
+                {Array.from(values).map(value =>
                   isRenderable(value) ? (
                     <MenuItem
                       key={`${key}-${value}`}
@@ -433,7 +433,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
                       </Typography>
                     </MenuItem>
                   ) : null
-                ))}
+                )}
                 <Divider
                   sx={{
                     borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
