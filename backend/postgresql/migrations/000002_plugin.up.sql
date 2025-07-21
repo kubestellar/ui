@@ -29,6 +29,14 @@ CREATE TABLE IF NOT EXISTS plugin_route (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS plugin_stats (
+    plugin_id INTEGER PRIMARY KEY REFERENCES plugin(id) ON DELETE CASCADE,
+    usage_count INTEGER NOT NULL DEFAULT 0,
+    last_used TIMESTAMP WITH TIME ZONE,
+    -- avg_rating will be computed from plugin_feedback, not stored here
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better performance
 -- Plugin table indexes
 CREATE INDEX idx_plugins_name ON plugin(name);

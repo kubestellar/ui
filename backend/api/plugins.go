@@ -3,6 +3,7 @@ package api
 import (
 	"archive/tar"
 	"compress/gzip"
+	"database/sql"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,9 +16,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/models"
 	pkg "github.com/kubestellar/ui/backend/pkg/plugins"
 	"github.com/kubestellar/ui/backend/plugin"
 	"github.com/kubestellar/ui/backend/plugin/plugins"
+	"github.com/kubestellar/ui/backend/postgresql/Database"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
@@ -716,6 +719,58 @@ func GetPluginStatusHandler(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{
 		"error": "Plugin not found",
 	})
+}
+
+// GetPluginStatsHandler returns usage statistics for a specific plugin
+func GetPluginStatsHandler(c *gin.Context) {
+	pluginID := c.Param("id")
+	if pluginID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Plugin ID is required"})
+		return
+	}
+
+	// Check if plugin exists (enabled or disabled)
+	var dbPluginID int
+	err := Database.DB.QueryRow("SELECT id FROM plugin WHERE name = $1", pluginID).Scan(&dbPluginID)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
+		return
+	}
+
+	// Query plugin_stats
+	var usageCount int
+	var lastUsed sql.NullTime
+	err = Database.DB.QueryRow("SELECT usage_count, last_used FROM plugin_stats WHERE plugin_id = $1", dbPluginID).Scan(&usageCount, &lastUsed)
+	if err == sql.ErrNoRows {
+		usageCount = 0
+		lastUsed = sql.NullTime{}
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
+		return
+	}
+
+	// Compute avg_rating from plugin_feedback
+	var avgRating sql.NullFloat64
+	err = Database.DB.QueryRow("SELECT AVG(rating) FROM plugin_feedback WHERE plugin_id = $1", dbPluginID).Scan(&avgRating)
+	if err != nil && err != sql.ErrNoRows {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
+		return
+	}
+
+	stats := models.PluginStats{
+		PluginID:   dbPluginID,
+		UsageCount: usageCount,
+		LastUsed:   lastUsed.Time,
+		AvgRating:  0,
+	}
+	if avgRating.Valid {
+		stats.AvgRating = avgRating.Float64
+	}
+
+	c.JSON(http.StatusOK, stats)
 }
 
 // GetPluginSystemMetricsHandler returns system-wide metrics for plugins

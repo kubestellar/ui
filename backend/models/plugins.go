@@ -43,3 +43,13 @@ type PluginRoute struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// PluginStats represents usage statistics for a plugin
+// This struct will be used for the /api/plugins/:id/stats endpoint
+// and can be extended as needed.
+type PluginStats struct {
+	PluginID   int       `json:"plugin_id"`
+	UsageCount int       `json:"usage_count"`
+	LastUsed   time.Time `json:"last_used"`
+	AvgRating  float64   `json:"avg_rating"`
+}
