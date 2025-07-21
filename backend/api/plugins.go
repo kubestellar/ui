@@ -182,6 +182,47 @@ func ListPluginsHandler(c *gin.Context) {
 	})
 }
 
+// ListPluginCategoriesHandler returns a list of all unique plugin categories
+func ListPluginCategoriesHandler(c *gin.Context) {
+	pluginManager := GetGlobalPluginManager()
+	pluginRegistry := GetGlobalPluginRegistry()
+	categoriesSet := make(map[string]struct{})
+
+	if pluginManager != nil && pluginRegistry != nil {
+		loadedPlugins := pluginManager.GetPluginList()
+		for _, p := range loadedPlugins {
+			if p.Manifest != nil {
+				cats := extractCategoriesFromManifest(p.Manifest)
+				for _, cat := range cats {
+					categoriesSet[cat] = struct{}{}
+				}
+			}
+		}
+	} else {
+		// Fallback: no categories if manager/registry unavailable
+	}
+
+	// Convert set to sorted slice
+	categories := make([]string, 0, len(categoriesSet))
+	for cat := range categoriesSet {
+		categories = append(categories, cat)
+	}
+	// Optionally sort alphabetically
+	// sort.Strings(categories)
+
+	c.JSON(http.StatusOK, gin.H{
+		"categories": categories,
+	})
+}
+
+// extractCategoriesFromManifest extracts categories from a plugin manifest (if present)
+func extractCategoriesFromManifest(manifest *pkg.PluginManifest) []string {
+	if manifest == nil {
+		return nil
+	}
+	return manifest.Spec.Categories
+}
+
 // GetPluginDetailsHandler returns details about a specific plugin
 func GetPluginDetailsHandler(c *gin.Context) {
 	pluginID := c.Param("id")

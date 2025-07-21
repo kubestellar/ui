@@ -11,6 +11,7 @@ func setupPluginRoutes(router *gin.Engine) {
 	{
 		// Plugin Management
 		plugins.GET("", api.ListPluginsHandler)
+		plugins.GET("/categories", api.ListPluginCategoriesHandler)
 		plugins.GET("/:id", api.GetPluginDetailsHandler)
 		plugins.POST("/install", api.InstallPluginHandler)
 		plugins.DELETE("/:id", api.UninstallPluginHandler)
