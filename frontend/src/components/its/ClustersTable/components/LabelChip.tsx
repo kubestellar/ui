@@ -23,7 +23,7 @@ const LabelChip: React.FC<LabelChipProps> = ({
   const isFiltered = filterByLabel.some(item => item.key === labelKey && item.value === value);
 
   return (
-    <Tooltip title={t('clusters.filteredByLabel')} arrow placement="top" TransitionComponent={Zoom}>
+    <Tooltip title={labelKey !== labelKey.split('/').pop() ? `${labelKey}=${value}` : t('clusters.filteredByLabel')} arrow placement="top" TransitionComponent={Zoom}>
       <span
         onClick={() => onFilterClick(labelKey, value)}
         style={{
@@ -47,7 +47,7 @@ const LabelChip: React.FC<LabelChipProps> = ({
         }}
         className="rounded-md px-2 py-1 text-xs font-medium hover:scale-105 hover:shadow-md"
       >
-        {labelKey}={value}
+        {labelKey.split('/').pop()}={value}
       </span>
     </Tooltip>
   );
