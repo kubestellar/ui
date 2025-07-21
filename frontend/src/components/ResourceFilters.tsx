@@ -37,11 +37,9 @@ interface ResourceFiltersProps {
   activeFilters: ResourceFilter;
 }
 
-// Utility to safely render values as strings
-function safeString(val: unknown): string {
-  if (val == null) return '';
-  if (typeof val === 'string' || typeof val === 'number') return String(val);
-  return JSON.stringify(val);
+// Utility to check if a value is string or number
+function isRenderable(val: unknown): val is string | number {
+  return typeof val === 'string' || typeof val === 'number';
 }
 
 const ResourceFilters: React.FC<ResourceFiltersProps> = ({
@@ -399,40 +397,42 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
                   {key}
                 </Typography>
                 {Array.from(values).map(value => (
-                  <MenuItem
-                    key={`${key}-${safeString(value)}`}
-                    onClick={() => handleLabelSelect(key, value as string)}
-                    selected={
-                      activeFilters.label?.key === key && activeFilters.label?.value === value
-                    }
-                    sx={{
-                      backgroundColor:
+                  isRenderable(value) ? (
+                    <MenuItem
+                      key={`${key}-${value}`}
+                      onClick={() => handleLabelSelect(key, value as string)}
+                      selected={
                         activeFilters.label?.key === key && activeFilters.label?.value === value
-                          ? isDark
-                            ? 'rgba(59, 130, 246, 0.25)'
-                            : 'rgba(59, 130, 246, 0.15)'
-                          : 'transparent',
-                      '&:hover': {
-                        backgroundColor: isDark
-                          ? 'rgba(255, 255, 255, 0.1)'
-                          : 'rgba(0, 0, 0, 0.05)',
-                      },
-                      '&.Mui-selected': {
-                        backgroundColor: isDark
-                          ? 'rgba(59, 130, 246, 0.25)'
-                          : 'rgba(59, 130, 246, 0.15)',
+                      }
+                      sx={{
+                        backgroundColor:
+                          activeFilters.label?.key === key && activeFilters.label?.value === value
+                            ? isDark
+                              ? 'rgba(59, 130, 246, 0.25)'
+                              : 'rgba(59, 130, 246, 0.15)'
+                            : 'transparent',
                         '&:hover': {
                           backgroundColor: isDark
-                            ? 'rgba(59, 130, 246, 0.35)'
-                            : 'rgba(59, 130, 246, 0.2)',
+                            ? 'rgba(255, 255, 255, 0.1)'
+                            : 'rgba(0, 0, 0, 0.05)',
                         },
-                      },
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ pl: 2 }}>
-                      {safeString(value)}
-                    </Typography>
-                  </MenuItem>
+                        '&.Mui-selected': {
+                          backgroundColor: isDark
+                            ? 'rgba(59, 130, 246, 0.25)'
+                            : 'rgba(59, 130, 246, 0.15)',
+                          '&:hover': {
+                            backgroundColor: isDark
+                              ? 'rgba(59, 130, 246, 0.35)'
+                              : 'rgba(59, 130, 246, 0.2)',
+                          },
+                        },
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ pl: 2 }}>
+                        {value}
+                      </Typography>
+                    </MenuItem>
+                  ) : null
                 ))}
                 <Divider
                   sx={{
@@ -517,9 +517,9 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
               }}
             />
           )}
-          {activeFilters.label && (
+          {activeFilters.label && isRenderable(activeFilters.label.value) && (
             <Chip
-              label={`${activeFilters.label.key}: ${safeString(activeFilters.label.value)}`}
+              label={`${activeFilters.label.key}: ${activeFilters.label.value}`}
               onDelete={() => handleRemoveFilter('label')}
               color="primary"
               variant="outlined"
