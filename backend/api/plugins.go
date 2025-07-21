@@ -866,6 +866,53 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 	})
 }
 
+// GetFeaturedPluginsHandler returns a curated list of featured plugins
+func GetFeaturedPluginsHandler(c *gin.Context) {
+	// Assume plugins are in ./plugins directory relative to backend
+	pluginsDir := "./plugins"
+	if _, err := os.Stat(pluginsDir); os.IsNotExist(err) {
+		c.JSON(200, gin.H{"featured_plugins": []interface{}{}})
+		return
+	}
+
+	entries, err := os.ReadDir(pluginsDir)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to read plugins directory", "details": err.Error()})
+		return
+	}
+
+	featured := []map[string]interface{}{}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		manifestPath := filepath.Join(pluginsDir, entry.Name(), "plugin.yml")
+		manifestData, err := os.ReadFile(manifestPath)
+		if err != nil {
+			continue
+		}
+		var manifest map[string]interface{}
+		if err := yaml.Unmarshal(manifestData, &manifest); err != nil {
+			continue
+		}
+		meta, ok := manifest["metadata"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if featuredVal, ok := meta["featured"].(bool); ok && featuredVal {
+			// Add plugin info (name, description, version, author, etc.)
+			pluginInfo := map[string]interface{}{
+				"name":        meta["name"],
+				"description": meta["description"],
+				"version":     meta["version"],
+				"author":      meta["author"],
+			}
+			featured = append(featured, pluginInfo)
+		}
+	}
+	c.JSON(200, gin.H{"featured_plugins": featured})
+}
+
 // Helper functions
 
 // getRegisteredPlugins returns all registered plugins
