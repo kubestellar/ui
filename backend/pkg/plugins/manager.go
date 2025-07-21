@@ -69,15 +69,15 @@ type PluginDependency struct {
 
 // PluginSpec contains the plugin specification
 type PluginSpec struct {
-	Wasm          *PluginWasmConfig      `yaml:"wasm,omitempty"`          // WASM binary configuration
-	Build         *PluginBuildConfig     `yaml:"build,omitempty"`         // Build configuration
-	Backend       *PluginBackendConfig   `yaml:"backend,omitempty"`       // Backend configuration
-	Permissions   []string               `yaml:"permissions,omitempty"`   // Required permissions - "kubestellar:read:clusters" "kubestellar:read:workloads"
-	Frontend      *PluginFrontendConfig  `yaml:"frontend,omitempty"`      // Frontend configuration
-	Navigation    []PluginNavigationItem `yaml:"navigation,omitempty"`    // Navigation integration
-	Widgets       []PluginWidgetConfig   `yaml:"widgets,omitempty"`       // Dashboard widgets
-	Routes        []PluginFrontendRoute  `yaml:"routes,omitempty"`        // Frontend routes
-	Configuration []PluginConfigItem     `yaml:"configuration,omitempty"` // Plugin configuration options
+	Wasm          *PluginWasmConfig      `yaml:"wasm,omitempty"`                                       // WASM binary configuration
+	Build         *PluginBuildConfig     `yaml:"build,omitempty"`                                      // Build configuration
+	Backend       *PluginBackendConfig   `yaml:"backend,omitempty"`                                    // Backend configuration
+	Permissions   []string               `yaml:"permissions,omitempty"`                                // Required permissions - "kubestellar:read:clusters" "kubestellar:read:workloads"
+	Frontend      *PluginFrontendConfig  `yaml:"frontend,omitempty"`                                   // Frontend configuration
+	Navigation    []PluginNavigationItem `yaml:"navigation,omitempty"`                                 // Navigation integration
+	Widgets       []PluginWidgetConfig   `yaml:"widgets,omitempty"`                                    // Dashboard widgets
+	Routes        []PluginFrontendRoute  `yaml:"routes,omitempty"`                                     // Frontend routes
+	Configuration []PluginConfigItem     `yaml:"configuration,omitempty"`                              // Plugin configuration options
 	Dependencies  []PluginDependency     `yaml:"dependencies,omitempty" json:"dependencies,omitempty"` // Plugin dependencies
 }
 
