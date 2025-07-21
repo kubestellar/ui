@@ -69,7 +69,9 @@ func (sm *SessionMap) Close(sessionId string) {
 	sm.Lock.Lock()
 	defer sm.Lock.Unlock()
 	if session, ok := sm.Sessions[sessionId]; ok {
-		session.socket.Close()
+		if session.socket != nil {
+			session.socket.Close()
+		}
 		delete(sm.Sessions, sessionId)
 		log.LogInfo("Closed terminal session", zap.String("sessionId", sessionId))
 	}
@@ -77,7 +79,7 @@ func (sm *SessionMap) Close(sessionId string) {
 
 var terminalSessions = SessionMap{Sessions: make(map[string]TerminalSession)}
 
-func genTerminalSessionId() (string, error) {
+func GenTerminalSessionId() (string, error) {
 	log.LogInfo("Generating terminal session ID")
 	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
@@ -90,7 +92,8 @@ func genTerminalSessionId() (string, error) {
 	return string(id), nil
 }
 
-func isValidShellCmd(validShells []string, shell string) bool {
+// Change isValidShellCmd to IsValidShellCmd
+func IsValidShellCmd(validShells []string, shell string) bool {
 	log.LogInfo("Validating shell command", zap.String("shell", shell))
 	for _, validShell := range validShells {
 		if validShell == shell {
@@ -250,7 +253,7 @@ func HandlePodExecShell(c *gin.Context) {
 		zap.String("pod", c.Param("pod")),
 		zap.String("container", c.Param("container")))
 
-	sessionID, err := genTerminalSessionId()
+	sessionID, err := GenTerminalSessionId()
 	if err != nil {
 		log.LogError("Failed to generate session ID", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate session ID"})
@@ -301,7 +304,7 @@ func HandlePodExecShell(c *gin.Context) {
 	shell := c.Query("shell")
 	validShells := []string{"bash", "sh", "powershell", "cmd"}
 	cmd := []string{shell}
-	if !isValidShellCmd(validShells, shell) {
+	if !IsValidShellCmd(validShells, shell) {
 		log.LogInfo("Invalid shell specified, defaulting to sh", zap.String("shell", shell))
 		cmd = []string{"sh"}
 	}
