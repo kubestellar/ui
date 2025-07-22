@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -238,7 +237,6 @@ func TestUninstallPluginHandler(t *testing.T) {
 					Status: "active",
 				}
 
-				log.Println("*************Registering plugin:", plugin.Manifest.Metadata.Name)
 				manager.RegisterPlugin(plugin)
 
 				pluginFolder := fmt.Sprintf("%s-%d", plugin.Manifest.Metadata.Name, plugin.ID)

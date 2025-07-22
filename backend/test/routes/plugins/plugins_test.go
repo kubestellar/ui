@@ -1,23 +1,52 @@
-package routes_test
+package plugins_test
 
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/pkg/plugins"
 	"github.com/kubestellar/ui/backend/routes"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSetupPluginRoutes(t *testing.T) {
+var router *gin.Engine
+
+// TestMain is the entry point for testing in this package.
+func TestMain(m *testing.M) {
+	// Set Gin to Test mode
 	gin.SetMode(gin.TestMode)
-	router := gin.New()
+
+	// Set up the global plugin manager and registry before any test runs
+	router = gin.New()
+	testManager := plugins.NewPluginManager(router)
+	testRegistry := plugins.NewPluginRegistry("./test_plugins", testManager)
+	api.SetGlobalPluginManager(testManager, testRegistry)
+
 	routes.SetupRoutes(router)
 
+	// (Optional) Preload or reset state if needed
+
+	// Run tests
+	code := m.Run()
+
+	// Cleanup logic if needed
+	err := os.RemoveAll("./test_plugins") // clean up test plugin dir
+	if err != nil {
+		log.Printf("failed to remove test plugin dir: %v", err)
+	}
+
+	os.Exit(code)
+}
+
+func TestSetupPluginRoutes(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
@@ -138,10 +167,6 @@ func TestSetupPluginRoutes(t *testing.T) {
 }
 
 func TestPluginParameterizedRoutes(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	routes.SetupRoutes(router)
-
 	plugins := []int{1, 2, 3} // 1 is the backup plugin
 	operations := []struct {
 		operation string
