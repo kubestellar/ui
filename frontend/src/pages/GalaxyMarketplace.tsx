@@ -370,7 +370,7 @@ const GalaxyMarketplace: React.FC = () => {
                   : themeStyles.colors.text.secondary,
               }}
             >
-              <HiMagnifyingGlass className="h-5 w-5" />
+              <HiMagnifyingGlass className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2" />
             </div>
             <input
               type="text"
@@ -379,17 +379,16 @@ const GalaxyMarketplace: React.FC = () => {
               onChange={handleSearchChange}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className="w-full rounded-xl py-2.5 pl-10 pr-4"
+              className="w-full rounded-lg border py-3 pl-10 pr-4 outline-none transition-colors"
               style={{
-                background: isDark ? 'rgba(17, 24, 39, 0.8)' : 'rgba(249, 250, 251, 0.9)',
-                backdropFilter: 'blur(2px)',
-                border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                background: themeStyles.colors.bg.secondary,
+                border: themeStyles.card.borderColor,
                 color: themeStyles.colors.text.primary,
               }}
             />
             {searchQuery && (
               <button
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-opacity-10"
                 onClick={handleClearSearch}
               >
                 <HiXMark className="h-5 w-5" style={{ color: themeStyles.colors.text.secondary }} />
