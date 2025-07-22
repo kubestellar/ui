@@ -24,7 +24,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = React.memo(
         </div>
 
         <div className="relative">
-          <div className="relative z-10 flex flex-wrap gap-2 overflow-x-auto pb-2">
+          <div className="z-1 relative flex flex-wrap gap-2 overflow-x-auto p-2">
             {categories.map(category => (
               <button
                 key={category.id}
