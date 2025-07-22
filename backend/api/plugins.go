@@ -435,6 +435,13 @@ func UninstallPluginHandler(c *gin.Context) {
 	var uninstallErrors []string
 	var successMessages []string
 
+	// get plugin by ID
+	plugin := findPluginByID(pluginID)
+	if plugin == nil {
+		uninstallErrors = append(uninstallErrors, fmt.Sprintf("Plugin not found in filesystem: %d", pluginID))
+		log.LogWarn("Plugin not found in filesystem for uninstallation", zap.String("id", strconv.Itoa(pluginID)))
+	}
+
 	// Step 1: Handle new WASM-based plugin system
 	log.LogInfo("Processing WASM plugin uninstallation", zap.String("id", strconv.Itoa(pluginID)))
 
@@ -475,11 +482,7 @@ func UninstallPluginHandler(c *gin.Context) {
 	}
 
 	// Step 2: Remove plugin files from filesystem
-	plugin := findPluginByID(pluginID)
-	if plugin == nil {
-		uninstallErrors = append(uninstallErrors, fmt.Sprintf("Plugin not found in filesystem: %d", pluginID))
-		log.LogWarn("Plugin not found in filesystem for uninstallation", zap.String("id", strconv.Itoa(pluginID)))
-	} else {
+	if plugin != nil && plugin.Manifest != nil {
 		// get plugin's name
 		pluginName := plugin.Manifest.Metadata.Name
 		pluginFolder := fmt.Sprintf("%s-%d", pluginName, pluginID)
@@ -502,12 +505,14 @@ func UninstallPluginHandler(c *gin.Context) {
 	}
 
 	// Step 3: Remove plugin from database
-	if err := pkg.UninstallPluginFromDB(pluginID); err != nil {
-		uninstallErrors = append(uninstallErrors, fmt.Sprintf("Failed to remove plugin from database: %v", err))
-		log.LogError("Failed to remove plugin from database", zap.String("id", strconv.Itoa(pluginID)), zap.Error(err))
-	} else {
-		successMessages = append(successMessages, "Plugin removed from database")
-		log.LogInfo("Plugin removed from database", zap.String("id", strconv.Itoa(pluginID)))
+	if plugin != nil && plugin.ID > 0 {
+		if err := pkg.UninstallPluginFromDB(pluginID); err != nil {
+			uninstallErrors = append(uninstallErrors, fmt.Sprintf("Failed to remove plugin from database: %v", err))
+			log.LogError("Failed to remove plugin from database", zap.String("id", strconv.Itoa(pluginID)), zap.Error(err))
+		} else {
+			successMessages = append(successMessages, "Plugin removed from database")
+			log.LogInfo("Plugin removed from database", zap.String("id", strconv.Itoa(pluginID)))
+		}
 	}
 
 	// TODO-route: Unregister routes if backend plugin

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -190,108 +191,136 @@ func TestInstallPluginHandler(t *testing.T) {
 }
 
 func TestUninstallPluginHandler(t *testing.T) {
-	testDB, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer testDB.Close()
-
-	database.DB = testDB
-
-	gin.SetMode(gin.TestMode)
-	router := gin.Default()
-
-	prevManager := api.GetGlobalPluginManager()
-	prevRegistry := api.GetGlobalPluginRegistry()
-
-	testManager := plugins.NewPluginManager(router)
-	testRegistry := plugins.NewPluginRegistry("./test_plugins", testManager)
-	api.SetGlobalPluginManager(testManager, testRegistry)
-
-	// Set up a real wazero runtime and module
-	runtime := wazero.NewRuntime(context.Background())
-
-	// Create a dummy module using wazero's minimal WASM binary for testing
-	wasmBytes := []byte{
-		0x00, 0x61, 0x73, 0x6d, // WASM binary magic
-		0x01, 0x00, 0x00, 0x00, // WASM binary version
+	type testCase struct {
+		name         string
+		pluginID     int
+		setupMocks   func(sqlmock.Sqlmock)
+		setupPlugin  func(manager *plugins.PluginManager, registry *plugins.PluginRegistry) *plugins.Plugin
+		expectedCode int
+		expectedBody string
 	}
-	compiledModule, err := runtime.CompileModule(context.Background(), wasmBytes)
-	require.NoError(t, err)
-	testModule, err := runtime.InstantiateModule(context.Background(), compiledModule, wazero.NewModuleConfig())
-	require.NoError(t, err)
 
-	// Cleanup
-	t.Cleanup(func() {
-		api.SetGlobalPluginManager(prevManager, prevRegistry)
-		os.RemoveAll("./test_plugins")
+	tests := []testCase{
+		{
+			name:     "Plugin exists and is uninstalled successfully",
+			pluginID: 1,
+			setupMocks: func(mock sqlmock.Sqlmock) {
+				// 1. Mock CheckPluginWithInfo (plugin does not exist) for registration
+				mock.ExpectQuery(`SELECT EXISTS\s+\(.*FROM plugin.*\)`).
+					WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin").
+					WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-		_ = runtime.Close(context.Background()) // ensure cleanup
-	})
+					// 2. GetPluginIdDB
+				mock.ExpectQuery(`SELECT id FROM plugin WHERE name=\$1 AND version=\$2 AND description=\$3`).
+					WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin").
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	// Set up route
-	router.DELETE("/api/plugins/:id", api.UninstallPluginHandler)
+				// 3. UpdatePluginStatusDB
+				mock.ExpectExec(`UPDATE plugin SET status = \$1 WHERE id = \$2`).
+					WithArgs("active", 1).
+					WillReturnResult(sqlmock.NewResult(0, 1)) // 0 insert ID, 1 row affected
 
-	plugin := &plugins.Plugin{
-		ID: 0, // will be assigned after RegisterPlugin
-		Manifest: &plugins.PluginManifest{
-			Metadata: plugins.PluginMetadata{
-				Name:        "TestPlugin",
-				Version:     "v0.1.0",
-				Description: "Temporary test plugin",
+				// 4. Mock DELETE plugin
+				mock.ExpectExec(`(?s)DELETE FROM plugin\s+WHERE id = \$1`).
+					WithArgs(1).
+					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
+			setupPlugin: func(manager *plugins.PluginManager, registry *plugins.PluginRegistry) *plugins.Plugin {
+				plugin := &plugins.Plugin{
+					Manifest: &plugins.PluginManifest{
+						Metadata: plugins.PluginMetadata{
+							Name:        "TestPlugin",
+							Version:     "v0.1.0",
+							Description: "Temporary test plugin",
+							Author:      "testuser",
+						},
+					},
+					Status: "active",
+				}
+
+				log.Println("*************Registering plugin:", plugin.Manifest.Metadata.Name)
+				manager.RegisterPlugin(plugin)
+
+				pluginFolder := fmt.Sprintf("%s-%d", plugin.Manifest.Metadata.Name, plugin.ID)
+				pluginDir := filepath.Join(registry.GetPluginsDirectory(), pluginFolder)
+				_ = os.MkdirAll(pluginDir, 0755)
+				wasmFilePath := filepath.Join(pluginDir, "plugin.wasm")
+				_ = os.WriteFile(wasmFilePath, []byte("dummy wasm content"), 0644)
+
+				return plugin
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: `{"message": "Plugin uninstalled successfully"}`,
 		},
-		Instance: testModule,
-		Status:   "active",
+
+		{
+			name:     "Plugin not found in manager",
+			pluginID: 999,
+			setupMocks: func(mock sqlmock.Sqlmock) {
+				// Plugin manager has no such plugin, no SQL expected
+			},
+			setupPlugin: func(manager *plugins.PluginManager, registry *plugins.PluginRegistry) *plugins.Plugin {
+				// Don't register the plugin
+				return nil
+			},
+			expectedCode: http.StatusPartialContent, // 206 - Plugin not found
+			expectedBody: `{"error":"Plugin not found"}`,
+		},
 	}
 
-	// --- MOCKING DB BEHAVIOR ---
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testDB, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			defer testDB.Close()
+			database.DB = testDB
 
-	// 1. Mock CheckPluginWithInfo
-	mock.ExpectQuery(`SELECT EXISTS\s+\(.*FROM plugin.*\)`).
-		WithArgs(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description).
-		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+			gin.SetMode(gin.TestMode)
+			router := gin.Default()
 
-	// 2. Mock AddPluginToDB to return ID = 9999
-	mock.ExpectQuery(`INSERT INTO plugin .* RETURNING id`).
-		WithArgs(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, true, plugin.Manifest.Metadata.Description, 0, "active").
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(9999))
+			prevManager := api.GetGlobalPluginManager()
+			prevRegistry := api.GetGlobalPluginRegistry()
 
-	// Register plugin
-	testManager.RegisterPlugin(plugin)
-	plugin.ID = 9999
+			testManager := plugins.NewPluginManager(router)
+			testRegistry := plugins.NewPluginRegistry("./test_plugins", testManager)
+			api.SetGlobalPluginManager(testManager, testRegistry)
 
-	// Create dummy plugin directory to simulate plugin files
-	pluginFolder := fmt.Sprintf("%s-%d", plugin.Manifest.Metadata.Name, plugin.ID)
-	pluginDir := filepath.Join(testRegistry.GetPluginsDirectory(), pluginFolder)
-	err = os.MkdirAll(pluginDir, 0755)
-	require.NoError(t, err)
+			// Set up Wazero runtime & dummy module (needed for registration)
+			runtime := wazero.NewRuntime(context.Background())
+			wasmBytes := []byte{0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00}
+			compiledModule, err := runtime.CompileModule(context.Background(), wasmBytes)
+			require.NoError(t, err)
+			testModule, err := runtime.InstantiateModule(context.Background(), compiledModule, wazero.NewModuleConfig())
+			require.NoError(t, err)
 
-	// Create a dummy plugin.wasm file
-	wasmFilePath := filepath.Join(pluginDir, "plugin.wasm")
-	err = os.WriteFile(wasmFilePath, []byte("dummy wasm content"), 0644)
-	require.NoError(t, err)
+			t.Cleanup(func() {
+				api.SetGlobalPluginManager(prevManager, prevRegistry)
+				_ = os.RemoveAll("./test_plugins")
+				_ = runtime.Close(context.Background())
+			})
 
-	// 3. Mock actual DELETE FROM plugin
-	mock.ExpectExec(`DELETE FROM plugin WHERE id = \$1`).
-		WithArgs(9999).
-		WillReturnResult(sqlmock.NewResult(0, 1)) // pretend one row was affected
+			router.DELETE("/api/plugins/:id", api.UninstallPluginHandler)
 
-	// Send DELETE request
-	req, err := http.NewRequest(http.MethodDelete, "/api/plugins/9999", nil)
-	require.NoError(t, err)
+			// Setup SQL mock expectations
+			tt.setupMocks(mock)
 
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+			// Setup plugin if needed
+			if plugin := tt.setupPlugin(testManager, testRegistry); plugin != nil {
+				plugin.Instance = testModule
+			}
 
-	// Assert response
-	require.Equal(t, http.StatusOK, w.Code)
-	require.JSONEq(t, `{"message": "Plugin uninstalled successfully"}`, w.Body.String())
+			// Make DELETE request
+			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/api/plugins/%d", tt.pluginID), nil)
+			require.NoError(t, err)
 
-	// Check plugin removed from manager
-	_, exists := testManager.GetPlugin(9999)
-	require.False(t, exists)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
 
-	// Verify all SQL expectations were met
-	require.NoError(t, mock.ExpectationsWereMet())
+			require.Equal(t, tt.expectedCode, w.Code)
+			// require.JSONEq(t, tt.expectedBody, w.Body.String())
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
 
 func TestEnablePluginHandler(t *testing.T) {

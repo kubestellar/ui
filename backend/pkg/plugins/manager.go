@@ -471,7 +471,7 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
 	// 	pm.registerPluginRoutes(plugin)
 	// }
 
-	log.LogInfo("Plugin registered successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
+	log.LogInfo("Plugin registered successfully", zap.Int("plugin", plugin.ID))
 }
 
 func (pm *PluginManager) DeregisterPlugin(plugin *Plugin) {
