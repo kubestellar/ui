@@ -2088,8 +2088,8 @@
         "infoMessage": "आपको सफलतापूर्वक लॉग आउट कर दिया गया है।"
       },
       "galaxyMarketplace": {
-        "title": "Galaxy Marketplace",
-        "description": "Galaxy Marketplace से Plugin खोजें और इंस्टॉल करें"
+        "title": "गैलेक्सी मार्केटप्लेस",
+        "description": "गैलेक्सी मार्केटप्लेस से प्लगइन खोजें और इंस्टॉल करें"
       }
     },
     "sections": {
@@ -2109,14 +2109,14 @@
     },
     "items": {
       "home": "होम",
-      "remoteClusters": "Remote Clusters",
-      "stagedWorkloads": "Staged Workloads",
-      "bindingPolicies": "Binding Policies",
-      "deployedWorkloads": "Deployed Workloads",
-      "pluginManager": "Plugin Manager",
+      "remoteClusters": "Remरिमोट क्लस्टर्स",
+      "stagedWorkloads": "स्टेज्ड वर्कलोड्स",
+      "bindingPolicies": "बाइंडिंग नीतियाँ",
+      "deployedWorkloads": "परिनियोजित वर्कलोड्स",
+      "pluginManager": "उपयोगकर्ता प्रबंधन",
       "userManagement": "User Management",
-      "metricsDashboard": "Metrics Dashboard",
-      "galaxyMarketplace": "Galaxy Marketplace"
+      "metricsDashboard": "मेट्रिक्स डैशबोर्ड",
+      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस"
     }
   },
   "plugins": {
