@@ -892,10 +892,23 @@
       "failedLoadDetails": "Failed to load {{type}} details.",
       "apiNotImplemented": "API not implemented for updating pod \"{{resourceName}}\"",
       "failedFetchContainers": "Failed to fetch container list",
-      "failedFetchLogsContainers": "Failed to fetch container list for logs"
+      "failedFetchLogsContainers": "Failed to fetch container list for logs",
+      "failedConnectExec": "Failed to connect to exec session",
+      "failedInitExec": "Failed to initialize exec session",
+      "failedUpdate": "Failed to update manifest",
+      "resourceNotFound": "Resource not found",
+      "permissionDenied": "Permission denied",
+      "invalidManifest": "Invalid manifest format",
+      "namespaceRequired": "Namespace is required"
+    },
+    "success": {
+      "manifestUpdated": "Manifest updated successfully"
     },
     "cluster": {
       "active": "Active"
+    },
+    "exec": {
+      "connected": "Connected"
     },
     "noManifest": "No manifest available"
   },
