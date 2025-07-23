@@ -300,6 +300,20 @@ func InstallPluginHandler(c *gin.Context) {
 
 	// get author's ID from DB
 	author, err := models.GetUserByUsername(manifest.Metadata.Author)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Unable to get author from database: " + manifest.Metadata.Author,
+		})
+		log.LogError("unable to get author from database", zap.String("author", manifest.Metadata.Author), zap.Error(err))
+		return
+	}
+	if author == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Author not found in database: " + manifest.Metadata.Author,
+		})
+		log.LogInfo("author not found", zap.String("author", manifest.Metadata.Author))
+		return
+	}
 	log.LogInfo("author ID", zap.Any("id", author.ID))
 
 	// plugin not existed - add to database and retrieve the ID
