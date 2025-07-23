@@ -848,11 +848,11 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 
 // GetAllPluginManifestsHandler returns all plugin manifests
 func GetAllPluginManifestsHandler(c *gin.Context) {
-	// Get the plugin manager instance
-	pm := pkg.NewPluginManager(&gin.Engine{})
+	// Get the new plugin manager instance
+	pluginManager := GetGlobalPluginManager()
 
-	// Get all plugins
-	pluginList := pm.GetPluginList()
+	// Get all plugins from the plugin manager
+	pluginList := pluginManager.GetPluginList()
 
 	// Extract manifests
 	manifests := make([]pkg.PluginManifest, 0, len(pluginList))
@@ -862,6 +862,7 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
+		"count":  len(manifests),
 		"data":   manifests,
 	})
 }
