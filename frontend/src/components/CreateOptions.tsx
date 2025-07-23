@@ -502,7 +502,7 @@ spec:
           webhook: 'none',
           workload_label: '',
         });
-        setTimeout(() => window.location.reload(), 4000);
+        setTimeout(() => window.location.reload(), 2000);
       } else {
         throw new Error('Unexpected response status: ' + response.status);
       }
@@ -572,7 +572,7 @@ spec:
           namespace: 'default',
           workload_label: '',
         });
-        setTimeout(() => window.location.reload(), 4000);
+        setTimeout(() => window.location.reload(), 2000);
       } else {
         throw new Error('Unexpected response status: ' + response.status);
       }
@@ -582,7 +582,13 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error(t('workloads.createOptions.notifications.helmDeployFailed'));
+          const errorMessage = (err.response.data as { error?: string })?.error || 'Unknown error';
+          // More specific error handling for release name conflicts
+          if (errorMessage.includes('cannot re-use a name')) {
+            toast.error('Release name already exists. Please choose a different release name.');
+          } else {
+            toast.error(t('workloads.createOptions.notifications.helmDeployFailed'));
+          }
         } else if (err.response.status === 400) {
           toast.error('Failed to deploy Helm chart!');
         } else {
@@ -635,7 +641,7 @@ spec:
 
       if (response.status === 200 || response.status === 201) {
         toast.success(t('workloads.createOptions.notifications.artifactHubDeploySuccess'));
-        setTimeout(() => window.location.reload(), 4000);
+        setTimeout(() => window.location.reload(), 2000);
       } else {
         throw new Error('Unexpected response status: ' + response.status);
       }
