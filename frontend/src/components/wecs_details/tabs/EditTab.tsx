@@ -55,7 +55,6 @@ const EditTab: React.FC<EditTabProps> = ({
     } catch {
       // Ignore, will be caught by validation
     }
-
   }, [editFormat, editedManifest, handleEditorChange, jsonToYaml, yamlToJson]);
 
   // Validate JSON/YAML content
