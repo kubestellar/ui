@@ -23,6 +23,7 @@ import {
   BarChart3,
   ClipboardList,
   Shield,
+  User,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useTheme from '../stores/themeStore';
@@ -30,6 +31,10 @@ import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { useTranslation } from 'react-i18next';
+import {
+  useDeletedUsersActivityQuery,
+  useUserActivityQuery,
+} from '../hooks/queries/useUserActivityQuery.ts';
 
 // Lazy load the ClusterDetailDialog component
 const ClusterDetailDialog = lazy(() => import('../components/ClusterDetailDialog'));
@@ -470,6 +475,8 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const { useClusters } = useClusterQueries();
   const { useBindingPolicies } = useBPQueries();
+  const { data: userActivities = [], isLoading: userLoading } = useUserActivityQuery();
+  const { data: deletedUserActivities = [] } = useDeletedUsersActivityQuery();
 
   // Use the existing query hooks to fetch data
   const {
@@ -485,7 +492,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 
   // Process data function to avoid code duplication
   const processData = useCallback(() => {
-    if (!clustersLoading && !bpLoading && clusterData && bindingPoliciesData) {
+    if (!clustersLoading && !bpLoading && clusterData && bindingPoliciesData && !userLoading) {
       try {
         const items: ActivityItem[] = [];
 
@@ -516,6 +523,9 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
             });
           });
         }
+        items.push(...userActivities.slice(0, 5));
+
+        items.push(...deletedUserActivities.slice(0, 3));
 
         // Sort by timestamp (newest first)
         items.sort((a, b) => {
@@ -542,7 +552,15 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
         setIsLoading(false);
       }
     }
-  }, [clustersLoading, bpLoading, clusterData, bindingPoliciesData]);
+  }, [
+    clustersLoading,
+    bpLoading,
+    clusterData,
+    bindingPoliciesData,
+    userLoading,
+    userActivities,
+    deletedUserActivities,
+  ]);
 
   useEffect(() => {
     processData();
@@ -623,7 +641,14 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 
   // Status icon based on activity status
   const getStatusIcon = (status: string) => {
-    if (status === 'Active' || status === 'Available' || status === 'Synced') {
+    if (
+      status === 'Active' ||
+      status === 'Available' ||
+      status === 'Synced' ||
+      status === 'Created' ||
+      status === 'Updated' ||
+      status === 'Deleted'
+    ) {
       return <CheckCircle size={12} />;
     } else if (status === 'Warning' || status === 'Pending') {
       return <AlertTriangle size={12} />;
@@ -683,7 +708,14 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                 const getStatusColors = (
                   status: string
                 ): { bgColor: string; textColor: string } => {
-                  if (status === 'Active' || status === 'Available' || status === 'Synced') {
+                  if (
+                    status === 'Active' ||
+                    status === 'Available' ||
+                    status === 'Synced' ||
+                    status === 'Created' ||
+                    status === 'Updated' ||
+                    status === 'Deleted'
+                  ) {
                     return {
                       bgColor: isDark ? 'bg-green-900/30' : 'bg-green-100',
                       textColor: isDark ? 'text-green-400' : 'text-green-600',
@@ -710,15 +742,21 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                       text: isDark ? 'text-purple-400' : 'text-purple-600',
                       icon: <FileText size={16} />,
                     }
-                  : {
-                      bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
-                      text: isDark ? 'text-blue-400' : 'text-blue-600',
-                      icon: <Server size={16} />,
-                    };
+                  : item.type === 'cluster'
+                    ? {
+                        bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
+                        text: isDark ? 'text-blue-400' : 'text-blue-600',
+                        icon: <Server size={16} />,
+                      }
+                    : {
+                        bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
+                        text: isDark ? 'text-teal-400' : 'text-teal-600',
+                        icon: <User size={16} />,
+                      };
 
                 return (
                   <Link
-                    to={isPolicy ? '/bp/manage' : '/its'}
+                    to={item.type === 'user' ? '/admin/users' : isPolicy ? '/bp/manage' : '/its'}
                     key={`${item.type}-${item.name}-${index}`}
                     className="block"
                   >
@@ -754,7 +792,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                           <span
                             className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${typeColors.bg} ${typeColors.text} transition-colors`}
                           >
-                            {isPolicy ? 'Policy' : 'Cluster'}
+                            {item.type === 'user' ? 'User' : isPolicy ? 'Policy' : 'Cluster'}
                           </span>
                         </div>
                         <div className="mt-0.5 flex items-center text-xs text-gray-500 transition-colors dark:text-gray-400">
