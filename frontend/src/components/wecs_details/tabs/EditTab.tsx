@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Box, Button, Stack, CircularProgress, Alert } from '@mui/material';
 const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
 
@@ -28,6 +28,43 @@ const EditTab: React.FC<EditTabProps> = ({
   loadingManifest = false,
 }) => {
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Ensure manifest is in the correct format on mount and when editFormat/editedManifest changes
+  useEffect(() => {
+    if (!editedManifest || editedManifest.trim() === '') return;
+    let needsConversion = false;
+    try {
+      if (editFormat === 'yaml') {
+        // Try parsing as YAML, then convert to JSON and back to YAML to normalize
+        const asJson = yamlToJson(editedManifest);
+        const asYaml = jsonToYaml(asJson);
+        // If the YAML produced from the JSON is different, update
+        if (editedManifest.trim() !== asYaml.trim()) {
+          needsConversion = true;
+          handleEditorChange(asYaml);
+        }
+      } else if (editFormat === 'json') {
+        // Try parsing as JSON, if fails, try converting from YAML
+        try {
+          JSON.parse(editedManifest);
+        } catch {
+          // Not valid JSON, try converting from YAML
+          try {
+            const asJson = yamlToJson(editedManifest);
+            // Pretty-print JSON
+            const prettyJson = JSON.stringify(JSON.parse(asJson), null, 2);
+            needsConversion = true;
+            handleEditorChange(prettyJson);
+          } catch {
+            // Ignore, will be caught by validation
+          }
+        }
+      }
+    } catch {
+      // Ignore, will be caught by validation
+    }
+    // If no conversion needed, do nothing
+  }, [editFormat, editedManifest, handleEditorChange, jsonToYaml, yamlToJson]);
 
   // Validate JSON/YAML content
   const validateContent = (content: string, format: 'yaml' | 'json'): boolean => {
