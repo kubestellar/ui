@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import useTheme from '../../../stores/themeStore';
 import { useClusterQueries } from '../../../hooks/queries/useClusterQueries';
 import { toast } from 'react-hot-toast';
-import CreateOptions from '../../ImportClusters';
+import CreateOptions from '../ImportCluster/ImportClusters';
 import TableHeader from './components/TableHeader';
 import TableContent from './components/TableContent';
 import TablePagination from './components/TablePagination';
@@ -12,8 +12,8 @@ import ActionMenu from './components/ActionMenu';
 import { ClustersTableProps, ManagedClusterInfo, ColorTheme, StatusFilterItem } from './types';
 import LabelEditDialog from './dialogs/LabelEditDialog';
 import DetachClusterDialog from './dialogs/DetachClusterDialog';
-import ClusterDetailDialog from '../../ClusterDetailDialog';
-import DetachmentLogsDialog from '../../DetachmentLogsDialog';
+import ClusterDetailDialog from './dialogs/ClusterDetailDialog';
+import DetachmentLogsDialog from './dialogs/DetachmentLogsDialog';
 
 const ClustersTable: React.FC<ClustersTableProps> = ({
   clusters,
