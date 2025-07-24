@@ -317,7 +317,7 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// get author's ID from DB
-	author, err := models.GetUserByUsername(manifest.Metadata.Author)
+	author, err := models.GetUserByUsername("admin")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Unable to get author from database: " + manifest.Metadata.Author,
@@ -335,17 +335,19 @@ func InstallPluginHandler(c *gin.Context) {
 	log.LogInfo("author ID", zap.Any("id", author.ID))
 
 	// plugin not existed - add to database and retrieve the ID
-	pluginID, err := pkg.AddPluginToDB(manifest.Metadata.Name,
+
+	pluginID, err := pkg.AddPluginToDB(
+		manifest.Metadata.Name,
 		manifest.Metadata.Version,
 		manifest.Metadata.Description,
 		author.ID,
-		"",
+		"kubestellar.io",
 		"unknown",
 		"unknown",
 		[]string{"monitoring", "cluster"},
 		"0.0.1",  // will change this after we have a versioning system
 		"0.28.0", // will change this after we have a versioning system
-		[]byte("{'dependencies': 'not mentioned'}"),
+		[]byte(`{"dependencies": "not mentioned"}`),
 		"unknown",
 		int(file.Size),
 	)
@@ -441,7 +443,7 @@ func InstallPluginHandler(c *gin.Context) {
 				"version": manifest.Metadata.Version,
 				"status":  "active",
 				"path":    pluginDir,
-				"warning": "Plugin loaded with errors: " + err.Error(),
+				"warning": fmt.Sprintf("Plugin loaded with errors: %v", err),
 			})
 			return
 		}
