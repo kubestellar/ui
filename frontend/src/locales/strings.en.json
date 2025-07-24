@@ -2077,8 +2077,8 @@
         "title": "Workloads",
         "description": "Manage workloads across clusters"
       },
-      "resourceExplorer": {
-        "title": "Resource Explorer",
+      "objectExplorer": {
+        "title": "Object Explorer",
         "description": "Search and filter Kubernetes resources"
       },
       "bindingPolicies": {
@@ -2136,7 +2136,7 @@
       "stagedWorkloads": "Staged Workloads",
       "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Deployed Workloads",
-      "resourceExplorer": "Resource Explorer",
+      "objectExplorer": "Object Explorer",
       "pluginManager": "Plugin Manager",
       "userManagement": "User Management",
       "metricsDashboard": "Metrics Dashboard",
@@ -2302,7 +2302,7 @@
     "clearFilters": "Clear Filters",
     "noLabelsFound": "No labels found",
     "noMatchingFilters": "No resources match the current filters",
-    "title": "Resource Explorer",
+    "title": "Object Explorer",
     "selectKind": "Select Kind / Object",
     "selectNamespace": "Select Namespace",
     "applyFilters": "Apply Filters",

@@ -1963,8 +1963,8 @@
         "title": "Charges de travail",
         "description": "Gérer les charges de travail entre clusters"
       },
-      "resourceExplorer": {
-        "title": "Explorateur de Ressources",
+      "objectExplorer": {
+        "title": "Explorateur d'objets",
         "description": "Rechercher et filtrer les ressources Kubernetes"
       },
       "bindingPolicies": {
@@ -2013,7 +2013,8 @@
       "deployedWorkloads": "Charges déployées",
       "pluginManager": "Gestionnaire de Plugins",
       "userManagement": "Gestion des Utilisateurs",
-      "galaxyMarketplace": "Marché Galaxy KubeStellar"
+      "galaxyMarketplace": "Marché Galaxy KubeStellar",
+      "objectExplorer": "Explorateur d'objets"
     }
   },
   "plugins": {
