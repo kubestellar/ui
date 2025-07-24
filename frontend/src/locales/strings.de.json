@@ -83,6 +83,10 @@
         "title": "Abmelden",
         "description": "Von Ihrem Konto abmelden",
         "infoMessage": "Sie wurden erfolgreich abgemeldet."
+      },
+      "galaxyMarketplace": {
+        "title": "Galaxy-Marktplatz",
+        "description": "Entdecken und installieren Sie Plugins aus dem Galaxy-Marktplatz"
       }
     }
   },
@@ -173,7 +177,8 @@
       "bindingPolicies": "Bindungsrichtlinien",
       "deployedWorkloads": "Bereitgestellte Workloads",
       "pluginManager": "Plugin-Manager",
-      "userManagement": "Benutzerverwaltung"
+      "userManagement": "Benutzerverwaltung",
+      "galaxyMarketplace": "Galaxy-Marktplatz"
     }
   }
 }

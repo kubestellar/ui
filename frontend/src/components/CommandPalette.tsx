@@ -18,6 +18,7 @@ import {
 import { useAuthActions, useAdminCheck } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { HiOutlinePuzzlePiece } from 'react-icons/hi2';
+import { FaRocket } from 'react-icons/fa';
 
 // Command types to support various actions
 type CommandType = 'navigation' | 'action' | 'documentation' | 'admin';
@@ -229,6 +230,25 @@ const CommandPalette: React.FC = () => {
         'cache',
         'runtime',
         'cluster',
+      ],
+      section: t('commandPalette.sections.navigation'),
+    },
+    {
+      id: 'galaxy-marketplace',
+      type: 'navigation',
+      icon: FaRocket,
+      title: t('commandPalette.commands.galaxyMarketplace.title'),
+      description: t('commandPalette.commands.galaxyMarketplace.description'),
+      action: () => navigate('/plugins/marketplace'),
+      keywords: [
+        'galaxy',
+        'marketplace',
+        'plugins',
+        'galaxy marketplace',
+        'discover',
+        'explore',
+        'search',
+        'install',
       ],
       section: t('commandPalette.sections.navigation'),
     },

@@ -1989,6 +1989,10 @@
         "title": "Cerrar sesión",
         "description": "Salir de tu cuenta",
         "infoMessage": "Has cerrado sesión exitosamente."
+      },
+      "galaxyMarketplace": {
+        "title": "Mercado Galaxy",
+        "description": "Descubre e instala complementos desde el Mercado Galaxy"
       }
     }
   },
@@ -2006,7 +2010,8 @@
       "bindingPolicies": "Políticas de Vinculación",
       "deployedWorkloads": "Cargas de Trabajo Desplegadas",
       "pluginManager": "Gestor de Plugins",
-      "userManagement": "Gestión de Usuarios"
+      "userManagement": "Gestión de Usuarios",
+      "galaxyMarketplace": "Mercado Galaxy"
     }
   },
   "plugins": {

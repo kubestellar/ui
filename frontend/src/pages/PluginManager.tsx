@@ -24,7 +24,7 @@ import { usePlugins } from '../plugins/PluginLoader';
 import { PluginAPI } from '../plugins/PluginAPI';
 import useTheme from '../stores/themeStore';
 import getThemeStyles from '../lib/theme-utils';
-import FeedbackModel from './plugin/FeedbackModel';
+import FeedbackModel from '../components/plugin/FeedbackModel';
 import toast from 'react-hot-toast';
 
 interface Plugin {

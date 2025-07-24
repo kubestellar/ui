@@ -79,6 +79,10 @@
         "title": "退出登录",
         "description": "退出您的账户",
         "infoMessage": "您已成功退出登录。"
+      },
+      "galaxyMarketplace": {
+        "title": "银河市场",
+        "description": "在银河市场中发现并安装插件"
       }
     }
   },
@@ -169,7 +173,8 @@
       "bindingPolicies": "绑定策略",
       "deployedWorkloads": "已部署工作负载",
       "pluginManager": "插件管理器",
-      "userManagement": "用户管理"
+      "userManagement": "用户管理",
+      "galaxyMarketplace": "银河市场"
     }
   },
   "common": {
