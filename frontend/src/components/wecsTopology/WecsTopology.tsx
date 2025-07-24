@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../../context/webSocketExports';
 import useTheme from '../../stores/themeStore';
 import useZoomStore from '../../stores/zoomStore';
-import WecsDetailsPanel from '../WecsDetailsPanel';
+import WecsDetailsPanel from '../wecs_details/WecsDetailsPanel';
 import { FlowCanvas } from '../wds_topology/FlowCanvas';
 import ListViewComponent from '../ListViewComponent';
 import FullScreenToggle from '../skeleton/FullScreenToggle';
