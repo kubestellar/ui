@@ -13,7 +13,7 @@ const NotFoundPageLazy = lazy(() => import('../pages/NotFoundPage'));
 const TreeViewLazy = lazy(() => import('../components/TreeViewComponent'));
 const WecsTreeviewLazy = lazy(() => import('../components/wecsTopology/WecsTopology'));
 const PluginManagerLazy = lazy(() =>
-  import('../components/PluginManager').then(module => ({ default: module.PluginManager }))
+  import('../pages/PluginManager').then(module => ({ default: module.PluginManager }))
 );
 const GalaxyMarketplaceLazy = lazy(() => import('../pages/GalaxyMarketplace'));
 const KubeStellarVisualizationLazy = lazy(() => import('../components/login/index'));

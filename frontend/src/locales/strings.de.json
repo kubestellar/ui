@@ -47,8 +47,8 @@
         "title": "Plugin-Manager",
         "description": "KubeStellar-Plugins verwalten und überwachen"
       },
-      "clusters": {
-        "title": "Remote-Cluster",
+      "managedClusters": {
+        "title": "Verwaltete Cluster",
         "description": "Kubernetes-Cluster verwalten"
       },
       "workloads": {
@@ -83,6 +83,10 @@
         "title": "Abmelden",
         "description": "Von Ihrem Konto abmelden",
         "infoMessage": "Sie wurden erfolgreich abgemeldet."
+      },
+      "galaxyMarketplace": {
+        "title": "Galaxy-Marktplatz",
+        "description": "Entdecken und installieren Sie Plugins aus dem Galaxy-Marktplatz"
       }
     }
   },
@@ -168,12 +172,17 @@
     },
     "items": {
       "home": "Startseite",
-      "remoteClusters": "Remote-Cluster",
+      "managedClusters": "Verwaltete Cluster",
       "stagedWorkloads": "Vorbereitete Workloads",
       "bindingPolicies": "Bindungsrichtlinien",
       "deployedWorkloads": "Bereitgestellte Workloads",
       "pluginManager": "Plugin-Manager",
-      "userManagement": "Benutzerverwaltung"
+      "userManagement": "Benutzerverwaltung",
+      "galaxyMarketplace": "Galaxy-Marktplatz"
     }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marktplatz",
+    "description": "Entdecken und installieren Sie Plugins zur Verbesserung Ihrer KubeStellar-Erfahrung"
   }
 }

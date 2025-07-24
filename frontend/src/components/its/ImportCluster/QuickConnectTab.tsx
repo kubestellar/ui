@@ -17,7 +17,7 @@ import React, { ChangeEvent, RefObject, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Colors, CommandResponse } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
-import CancelButton from './common/CancelButton';
+import CancelButton from '../../common/CancelButton';
 interface QuickConnectProps {
   theme: string;
   colors: Colors;

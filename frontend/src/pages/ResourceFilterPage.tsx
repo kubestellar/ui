@@ -47,6 +47,11 @@ interface Resource {
   [key: string]: unknown; // Changed from 'any' to 'unknown'
 }
 
+// Utility to safely render values as strings
+function isRenderable(val: unknown): val is string | number {
+  return typeof val === 'string' || typeof val === 'number';
+}
+
 const ResourceFilterPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
@@ -552,7 +557,7 @@ const ResourceFilterPage: React.FC = () => {
                                   borderRadius: '4px',
                                 }}
                               />
-                              {resource.status && (
+                              {isRenderable(resource.status) && (
                                 <Chip
                                   label={resourceStatus || resource.status}
                                   size="small"
@@ -642,24 +647,26 @@ const ResourceFilterPage: React.FC = () => {
                                     {t('resources.labels')}
                                   </Typography>
                                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                    {Object.entries(resource.labels).map(([key, value]) => (
-                                      <Chip
-                                        key={`${key}-${value}`}
-                                        label={`${key}: ${value}`}
-                                        size="small"
-                                        sx={{
-                                          backgroundColor: isDark
-                                            ? 'rgba(255, 255, 255, 0.05)'
-                                            : 'rgba(0, 0, 0, 0.03)',
-                                          color: isDark
-                                            ? darkTheme.text.secondary
-                                            : lightTheme.text.secondary,
-                                          fontSize: '0.7rem',
-                                          height: '20px',
-                                          borderRadius: '4px',
-                                        }}
-                                      />
-                                    ))}
+                                    {Object.entries(resource.labels).map(([key, value]) =>
+                                      isRenderable(value) ? (
+                                        <Chip
+                                          key={`${key}-${value}`}
+                                          label={`${key}: ${value}`}
+                                          size="small"
+                                          sx={{
+                                            backgroundColor: isDark
+                                              ? 'rgba(255, 255, 255, 0.05)'
+                                              : 'rgba(0, 0, 0, 0.03)',
+                                            color: isDark
+                                              ? darkTheme.text.secondary
+                                              : lightTheme.text.secondary,
+                                            fontSize: '0.7rem',
+                                            height: '20px',
+                                            borderRadius: '4px',
+                                          }}
+                                        />
+                                      ) : null
+                                    )}
                                   </Box>
                                 </Box>
                               </>

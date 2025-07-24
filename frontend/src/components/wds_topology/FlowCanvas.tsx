@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import ReactFlow, { Background, BackgroundVariant, PanOnScrollMode, useReactFlow } from 'reactflow';
+import ReactFlow, { Background, BackgroundVariant, useReactFlow } from 'reactflow';
+import 'reactflow/dist/style.css';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import useZoomStore from '../../stores/zoomStore';
 import useEdgeTypeStore from '../../stores/edgeTypeStore';
@@ -138,6 +139,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       const reactFlowContainer = reactFlowContainerRef.current;
       const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
       if (isInsideTree) {
+        event.preventDefault();
         const { zoom, x, y } = getViewport();
         const scrollSpeed = 0.5;
         const zoomSpeed = 0.05;
@@ -172,8 +174,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         zoomOnScroll={false}
         zoomOnDoubleClick={false}
         zoomOnPinch={false}
-        panOnScroll={true}
-        panOnScrollMode={PanOnScrollMode.Free}
+        panOnScroll={false}
         onMoveEnd={onMoveEnd}
         style={{
           background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',

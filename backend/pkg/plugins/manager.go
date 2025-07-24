@@ -8,37 +8,42 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"strconv"
+
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/models"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
 // PluginManager handles the lifecycle, runtime, and routing of dynamically loaded plugins.
 type PluginManager struct {
-	runtime wazero.Runtime     // Wazero runtime used to compile and instantiate WASM modules
-	plugins map[string]*Plugin // Registered plugin instances by name
-	router  *gin.Engine        // Gin router to dynamically add plugin-specific routes
-	ctx     context.Context    // Context shared across plugin execution
-	mu      sync.RWMutex       // Mutex to manage concurrent plugin map access
+	runtime wazero.Runtime  // Wazero runtime used to compile and instantiate WASM modules
+	plugins map[int]*Plugin // Registered plugin instances by ID
+	router  *gin.Engine     // Gin router to dynamically add plugin-specific routes
+	ctx     context.Context // Context shared across plugin execution
+	mu      sync.RWMutex    // Mutex to manage concurrent plugin map access
 	// Route tracking for unregistration
-	registeredRoutes map[string][]string // Map of plugin name to route paths for tracking
-	routeMutex       sync.RWMutex        // Mutex for route tracking
+	registeredRoutes map[int][]string // Map of plugin ID to route paths for tracking
+	routeMutex       sync.RWMutex     // Mutex for route tracking
 }
 
 // Plugin represents a single loaded WASM plugin and its runtime details.
 type Plugin struct {
+	ID       int                   `json:"id"`
 	Manifest *PluginManifest       // Plugin metadata and configuration from plugin.yml
 	Module   wazero.CompiledModule // Compiled WASM module
 	Instance api.Module            // Instantiated WASM module
-	Status   string                // Current status (e.g., Running, Stopped)
+	Status   string                // Current status (e.g., active, inactive)
 	LoadTime time.Time             // Timestamp when the plugin was loaded
 }
 
@@ -148,22 +153,22 @@ func NewPluginManager(router *gin.Engine) *PluginManager {
 
 	// Instantiate WASI for plugins, returning error if instantiation fails
 	if _, err := wasi_snapshot_preview1.Instantiate(ctx, runtime); err != nil {
-		log.Fatalf("Failed to instantiate WASI: %v", err)
+		log.LogError("Failed to instantiate WASI", zap.Error(err))
 	}
 
 	pm := &PluginManager{
 		runtime:          runtime,
-		plugins:          make(map[string]*Plugin),
+		plugins:          make(map[int]*Plugin),
 		router:           router,
 		ctx:              ctx,
-		registeredRoutes: make(map[string][]string),
+		registeredRoutes: make(map[int][]string),
 	}
 
 	// Register host functions for WASM runtime bridge
 	if err := pm.buildHostFunctions(ctx, runtime); err != nil {
 		// Log error but continue - this is during initialization
 		// In a production system, you might want to handle this differently
-		log.Printf("Failed to register host functions: %v", err)
+		log.LogError("Failed to register host functions", zap.String("error", err.Error()))
 	}
 
 	return pm
@@ -179,6 +184,18 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 
 	var manifest PluginManifest
 	if err := yaml.Unmarshal(manifestData, &manifest); err != nil {
+		log.LogError("error unmarshal manifest data", zap.String("error", err.Error()))
+		return err
+	}
+
+	pluginID, err := GetPluginIdDB(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
+	if err != nil {
+		log.LogError("error getting pluginID", zap.String("error", err.Error()))
+		return err
+	}
+	pluginStatus, err := GetPluginStatusDB(pluginID)
+	if err != nil {
+		log.LogError("error getting plugin status", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -190,32 +207,43 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 	wasmPath := filepath.Join(pluginPath, wasmFileName)
 	wasmBinary, err := os.ReadFile(wasmPath)
 	if err != nil {
+		log.LogError("error read file .wasm", zap.String("error", err.Error()))
 		return err
 	}
 
 	compiledModule, err := pm.runtime.CompileModule(pm.ctx, wasmBinary)
 	if err != nil {
+		log.LogError("error compile module", zap.String("error", err.Error()))
 		return err
 	}
 
 	// Create module config
 	moduleConfig := wazero.NewModuleConfig().WithName(manifest.Metadata.Name).WithStartFunctions(manifest.Spec.Wasm.Entrypoint)
 
+	pm.mu.Lock()
+	if existing, ok := pm.plugins[pluginID]; ok {
+		_ = existing.Instance.Close(pm.ctx) // close old instance
+		delete(pm.plugins, pluginID)
+	}
+	pm.mu.Unlock()
+
 	instance, err := pm.runtime.InstantiateModule(pm.ctx, compiledModule, moduleConfig)
 	if err != nil {
+		log.LogError("error instantiate module", zap.String("error", err.Error()))
 		return err
 	}
 
 	plugin := &Plugin{
+		ID:       pluginID,
 		Manifest: &manifest,
 		Module:   compiledModule,
 		Instance: instance,
-		Status:   "Running",
+		Status:   pluginStatus,
 		LoadTime: time.Now(),
 	}
 
 	pm.mu.Lock()
-	pm.plugins[manifest.Metadata.Name] = plugin
+	pm.plugins[pluginID] = plugin
 	pm.mu.Unlock()
 
 	if manifest.Spec.Backend != nil && manifest.Spec.Backend.Enabled {
@@ -227,11 +255,11 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 
 // registerPluginRoutes maps each declared route from plugin manifest to Gin route group.
 func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
-	group := pm.router.Group("/api/plugins/" + plugin.Manifest.Metadata.Name)
+	group := pm.router.Group("/api/plugins/" + strconv.Itoa(plugin.ID))
 
 	// Track routes for this plugin
 	pm.routeMutex.Lock()
-	pm.registeredRoutes[plugin.Manifest.Metadata.Name] = []string{}
+	pm.registeredRoutes[plugin.ID] = []string{}
 	pm.routeMutex.Unlock()
 
 	if plugin.Manifest.Spec.Backend != nil {
@@ -258,8 +286,8 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 			// Track all methods for the same route path
 			pm.routeMutex.Lock()
 			for _, method := range route.Methods {
-				pm.registeredRoutes[plugin.Manifest.Metadata.Name] = append(
-					pm.registeredRoutes[plugin.Manifest.Metadata.Name],
+				pm.registeredRoutes[plugin.ID] = append(
+					pm.registeredRoutes[plugin.ID],
 					fmt.Sprintf("%s %s", method, routePath),
 				)
 			}
@@ -346,44 +374,212 @@ func (pm *PluginManager) GetPluginList() []*Plugin {
 }
 
 // GetPlugin retrieves a specific plugin by name.
-func (pm *PluginManager) GetPlugin(name string) (*Plugin, bool) {
+func (pm *PluginManager) GetPlugin(id int) (*Plugin, bool) {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
-	p, ok := pm.plugins[name]
+	p, ok := pm.plugins[id]
 	return p, ok
 }
 
 // UnloadPlugin terminates and removes a plugin from the manager.
-func (pm *PluginManager) UnloadPlugin(name string) error {
+func (pm *PluginManager) UnloadPlugin(pluginID int) error {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-	plugin, ok := pm.plugins[name]
+	plugin, ok := pm.plugins[pluginID]
 	if !ok {
 		return errors.New("plugin not found")
+	}
+
+	// Close the WASM instance
+	if plugin.Instance != nil {
+		plugin.Instance.Close(pm.ctx)
+	}
+
+	// Remove from plugins map
+	delete(pm.plugins, pluginID)
+
+	// Clean up route tracking
+	pm.routeMutex.Lock()
+	delete(pm.registeredRoutes, pluginID)
+	pm.routeMutex.Unlock()
+
+	log.LogInfo("Plugin unloaded successfully", zap.String("plugin", strconv.Itoa(pluginID)))
+	return nil
+}
+
+// GetRegisteredRoutes returns the list of registered routes for a plugin
+func (pm *PluginManager) GetRegisteredRoutes(pluginID int) []string {
+	pm.routeMutex.RLock()
+	defer pm.routeMutex.RUnlock()
+
+	if routes, exists := pm.registeredRoutes[pluginID]; exists {
+		return routes
+	}
+	return []string{}
+}
+
+func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
+	// check if the plugin is in database
+	// if not, add to database with status "active"
+	// if yes, update the status to "active"
+	exist, err := CheckPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description)
+	if err != nil {
+		log.LogError("Failed to check plugin existence", zap.Error(err))
+		return
+	}
+
+	var pluginID int
+	if !exist {
+		// Get userID
+		user, err := models.GetUserByUsername(plugin.Manifest.Metadata.Author)
+		if err != nil {
+			log.LogError("Failed to get user ID", zap.Error(err))
+			return
+		}
+		if user == nil {
+			log.LogError("User not found for plugin registration", zap.String("author", plugin.Manifest.Metadata.Author))
+			return
+		}
+		// Add plugin to database
+		pluginID, err = AddPluginToDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, true, plugin.Manifest.Metadata.Description, user.ID, "active")
+		if err != nil {
+			log.LogError("Failed to add plugin to database", zap.Error(err))
+		}
+	} else {
+		pluginID, err = GetPluginIdDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description)
+		err := UpdatePluginStatusDB(pluginID, "active")
+		if err != nil {
+			log.LogError("Failed to update plugin status in database", zap.Error(err))
+		}
+	}
+
+	plugin.ID = pluginID
+
+	// Register the plugin in the manager
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	if _, exists := pm.plugins[plugin.ID]; exists {
+		log.LogWarn("Plugin already registered", zap.String("plugin", plugin.Manifest.Metadata.Name))
+		return
+	}
+
+	pm.plugins[plugin.ID] = plugin
+
+	// TODO-route: Register routes if backend plugin
+	// if plugin.Manifest.Backend {
+	// 	pm.registerPluginRoutes(plugin)
+	// }
+
+	log.LogInfo("Plugin registered successfully", zap.Int("plugin", plugin.ID))
+}
+
+func (pm *PluginManager) DeregisterPlugin(plugin *Plugin) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	plugin, exists := pm.plugins[plugin.ID]
+	if !exists {
+		log.LogWarn("Plugin not found for deregistration", zap.Int("pluginID", plugin.ID))
+		return
 	}
 
 	// Close the WASM instance
 	plugin.Instance.Close(pm.ctx)
 
 	// Remove from plugins map
-	delete(pm.plugins, name)
+	delete(pm.plugins, plugin.ID)
 
-	// Clean up route tracking
-	pm.routeMutex.Lock()
-	delete(pm.registeredRoutes, name)
-	pm.routeMutex.Unlock()
+	// TODO-route: Unregister routes if backend plugin
+	// // Clean up route tracking
+	// pm.routeMutex.Lock()
+	// delete(pm.registeredRoutes, plugin.ID)
+	// pm.routeMutex.Unlock()
 
-	log.Printf("Plugin %s unloaded successfully", name)
+}
+
+func (pm *PluginManager) EnablePlugin(pluginID int) error {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	plugin, exists := pm.plugins[pluginID]
+	if !exists {
+		return fmt.Errorf("plugin not found: %d", pluginID)
+	}
+
+	// set plugin status to active
+	plugin.Status = "active"
+
+	// Update status in database
+	err := UpdatePluginStatusDB(pluginID, "active")
+	if err != nil {
+		return fmt.Errorf("failed to update plugin status: %v", err)
+	}
+
+	// TODO-route: Register routes if backend plugin
+	// // Re-register routes if backend plugin
+	// if plugin.Manifest.Backend {
+	// 	pm.registerPluginRoutes(plugin)
+	// }
+
+	log.LogInfo("Plugin enabled successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
 	return nil
 }
 
-// GetRegisteredRoutes returns the list of registered routes for a plugin
-func (pm *PluginManager) GetRegisteredRoutes(pluginName string) []string {
-	pm.routeMutex.RLock()
-	defer pm.routeMutex.RUnlock()
+func (pm *PluginManager) DisablePlugin(pluginID int) error {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
 
-	if routes, exists := pm.registeredRoutes[pluginName]; exists {
-		return routes
+	plugin, exists := pm.plugins[pluginID]
+	if !exists {
+		return fmt.Errorf("plugin not found: %d", pluginID)
 	}
-	return []string{}
+
+	// set plugin status to inactive
+	plugin.Status = "inactive"
+
+	// Update status in database
+	err := UpdatePluginStatusDB(pluginID, "inactive")
+	if err != nil {
+		return fmt.Errorf("failed to update plugin status: %v", err)
+	}
+
+	// TODO-route: Unregister routes if backend plugin
+	// // Remove routes if backend plugin
+	// if plugin.Manifest.Backend {
+	// 	pm.routeMutex.Lock()
+	// 	delete(pm.registeredRoutes, pluginID)
+	// 	pm.routeMutex.Unlock()
+	// }
+
+	log.LogInfo("Plugin disabled successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
+	return nil
+}
+
+func (pm *PluginManager) UninstallAllPlugins() error {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	for id, plugin := range pm.plugins {
+		// Remove plugin from database
+		err := UninstallPluginFromDB(id)
+		if err != nil {
+			log.LogError("Failed to uninstall plugin from database", zap.Int("pluginID", id), zap.Error(err))
+			continue
+		}
+		// Close the WASM instance
+		plugin.Instance.Close(pm.ctx)
+
+		// Remove from plugins map
+		delete(pm.plugins, id)
+
+		// Clean up route tracking
+		pm.routeMutex.Lock()
+		delete(pm.registeredRoutes, id)
+		pm.routeMutex.Unlock()
+
+		log.LogInfo("Plugin uninstalled successfully", zap.String("plugin", plugin.Manifest.Metadata.Name))
+	}
+
+	return nil
 }

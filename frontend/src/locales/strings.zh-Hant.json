@@ -47,8 +47,8 @@
         "title": "插件管理器",
         "description": "管理和監控 KubeStellar 插件"
       },
-      "clusters": {
-        "title": "遠端叢集",
+      "managedClusters": {
+        "title": "管理叢集",
         "description": "管理 Kubernetes 叢集"
       },
       "workloads": {
@@ -79,6 +79,10 @@
         "title": "登出",
         "description": "登出您的帳戶",
         "infoMessage": "您已成功登出。"
+      },
+      "galaxyMarketplace": {
+        "title": "銀河市場",
+        "description": "在銀河市場中探索並安裝插件"
       }
     }
   },
@@ -164,12 +168,17 @@
     },
     "items": {
       "home": "首頁",
-      "remoteClusters": "遠端叢集",
+      "managedClusters": "管理叢集",
       "stagedWorkloads": "已暫存工作負載",
       "bindingPolicies": "綁定策略",
       "deployedWorkloads": "已部署工作負載",
       "pluginManager": "插件管理器",
-      "userManagement": "用戶管理"
+      "userManagement": "用戶管理",
+      "galaxyMarketplace": "銀河市場"
     }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy 市集",
+    "description": "探索並安裝插件以提升您的 KubeStellar 體驗"
   }
 }

@@ -32,7 +32,9 @@ import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { useTranslation } from 'react-i18next';
 
 // Lazy load the ClusterDetailDialog component
-const ClusterDetailDialog = lazy(() => import('../components/ClusterDetailDialog'));
+const ClusterDetailDialog = lazy(
+  () => import('../components/its/ClustersTable/dialogs/ClusterDetailDialog')
+);
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
@@ -75,7 +77,7 @@ const HealthIndicator = ({ value }: { value: number }) => {
         className="mr-1 flex h-2 w-2 rounded-full bg-white opacity-80"
         style={{ boxShadow: '0 0 5px rgba(255,255,255,0.8)' }}
       ></span>
-      <span className="relative z-10 text-xs font-medium">{value}%</span>
+      <span className="relative z-10 text-xs font-medium">{`${value}% / 100%`}</span>
 
       {/* Static gradient background */}
       <div
@@ -146,7 +148,7 @@ const OptimizedProgressBar = ({
         />
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-xs font-medium text-gray-700 drop-shadow-sm dark:text-gray-200">
-            {value}%
+            {`${value}% / 100%`}
           </span>
         </div>
       </div>

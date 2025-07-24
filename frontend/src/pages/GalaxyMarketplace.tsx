@@ -303,7 +303,7 @@ const GalaxyMarketplace: React.FC = () => {
       />
 
       {/* Static spaceship in background */}
-      <div className="pointer-events-none absolute bottom-[15%] right-[10%] z-10 opacity-40">
+      <div className="z-1 pointer-events-none absolute bottom-[15%] right-[10%] opacity-40">
         <FaSpaceShuttle
           className="h-48 w-48 text-gray-400"
           style={{
@@ -316,12 +316,12 @@ const GalaxyMarketplace: React.FC = () => {
       </div>
 
       {/* Static decorative elements */}
-      <div className="pointer-events-none absolute right-10 top-20 z-10 opacity-50">
+      <div className="z-1 pointer-events-none absolute right-10 top-20 opacity-50">
         <FaGlobeAsia className="h-12 w-12 text-purple-300" />
       </div>
 
       {/* Header */}
-      <div className="relative z-10 flex flex-col gap-2 p-6 pb-0">
+      <div className="z-1 relative flex flex-col gap-2 p-6 pb-0">
         <div className="mb-4 flex items-center gap-3">
           <div
             className="relative rounded-xl p-3"
@@ -347,7 +347,7 @@ const GalaxyMarketplace: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold" style={{ color: themeStyles.colors.text.primary }}>
               <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                {t('marketplace.title', 'Galaxy Marketplace')}
+                {t('marketplace.title', 'KubeStellar Galaxy Marketplace')}
               </span>
             </h1>
             <p style={{ color: themeStyles.colors.text.secondary }}>
@@ -370,7 +370,7 @@ const GalaxyMarketplace: React.FC = () => {
                   : themeStyles.colors.text.secondary,
               }}
             >
-              <HiMagnifyingGlass className="h-5 w-5" />
+              <HiMagnifyingGlass className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2" />
             </div>
             <input
               type="text"
@@ -379,17 +379,16 @@ const GalaxyMarketplace: React.FC = () => {
               onChange={handleSearchChange}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className="w-full rounded-xl py-2.5 pl-10 pr-4"
+              className="w-full rounded-lg border py-3 pl-10 pr-4 outline-none transition-colors"
               style={{
-                background: isDark ? 'rgba(17, 24, 39, 0.6)' : 'rgba(249, 250, 251, 0.8)',
-                backdropFilter: 'blur(8px)',
-                border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                background: themeStyles.colors.bg.secondary,
+                border: themeStyles.card.borderColor,
                 color: themeStyles.colors.text.primary,
               }}
             />
             {searchQuery && (
               <button
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-opacity-10"
                 onClick={handleClearSearch}
               >
                 <HiXMark className="h-5 w-5" style={{ color: themeStyles.colors.text.secondary }} />
@@ -402,8 +401,8 @@ const GalaxyMarketplace: React.FC = () => {
               onClick={handleToggleFilters}
               className="flex items-center gap-2 rounded-xl px-4 py-2.5"
               style={{
-                background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(249, 250, 251, 0.8)',
-                backdropFilter: 'blur(8px)',
+                background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(249, 250, 251, 0.9)',
+                backdropFilter: 'blur(2px)',
                 border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
                 color: themeStyles.colors.text.primary,
               }}
@@ -418,8 +417,8 @@ const GalaxyMarketplace: React.FC = () => {
                 onChange={handleSortChange}
                 className="cursor-pointer appearance-none rounded-xl px-4 py-2.5 pr-8"
                 style={{
-                  background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(249, 250, 251, 0.8)',
-                  backdropFilter: 'blur(8px)',
+                  background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(249, 250, 251, 0.9)',
+                  backdropFilter: 'blur(2px)',
                   border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
                   color: themeStyles.colors.text.primary,
                 }}
@@ -521,8 +520,8 @@ const GalaxyMarketplace: React.FC = () => {
                 <div
                   className="rounded-xl py-16 text-center"
                   style={{
-                    background: isDark ? 'rgba(31, 41, 55, 0.3)' : 'rgba(249, 250, 251, 0.5)',
-                    backdropFilter: 'blur(8px)',
+                    background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(249, 250, 251, 0.7)',
+                    backdropFilter: 'blur(2px)',
                     border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.2)' : 'rgba(226, 232, 240, 0.5)'}`,
                   }}
                 >
@@ -563,8 +562,8 @@ const GalaxyMarketplace: React.FC = () => {
                   <button
                     className="rounded-lg px-6 py-2"
                     style={{
-                      background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(249, 250, 251, 0.8)',
-                      backdropFilter: 'blur(8px)',
+                      background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(249, 250, 251, 0.9)',
+                      backdropFilter: 'blur(2px)',
                       border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
                       color: themeStyles.colors.text.primary,
                     }}

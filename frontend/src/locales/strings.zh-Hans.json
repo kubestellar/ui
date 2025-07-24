@@ -47,9 +47,9 @@
         "title": "插件管理器",
         "description": "管理和监控 KubeStellar 插件"
       },
-      "clusters": {
-        "title": "远程集群",
-        "description": "管理 Kubernetes 集群"
+      "managedClusters": {
+        "title": "管理集群",
+        "description": "管理Kubernetes集群"
       },
       "workloads": {
         "title": "工作负载",
@@ -79,6 +79,10 @@
         "title": "退出登录",
         "description": "退出您的账户",
         "infoMessage": "您已成功退出登录。"
+      },
+      "galaxyMarketplace": {
+        "title": "银河市场",
+        "description": "在银河市场中发现并安装插件"
       }
     }
   },
@@ -164,12 +168,13 @@
     },
     "items": {
       "home": "首页",
-      "remoteClusters": "远程集群",
+      "managedClusters": "管理集群",
       "stagedWorkloads": "已暂存工作负载",
       "bindingPolicies": "绑定策略",
       "deployedWorkloads": "已部署工作负载",
       "pluginManager": "插件管理器",
-      "userManagement": "用户管理"
+      "userManagement": "用户管理",
+      "galaxyMarketplace": "银河市场"
     }
   },
   "common": {
@@ -2051,5 +2056,9 @@
     "tokenLabel": "个人访问令牌 (PAT) *",
     "tokenPlaceholder": "例如：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tokenTip": "输入您的 GitHub 个人访问令牌"
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy 市场",
+    "description": "发现并安装插件以增强您的 KubeStellar 体验"
   }
 }
