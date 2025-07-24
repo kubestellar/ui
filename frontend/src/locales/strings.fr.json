@@ -1993,8 +1993,8 @@
         "infoMessage": "Vous avez été déconnecté avec succès."
       },
       "galaxyMarketplace": {
-        "title": "Marché Galaxy",
-        "description": "Découvrez et installez des plugins depuis le Marché Galaxy"
+        "title": "Marché Galaxy KubeStellar",
+        "description": "Découvrez et installez des plugins pour améliorer votre expérience KubeStellar"
       }
     }
   },
@@ -2013,7 +2013,7 @@
       "deployedWorkloads": "Charges déployées",
       "pluginManager": "Gestionnaire de Plugins",
       "userManagement": "Gestion des Utilisateurs",
-      "galaxyMarketplace": "Marché Galaxy"
+      "galaxyMarketplace": "Marché Galaxy KubeStellar"
     }
   },
   "plugins": {

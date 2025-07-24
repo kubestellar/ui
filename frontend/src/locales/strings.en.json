@@ -2233,7 +2233,8 @@
       }
     },
     "marketplace": {
-      "title": "Plugin Marketplace",
+      "title": "KubeStellar Galaxy Marketplace",
+      "description": "Discover and install plugins to enhance your KubeStellar experience",
       "browse": "Browse Available Plugins",
       "featured": "Featured Plugins",
       "categories": "Categories",

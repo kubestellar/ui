@@ -2207,7 +2207,8 @@
       }
     },
     "marketplace": {
-      "title": "プラグインマーケットプレイス",
+      "title": "KubeStellar Galaxy マーケットプレイス",
+      "description": "KubeStellarの体験を向上させるプラグインを見つけてインストール",
       "browse": "利用可能なプラグインを参照",
       "featured": "おすすめプラグイン",
       "categories": "カテゴリ",

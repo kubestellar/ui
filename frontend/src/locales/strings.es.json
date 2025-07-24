@@ -2098,7 +2098,8 @@
       }
     },
     "marketplace": {
-      "title": "Mercado de Plugins",
+      "title": "Mercado Galaxy de KubeStellar",
+      "description": "Descubre e instala plugins para mejorar tu experiencia con KubeStellar",
       "browse": "Explorar Plugins Disponibles",
       "featured": "Plugins Destacados",
       "categories": "Categorías",

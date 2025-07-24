@@ -176,5 +176,9 @@
       "userManagement": "用戶管理",
       "galaxyMarketplace": "銀河市場"
     }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy 市集",
+    "description": "探索並安裝插件以提升您的 KubeStellar 體驗"
   }
 }
