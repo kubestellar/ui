@@ -163,7 +163,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	status := "inactive" // Default status if not loaded
 
 	// Check if the plugin is loaded and created in DB
-	exist, err := CheckPluginWithInfo(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
+	exist, err := CheckInstalledPluginWithID(pluginIdDB)
 	if err != nil {
 		return nil, err
 	}

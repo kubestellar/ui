@@ -35,6 +35,7 @@ func AuthenticateMiddleware() gin.HandlerFunc {
 		c.Set("username", claims.Username)
 		c.Set("is_admin", claims.IsAdmin)
 		c.Set("permissions", claims.Permissions)
+		c.Set("user_id", claims.UserID)
 		c.Next()
 	}
 }

@@ -210,7 +210,7 @@ func TestUninstallPluginHandler(t *testing.T) {
 					WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 					// 2. GetPluginIdDB
-				mock.ExpectQuery(`SELECT id FROM plugin WHERE name=\$1 AND version=\$2 AND description=\$3`).
+				mock.ExpectQuery(`SELECT id FROM plugin_details WHERE name=\$1 AND version=\$2 AND description=\$3`).
 					WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin").
 					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
@@ -237,7 +237,7 @@ func TestUninstallPluginHandler(t *testing.T) {
 					Status: "active",
 				}
 
-				manager.RegisterPlugin(plugin)
+				manager.RegisterPlugin(plugin, 1)
 
 				pluginFolder := fmt.Sprintf("%s-%d", plugin.Manifest.Metadata.Name, plugin.ID)
 				pluginDir := filepath.Join(registry.GetPluginsDirectory(), pluginFolder)

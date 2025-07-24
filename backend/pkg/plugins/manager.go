@@ -418,11 +418,11 @@ func (pm *PluginManager) GetRegisteredRoutes(pluginID int) []string {
 	return []string{}
 }
 
-func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
+func (pm *PluginManager) RegisterPlugin(plugin *Plugin, userIDAuth int) {
 	// check if the plugin is in database
 	// if not, add to database with status "active"
 	// if yes, update the status to "active"
-	exist, err := CheckPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description)
+	exist, err := CheckPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description, userIDAuth)
 	if err != nil {
 		log.LogError("Failed to check plugin existence", zap.Error(err))
 		return
@@ -436,18 +436,23 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin) {
 			log.LogError("Failed to get user ID", zap.Error(err))
 			return
 		}
+
 		if user == nil {
 			log.LogError("User not found for plugin registration", zap.String("author", plugin.Manifest.Metadata.Author))
 			return
 		}
-		// Add plugin to database
-		pluginID, err = AddPluginToDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, true, plugin.Manifest.Metadata.Description, user.ID, "active")
+
+		_, err = AddInstalledPluginToDB(pluginID, nil, user.ID, "manual", true, "active", "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(pluginID), 0)
 		if err != nil {
-			log.LogError("Failed to add plugin to database", zap.Error(err))
+			log.LogError("Failed to add plugin to installed_plugins  table in database", zap.Error(err))
 		}
 	} else {
 		pluginID, err = GetPluginIdDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description)
-		err := UpdatePluginStatusDB(pluginID, "active")
+		if err != nil {
+			log.LogError("Failed to get plugin ID", zap.Error(err))
+			return
+		}
+		err := UpdatePluginStatusDB(pluginID, "active", userIDAuth)
 		if err != nil {
 			log.LogError("Failed to update plugin status in database", zap.Error(err))
 		}
@@ -498,7 +503,7 @@ func (pm *PluginManager) DeregisterPlugin(plugin *Plugin) {
 
 }
 
-func (pm *PluginManager) EnablePlugin(pluginID int) error {
+func (pm *PluginManager) EnablePlugin(pluginID int, userID int) error {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -511,7 +516,7 @@ func (pm *PluginManager) EnablePlugin(pluginID int) error {
 	plugin.Status = "active"
 
 	// Update status in database
-	err := UpdatePluginStatusDB(pluginID, "active")
+	err := UpdatePluginStatusDB(pluginID, "active", userID)
 	if err != nil {
 		return fmt.Errorf("failed to update plugin status: %v", err)
 	}
@@ -526,7 +531,7 @@ func (pm *PluginManager) EnablePlugin(pluginID int) error {
 	return nil
 }
 
-func (pm *PluginManager) DisablePlugin(pluginID int) error {
+func (pm *PluginManager) DisablePlugin(pluginID int, userID int) error {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -539,7 +544,7 @@ func (pm *PluginManager) DisablePlugin(pluginID int) error {
 	plugin.Status = "inactive"
 
 	// Update status in database
-	err := UpdatePluginStatusDB(pluginID, "inactive")
+	err := UpdatePluginStatusDB(pluginID, "inactive", userID)
 	if err != nil {
 		return fmt.Errorf("failed to update plugin status: %v", err)
 	}

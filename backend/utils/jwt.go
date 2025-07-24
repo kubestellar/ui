@@ -14,6 +14,7 @@ func InitJWT(secret string) {
 }
 
 type Claims struct {
+	UserID      int               `json:"user_id"`
 	Username    string            `json:"username"`
 	IsAdmin     bool              `json:"is_admin"`
 	Permissions map[string]string `json:"permissions"`
@@ -21,8 +22,9 @@ type Claims struct {
 }
 
 // GenerateToken creates a JWT token for the user
-func GenerateToken(username string, isAdmin bool, permissions map[string]string) (string, error) {
+func GenerateToken(username string, isAdmin bool, permissions map[string]string, userID int) (string, error) {
 	claims := &Claims{
+		UserID:      userID,
 		Username:    username,
 		IsAdmin:     isAdmin,
 		Permissions: permissions,
