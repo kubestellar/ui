@@ -55,8 +55,8 @@
         "title": "Workloads",
         "description": "Workloads über Cluster hinweg verwalten"
       },
-      "resourceExplorer": {
-        "title": "Ressourcen-Explorer",
+      "objectExplorer": {
+        "title": "Objekt-Explorer",
         "description": "Kubernetes-Ressourcen durchsuchen und filtern"
       },
       "bindingPolicies": {
@@ -178,7 +178,8 @@
       "deployedWorkloads": "Bereitgestellte Workloads",
       "pluginManager": "Plugin-Manager",
       "userManagement": "Benutzerverwaltung",
-      "galaxyMarketplace": "Galaxy-Marktplatz"
+      "galaxyMarketplace": "Galaxy-Marktplatz",
+      "objectExplorer": "Objekt-Explorer"
     }
   },
   "marketplace": {

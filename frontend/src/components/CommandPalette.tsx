@@ -156,11 +156,11 @@ const CommandPalette: React.FC = () => {
       section: t('commandPalette.sections.navigation'),
     },
     {
-      id: 'resourceExplorer',
+      id: 'objectExplorer',
       type: 'navigation',
       icon: FiSearch,
-      title: t('commandPalette.commands.resourceExplorer.title'),
-      description: t('commandPalette.commands.resourceExplorer.description'),
+      title: t('commandPalette.commands.objectExplorer.title'),
+      description: t('commandPalette.commands.objectExplorer.description'),
       action: () => navigate('/resources'),
       keywords: [
         'resource',

@@ -63,7 +63,7 @@ export const useMenuData = (): MenuItemData[] => {
           isLink: true,
           url: '/resources',
           icon: HiOutlineViewfinderCircle,
-          label: t('menu.items.resourceExplorer'),
+          label: t('menu.items.objectExplorer'),
         },
         {
           isLink: true,

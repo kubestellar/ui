@@ -1666,8 +1666,8 @@
       "title": "ワークロード",
       "description": "クラスター間のワークロードを管理する"
     },
-    "resourceExplorer": {
-      "title": "リソースエクスプローラー",
+    "objectExplorer": {
+      "title": "オブジェクトエクスプローラー",
       "description": "Kubernetesリソースを検索およびフィルタリングする"
     },
     "bindingPolicies": {
@@ -2070,8 +2070,8 @@
         "title": "ワークロード",
         "description": "クラスタ間のワークロードを管理"
       },
-      "resourceExplorer": {
-        "title": "リソースエクスプローラー",
+      "objectExplorer": {
+        "title": "オブジェクトエクスプローラー",
         "description": "Kubernetesリソースを検索およびフィルタリングする"
       },
       "bindingPolicies": {

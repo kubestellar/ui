@@ -1961,8 +1961,8 @@
         "title": "Cargas de trabajo",
         "description": "Gestionar cargas de trabajo en clusters"
       },
-      "resourceExplorer": {
-        "title": "Explorador de Recursos",
+      "objectExplorer": {
+        "title": "Explorador de Objetos",
         "description": "Buscar y filtrar recursos de Kubernetes"
       },
       "bindingPolicies": {
@@ -2011,7 +2011,8 @@
       "deployedWorkloads": "Cargas de Trabajo Desplegadas",
       "pluginManager": "Gestor de Plugins",
       "userManagement": "Gestión de Usuarios",
-      "galaxyMarketplace": "Mercado Galaxy"
+      "galaxyMarketplace": "Mercado Galaxy",
+      "objectExplorer": "Explorador de Objetos"
     }
   },
   "plugins": {
