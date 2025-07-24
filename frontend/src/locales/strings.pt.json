@@ -176,5 +176,9 @@
       "userManagement": "Gerenciamento de Usuários",
       "galaxyMarketplace": "Mercado Galaxy"
     }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marketplace",
+    "description": "Descubra e instale plugins para melhorar sua experiência KubeStellar"
   }
 }

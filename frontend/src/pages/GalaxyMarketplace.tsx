@@ -347,7 +347,7 @@ const GalaxyMarketplace: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold" style={{ color: themeStyles.colors.text.primary }}>
               <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                {t('marketplace.title', 'Galaxy Marketplace')}
+                {t('marketplace.title', 'KubeStellar Galaxy Marketplace')}
               </span>
             </h1>
             <p style={{ color: themeStyles.colors.text.secondary }}>

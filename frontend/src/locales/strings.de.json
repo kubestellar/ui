@@ -180,5 +180,9 @@
       "userManagement": "Benutzerverwaltung",
       "galaxyMarketplace": "Galaxy-Marktplatz"
     }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marktplatz",
+    "description": "Entdecken und installieren Sie Plugins zur Verbesserung Ihrer KubeStellar-Erfahrung"
   }
 }
