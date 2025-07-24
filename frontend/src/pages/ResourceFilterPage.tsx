@@ -8,7 +8,6 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
-  CircularProgress,
   Alert,
   Button,
   Grid,
@@ -31,6 +30,7 @@ import { darkTheme, lightTheme } from '../lib/theme-utils';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { ResourceItem } from '../components/ListViewComponent';
+import { SearchIcon } from 'lucide-react';
 
 // Define a proper type for the Resource objects from filteredResources
 interface Resource {
@@ -70,7 +70,7 @@ const ResourceFilterPage: React.FC = () => {
   const [selectedNamespace, setSelectedNamespace] = useState<string>('');
   const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
   const [showFilters, setShowFilters] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Convert filteredResources to ResourceItem[] type with correct status type
   const resources: ResourceItem[] = (filteredResources as unknown as Resource[]).map(resource => ({
@@ -111,9 +111,7 @@ const ResourceFilterPage: React.FC = () => {
 
   const handleRefresh = useCallback(async () => {
     if (selectedKind && selectedNamespace) {
-      setIsRefreshing(true);
       await applyFilters(selectedKind, selectedNamespace, resourceFilters);
-      setIsRefreshing(false);
     }
   }, [selectedKind, selectedNamespace, resourceFilters, applyFilters]);
 
@@ -183,12 +181,7 @@ const ResourceFilterPage: React.FC = () => {
       >
         <Typography
           variant="h4"
-          component="h1"
-          sx={{
-            color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-            fontWeight: 600,
-            fontSize: { xs: '1.5rem', sm: '2rem' },
-          }}
+          sx={{ color: '#4498FF', fontWeight: 700, fontSize: '30px', letterSpacing: '0.5px' }}
         >
           {t('resources.title')}
         </Typography>
@@ -208,10 +201,11 @@ const ResourceFilterPage: React.FC = () => {
               <FilterAltIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title={t('resources.refresh')}>
+          <Tooltip title={t('resources.search')}>
             <IconButton
-              onClick={handleRefresh}
-              disabled={isRefreshing || !selectedKind || !selectedNamespace}
+              onClick={() => {
+                setSearchOpen(!searchOpen);
+              }}
               sx={{
                 color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                 '&:hover': {
@@ -223,7 +217,7 @@ const ResourceFilterPage: React.FC = () => {
                 },
               }}
             >
-              {isRefreshing ? <CircularProgress size={24} /> : <RefreshIcon />}
+              <SearchIcon />
             </IconButton>
           </Tooltip>
         </Box>
@@ -285,6 +279,12 @@ const ResourceFilterPage: React.FC = () => {
                           : '1px solid rgba(0, 0, 0, 0.05)',
                         opacity: 1,
                       },
+                    },
+                  }}
+                  sx={{
+                    // Change dropdown icon color here
+                    '& .MuiSelect-icon': {
+                      color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                     },
                   }}
                 >
@@ -362,6 +362,12 @@ const ResourceFilterPage: React.FC = () => {
                       },
                     },
                   }}
+                  sx={{
+                    // Change dropdown icon color here
+                    '& .MuiSelect-icon': {
+                      color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                    },
+                  }}
                 >
                   {filteredNamespaces.map(ns => (
                     <MenuItem
@@ -392,8 +398,7 @@ const ResourceFilterPage: React.FC = () => {
               </FormControl>
             </Grid>
           </Grid>
-
-          {selectedKind && selectedNamespace && (
+          {searchOpen && (
             <Box sx={{ mt: 3 }}>
               <ResourceFilters
                 availableResources={resources}
