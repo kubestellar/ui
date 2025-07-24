@@ -2090,6 +2090,10 @@
       "galaxyMarketplace": {
         "title": "गैलेक्सी मार्केटप्लेस",
         "description": "गैलेक्सी मार्केटप्लेस से प्लगइन खोजें और इंस्टॉल करें"
+      },
+      "managedClusters": {
+        "title": "प्रबंधित क्लस्टर",
+        "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
       }
     },
     "sections": {
@@ -2116,7 +2120,8 @@
       "pluginManager": "उपयोगकर्ता प्रबंधन",
       "userManagement": "User Management",
       "metricsDashboard": "मेट्रिक्स डैशबोर्ड",
-      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस"
+      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस",
+      "managedClusters": "प्रबंधित क्लस्टर"
     }
   },
   "plugins": {

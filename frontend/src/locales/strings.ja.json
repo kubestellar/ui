@@ -2102,6 +2102,10 @@
       "galaxyMarketplace": {
         "title": "ギャラクシーマーケットプレイス",
         "description": "ギャラクシーマーケットプレイスからプラグインを見つけてインストールしましょう"
+      },
+      "managedClusters": {
+        "title": "管理クラスター",
+        "description": "Kubernetesクラスターを管理"
       }
     }
   },
@@ -2120,7 +2124,8 @@
       "deployedWorkloads": "デプロイ済みワークロード",
       "pluginManager": "プラグインマネージャー",
       "userManagement": "ユーザー管理",
-      "galaxyMarketplace": "ギャラクシーマーケットプレイス"
+      "galaxyMarketplace": "ギャラクシーマーケットプレイス",
+      "managedClusters": "管理クラスター"
     }
   },
   "plugins": {
