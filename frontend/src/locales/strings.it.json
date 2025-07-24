@@ -2082,6 +2082,10 @@
         "title": "Logout",
         "description": "Esci dal tuo account",
         "infoMessage": "Disconnessione avvenuta con successo."
+      },
+      "galaxyMarketplace": {
+        "title": "Mercato Galaxy",
+        "description": "Scopri e installa plugin dal Mercato Galaxy"
       }
     },
     "sections": {
@@ -2106,7 +2110,8 @@
       "bindingPolicies": "Policy di Binding",
       "deployedWorkloads": "Carichi di Lavoro Distribuiti",
       "pluginManager": "Gestore Plugin",
-      "userManagement": "Gestione Utenti"
+      "userManagement": "Gestione Utenti",
+      "galaxyMarketplace": "Mercato Galaxy"
     }
   },
   "plugins": {

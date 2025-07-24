@@ -79,6 +79,10 @@
         "title": "登出",
         "description": "登出您的帳戶",
         "infoMessage": "您已成功登出。"
+      },
+      "galaxyMarketplace": {
+        "title": "銀河市場",
+        "description": "在銀河市場中探索並安裝插件"
       }
     }
   },
@@ -169,7 +173,8 @@
       "bindingPolicies": "綁定策略",
       "deployedWorkloads": "已部署工作負載",
       "pluginManager": "插件管理器",
-      "userManagement": "用戶管理"
+      "userManagement": "用戶管理",
+      "galaxyMarketplace": "銀河市場"
     }
   }
 }

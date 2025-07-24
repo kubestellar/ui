@@ -2109,6 +2109,10 @@
       "metricsDashboard": {
         "title": "Metrics Dashboard",
         "description": "Monitor system performance and metrics"
+      },
+      "galaxyMarketplace": {
+        "title": "Galaxy Marketplace",
+        "description": "Discover and install plugins from the Galaxy Marketplace"
       }
     },
     "sections": {
@@ -2135,7 +2139,8 @@
       "resourceExplorer": "Resource Explorer",
       "pluginManager": "Plugin Manager",
       "userManagement": "User Management",
-      "metricsDashboard": "Metrics Dashboard"
+      "metricsDashboard": "Metrics Dashboard",
+      "galaxyMarketplace": "Galaxy Marketplace"
     }
   },
   "plugins": {

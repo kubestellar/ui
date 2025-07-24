@@ -37,7 +37,9 @@ import {
 } from '../hooks/queries/useUserActivityQuery.ts';
 
 // Lazy load the ClusterDetailDialog component
-const ClusterDetailDialog = lazy(() => import('../components/ClusterDetailDialog'));
+const ClusterDetailDialog = lazy(
+  () => import('../components/its/ClustersTable/dialogs/ClusterDetailDialog')
+);
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {

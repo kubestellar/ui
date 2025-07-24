@@ -1991,6 +1991,10 @@
         "title": "Déconnexion",
         "description": "Se déconnecter de votre compte",
         "infoMessage": "Vous avez été déconnecté avec succès."
+      },
+      "galaxyMarketplace": {
+        "title": "Marché Galaxy",
+        "description": "Découvrez et installez des plugins depuis le Marché Galaxy"
       }
     }
   },
@@ -2008,7 +2012,8 @@
       "bindingPolicies": "Politiques d'assignation",
       "deployedWorkloads": "Charges déployées",
       "pluginManager": "Gestionnaire de Plugins",
-      "userManagement": "Gestion des Utilisateurs"
+      "userManagement": "Gestion des Utilisateurs",
+      "galaxyMarketplace": "Marché Galaxy"
     }
   },
   "plugins": {

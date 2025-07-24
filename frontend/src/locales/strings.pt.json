@@ -152,6 +152,10 @@
         "title": "Sair",
         "description": "Sair da sua conta",
         "infoMessage": "Você saiu com sucesso."
+      },
+      "galaxyMarketplace": {
+        "title": "Mercado Galaxy",
+        "description": "Descubra e instale plugins do Mercado Galaxy"
       }
     }
   },
@@ -169,7 +173,8 @@
       "bindingPolicies": "Políticas de binding",
       "deployedWorkloads": "Workloads Implantados",
       "pluginManager": "Gerenciador de Plugins",
-      "userManagement": "Gerenciamento de Usuários"
+      "userManagement": "Gerenciamento de Usuários",
+      "galaxyMarketplace": "Mercado Galaxy"
     }
   }
 }
