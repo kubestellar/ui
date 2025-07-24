@@ -1956,7 +1956,7 @@
         "description": "Gérer et surveiller les plugins de KubeStellar"
       },
       "clusters": {
-        "title": "Clusters Distants",
+        "title": "Clusters Gérés",
         "description": "Gérer les clusters Kubernetes"
       },
       "workloads": {
@@ -2007,7 +2007,7 @@
     },
     "items": {
       "home": "Accueil",
-      "remoteClusters": "Clusters Distants",
+      "managedClusters": "Clusters Gérés",
       "stagedWorkloads": "Charges en attente",
       "bindingPolicies": "Politiques d'assignation",
       "deployedWorkloads": "Charges déployées",

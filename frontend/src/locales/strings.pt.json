@@ -120,8 +120,8 @@
         "title": "Gerenciador de Plugins",
         "description": "Gerencie e monitore plugins do KubeStellar"
       },
-      "clusters": {
-        "title": "Clusters Remotos",
+      "managedClusters": {
+        "title": "Clusters Gerenciados",
         "description": "Gerenciar clusters Kubernetes"
       },
       "workloads": {
@@ -168,7 +168,7 @@
     },
     "items": {
       "home": "Início",
-      "remoteClusters": "Clusters Remotos",
+      "managedClusters": "Clusters Gerenciados",
       "stagedWorkloads": "Workloads Preparados",
       "bindingPolicies": "Políticas de binding",
       "deployedWorkloads": "Workloads Implantados",

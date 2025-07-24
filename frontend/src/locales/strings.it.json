@@ -2105,6 +2105,7 @@
     },
     "items": {
       "home": "Home",
+      "managedClusters": "Cluster Gestiti",
       "remoteClusters": "Cluster Remoti",
       "stagedWorkloads": "Carichi di Lavoro In Preparazione",
       "bindingPolicies": "Policy di Binding",
