@@ -432,7 +432,7 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin, userIDAuth int) {
 	pluginID := plugin.ID
 	if !exist {
 		// Get userID
-		author, err := models.GetUserByUsername("admin")
+		author, err := models.GetUserByUsername(plugin.Manifest.Metadata.Author)
 		if err != nil {
 			log.LogError("Failed to get user ID", zap.Error(err))
 			return

@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: "cluster-monitor"
   version: "1.0.0"
-  author: "developer@company.com"
+  author: "admin"
   description: "Simple cluster monitoring dashboard"
 spec:
   # Plugin binary information

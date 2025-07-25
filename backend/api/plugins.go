@@ -319,7 +319,7 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// get author's ID from DB
-	author, err := models.GetUserByUsername("admin")
+	author, err := models.GetUserByUsername(manifest.Metadata.Author)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Unable to get author from database: " + manifest.Metadata.Author,
