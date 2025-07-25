@@ -1954,8 +1954,8 @@
         "description": "Gestionar y supervisar los plugins de KubeStellar"
       },
       "clusters": {
-        "title": "Clusters Remotos",
-        "description": "Administrar clusters de Kubernetes"
+        "title": "Clústeres Administrados",
+        "description": "Administrar clústeres de Kubernetes"
       },
       "workloads": {
         "title": "Cargas de trabajo",
@@ -2005,7 +2005,7 @@
     },
     "items": {
       "home": "Inicio",
-      "remoteClusters": "Clústeres Remotos",
+      "managedClusters": "Clústeres Administrados",
       "stagedWorkloads": "Cargas de Trabajo Preparadas",
       "bindingPolicies": "Políticas de Vinculación",
       "deployedWorkloads": "Cargas de Trabajo Desplegadas",
@@ -2098,7 +2098,8 @@
       }
     },
     "marketplace": {
-      "title": "Mercado de Plugins",
+      "title": "Mercado Galaxy de KubeStellar",
+      "description": "Descubre e instala plugins para mejorar tu experiencia con KubeStellar",
       "browse": "Explorar Plugins Disponibles",
       "featured": "Plugins Destacados",
       "categories": "Categorías",

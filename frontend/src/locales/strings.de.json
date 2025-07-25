@@ -47,8 +47,8 @@
         "title": "Plugin-Manager",
         "description": "KubeStellar-Plugins verwalten und überwachen"
       },
-      "clusters": {
-        "title": "Remote-Cluster",
+      "managedClusters": {
+        "title": "Verwaltete Cluster",
         "description": "Kubernetes-Cluster verwalten"
       },
       "workloads": {
@@ -172,7 +172,7 @@
     },
     "items": {
       "home": "Startseite",
-      "remoteClusters": "Remote-Cluster",
+      "managedClusters": "Verwaltete Cluster",
       "stagedWorkloads": "Vorbereitete Workloads",
       "bindingPolicies": "Bindungsrichtlinien",
       "deployedWorkloads": "Bereitgestellte Workloads",
@@ -180,5 +180,9 @@
       "userManagement": "Benutzerverwaltung",
       "galaxyMarketplace": "Galaxy-Marktplatz"
     }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marktplatz",
+    "description": "Entdecken und installieren Sie Plugins zur Verbesserung Ihrer KubeStellar-Erfahrung"
   }
 }

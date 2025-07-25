@@ -38,6 +38,27 @@ const ClusterDetailDialog = lazy(
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Check for command palette by detecting body overflow hidden
+  useEffect(() => {
+    const checkCommandPalette = () => {
+      setIsCommandPaletteOpen(document.body.style.overflow === 'hidden');
+    };
+
+    // Initial check
+    checkCommandPalette();
+
+    // Watch for body style changes
+    const observer = new MutationObserver(checkCommandPalette);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   // Memoize the color calculation to avoid recalculating on every render
   const { color, bgGradient } = useMemo(() => {
     if (value >= 90) {
@@ -70,14 +91,18 @@ const HealthIndicator = ({ value }: { value: number }) => {
 
   return (
     <div
-      className={`inline-flex items-center rounded-full px-2 py-1 ${color} relative overflow-hidden shadow-sm transition-colors`}
+      className={`inline-flex items-center rounded-full px-2 py-1 ${color} relative overflow-hidden shadow-sm transition-all duration-200`}
+      style={{
+        filter: isCommandPaletteOpen ? 'blur(5px)' : 'none',
+        pointerEvents: isCommandPaletteOpen ? 'none' : 'auto',
+      }}
     >
       {/* Pulse effect without animation loop */}
       <span
         className="mr-1 flex h-2 w-2 rounded-full bg-white opacity-80"
         style={{ boxShadow: '0 0 5px rgba(255,255,255,0.8)' }}
       ></span>
-      <span className="relative z-10 text-xs font-medium">{value}%</span>
+      <span className="relative z-10 text-xs font-medium">{`${value}% / 100%`}</span>
 
       {/* Static gradient background */}
       <div
@@ -148,7 +173,7 @@ const OptimizedProgressBar = ({
         />
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-xs font-medium text-gray-700 drop-shadow-sm dark:text-gray-200">
-            {value}%
+            {`${value}% / 100%`}
           </span>
         </div>
       </div>
@@ -395,9 +420,9 @@ const StatCard = ({
         </div>
 
         <div className="mt-1 flex items-end justify-between">
-          <div className="flex-grow">
+          <div className="min-w-0 flex-grow">
             <div className="flex items-center">
-              <h3 className="text-3xl font-bold text-gray-900 transition-colors dark:text-gray-50">
+              <h3 className="truncate text-3xl font-bold text-gray-900 transition-colors dark:text-gray-50">
                 {value}
               </h3>
               {isContext && (

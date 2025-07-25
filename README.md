@@ -19,7 +19,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 1. **Frontend**: Built with React and TypeScript
 2. **Backend**: Built with Golang using the Gin framework.
 
-<a href="https://kubernetes.slack.com/archives/C058SUSL5AA"> 
+<a href="https://cloud-native.slack.com/archives/C097094RZ3M"> 
   <img alt="Join Slack" src="https://img.shields.io/badge/KubeStellar-Join%20Slack-blue?logo=slack">
 </a>
 <a href="https://deepwiki.com/kubestellar/ui">

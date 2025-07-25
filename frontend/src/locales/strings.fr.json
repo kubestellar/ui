@@ -1956,7 +1956,7 @@
         "description": "Gérer et surveiller les plugins de KubeStellar"
       },
       "clusters": {
-        "title": "Clusters Distants",
+        "title": "Clusters Gérés",
         "description": "Gérer les clusters Kubernetes"
       },
       "workloads": {
@@ -1993,8 +1993,8 @@
         "infoMessage": "Vous avez été déconnecté avec succès."
       },
       "galaxyMarketplace": {
-        "title": "Marché Galaxy",
-        "description": "Découvrez et installez des plugins depuis le Marché Galaxy"
+        "title": "Marché Galaxy KubeStellar",
+        "description": "Découvrez et installez des plugins pour améliorer votre expérience KubeStellar"
       }
     }
   },
@@ -2007,13 +2007,13 @@
     },
     "items": {
       "home": "Accueil",
-      "remoteClusters": "Clusters Distants",
+      "managedClusters": "Clusters Gérés",
       "stagedWorkloads": "Charges en attente",
       "bindingPolicies": "Politiques d'assignation",
       "deployedWorkloads": "Charges déployées",
       "pluginManager": "Gestionnaire de Plugins",
       "userManagement": "Gestion des Utilisateurs",
-      "galaxyMarketplace": "Marché Galaxy"
+      "galaxyMarketplace": "Marché Galaxy KubeStellar"
     }
   },
   "plugins": {
