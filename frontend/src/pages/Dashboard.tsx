@@ -395,9 +395,9 @@ const StatCard = ({
         </div>
 
         <div className="mt-1 flex items-end justify-between">
-          <div className="flex-grow">
+          <div className="min-w-0 flex-grow">
             <div className="flex items-center">
-              <h3 className="text-3xl font-bold text-gray-900 transition-colors dark:text-gray-50">
+              <h3 className="truncate text-3xl font-bold text-gray-900 transition-colors dark:text-gray-50">
                 {value}
               </h3>
               {isContext && (
