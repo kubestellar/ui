@@ -290,7 +290,7 @@ func UninstallPluginFromDB(pluginID int, userID int) error {
 func UninstallAllPluginFromDB(pluginID int) error {
 	query := `
 		DELETE FROM installed_plugins
-		WHERE plugin_details_id = $1
+		WHERE id = $1
 	`
 
 	_, err := database.DB.Exec(query, pluginID)
