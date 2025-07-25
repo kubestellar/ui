@@ -105,7 +105,7 @@ const ProfileSection = () => {
   }, []);
 
   const openDocs = () => {
-    window.open('https://docs.kubestellar.io/release-0.28.0/', '_blank', 'noopener,noreferrer');
+    window.open('https://docs.kubestellar.io/latest', '_blank', 'noopener,noreferrer');
     setShowUserMenu(false);
   };
 
