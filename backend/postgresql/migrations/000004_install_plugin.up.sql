@@ -56,3 +56,14 @@ CREATE TABLE IF NOT EXISTS installed_plugins (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(plugin_details_id, user_id)
 );
+
+DROP TABLE IF EXISTS plugin_route;
+
+-- Already implemented plugin_feedback but we need some constraints and columns to be changed
+ALTER TABLE plugin_feedback RENAME COLUMN plugin_id TO marketplace_plugin_id;
+ALTER TABLE plugin_feedback DROP CONSTRAINT IF EXISTS plugin_feedback_plugin_id_fkey;
+ALTER TABLE plugin_feedback DROP CONSTRAINT IF EXISTS plugin_feedback_user_id_fkey;
+
+-- Add foreign key constraint to plugin_feedback table
+ALTER TABLE plugin_feedback ADD CONSTRAINT plugin_feedback_marketplace_plugin_id_fkey FOREIGN KEY (marketplace_plugin_id) REFERENCES marketplace_plugins(id) ON DELETE CASCADE;
+ALTER TABLE plugin_feedback ADD CONSTRAINT plugin_feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
