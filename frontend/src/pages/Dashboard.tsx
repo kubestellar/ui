@@ -53,7 +53,7 @@ const HealthIndicator = ({ value }: { value: number }) => {
     const observer = new MutationObserver(checkCommandPalette);
     observer.observe(document.body, {
       attributes: true,
-      attributeFilter: ['style']
+      attributeFilter: ['style'],
     });
 
     return () => observer.disconnect();
