@@ -830,7 +830,10 @@
       "expandAll": "Expand all the child nodes of all parent nodes",
       "collapseAll": "Collapse all the child nodes of all parent nodes",
       "zoomIn": "Zoom In",
-      "zoomOut": "Zoom Out"
+      "zoomOut": "Zoom Out",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square"
     },
     "nodeLabel": {
       "labels": "Labels:",
