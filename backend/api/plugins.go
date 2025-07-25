@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -214,6 +215,7 @@ func InstallPluginHandler(c *gin.Context) {
 		return
 	}
 	log.LogInfo("user ID", zap.Any("id", userIDInt))
+	fmt.Println(reflect.TypeOf(userIDInt))
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -336,29 +338,50 @@ func InstallPluginHandler(c *gin.Context) {
 
 	// plugin not existed - add to database and retrieve the ID
 
-	pluginID, err := pkg.AddPluginToDB(
-		manifest.Metadata.Name,
-		manifest.Metadata.Version,
-		manifest.Metadata.Description,
-		author.ID,
-		"kubestellar.io",
-		"unknown",
-		"unknown",
-		[]string{"monitoring", "cluster"},
-		"0.0.1",  // will change this after we have a versioning system
-		"0.28.0", // will change this after we have a versioning system
-		[]byte(`{"dependencies": "not mentioned"}`),
-		"unknown",
-		int(file.Size),
-	)
+	var pluginID int
+
+	// upload plugin details to plugin_details table for the 1st time
+	// check if plugin details already exist
+	exist, err := pkg.CheckPluginDetailsExist(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Unable to add plugin to database " + manifest.Metadata.Name,
+			"error": "Error checking plugin details existence: " + manifest.Metadata.Name,
 		})
-		log.LogError("unable to add plugin to database", zap.String("error", err.Error()))
-		return
 	}
-
+	if !exist {
+		pluginID, err = pkg.AddPluginToDB(
+			manifest.Metadata.Name,
+			manifest.Metadata.Version,
+			manifest.Metadata.Description,
+			author.ID,
+			"kubestellar.io",
+			"unknown",
+			"unknown",
+			[]string{"monitoring", "cluster"},
+			"0.0.1",  // will change this after we have a versioning system
+			"0.28.0", // will change this after we have a versioning system
+			[]byte(`{"dependencies": "not mentioned"}`),
+			"unknown",
+			int(file.Size),
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Unable to add plugin to database " + manifest.Metadata.Name,
+			})
+			log.LogError("unable to add plugin to database", zap.String("error", err.Error()))
+			os.Exit(0)
+			return
+		}
+	} else {
+		pluginID, err = pkg.GetPluginDetailsID(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Unable to get plugin details ID: " + manifest.Metadata.Name,
+			})
+			log.LogError("unable to get plugin details ID", zap.String("error", err.Error()))
+			return
+		}
+	}
 	// Find WASM file
 	// Determine WASM file name
 	wasmFileName := manifest.Metadata.Name + ".wasm"

@@ -45,6 +45,39 @@ func CheckInstalledPluginWithID(pluginID int) (bool, error) {
 	return exist, nil
 }
 
+func CheckPluginDetailsExist(pluginName, pluginVersion, pluginDescription string, authorID int) (bool, error) {
+	query := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM plugin_details
+			WHERE name = $1 AND version = $2 AND description = $3 AND author_id = $4
+		)
+	`
+
+	var exist bool
+	row := database.DB.QueryRow(query, pluginName, pluginVersion, pluginDescription, authorID)
+	if err := row.Scan(&exist); err != nil {
+		return false, fmt.Errorf("failed to check plugin existence: %w", err)
+	}
+
+	return exist, nil
+}
+
+func GetPluginDetailsID(pluginName, pluginVersion, pluginDescription string, authorID int) (int, error) {
+	query := `
+		SELECT id FROM plugin_details
+		WHERE name = $1 AND version = $2 AND description = $3 AND author_id = $4
+	`
+
+	var pluginID int
+	row := database.DB.QueryRow(query, pluginName, pluginVersion, pluginDescription, authorID)
+	if err := row.Scan(&pluginID); err != nil {
+		return -1, fmt.Errorf("failed to get plugin details ID: %w", err)
+	}
+
+	return pluginID, nil
+}
+
 func AddPluginToDB(
 	name string,
 	version string,
