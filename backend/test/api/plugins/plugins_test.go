@@ -175,7 +175,7 @@ func TestInstallPluginHandler(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 			}
 			c.Request = req
-
+			c.Set("user_id", 1)
 			// Call the handler
 			api.InstallPluginHandler(c)
 
@@ -204,25 +204,17 @@ func TestUninstallPluginHandler(t *testing.T) {
 			name:     "Plugin exists and is uninstalled successfully",
 			pluginID: 1,
 			setupMocks: func(mock sqlmock.Sqlmock) {
-				// 1. Mock CheckPluginWithInfo (plugin does not exist) for registration
-				mock.ExpectQuery(`SELECT EXISTS\s+\(.*FROM plugin.*\)`).
-					WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin").
-					WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+				// 1. Mock CheckInstalledPluginWithID (plugin is installed)
+				mock.ExpectQuery(`SELECT EXISTS\s+\(\s*SELECT 1\s+FROM plugin_details pd\s+JOIN installed_plugins ip ON ip.plugin_details_id = pd.id.*\)`).WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin", 1).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-					// 2. GetPluginIdDB
-				mock.ExpectQuery(`SELECT id FROM plugin_details WHERE name=\$1 AND version=\$2 AND description=\$3`).
-					WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin").
-					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+				// 2. Mock GetPluginDetailsID (plugin details lookup)
+				mock.ExpectQuery(`SELECT EXISTS \( SELECT 1 FROM installed_plugins WHERE id=\$1 \)`).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 				// 3. UpdatePluginStatusDB
-				mock.ExpectExec(`UPDATE plugin SET status = \$1 WHERE id = \$2`).
-					WithArgs("active", 1).
-					WillReturnResult(sqlmock.NewResult(0, 1)) // 0 insert ID, 1 row affected
+				mock.ExpectExec(`UPDATE installed_plugins SET status = \$1 WHERE id = \$2 AND user_id = \$3`).WithArgs("active", 1, 1).WillReturnResult(sqlmock.NewResult(0, 1))
 
 				// 4. Mock DELETE plugin
-				mock.ExpectExec(`(?s)DELETE FROM plugin\s+WHERE id = \$1`).
-					WithArgs(1).
-					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectExec(`DELETE FROM installed_plugins WHERE id = \$1 AND user_id = \$2`).WithArgs(1, 1).WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			setupPlugin: func(manager *plugins.PluginManager, registry *plugins.PluginRegistry) *plugins.Plugin {
 				plugin := &plugins.Plugin{
@@ -231,11 +223,13 @@ func TestUninstallPluginHandler(t *testing.T) {
 							Name:        "TestPlugin",
 							Version:     "v0.1.0",
 							Description: "Temporary test plugin",
-							Author:      "testuser",
+							Author:      "admin",
 						},
 					},
 					Status: "active",
 				}
+
+				plugin.ID = 1
 
 				manager.RegisterPlugin(plugin, 1)
 
@@ -297,8 +291,6 @@ func TestUninstallPluginHandler(t *testing.T) {
 				_ = runtime.Close(context.Background())
 			})
 
-			router.DELETE("/api/plugins/:id", api.UninstallPluginHandler)
-
 			// Setup SQL mock expectations
 			tt.setupMocks(mock)
 
@@ -312,6 +304,14 @@ func TestUninstallPluginHandler(t *testing.T) {
 			require.NoError(t, err)
 
 			w := httptest.NewRecorder()
+
+			c, _ := gin.CreateTestContext(w)
+			c.Request = req
+			router.Use(func(c *gin.Context) {
+				c.Set("user_id", 1)
+			})
+
+			router.DELETE("/api/plugins/:id", api.UninstallPluginHandler)
 			router.ServeHTTP(w, req)
 
 			require.Equal(t, tt.expectedCode, w.Code)
@@ -351,6 +351,7 @@ func TestEnablePluginHandler(t *testing.T) {
 			// Create a mock request
 			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+strconv.Itoa(tt.pluginID)+"/enable", nil)
 			c.Request = req
+			c.Set("user_id", 1)
 
 			// Call the handler
 			api.EnablePluginHandler(c)
@@ -395,6 +396,7 @@ func TestDisablePluginHandler(t *testing.T) {
 			// Create a mock request
 			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+strconv.Itoa(tt.pluginID)+"/disable", nil)
 			c.Request = req
+			c.Set("user_id", 1)
 
 			// Call the handler
 			api.DisablePluginHandler(c)
@@ -439,6 +441,7 @@ func TestGetPluginStatusHandler(t *testing.T) {
 			// Create a mock request
 			req, _ := http.NewRequest(http.MethodGet, "/plugins/"+strconv.Itoa(tt.pluginID)+"/status", nil)
 			c.Request = req
+			c.Set("user_id", 1)
 
 			// Call the handler
 			api.GetPluginStatusHandler(c)
@@ -483,6 +486,7 @@ func TestReloadPluginHandler(t *testing.T) {
 			// Create a mock request
 			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+strconv.Itoa(tt.pluginID)+"/reload", nil)
 			c.Request = req
+			c.Set("user_id", 1)
 
 			// Call the handler
 			api.ReloadPluginHandler(c)
