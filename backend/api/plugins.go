@@ -349,7 +349,7 @@ func InstallPluginHandler(c *gin.Context) {
 		})
 	}
 	if !exist {
-		pluginID, err = pkg.AddPluginToDB(
+		pluginDetailsID, err := pkg.AddPluginToDB(
 			manifest.Metadata.Name,
 			manifest.Metadata.Version,
 			manifest.Metadata.Description,
@@ -369,11 +369,16 @@ func InstallPluginHandler(c *gin.Context) {
 				"error": "Unable to add plugin to database " + manifest.Metadata.Name,
 			})
 			log.LogError("unable to add plugin to database", zap.String("error", err.Error()))
-			os.Exit(0)
+
 			return
 		}
+		elapsed := int(time.Since(start).Seconds())
+		pluginID, err = pkg.AddInstalledPluginToDB(pluginDetailsID, nil, userIDInt, "manual", true, "loading", "/plugins", elapsed)
+		if err != nil {
+			log.LogError("Failed to add plugin to installed_plugins table", zap.Error(err))
+		}
 	} else {
-		pluginID, err = pkg.GetPluginDetailsID(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
+		pluginDetailsID, err := pkg.GetPluginDetailsID(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Unable to get plugin details ID: " + manifest.Metadata.Name,
@@ -381,6 +386,12 @@ func InstallPluginHandler(c *gin.Context) {
 			log.LogError("unable to get plugin details ID", zap.String("error", err.Error()))
 			return
 		}
+		elapsed := int(time.Since(start).Seconds())
+		pluginID, err = pkg.AddInstalledPluginToDB(pluginDetailsID, nil, userIDInt, "manual", true, "loading", "/plugins", elapsed)
+		if err != nil {
+			log.LogError("Failed to add plugin to installed_plugins table", zap.Error(err))
+		}
+
 	}
 	// Find WASM file
 	// Determine WASM file name
@@ -407,6 +418,14 @@ func InstallPluginHandler(c *gin.Context) {
 			"error": "Failed to create plugin directory",
 		})
 		return
+	}
+
+	err = pkg.UpdateInstalledPluginInstalledPath(pluginID, pluginDir)
+	if err != nil {
+		log.LogError("Failed to update installed plugin installed path", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update installed plugin installed path",
+		})
 	}
 
 	// Copy files to plugin directory
@@ -442,22 +461,26 @@ func InstallPluginHandler(c *gin.Context) {
 
 	if pluginManager != nil && pluginRegistry != nil {
 		// Load the plugin from the recent created folder
+
 		if err := pluginRegistry.LoadPlugin(pluginKey); err != nil {
+			err := pkg.UpdatePluginStatusDB(pluginID, "active", userIDInt)
+			if err != nil {
+				log.LogError("Failed to update plugin status", zap.Error(err))
+			}
+			err = pluginManager.EnablePlugin(pluginID, userIDInt)
+			if err != nil {
+				log.LogError("Failed to enable plugin", zap.Error(err))
+			}
+
 			log.LogError("Failed to load plugin after installation",
 				zap.String("name", manifest.Metadata.Name),
 				zap.Error(err))
-
-			elapsed := int(time.Since(start).Seconds())
-			id, err := pkg.AddInstalledPluginToDB(pluginID, nil, userIDInt, "manual", true, "active", pluginDir, elapsed)
-			if err != nil {
-				log.LogError("Failed to add plugin to installed_plugins table", zap.Error(err))
-			}
 
 			log.LogInfo("Plugin installed and loaded successfully, but failed to load",
 				zap.String("name", manifest.Metadata.Name),
 				zap.String("version", manifest.Metadata.Version),
 				zap.String("path", pluginDir),
-				zap.Int("id", id))
+				zap.Int("id", pluginID))
 
 			// Return success for installation but warn about loading failure
 			c.JSON(http.StatusOK, gin.H{
@@ -471,10 +494,17 @@ func InstallPluginHandler(c *gin.Context) {
 			return
 		}
 
-		elapsed := int(time.Since(start).Seconds())
-		_, err := pkg.AddInstalledPluginToDB(pluginID, nil, userIDInt, "manual", true, "active", pluginDir, elapsed)
 		if err != nil {
-			log.LogError("Failed to add plugin to installed_plugins table", zap.Error(err))
+			log.LogError("Failed to update plugin status", zap.Error(err))
+		}
+
+		err := pkg.UpdatePluginStatusDB(pluginID, "active", userIDInt)
+		if err != nil {
+			log.LogError("Failed to update plugin status", zap.Error(err))
+		}
+		err = pluginManager.EnablePlugin(pluginID, userIDInt)
+		if err != nil {
+			log.LogError("Failed to enable plugin", zap.Error(err))
 		}
 
 		log.LogInfo("Plugin installed and loaded successfully",
@@ -484,12 +514,6 @@ func InstallPluginHandler(c *gin.Context) {
 	} else {
 		log.LogWarn("Plugin manager not available for dynamic loading",
 			zap.String("name", manifest.Metadata.Name))
-	}
-
-	elapsed := int(time.Since(start).Seconds())
-	_, err = pkg.AddInstalledPluginToDB(pluginID, nil, userIDInt, "manual", true, "active", pluginDir, elapsed)
-	if err != nil {
-		log.LogError("Failed to add plugin to installed_plugins table", zap.Error(err))
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -511,6 +535,24 @@ func UninstallPluginHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "User ID not found",
+		})
+		return
+	}
+
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "User ID is not an integer",
+		})
+		return
+	}
+	log.LogInfo("user ID", zap.Any("id", userIDInt))
+	fmt.Println(reflect.TypeOf(userIDInt))
 
 	log.LogInfo("Starting plugin uninstallation", zap.String("id", strconv.Itoa(pluginID)))
 
@@ -600,7 +642,7 @@ func UninstallPluginHandler(c *gin.Context) {
 
 	// Step 3: Remove plugin from database
 	if plugin != nil && plugin.ID > 0 {
-		if err := pkg.UninstallPluginFromDB(pluginID); err != nil {
+		if err := pkg.UninstallPluginFromDB(pluginID, userIDInt); err != nil {
 			uninstallErrors = append(uninstallErrors, fmt.Sprintf("Failed to remove plugin from database: %v", err))
 			log.LogError("Failed to remove plugin from database", zap.String("id", strconv.Itoa(pluginID)), zap.Error(err))
 		} else {

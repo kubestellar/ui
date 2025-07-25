@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"os"
 	"path/filepath"
@@ -188,7 +189,7 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		return err
 	}
 
-	pluginID, err := GetPluginIdDB(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
+	pluginID, err := extractPluginPathID(pluginPath)
 	if err != nil {
 		log.LogError("error getting pluginID", zap.String("error", err.Error()))
 		return err
@@ -262,7 +263,7 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 	pm.registeredRoutes[plugin.ID] = []string{}
 	pm.routeMutex.Unlock()
 
-	if plugin.Manifest.Spec.Backend != nil {
+	if plugin.Manifest.Spec.Backend != nil && plugin.Manifest.Spec.Backend.Enabled {
 		for _, route := range plugin.Manifest.Spec.Backend.Routes {
 			handler := pm.createPluginHandler(plugin, route.Handler)
 			routePath := route.Path
@@ -428,31 +429,41 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin, userIDAuth int) {
 		return
 	}
 
-	var pluginID int
+	pluginID := plugin.ID
 	if !exist {
 		// Get userID
-		user, err := models.GetUserByUsername(plugin.Manifest.Metadata.Author)
+		author, err := models.GetUserByUsername("admin")
 		if err != nil {
 			log.LogError("Failed to get user ID", zap.Error(err))
 			return
 		}
 
-		if user == nil {
+		if author == nil {
 			log.LogError("User not found for plugin registration", zap.String("author", plugin.Manifest.Metadata.Author))
 			return
 		}
 
-		_, err = AddInstalledPluginToDB(pluginID, nil, user.ID, "manual", true, "active", "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(pluginID), 0)
+		pluginID, err = AddInstalledPluginToDB(pluginID, nil, author.ID, "manual", true, "active", "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(pluginID), 0)
 		if err != nil {
 			log.LogError("Failed to add plugin to installed_plugins  table in database", zap.Error(err))
 		}
+		err = UpdateInstalledPluginInstalledPath(pluginID, "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(pluginID))
+		if err != nil {
+			log.LogError("Failed to update installed plugin installed path in database", zap.Error(err))
+		}
 	} else {
-		pluginID, err = GetPluginIdDB(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description)
+		exists, err := CheckInstalledPluginWithID(pluginID)
 		if err != nil {
 			log.LogError("Failed to get plugin ID", zap.Error(err))
 			return
 		}
-		err := UpdatePluginStatusDB(pluginID, "active", userIDAuth)
+
+		if !exists {
+			log.LogError("Plugin not found in installed_plugins table", zap.Int("pluginID", pluginID))
+			return
+		}
+
+		err = UpdatePluginStatusDB(pluginID, "active", userIDAuth)
 		if err != nil {
 			log.LogError("Failed to update plugin status in database", zap.Error(err))
 		}
@@ -567,7 +578,7 @@ func (pm *PluginManager) UninstallAllPlugins() error {
 
 	for id, plugin := range pm.plugins {
 		// Remove plugin from database
-		err := UninstallPluginFromDB(id)
+		err := UninstallAllPluginFromDB(id)
 		if err != nil {
 			log.LogError("Failed to uninstall plugin from database", zap.Int("pluginID", id), zap.Error(err))
 			continue
@@ -587,4 +598,19 @@ func (pm *PluginManager) UninstallAllPlugins() error {
 	}
 
 	return nil
+}
+
+// Helper functions
+
+func extractPluginPathID(s string) (int, error) {
+	parts := strings.Split(s, "-")
+	if len(parts) == 0 {
+		return 0, fmt.Errorf("invalid format")
+	}
+	last := parts[len(parts)-1]
+	num, err := strconv.Atoi(last)
+	if err != nil {
+		return 0, fmt.Errorf("not a number: %w", err)
+	}
+	return num, nil
 }

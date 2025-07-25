@@ -107,12 +107,6 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, fmt.Errorf("failed to parse manifest: %v", err)
 	}
 
-	// Get plugin ID from the database if it exists
-	pluginIdDB, err := GetPluginIdDB(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get plugin ID: %v", err)
-	}
-
 	// Get plugin ID from the folder name
 	parts := strings.Split(filepath.Base(dirPath), "-")
 	if len(parts) < 2 {
@@ -124,9 +118,14 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, fmt.Errorf("invalid plugin ID in folder name: %s", filepath.Base(dirPath))
 	}
 
+	exist, err := CheckInstalledPluginWithID(pluginIdFolder)
+	if err != nil {
+		return nil, err
+	}
+
 	// Check if the plugin ID from the database matches the folder name
-	if pluginIdDB != pluginIdFolder {
-		return nil, fmt.Errorf("plugin ID mismatch: DB ID %d, folder ID %d", pluginIdDB, pluginIdFolder)
+	if !exist {
+		return nil, fmt.Errorf("plugin ID mismatch: plugin not found, DB ID %d", pluginIdFolder)
 	}
 
 	// Check if WASM file exists
@@ -141,7 +140,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginInfo{
-				ID:           pluginIdDB,
+				ID:           pluginIdFolder,
 				Name:         manifest.Metadata.Name,
 				Path:         dirPath,
 				ManifestPath: manifestPath,
@@ -162,20 +161,15 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 
 	status := "inactive" // Default status if not loaded
 
-	// Check if the plugin is loaded and created in DB
-	exist, err := CheckInstalledPluginWithID(pluginIdDB)
-	if err != nil {
-		return nil, err
-	}
 	if exist {
-		status, err = GetPluginStatusDB(pluginIdDB)
+		status, err = GetPluginStatusDB(pluginIdFolder)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get plugin status: %v", err)
 		}
 	}
 
 	return &PluginInfo{
-		ID:           pluginIdDB,
+		ID:           pluginIdFolder,
 		Name:         manifest.Metadata.Name,
 		Version:      manifest.Metadata.Version,
 		Author:       manifest.Metadata.Author,
@@ -193,7 +187,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 func (pr *PluginRegistry) LoadPlugin(name string) error {
 	// Find the plugin directory
 	pluginPath := filepath.Join(pr.pluginsDirectory, name)
-
+	fmt.Println("pluginPath", pluginPath)
 	// Check if directory exists
 	if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
 		return fmt.Errorf("plugin directory not found: %s", pluginPath)
@@ -227,6 +221,7 @@ func (pr *PluginRegistry) ReloadPlugin(pluginID int) error {
 // GetPluginInfo returns information about a specific plugin
 func (pr *PluginRegistry) GetPluginInfo(name string) (*PluginInfo, error) {
 	pluginPath := filepath.Join(pr.pluginsDirectory, name)
+	// TODO: get user ID from context when it is implemented
 	return pr.discoverPluginInDirectory(pluginPath)
 }
 

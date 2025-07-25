@@ -448,6 +448,7 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 
 		// Load the plugin
 		pluginFolderName := fmt.Sprintf("%s-%d", pluginInfo.Name, pluginInfo.ID)
+		fmt.Println("pluginFolderName", pluginFolderName)
 		if err := registry.LoadPlugin(pluginFolderName); err != nil {
 			logger.Error("Failed to load plugin",
 				zap.String("name", pluginInfo.Name),

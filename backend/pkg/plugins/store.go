@@ -32,7 +32,7 @@ func CheckInstalledPluginWithID(pluginID int) (bool, error) {
 	query := `
 		SELECT EXISTS (
 			SELECT 1 FROM installed_plugins
-			WHERE plugin_details_id=$1
+			WHERE id=$1
 		) 
 	`
 
@@ -183,6 +183,21 @@ func AddInstalledPluginToDB(
 	return installedPluginID, nil
 }
 
+func UpdateInstalledPluginInstalledPath(installedPluginID int, installedPath string) error {
+	query := `
+		UPDATE installed_plugins
+		SET installed_path = $1
+		WHERE id = $2
+	`
+
+	_, err := database.DB.Exec(query, installedPath, installedPluginID)
+	if err != nil {
+		return fmt.Errorf("failed to update installed plugin installed path: %w", err)
+	}
+
+	return nil
+}
+
 func GetPluginIdDB(pluginName, pluginVersion, pluginDescription string) (int, error) {
 	query := `
 		SELECT id FROM plugin_details
@@ -202,11 +217,32 @@ func GetPluginIdDB(pluginName, pluginVersion, pluginDescription string) (int, er
 	return pluginID, nil
 }
 
+func GetInstalledPluginId(pluginName, pluginVersion, pluginDescription string, authorID int, userID int) (int, error) {
+	query := `		
+			SELECT ip.id
+			FROM plugin_details pd
+			JOIN installed_plugins ip ON ip.plugin_details_id = pd.id
+			WHERE pd.name = $1 AND pd.version = $2 AND pd.description = $3 AND pd.author_id = $4 AND ip.user_id = $5
+	`
+
+	var pluginID int
+	row := database.DB.QueryRow(query, pluginName, pluginVersion, pluginDescription, authorID, userID)
+	if err := row.Scan(&pluginID); err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return -1, fmt.Errorf("plugin not found: %w", err)
+		default:
+			return -1, err
+		}
+	}
+	return pluginID, nil
+}
+
 func UpdatePluginStatusDB(pluginID int, status string, userID int) error {
 	query := `
 		UPDATE installed_plugins
 		SET status = $1
-		WHERE plugin_details_id = $2 AND user_id = $3
+		WHERE id = $2 AND user_id = $3
 	`
 
 	_, err := database.DB.Exec(query, status, pluginID, userID)
@@ -220,7 +256,7 @@ func UpdatePluginStatusDB(pluginID int, status string, userID int) error {
 func GetPluginStatusDB(pluginID int) (string, error) {
 	query := `
 		SELECT status FROM installed_plugins
-		WHERE plugin_details_id = $1
+		WHERE id = $1
 	`
 
 	var status string
@@ -237,7 +273,21 @@ func GetPluginStatusDB(pluginID int) (string, error) {
 	return status, nil
 }
 
-func UninstallPluginFromDB(pluginID int) error {
+func UninstallPluginFromDB(pluginID int, userID int) error {
+	query := `
+		DELETE FROM installed_plugins
+		WHERE id = $1 AND user_id = $2
+	`
+
+	_, err := database.DB.Exec(query, pluginID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to uninstall plugin: %w", err)
+	}
+
+	return nil
+}
+
+func UninstallAllPluginFromDB(pluginID int) error {
 	query := `
 		DELETE FROM installed_plugins
 		WHERE plugin_details_id = $1
@@ -245,7 +295,7 @@ func UninstallPluginFromDB(pluginID int) error {
 
 	_, err := database.DB.Exec(query, pluginID)
 	if err != nil {
-		return fmt.Errorf("failed to uninstall plugin: %w", err)
+		return fmt.Errorf("failed to uninstall all plugin: %w", err)
 	}
 
 	return nil
