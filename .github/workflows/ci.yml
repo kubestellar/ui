@@ -90,6 +90,13 @@ jobs:
           cache: true
           cache-dependency-path: backend/go.sum
 
+      - name: Dummy kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "{}" > $HOME/.kube/config
+        env:
+          HOME: /home/runner
+
       - name: Install Dependencies
         working-directory: backend
         run: go mod download
