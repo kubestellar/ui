@@ -545,32 +545,33 @@ const ListViewComponent = ({
     }
   };
 
-  // Generate page numbers
   const getPageNumbers = useCallback((): (number | string)[] => {
     if (totalPages <= 1) return [1];
-
+    
     const range: (number | string)[] = [];
-    let lastNumber: number | null = null;
-
+    const delta = 2; 
+    
     range.push(1);
-
-    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-      if (i > 1 && i < totalPages) {
-        if (lastNumber && i > lastNumber + 1) {
-          range.push('...');
-        }
-        range.push(i);
-        lastNumber = i;
-      }
+    
+    const rangeStart = Math.max(2, currentPage - delta);
+    const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
+    
+    if (rangeStart > 2) {
+      range.push('...');
     }
+    
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      range.push(i);
+    }
+    
 
-    if (lastNumber && totalPages > lastNumber + 1) {
+    if (rangeEnd < totalPages - 1) {
       range.push('...');
     }
     if (totalPages > 1) {
       range.push(totalPages);
     }
-
+    
     return range;
   }, [currentPage, totalPages]);
 
@@ -1015,14 +1016,15 @@ const ListViewComponent = ({
                     }
                     sx={{
                       display: {
-                        xs:
-                          typeof pageNumber === 'number' &&
-                          Math.abs((pageNumber as number) - currentPage) > 1 &&
-                          pageNumber !== 1 &&
-                          pageNumber !== totalPages
-                            ? 'none'
-                            : 'inline-flex',
-                        sm: 'inline-flex',
+                        xs: 
+                          // On mobile, show: first page, current page ±1, last page, and ellipsis
+                          pageNumber === '...' ||
+                          pageNumber === 1 ||
+                          pageNumber === totalPages ||
+                          (typeof pageNumber === 'number' && Math.abs(pageNumber - currentPage) <= 1)
+                            ? 'inline-flex'
+                            : 'none',
+                        sm: 'inline-flex', // On larger screens, show all pages from our improved algorithm
                       },
                       minWidth: { xs: 30, sm: 36 },
                       height: { xs: 30, sm: 32 },
