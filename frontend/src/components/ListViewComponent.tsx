@@ -547,23 +547,22 @@ const ListViewComponent = ({
 
   const getPageNumbers = useCallback((): (number | string)[] => {
     if (totalPages <= 1) return [1];
-    
+
     const range: (number | string)[] = [];
-    const delta = 2; 
-    
+    const delta = 2;
+
     range.push(1);
-    
+
     const rangeStart = Math.max(2, currentPage - delta);
     const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
-    
+
     if (rangeStart > 2) {
       range.push('...');
     }
-    
+
     for (let i = rangeStart; i <= rangeEnd; i++) {
       range.push(i);
     }
-    
 
     if (rangeEnd < totalPages - 1) {
       range.push('...');
@@ -571,7 +570,7 @@ const ListViewComponent = ({
     if (totalPages > 1) {
       range.push(totalPages);
     }
-    
+
     return range;
   }, [currentPage, totalPages]);
 
@@ -1016,12 +1015,13 @@ const ListViewComponent = ({
                     }
                     sx={{
                       display: {
-                        xs: 
+                        xs:
                           // On mobile, show: first page, current page ±1, last page, and ellipsis
                           pageNumber === '...' ||
                           pageNumber === 1 ||
                           pageNumber === totalPages ||
-                          (typeof pageNumber === 'number' && Math.abs(pageNumber - currentPage) <= 1)
+                          (typeof pageNumber === 'number' &&
+                            Math.abs(pageNumber - currentPage) <= 1)
                             ? 'inline-flex'
                             : 'none',
                         sm: 'inline-flex', // On larger screens, show all pages from our improved algorithm
