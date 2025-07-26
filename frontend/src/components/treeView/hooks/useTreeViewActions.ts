@@ -9,6 +9,25 @@ import {
 } from '../types';
 import { kindToPluralMap } from '../types';
 
+// Define the tab configuration - this can be easily modified if tabs are reordered
+const TAB_CONFIG = {
+  SUMMARY: 0,
+  EDIT: 1,
+  LOGS: 2,
+} as const;
+
+// Map actions to tab indices dynamically
+const getTabIndexForAction = (action: string): number => {
+  const actionToTabMap: Record<string, keyof typeof TAB_CONFIG> = {
+    Details: 'SUMMARY',
+    Edit: 'EDIT',
+    Logs: 'LOGS',
+  };
+
+  const tabKey = actionToTabMap[action];
+  return tabKey ? TAB_CONFIG[tabKey] : TAB_CONFIG.SUMMARY; // Default to summary tab
+};
+
 interface UseTreeViewActionsProps {
   nodes: CustomNode[];
   edges: CustomEdge[];
@@ -119,27 +138,7 @@ export const useTreeViewActions = ({
               setDeleteDialogOpen(true);
               break;
             case 'Details':
-              if (onNodeSelect) {
-                onNodeSelect({
-                  namespace: namespace || 'default',
-                  name: nodeName,
-                  type: nodeType,
-                  resourceData,
-                  initialTab: 0,
-                });
-              }
-              break;
             case 'Edit':
-              if (onNodeSelect) {
-                onNodeSelect({
-                  namespace: namespace || 'default',
-                  name: nodeName,
-                  type: nodeType,
-                  resourceData,
-                  initialTab: 1,
-                });
-              }
-              break;
             case 'Logs':
               if (onNodeSelect) {
                 onNodeSelect({
@@ -147,7 +146,7 @@ export const useTreeViewActions = ({
                   name: nodeName,
                   type: nodeType,
                   resourceData,
-                  initialTab: 2,
+                  initialTab: getTabIndexForAction(action),
                 });
               }
               break;
