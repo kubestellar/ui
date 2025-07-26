@@ -94,12 +94,13 @@ func TestSetupRoutes(t *testing.T) {
 			// but ensure the route exists (not 404)
 			assert.NotEqual(t, http.StatusNotFound, w.Code, "Route should be registered")
 
-			// Accept common error codes that occur due to missing external dependencies
+			// Accept common error codes that occur due to missing external dependencies or authentication
 			validCodes := []int{
 				http.StatusOK,
 				http.StatusBadRequest,
 				http.StatusInternalServerError,
 				http.StatusServiceUnavailable,
+				http.StatusUnauthorized,
 			}
 
 			isValidCode := false
