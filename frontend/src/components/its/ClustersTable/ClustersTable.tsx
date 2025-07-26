@@ -223,7 +223,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     deletedLabels?: string[]
   ) => {
     const isBulkOperation =
-      selectedClusters.length > 1 && clusterName.includes('selected clusters');
+      selectedClusters.length > 0 && clusterName.includes('selected clusters');
     setLoadingClusterEdit(isBulkOperation ? 'bulk' : clusterName);
 
     if (isBulkOperation) {
