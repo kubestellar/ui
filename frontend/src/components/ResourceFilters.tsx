@@ -129,19 +129,18 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
     onFiltersChange(newFilters);
   };
 
-  // Common menu paper props with colors
+  // Common menu paper props with improved opacity - more solid colors
   const menuPaperProps = {
     component: Paper,
     elevation: 6,
     sx: {
       maxHeight: 300,
       width: 200,
-      backgroundColor: isDark ? '#1f2937' : '#ffffff',
+      backgroundColor: isDark ? darkTheme.element.card : lightTheme.element.card,
       color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
       boxShadow: isDark ? '0px 5px 15px rgba(0, 0, 0, 0.4)' : '0px 5px 15px rgba(0, 0, 0, 0.2)',
       borderRadius: '8px',
       border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
-      zIndex: 1300,
     },
   };
 
@@ -181,7 +180,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
         alignItems: { xs: 'stretch', md: 'center' },
         gap: 2,
         p: 2,
-        backgroundColor: isDark ? '#111827' : '#f8fafc',
+        backgroundColor: isDark ? darkTheme.bg.secondary : lightTheme.bg.secondary,
         borderRadius: '8px',
         mb: 2,
         boxShadow: isDark ? darkTheme.shadow.sm : lightTheme.shadow.sm,
@@ -226,7 +225,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
               </InputAdornment>
             ) : null,
             sx: {
-              backgroundColor: isDark ? '#0f172a' : '#ffffff',
+              backgroundColor: isDark ? darkTheme.element.input : lightTheme.element.input,
               color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
               borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
               '& .MuiOutlinedInput-notchedOutline': {
@@ -380,7 +379,6 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
               sx: {
                 ...menuPaperProps.sx,
                 width: 250,
-                zIndex: 1300,
               },
             }}
           >
