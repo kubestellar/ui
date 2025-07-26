@@ -79,10 +79,10 @@ const ListViewComponent = ({
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(25);
-  const [totalItems, setTotalItems] = useState<number>(0);
 
   // Add resource filters state
   const [resourceFilters, setResourceFilters] = useState<ResourceFilter>(initialResourceFilters);
+  const prevFiltersRef = useRef({ filteredContext, resourceFilters: initialResourceFilters });
 
   // Initialize filters from props when they change
   useEffect(() => {
@@ -147,7 +147,6 @@ const ListViewComponent = ({
     }
 
     setFilteredResources(filtered);
-    setTotalItems(filtered.length);
 
     // Log resources stats for debugging
     console.log(`[ListViewComponent] Resource counts: 
@@ -156,8 +155,14 @@ const ListViewComponent = ({
       - Filtered resources (${filteredContext}): ${filtered.length}
     `);
 
-    // Reset to first page when filter changes
-    setCurrentPage(1);
+    const filtersChanged =
+      prevFiltersRef.current.filteredContext !== filteredContext ||
+      JSON.stringify(prevFiltersRef.current.resourceFilters) !== JSON.stringify(resourceFilters);
+
+    if (filtersChanged) {
+      setCurrentPage(1);
+      prevFiltersRef.current = { filteredContext, resourceFilters };
+    }
   }, [filteredContext, resources, totalRawResources, resourceFilters]);
 
   // Function to format date strings properly
@@ -527,7 +532,8 @@ const ListViewComponent = ({
   }, [t]); // Keep original dependencies
 
   // Calculate pagination values using filteredResources instead of resources
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const actualTotalItems = filteredResources.length;
+  const totalPages = Math.ceil(actualTotalItems / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredResources.slice(indexOfFirstItem, indexOfLastItem);
@@ -922,8 +928,8 @@ const ListViewComponent = ({
               >
                 {t('listView.pagination.showing', {
                   from: indexOfFirstItem + 1,
-                  to: Math.min(indexOfLastItem, totalItems),
-                  total: totalItems,
+                  to: Math.min(indexOfLastItem, actualTotalItems),
+                  total: actualTotalItems,
                 })}
                 {filteredContext !== 'all' &&
                   t('listView.pagination.filtered', { context: filteredContext })}
@@ -961,7 +967,7 @@ const ListViewComponent = ({
                 variant="outlined"
                 size="small"
                 onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || totalPages === 0}
                 sx={{
                   minWidth: { xs: 60, sm: 70 },
                   px: { xs: 1, sm: 1.5 },
@@ -1051,7 +1057,7 @@ const ListViewComponent = ({
                 variant="outlined"
                 size="small"
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
                 sx={{
                   minWidth: { xs: 60, sm: 70 },
                   px: { xs: 1, sm: 1.5 },
