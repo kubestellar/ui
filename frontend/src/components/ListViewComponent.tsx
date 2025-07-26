@@ -547,26 +547,37 @@ const ListViewComponent = ({
 
   const getPageNumbers = useCallback((): (number | string)[] => {
     if (totalPages <= 1) return [1];
+    if (totalPages <= 7) {
+      // If we have 7 or fewer pages, show them all
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
 
     const range: (number | string)[] = [];
-    const delta = 2;
 
     range.push(1);
 
-    const rangeStart = Math.max(2, currentPage - delta);
-    const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
-
-    if (rangeStart > 2) {
+    if (currentPage <= 4) {
+      for (let i = 2; i <= Math.min(5, totalPages - 1); i++) {
+        range.push(i);
+      }
+      if (totalPages > 6) {
+        range.push('...');
+      }
+    } else if (currentPage >= totalPages - 3) {
+      if (totalPages > 6) {
+        range.push('...');
+      }
+      for (let i = Math.max(totalPages - 4, 2); i <= totalPages - 1; i++) {
+        range.push(i);
+      }
+    } else {
+      range.push('...');
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        range.push(i);
+      }
       range.push('...');
     }
 
-    for (let i = rangeStart; i <= rangeEnd; i++) {
-      range.push(i);
-    }
-
-    if (rangeEnd < totalPages - 1) {
-      range.push('...');
-    }
     if (totalPages > 1) {
       range.push(totalPages);
     }
