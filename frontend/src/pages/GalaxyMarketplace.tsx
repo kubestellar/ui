@@ -9,8 +9,11 @@ import {
   HiSparkles,
   HiOutlineGlobeAlt,
   HiOutlineStar,
+  HiOutlineFunnel,
 } from 'react-icons/hi2';
 import { FaRocket, FaGlobeAsia, FaSpaceShuttle } from 'react-icons/fa';
+import { Select, MenuItem, FormControl } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import useTheme from '../stores/themeStore';
 import getThemeStyles from '../lib/theme-utils';
 import { PluginAPI } from '../plugins/PluginAPI';
@@ -266,7 +269,7 @@ const GalaxyMarketplace: React.FC = () => {
     setShowFilters(prev => !prev);
   }, []);
 
-  const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSortChange = useCallback((e: SelectChangeEvent<string>) => {
     setSortBy(e.target.value);
   }, []);
 
@@ -399,7 +402,7 @@ const GalaxyMarketplace: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={handleToggleFilters}
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5"
+              className="flex items-center gap-2 rounded-xl px-4 py-3"
               style={{
                 background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(249, 250, 251, 0.9)',
                 backdropFilter: 'blur(2px)',
@@ -411,41 +414,82 @@ const GalaxyMarketplace: React.FC = () => {
               <span>{t('marketplace.filters', 'Filters')}</span>
             </button>
 
-            <div className="relative">
-              <select
+            <FormControl>
+              <Select
                 value={sortBy}
                 onChange={handleSortChange}
-                className="cursor-pointer appearance-none rounded-xl px-4 py-2.5 pr-8"
-                style={{
-                  background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(249, 250, 251, 0.9)',
-                  backdropFilter: 'blur(2px)',
-                  border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
-                  color: themeStyles.colors.text.primary,
+                displayEmpty
+                renderValue={(selected) => (
+                  <div className="flex items-center gap-2">
+                    <HiOutlineFunnel className="h-5 w-5" />
+                    <span className="capitalize">{selected}</span>
+                  </div>
+                )}
+                sx={{
+                  borderRadius: '12px',
+                  minWidth: 120,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)',
+                    borderWidth: '1px',
+                    borderRadius: '12px',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: themeStyles.colors.brand.primary,
+                    borderRadius: '12px',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: themeStyles.colors.brand.primary,
+                    borderWidth: '1px',
+                    borderRadius: '12px',
+                  },
+                  '& .MuiSelect-select': {
+                    padding: '12px 16px',
+                    fontSize: 'inherit',
+                    color: themeStyles.colors.text.primary,
+                    backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(249, 250, 251, 0.9)',
+                    backdropFilter: 'blur(2px)',
+                    borderRadius: '12px',
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: isDark ? '#9ca3af' : '#64748b',
+                  },
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(249, 250, 251, 0.95)',
+                      backdropFilter: 'blur(8px)',
+                      border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                      boxShadow: isDark
+                        ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
+                        : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                      '& .MuiMenuItem-root': {
+                        color: themeStyles.colors.text.primary,
+                        fontSize: '0.875rem',
+                        padding: '8px 16px',
+                        '&:hover': {
+                          backgroundColor: isDark
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'rgba(0, 0, 0, 0.04)',
+                        },
+                        '&.Mui-selected': {
+                          backgroundColor: isDark
+                            ? 'rgba(59, 130, 246, 0.16)'
+                            : 'rgba(59, 130, 246, 0.08)',
+                        },
+                      },
+                    },
+                  },
                 }}
               >
-                <option value="popular">{t('marketplace.sortPopular', 'Popular')}</option>
-                <option value="rating">{t('marketplace.sortRating', 'Highest Rated')}</option>
-                <option value="newest">{t('marketplace.sortNewest', 'Newest')}</option>
-              </select>
-              {/* Custom dropdown arrow */}
-              <div
-                className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
-                style={{ color: isDark ? '#9ca3af' : '#64748b' }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
+                <MenuItem value="popular" className="capitalize">{t('marketplace.sortPopular', 'Popular')}</MenuItem>
+                <MenuItem value="rating" className="capitalize">{t('marketplace.sortRating', 'Highest Rated')}</MenuItem>
+                <MenuItem value="newest" className="capitalize">{t('marketplace.sortNewest', 'Newest')}</MenuItem>
+              </Select>
+            </FormControl>
           </div>
         </div>
 
