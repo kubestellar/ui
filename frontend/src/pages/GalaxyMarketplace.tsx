@@ -419,7 +419,7 @@ const GalaxyMarketplace: React.FC = () => {
                 value={sortBy}
                 onChange={handleSortChange}
                 displayEmpty
-                renderValue={(selected) => (
+                renderValue={selected => (
                   <div className="flex items-center gap-2">
                     <HiOutlineFunnel className="h-5 w-5" />
                     <span className="capitalize">{selected}</span>
@@ -460,7 +460,9 @@ const GalaxyMarketplace: React.FC = () => {
                 MenuProps={{
                   PaperProps: {
                     sx: {
-                      backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(249, 250, 251, 0.95)',
+                      backgroundColor: isDark
+                        ? 'rgba(31, 41, 55, 0.95)'
+                        : 'rgba(249, 250, 251, 0.95)',
                       backdropFilter: 'blur(8px)',
                       border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
                       boxShadow: isDark
@@ -485,9 +487,15 @@ const GalaxyMarketplace: React.FC = () => {
                   },
                 }}
               >
-                <MenuItem value="popular" className="capitalize">{t('marketplace.sortPopular', 'Popular')}</MenuItem>
-                <MenuItem value="rating" className="capitalize">{t('marketplace.sortRating', 'Highest Rated')}</MenuItem>
-                <MenuItem value="newest" className="capitalize">{t('marketplace.sortNewest', 'Newest')}</MenuItem>
+                <MenuItem value="popular" className="capitalize">
+                  {t('marketplace.sortPopular', 'Popular')}
+                </MenuItem>
+                <MenuItem value="rating" className="capitalize">
+                  {t('marketplace.sortRating', 'Highest Rated')}
+                </MenuItem>
+                <MenuItem value="newest" className="capitalize">
+                  {t('marketplace.sortNewest', 'Newest')}
+                </MenuItem>
               </Select>
             </FormControl>
           </div>
