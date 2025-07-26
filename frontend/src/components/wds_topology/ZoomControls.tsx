@@ -264,6 +264,8 @@ export const ZoomControls = memo<ZoomControlsProps>(
                   '&.Mui-selected': {
                     backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
                     color: theme === 'dark' ? '#fff' : '#1976d2',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                    transform: 'translateY(-1px)',
                   },
                   '&:not(.Mui-selected)': {
                     color: theme === 'dark' ? '#aaa' : '#6d7f8b',
@@ -271,46 +273,41 @@ export const ZoomControls = memo<ZoomControlsProps>(
                   '&:hover': {
                     backgroundColor: theme === 'dark' ? '#444' : '#f5f5f5',
                   },
+                  transition: 'all 0.2s ease-in-out',
                 },
               }}
             >
               <ToggleButton
                 value="bezier"
-                aria-label="Curvy"
+                aria-label={t('wecsTopology.zoomControls.curvy')}
                 sx={{
                   px: 1.5,
                   py: 0.5,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5,
+                  justifyContent: 'center',
+                  minWidth: '40px',
+                  height: '32px',
+                  borderRadius: '4px 0 0 4px',
                 }}
               >
-                <i className="fa fa-bezier-curve" style={{ fontSize: '14px' }} />
-                <Typography
-                  variant="caption"
-                  sx={{ ml: 0.5, display: { xs: 'none', sm: 'block' } }}
-                >
-                  {t('wecsTopology.zoomControls.curvy')}
-                </Typography>
+                <i className="fa fa-bezier-curve" style={{ fontSize: '16px' }} />
               </ToggleButton>
               <ToggleButton
                 value="step"
-                aria-label="Square"
+                aria-label={t('wecsTopology.zoomControls.square')}
                 sx={{
                   px: 1.5,
                   py: 0.5,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5,
+                  justifyContent: 'center',
+                  minWidth: '40px',
+                  height: '32px',
+                  borderRadius: '0 4px 4px 0',
                 }}
               >
-                <i className="fa fa-project-diagram" style={{ fontSize: '14px' }} />
-                <Typography
-                  variant="caption"
-                  sx={{ ml: 0.5, display: { xs: 'none', sm: 'block' } }}
-                >
-                  {t('wecsTopology.zoomControls.square')}
-                </Typography>
+                <i className="fa fa-project-diagram" style={{ fontSize: '16px' }} />
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
