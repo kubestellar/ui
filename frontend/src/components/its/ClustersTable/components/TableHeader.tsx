@@ -162,18 +162,25 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 variant="outlined"
                 startIcon={<Tag size={16} />}
                 endIcon={<KeyboardArrowDownIcon />}
-                onClick={handleBulkLabelsClick}
+                onClick={selectedCount > 1 ? handleBulkLabelsClick : onBulkLabels}
                 sx={{
-                  color: colors.primary,
-                  borderColor: colors.border,
+                  color: selectedCount > 1 ? colors.primary : colors.disabled,
+                  borderColor: selectedCount > 1 ? colors.border : colors.disabled,
                   backgroundColor: isDark ? 'rgba(47, 134, 255, 0.05)' : 'transparent',
+                  opacity: selectedCount <= 1 ? 0.6 : 1,
+                  cursor: selectedCount <= 1 ? 'not-allowed' : 'pointer',
                   '&:hover': {
-                    borderColor: colors.primary,
-                    backgroundColor: isDark
-                      ? 'rgba(47, 134, 255, 0.1)'
-                      : 'rgba(47, 134, 255, 0.05)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 8px -2px rgba(47, 134, 255, 0.2)',
+                    borderColor: selectedCount > 1 ? colors.primary : colors.disabled,
+                    backgroundColor:
+                      selectedCount > 1
+                        ? isDark
+                          ? 'rgba(47, 134, 255, 0.1)'
+                          : 'rgba(47, 134, 255, 0.05)'
+                        : 'transparent',
+                    transform: selectedCount > 1 ? 'translateY(-2px)' : 'none',
+                    boxShadow:
+                      selectedCount > 1 ? '0 4px 8px -2px rgba(47, 134, 255, 0.2)' : 'none',
+                    cursor: selectedCount <= 1 ? 'not-allowed' : 'pointer',
                   },
                   textTransform: 'none',
                   fontWeight: '500',
@@ -204,38 +211,40 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                   {selectedCount}
                 </Box>
               </Button>
-              <Menu
-                anchorEl={bulkLabelsAnchorEl}
-                open={Boolean(bulkLabelsAnchorEl)}
-                onClose={handleBulkLabelsClose}
-                MenuListProps={{
-                  'aria-labelledby': 'bulk-labels-button',
-                }}
-                PaperProps={{
-                  sx: {
-                    mt: 1,
-                    boxShadow: isDark
-                      ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
-                      : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                    backgroundColor: colors.paper,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                  },
-                }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    onBulkLabels();
-                    handleBulkLabelsClose();
+              {selectedCount > 1 && (
+                <Menu
+                  anchorEl={bulkLabelsAnchorEl}
+                  open={Boolean(bulkLabelsAnchorEl)}
+                  onClose={handleBulkLabelsClose}
+                  MenuListProps={{
+                    'aria-labelledby': 'bulk-labels-button',
                   }}
-                  sx={{ color: colors.text }}
+                  PaperProps={{
+                    sx: {
+                      mt: 1,
+                      boxShadow: isDark
+                        ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
+                        : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                      backgroundColor: colors.paper,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                    },
+                  }}
                 >
-                  <ListItemIcon>
-                    <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
-                  </ListItemIcon>
-                  <ListItemText>{t('clusters.labels.bulkLabels')}</ListItemText>
-                </MenuItem>
-              </Menu>
+                  <MenuItem
+                    onClick={() => {
+                      onBulkLabels();
+                      handleBulkLabelsClose();
+                    }}
+                    sx={{ color: colors.text }}
+                  >
+                    <ListItemIcon>
+                      <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
+                    </ListItemIcon>
+                    <ListItemText>{t('clusters.labels.bulkLabels')}</ListItemText>
+                  </MenuItem>
+                </Menu>
+              )}
             </div>
           )}
 

@@ -223,7 +223,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     deletedLabels?: string[]
   ) => {
     const isBulkOperation =
-      selectedClusters.length > 0 && clusterName.includes('selected clusters');
+      selectedClusters.length > 1 && clusterName.includes('selected clusters');
     setLoadingClusterEdit(isBulkOperation ? 'bulk' : clusterName);
 
     if (isBulkOperation) {
@@ -329,13 +329,20 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         onFilterChange={setFilter}
         hasSelectedClusters={selectedClusters.length > 0}
         selectedCount={selectedClusters.length}
-        onBulkLabels={() =>
+        onBulkLabels={() => {
+          if (selectedClusters.length <= 1) {
+            toast.error('Bulk labeling requires multiple clusters to be selected', {
+              icon: '⚠️',
+              duration: 4000,
+            });
+            return;
+          }
           handleEditLabels({
             name: `${selectedClusters.length} selected clusters`,
             context: 'bulk-operation',
             labels: {},
-          })
-        }
+          });
+        }}
         onShowCreateOptions={() => {
           setShowCreateOptions(true);
           setActiveOption('quickconnect');
