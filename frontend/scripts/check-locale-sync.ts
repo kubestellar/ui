@@ -1,7 +1,6 @@
 /// <reference types="node" />
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { Octokit } from '@octokit/rest';
 
 interface LocaleData {
@@ -31,12 +30,14 @@ class LocaleSyncChecker {
     const repository = process.env.GITHUB_REPOSITORY;
     const token = process.env.GH_REPO_TOKEN || process.env.GITHUB_TOKEN;
     this.prNumber = process.env.PR_NUMBER || process.env.GITHUB_PR_NUMBER || this.detectPRNumber();
-    
+
     if (repository && token) {
       [this.owner, this.repo] = repository.split('/');
       this.octokit = new Octokit({ auth: token });
     } else {
-      console.log('⚠️  GITHUB_REPOSITORY or token not set; running in local-only mode (no PR comments will be posted).');
+      console.log(
+        '⚠️  GITHUB_REPOSITORY or token not set; running in local-only mode (no PR comments will be posted).'
+      );
     }
   }
 
@@ -94,7 +95,10 @@ class LocaleSyncChecker {
 
   private generatePRComment(results: LocaleResults): string {
     const summary = Object.entries(results)
-      .map(([locale, issues]) => `• ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`)
+      .map(
+        ([locale, issues]) =>
+          `• ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`
+      )
       .join('\n');
 
     return `## 🌐 Locale Sync Check Results
@@ -119,7 +123,7 @@ Missing keys should be added, and extra keys should be removed.`;
         owner: this.owner,
         repo: this.repo,
         issue_number: parseInt(this.prNumber),
-        body: comment
+        body: comment,
       });
       console.log('✅ PR comment posted successfully');
     } catch (error) {
@@ -129,34 +133,36 @@ Missing keys should be added, and extra keys should be removed.`;
 
   async run(): Promise<void> {
     console.log('🔍 Checking locale synchronization...');
-    
+
     const masterData = this.loadLocaleFile(this.masterLocale);
     const masterKeys = this.flattenObject(masterData);
     console.log(`📋 Master locale (${this.masterLocale}) has ${masterKeys.length} keys`);
-    
+
     const locales = this.getAvailableLocales();
     console.log(`🌍 Checking ${locales.length} locale(s): ${locales.join(', ')}`);
-    
+
     const results: LocaleResults = {};
     let hasIssues = false;
-    
+
     for (const locale of locales) {
       try {
         const localeData = this.loadLocaleFile(locale);
         const localeKeys = this.flattenObject(localeData);
         const issues = this.compareKeys(masterKeys, localeKeys);
         results[locale] = issues;
-        
+
         if (issues.missing.length > 0 || issues.extra.length > 0) {
           hasIssues = true;
-          console.log(`  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`);
+          console.log(
+            `  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`
+          );
         }
       } catch (error) {
         console.error(`❌ Error processing ${locale}:`, error);
         hasIssues = true;
       }
     }
-    
+
     if (hasIssues) {
       console.log('\n❌ Locale synchronization issues found!');
       await this.postPRComment(results);
