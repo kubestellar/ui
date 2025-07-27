@@ -428,8 +428,8 @@ Instantly get access to our documents and meeting invites at http://kubestellar.
 <br>
 
 <center>
-<a href="https://github.com/kubestellar/kubestellar/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=kubestellar/kubestellar" />
+<a href="https://github.com/kubestellar/ui/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=kubestellar/ui" />
 </a>
 </center>
 <br>
