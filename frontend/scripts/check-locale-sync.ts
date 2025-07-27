@@ -1,7 +1,8 @@
+/// <reference types="node" />
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// import { Octokit } from '@octokit/rest';
+import { Octokit } from '@octokit/rest';
 
 interface LocaleData {
   [key: string]: unknown;
@@ -25,26 +26,33 @@ interface LocaleResults {
 // }
 
 class LocaleSyncChecker {
-  // private octokit?: Octokit;
-  // private owner?: string;
-  // private repo?: string;
+  private octokit?: Octokit;
+  private owner?: string;
+  private repo?: string;
+  private prNumber?: string;
   private localesPath: string;
   private masterLocale: string;
   // private issueLabel: string;
 
   constructor() {
-    // const repository = process.env.GITHUB_REPOSITORY;
-    // if (!repository) {
-    //   console.warn(
-    //     '⚠️  GITHUB_REPOSITORY not set; running in local-only mode (no issues will be created).'
-    //   );
-    // } else {
-    //   [this.owner, this.repo] = repository.split('/');
-    //   this.octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-    // }
     this.localesPath = path.join(process.cwd(), 'src', 'locales');
     this.masterLocale = 'en';
-    // this.issueLabel = 'locale-sync';
+    const repository = process.env.GITHUB_REPOSITORY;
+    const token = process.env.GH_REPO_TOKEN || process.env.GITHUB_TOKEN;
+    this.prNumber = process.env.PR_NUMBER || process.env.GITHUB_PR_NUMBER || this.detectPRNumber();
+    if (repository && token) {
+      [this.owner, this.repo] = repository.split('/');
+      this.octokit = new Octokit({ auth: token });
+    }
+  }
+
+  private detectPRNumber(): string | undefined {
+    // Try to detect PR number from CI envs
+    if (process.env.GITHUB_REF && process.env.GITHUB_REF.startsWith('refs/pull/')) {
+      const match = process.env.GITHUB_REF.match(/refs\/pull\/(\d+)\//);
+      if (match) return match[1];
+    }
+    return undefined;
   }
 
   private flattenObject(obj: Record<string, unknown>, prefix = ''): string[] {
@@ -191,27 +199,50 @@ class LocaleSyncChecker {
   //   }
   // }
 
-  // private generateIssueBody(locale: string, issues: LocaleIssues): string {
-  //   const { missing, extra } = issues;
-  //   let b = `## Locale Sync for \`${locale}\`\n`;
-  //   if (missing.length) b += `\nMissing (\`${missing.length}\`): ${missing.join(', ')}\n`;
-  //   if (extra.length) b += `\nExtra   (\`${extra.length}\`): ${extra.join(', ')}\n`;
-  //   return b;
-  // }
+  private generatePRComment(results: LocaleResults): string {
+    let body = '## :warning: Locale Sync Check Failed\n';
+    for (const [locale, issues] of Object.entries(results)) {
+      if (issues.missing.length || issues.extra.length) {
+        body += `\n### \`${locale}\``;
+        if (issues.missing.length) body += `\n- Missing keys (${issues.missing.length}): ${issues.missing.join(', ')}`;
+        if (issues.extra.length) body += `\n- Extra keys (${issues.extra.length}): ${issues.extra.join(', ')}`;
+      }
+    }
+    body += '\n\nPlease update the translation files to match `strings.en.json`.';
+    return body;
+  }
+
+  private async postPRComment(results: LocaleResults) {
+    if (!this.octokit || !this.owner || !this.repo || !this.prNumber) return;
+    const body = this.generatePRComment(results);
+    try {
+      await this.octokit.issues.createComment({
+        owner: this.owner,
+        repo: this.repo,
+        issue_number: Number(this.prNumber),
+        body,
+      });
+      console.log('💬 Posted PR comment for locale sync discrepancies.');
+    } catch (err) {
+      console.error('❌ Failed to post PR comment:', err);
+    }
+  }
 
   async run(): Promise<void> {
-    this.checkLocaleSync();
-    // const results = this.checkLocaleSync();
-    // const out = path.join(process.cwd(), 'locale-check-results.json');
-    // fs.writeFileSync(out, JSON.stringify(results, null, 2));
-    // if (this.octokit) {
-    //   for (const [loc, iss] of Object.entries(results)) {
-    //     if (iss.missing.length || iss.extra.length) {
-    //       await this.createOrUpdateIssue(loc, iss);
-    //     }
-    //   }
-    //   await this.closeResolved(results);
-    // }
+    const results = this.checkLocaleSync();
+    let hasDiscrepancy = false;
+    for (const issues of Object.values(results)) {
+      if (issues.missing.length || issues.extra.length) {
+        hasDiscrepancy = true;
+        break;
+      }
+    }
+    if (hasDiscrepancy) {
+      if (this.octokit && this.owner && this.repo && this.prNumber) {
+        await this.postPRComment(results);
+      }
+      process.exitCode = 1;
+    }
   }
 }
 
