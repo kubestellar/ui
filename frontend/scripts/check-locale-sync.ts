@@ -17,14 +17,6 @@ interface LocaleResults {
   [locale: string]: LocaleIssues;
 }
 
-// interface GitHubIssue {
-//   number: number;
-//   title: string;
-//   body: string;
-//   state: 'open' | 'closed';
-//   labels: Array<{ name: string }>;
-// }
-
 class LocaleSyncChecker {
   private octokit?: Octokit;
   private owner?: string;
@@ -32,7 +24,6 @@ class LocaleSyncChecker {
   private prNumber?: string;
   private localesPath: string;
   private masterLocale: string;
-  // private issueLabel: string;
 
   constructor() {
     this.localesPath = path.join(process.cwd(), 'src', 'locales');
@@ -40,9 +31,12 @@ class LocaleSyncChecker {
     const repository = process.env.GITHUB_REPOSITORY;
     const token = process.env.GH_REPO_TOKEN || process.env.GITHUB_TOKEN;
     this.prNumber = process.env.PR_NUMBER || process.env.GITHUB_PR_NUMBER || this.detectPRNumber();
+    
     if (repository && token) {
       [this.owner, this.repo] = repository.split('/');
       this.octokit = new Octokit({ auth: token });
+    } else {
+      console.log('⚠️  GITHUB_REPOSITORY or token not set; running in local-only mode (no PR comments will be posted).');
     }
   }
 
@@ -98,164 +92,89 @@ class LocaleSyncChecker {
     return { missing, extra };
   }
 
-  private checkLocaleSync(): LocaleResults {
-    console.log('🔍 Checking locale synchronization...');
-    const masterKeys = this.flattenObject(this.loadLocaleFile(this.masterLocale)).sort();
-    console.log(`📋 Master locale (${this.masterLocale}) has ${masterKeys.length} keys`);
-
-    const results: LocaleResults = {};
-    const locales = this.getAvailableLocales();
-    console.log(`🌍 Checking ${locales.length} locale(s): ${locales.join(', ')}`);
-
-    for (const locale of locales) {
-      try {
-        const localeKeys = this.flattenObject(this.loadLocaleFile(locale)).sort();
-        const issues = this.compareKeys(masterKeys, localeKeys);
-        results[locale.toLowerCase()] = issues;
-        console.log(
-          `  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`
-        );
-      } catch (err) {
-        console.error(`❌ Error for locale ${locale}:`, err);
-        results[locale] = { missing: [], extra: [] };
-      }
-    }
-    return results;
-  }
-
-  // private async findExistingIssues(): Promise<GitHubIssue[]> {
-  //   if (!this.octokit || !this.owner || !this.repo) return [];
-  //   try {
-  //     const { data } = await this.octokit.rest.issues.listForRepo({
-  //       owner: this.owner,
-  //       repo: this.repo,
-  //       labels: this.issueLabel,
-  //       state: 'open',
-  //     });
-  //     return data.map(issue => ({
-  //       number: issue.number,
-  //       title: issue.title,
-  //       body: issue.body ?? '',
-  //       state: issue.state as 'open' | 'closed',
-  //       labels: issue.labels.map(l => ({ name: typeof l === 'string' ? l : l.name || '' })),
-  //     }));
-  //   } catch (err) {
-  //     console.error('❌ Failed to fetch issues:', err);
-  //     return [];
-  //   }
-  // }
-
-  // private async createOrUpdateIssue(locale: string, issues: LocaleIssues): Promise<void> {
-  //   if (!this.octokit || !this.owner || !this.repo) return;
-  //   const title = `[Locale Sync] ${locale.toUpperCase()} translation keys out of sync`;
-  //   const body = this.generateIssueBody(locale, issues);
-  //   const existing = (await this.findExistingIssues()).find(i => i.title === title);
-  //   try {
-  //     if (existing) {
-  //       await this.octokit.rest.issues.update({
-  //         owner: this.owner,
-  //         repo: this.repo,
-  //         issue_number: existing.number,
-  //         title,
-  //         body,
-  //       });
-  //       console.log(`🔄 Updated issue #${existing.number}`);
-  //     } else {
-  //       const { data } = await this.octokit.rest.issues.create({
-  //         owner: this.owner,
-  //         repo: this.repo,
-  //         title,
-  //         body,
-  //         labels: [this.issueLabel],
-  //       });
-  //       console.log(`🆕 Created issue #${data.number}`);
-  //     }
-  //   } catch (err) {
-  //     console.error('❌ Issue create/update failed:', err);
-  //   }
-  // }
-
-  // private async closeResolved(results: LocaleResults): Promise<void> {
-  //   if (!this.octokit || !this.owner || !this.repo) return;
-  //   const existing = await this.findExistingIssues();
-  //   for (const issue of existing) {
-  //     const m = issue.title.match(/\[Locale Sync\] (.+) translation keys out of sync/);
-  //     if (!m) continue;
-  //     const locale = m[1].toLowerCase();
-  //     const { missing, extra } = results[locale] || { missing: [], extra: [] };
-  //     if (missing.length === 0 && extra.length === 0) {
-  //       try {
-  //         await this.octokit.rest.issues.update({
-  //           owner: this.owner,
-  //           repo: this.repo,
-  //           issue_number: issue.number,
-  //           state: 'closed',
-  //         });
-  //         console.log(`✅ Closed issue #${issue.number}`);
-  //       } catch (err) {
-  //         console.error('❌ Failed to close issue:', err);
-  //       }
-  //     }
-  //   }
-  // }
-
   private generatePRComment(results: LocaleResults): string {
-    let body = '## :warning: Locale Sync Check Failed\n';
-    for (const [locale, issues] of Object.entries(results)) {
-      if (issues.missing.length || issues.extra.length) {
-        body += `\n### \`${locale}\``;
-        if (issues.missing.length) body += `\n- Missing keys (${issues.missing.length}): ${issues.missing.join(', ')}`;
-        if (issues.extra.length) body += `\n- Extra keys (${issues.extra.length}): ${issues.extra.join(', ')}`;
-      }
-    }
-    body += '\n\nPlease update the translation files to match `strings.en.json`.';
-    return body;
+    const summary = Object.entries(results)
+      .map(([locale, issues]) => `• ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`)
+      .join('\n');
+
+    return `## 🌐 Locale Sync Check Results
+
+The following locale files have synchronization issues with the master English locale:
+
+${summary}
+
+**Action Required:** Please ensure all locale files have the same keys as \`strings.en.json\`.
+Missing keys should be added, and extra keys should be removed.`;
   }
 
   private async postPRComment(results: LocaleResults) {
-    if (!this.octokit || !this.owner || !this.repo || !this.prNumber) return;
-    const body = this.generatePRComment(results);
+    if (!this.octokit || !this.owner || !this.repo || !this.prNumber) {
+      console.log('⚠️  Skipping PR comment - missing GitHub context or token');
+      return;
+    }
+
     try {
-      await this.octokit.issues.createComment({
+      const comment = this.generatePRComment(results);
+      await this.octokit.rest.issues.createComment({
         owner: this.owner,
         repo: this.repo,
-        issue_number: Number(this.prNumber),
-        body,
+        issue_number: parseInt(this.prNumber),
+        body: comment
       });
-      console.log('💬 Posted PR comment for locale sync discrepancies.');
-    } catch (err) {
-      console.error('❌ Failed to post PR comment:', err);
+      console.log('✅ PR comment posted successfully');
+    } catch (error) {
+      console.error('❌ Failed to post PR comment:', error);
     }
   }
 
   async run(): Promise<void> {
-    const results = this.checkLocaleSync();
-    let hasDiscrepancy = false;
-    for (const issues of Object.values(results)) {
-      if (issues.missing.length || issues.extra.length) {
-        hasDiscrepancy = true;
-        break;
+    console.log('🔍 Checking locale synchronization...');
+    
+    const masterData = this.loadLocaleFile(this.masterLocale);
+    const masterKeys = this.flattenObject(masterData);
+    console.log(`📋 Master locale (${this.masterLocale}) has ${masterKeys.length} keys`);
+    
+    const locales = this.getAvailableLocales();
+    console.log(`🌍 Checking ${locales.length} locale(s): ${locales.join(', ')}`);
+    
+    const results: LocaleResults = {};
+    let hasIssues = false;
+    
+    for (const locale of locales) {
+      try {
+        const localeData = this.loadLocaleFile(locale);
+        const localeKeys = this.flattenObject(localeData);
+        const issues = this.compareKeys(masterKeys, localeKeys);
+        results[locale] = issues;
+        
+        if (issues.missing.length > 0 || issues.extra.length > 0) {
+          hasIssues = true;
+          console.log(`  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`);
+        }
+      } catch (error) {
+        console.error(`❌ Error processing ${locale}:`, error);
+        hasIssues = true;
       }
     }
-    if (hasDiscrepancy) {
-      if (this.octokit && this.owner && this.repo && this.prNumber) {
-        await this.postPRComment(results);
-      }
-      process.exitCode = 1;
+    
+    if (hasIssues) {
+      console.log('\n❌ Locale synchronization issues found!');
+      await this.postPRComment(results);
+      process.exit(1); // Fail the check
+    } else {
+      console.log('\n✅ All locale files are synchronized!');
     }
   }
 }
 
 async function main() {
-  const checker = new LocaleSyncChecker();
-  await checker.run();
+  try {
+    const checker = new LocaleSyncChecker();
+    await checker.run();
+  } catch (error) {
+    console.error('❌ Locale sync check failed:', error);
+    process.exit(1);
+  }
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const entryScript = path.resolve(process.argv[1] || '');
-if (__filename === entryScript) {
-  main().catch(e => {
-    console.error('Fatal:', e);
-    process.exit(1);
-  });
-}
+main();
