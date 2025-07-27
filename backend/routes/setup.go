@@ -5,8 +5,6 @@ import (
 	"github.com/kubestellar/ui/backend/api"
 )
 
-
-
 func SetupRoutes(router *gin.Engine) {
 	RegisterMetrics()
 	setupClusterRoutes(router)
