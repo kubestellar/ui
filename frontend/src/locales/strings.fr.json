@@ -68,6 +68,101 @@
     "items_plural": "{{count}} éléments",
     "filteredFrom": "filtré à partir de"
   },
+  "admin": {
+    "users": {
+      "title": "Gestion des Utilisateurs",
+      "subtitle": "Utilisateurs du Système",
+      "description": "Gérer les utilisateurs du système et leurs permissions",
+      "searchPlaceholder": "Rechercher des utilisateurs par nom, rôle ou permissions...",
+      "refresh": "Actualiser les Utilisateurs",
+      "addUser": "Ajouter un Utilisateur",
+      "noUsers": "Aucun Utilisateur Trouvé",
+      "noUsersDescription": "Il n'y a pas encore d'utilisateurs dans le système. Cliquez sur 'Ajouter un Utilisateur' pour créer votre premier utilisateur.",
+      "noPermissions": "Aucune permission attribuée",
+      "filters": {
+        "title": "Filtres",
+        "reset": "Réinitialiser les Filtres",
+        "role": "Rôle",
+        "allRoles": "Tous les Rôles",
+        "permission": "Permission",
+        "anyPermission": "N'importe quelle Permission",
+        "permissionLevel": "Niveau de Permission",
+        "anyLevel": "N'importe quel Niveau",
+        "sortBy": "Trier Par",
+        "created": "Date de Création",
+        "ascending": "Ascendant",
+        "descending": "Descendant",
+        "active": "Filtres Actifs",
+        "roleFilter": "Rôle",
+        "permissionFilter": "Permission",
+        "levelFilter": "Niveau",
+        "searchFilter": "Recherche"
+      },
+      "actions": {
+        "addUser": "Ajouter un Utilisateur",
+        "editUser": "Modifier un Utilisateur",
+        "add": "Ajouter un Utilisateur",
+        "update": "Mettre à jour l'Utilisateur",
+        "delete": "Supprimer l'Utilisateur",
+        "edit": "Modifier",
+        "deleteUser": "Supprimer l'Utilisateur"
+      },
+      "table": {
+        "username": "Nom d'Utilisateur",
+        "role": "Rôle",
+        "permissions": "Permissions",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Administrateur",
+        "user": "Utilisateur"
+      },
+      "permissions": {
+        "users": "Utilisateurs",
+        "resources": "Ressources",
+        "system": "Système",
+        "dashboard": "Tableau de Bord",
+        "levels": {
+          "read": "Lecture",
+          "write": "Écriture",
+          "none": "Aucun"
+        }
+      },
+      "form": {
+        "username": "Nom d'Utilisateur",
+        "usernamePlaceholder": "Entrez le nom d'utilisateur",
+        "password": "Mot de Passe",
+        "passwordPlaceholder": "Entrez le mot de passe",
+        "passwordOptional": "Mot de Passe (optionnel)",
+        "passwordOptionalPlaceholder": "Entrez un nouveau mot de passe ou laissez vide",
+        "confirmPassword": "Confirmer le Mot de Passe",
+        "confirmPasswordPlaceholder": "Confirmez le mot de passe",
+        "isAdmin": "Accès Administrateur",
+        "permissions": "Permissions des Composants",
+        "cancel": "Annuler",
+        "optional": "optionnel"
+      },
+      "delete": {
+        "title": "Supprimer l'Utilisateur",
+        "confirmTitle": "Confirmer la Suppression",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'utilisateur \"{{username}}\" ? Cette action ne peut pas être annulée.",
+        "confirm": "Supprimer l'Utilisateur"
+      },
+      "errors": {
+        "fetchFailed": "Échec de la récupération des utilisateurs",
+        "missingFields": "Veuillez remplir tous les champs requis",
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "addFailed": "Échec de l'ajout de l'utilisateur",
+        "updateFailed": "Échec de la mise à jour de l'utilisateur",
+        "deleteFailed": "Échec de la suppression de l'utilisateur"
+      },
+      "success": {
+        "userAdded": "Utilisateur ajouté avec succès",
+        "userUpdated": "Utilisateur mis à jour avec succès",
+        "userDeleted": "Utilisateur supprimé avec succès"
+      }
+    }
+  },
   "installationPage": {
     "successSection": {
       "installed": "est correctement installé et répond aux exigences de version."
@@ -781,11 +876,17 @@
       "selectContainer": "Sélectionner un conteneur",
       "noContainersFound": "Aucun conteneur trouvé"
     },
+    "logs": {
+      "previousLogs": "TODO",
+      "currentLogs": "TODO",
+      "selectLogsContainer": "TODO"
+    },
     "errors": {
       "failedLoadClusterDetails": "Échec du chargement des détails du cluster.",
       "failedLoadDetails": "Échec du chargement des détails de {{type}}.",
       "apiNotImplemented": "API non implémentée pour la mise à jour du pod « {{resourceName}} »",
-      "failedFetchContainers": "Échec de la récupération de la liste des conteneurs"
+      "failedFetchContainers": "Échec de la récupération de la liste des conteneurs",
+      "failedFetchLogsContainers": "TODO"
     },
     "cluster": {
       "active": "Actif"
@@ -1177,13 +1278,11 @@
       "selectClusters": "Sélectionner les clusters ici",
       "matches": "Correspondances : {{count}} {{resourceType}}"
     },
-
     "labels": {
       "title": "Étiquettes :",
       "key": "Clé",
       "value": "Valeur",
-      "add": "Ajouter",
-      "count": "{{count}} étiquettes uniques sur {{total}}"
+      "add": "Ajouter"
     },
     "creatingConnection": "Création de la connexion :",
     "previewDialog": {
@@ -1230,10 +1329,6 @@
       "schedulingRules": "Règles de planification",
       "schedulingTooltip": "Définissez les conditions nécessaires pour qu'un cluster reçoive cette charge de travail",
       "resource": "Ressource",
-      "resource.cpu": "Cœurs CPU",
-      "resource.memory": "Mémoire",
-      "resource.storage": "Stockage",
-      "resource.pods": "Pods disponibles",
       "operator": "Opérateur",
       "activeRules": "Règles actives :",
       "noSchedulingRules": "Aucune règle de planification ajoutée. La politique s'appliquera à tous les clusters correspondants, quel que soit leur niveau de ressources.",
@@ -1644,7 +1739,9 @@
       "successWithUser": "Connexion réussie pour l'utilisateur : {{username}}. Redirection vers {{path}}",
       "invalidCredentials": "Identifiants invalides",
       "authFailed": "Échec de l'authentification. Veuillez vérifier vos identifiants.",
-      "noToken": "Aucun jeton reçu du serveur"
+      "noToken": "Aucun jeton reçu du serveur",
+      "invalidRequest": "TODO",
+      "serverError": "TODO"
     }
   },
   "kubestellarData": {
@@ -1939,13 +2036,6 @@
       "arrows": "↑↓",
       "enter": "↵"
     },
-    "sections": {
-      "navigation": "Navigation",
-      "visualizations": "Visualisations",
-      "help": "Aide",
-      "account": "Compte",
-      "admin": "Administration"
-    },
     "commands": {
       "home": {
         "title": "Accueil",
@@ -1988,6 +2078,13 @@
         "description": "Se déconnecter de votre compte",
         "infoMessage": "Vous avez été déconnecté avec succès."
       }
+    },
+    "sections": {
+      "navigation": "Navigation",
+      "admin": "Administration",
+      "visualizations": "Visualisations",
+      "help": "Aide",
+      "account": "Compte"
     }
   },
   "menu": {
@@ -2053,7 +2150,8 @@
         "details": "Détails",
         "uninstall": "Désinstaller",
         "reload": "Recharger",
-        "settings": "Paramètres"
+        "settings": "Paramètres",
+        "feedback": "TODO"
       }
     },
     "details": {
@@ -2088,6 +2186,11 @@
         "title": "Confirmer la désactivation du plugin",
         "message": "La désactivation de \"{{name}}\" arrêtera toutes les fonctionnalités du plugin. Vous pourrez le réactiver plus tard.",
         "confirm": "Oui, désactiver"
+      },
+      "enable": {
+        "title": "TODO",
+        "message": "TODO",
+        "confirm": "TODO"
       }
     },
     "marketplace": {
@@ -2114,101 +2217,6 @@
       "suggestion": {
         "title": "Suggestions d'amélioration",
         "placeholder": "Des suggestions pour améliorer ?"
-      }
-    }
-  },
-  "admin": {
-    "users": {
-      "title": "Gestion des Utilisateurs",
-      "subtitle": "Utilisateurs du Système",
-      "description": "Gérer les utilisateurs du système et leurs permissions",
-      "searchPlaceholder": "Rechercher des utilisateurs par nom, rôle ou permissions...",
-      "refresh": "Actualiser les Utilisateurs",
-      "addUser": "Ajouter un Utilisateur",
-      "noUsers": "Aucun Utilisateur Trouvé",
-      "noUsersDescription": "Il n'y a pas encore d'utilisateurs dans le système. Cliquez sur 'Ajouter un Utilisateur' pour créer votre premier utilisateur.",
-      "noPermissions": "Aucune permission attribuée",
-      "filters": {
-        "title": "Filtres",
-        "reset": "Réinitialiser les Filtres",
-        "role": "Rôle",
-        "allRoles": "Tous les Rôles",
-        "permission": "Permission",
-        "anyPermission": "N'importe quelle Permission",
-        "permissionLevel": "Niveau de Permission",
-        "anyLevel": "N'importe quel Niveau",
-        "sortBy": "Trier Par",
-        "created": "Date de Création",
-        "ascending": "Ascendant",
-        "descending": "Descendant",
-        "active": "Filtres Actifs",
-        "roleFilter": "Rôle",
-        "permissionFilter": "Permission",
-        "levelFilter": "Niveau",
-        "searchFilter": "Recherche"
-      },
-      "actions": {
-        "addUser": "Ajouter un Utilisateur",
-        "editUser": "Modifier un Utilisateur",
-        "add": "Ajouter un Utilisateur",
-        "update": "Mettre à jour l'Utilisateur",
-        "delete": "Supprimer l'Utilisateur",
-        "edit": "Modifier",
-        "deleteUser": "Supprimer l'Utilisateur"
-      },
-      "table": {
-        "username": "Nom d'Utilisateur",
-        "role": "Rôle",
-        "permissions": "Permissions",
-        "actions": "Actions"
-      },
-      "roles": {
-        "admin": "Administrateur",
-        "user": "Utilisateur"
-      },
-      "permissions": {
-        "users": "Utilisateurs",
-        "resources": "Ressources",
-        "system": "Système",
-        "dashboard": "Tableau de Bord",
-        "levels": {
-          "read": "Lecture",
-          "write": "Écriture",
-          "none": "Aucun"
-        }
-      },
-      "form": {
-        "username": "Nom d'Utilisateur",
-        "usernamePlaceholder": "Entrez le nom d'utilisateur",
-        "password": "Mot de Passe",
-        "passwordPlaceholder": "Entrez le mot de passe",
-        "passwordOptional": "Mot de Passe (optionnel)",
-        "passwordOptionalPlaceholder": "Entrez un nouveau mot de passe ou laissez vide",
-        "confirmPassword": "Confirmer le Mot de Passe",
-        "confirmPasswordPlaceholder": "Confirmez le mot de passe",
-        "isAdmin": "Accès Administrateur",
-        "permissions": "Permissions des Composants",
-        "cancel": "Annuler",
-        "optional": "optionnel"
-      },
-      "delete": {
-        "title": "Supprimer l'Utilisateur",
-        "confirmTitle": "Confirmer la Suppression",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'utilisateur \"{{username}}\" ? Cette action ne peut pas être annulée.",
-        "confirm": "Supprimer l'Utilisateur"
-      },
-      "errors": {
-        "fetchFailed": "Échec de la récupération des utilisateurs",
-        "missingFields": "Veuillez remplir tous les champs requis",
-        "passwordMismatch": "Les mots de passe ne correspondent pas",
-        "addFailed": "Échec de l'ajout de l'utilisateur",
-        "updateFailed": "Échec de la mise à jour de l'utilisateur",
-        "deleteFailed": "Échec de la suppression de l'utilisateur"
-      },
-      "success": {
-        "userAdded": "Utilisateur ajouté avec succès",
-        "userUpdated": "Utilisateur mis à jour avec succès",
-        "userDeleted": "Utilisateur supprimé avec succès"
       }
     }
   }
