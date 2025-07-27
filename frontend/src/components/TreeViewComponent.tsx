@@ -35,6 +35,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     resourceData?: TreeResourceItem;
     isGroup?: boolean;
     groupItems?: TreeResourceItem[];
+    initialTab?: number;
   } | null>(null);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
@@ -53,17 +54,17 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
       resourceData?: TreeResourceItem;
       isGroup?: boolean;
       groupItems?: TreeResourceItem[];
+      initialTab?: number;
     }) => {
       setSelectedNode(nodeData);
     },
     []
   );
 
-  // Menu open handler - used by the actions hook
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleMenuOpen = useCallback((_event: React.MouseEvent, _nodeId: string) => {
-    // This will be handled by the useTreeViewActions hook
-  }, []);
+  // Temporary menu open handler - will be updated after actions hook is created
+  const [handleMenuOpen, setHandleMenuOpen] = useState<
+    ((event: React.MouseEvent, nodeId: string) => void) | null
+  >(null);
 
   // Data management hook
   const {
@@ -83,7 +84,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     isCollapsed,
     isExpanded,
     onNodeSelect: handleNodeSelect,
-    onMenuOpen: handleMenuOpen,
+    onMenuOpen: handleMenuOpen || (() => {}),
   });
 
   // Actions management hook
@@ -94,6 +95,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     snackbarOpen,
     snackbarMessage,
     snackbarSeverity,
+    handleMenuOpen: handleMenuOpenFromActions,
     handleMenuClose,
     handleMenuAction,
     handleDeleteConfirm,
@@ -111,7 +113,13 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
       // Update edges state - handled by the data hook
     },
     getDescendantEdges,
+    onNodeSelect: handleNodeSelect,
   });
+
+  // Update the menu open handler after actions hook is created
+  useEffect(() => {
+    setHandleMenuOpen(() => handleMenuOpenFromActions);
+  }, [handleMenuOpenFromActions]);
 
   // Panel close handler
   const handleClosePanel = useCallback(() => {
