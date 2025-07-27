@@ -65,103 +65,7 @@
     "clear": "Limpiar",
     "of": "de",
     "items": "elemento{{count, plural, one {} other {s}}}",
-    "items_plural": "TODO",
     "filteredFrom": "filtrado de"
-  },
-  "admin": {
-    "users": {
-      "title": "Gestión de Usuarios",
-      "subtitle": "Usuarios del Sistema",
-      "description": "Gestionar usuarios del sistema y sus permisos",
-      "searchPlaceholder": "Buscar usuarios por nombre, rol o permisos...",
-      "refresh": "Actualizar Usuarios",
-      "addUser": "Añadir Usuario",
-      "noUsers": "No se encontraron Usuarios",
-      "noUsersDescription": "No hay usuarios en el sistema todavía. Haz clic en 'Añadir Usuario' para crear tu primer usuario.",
-      "noPermissions": "Sin permisos asignados",
-      "filters": {
-        "title": "Filtros",
-        "reset": "Restablecer Filtros",
-        "role": "Rol",
-        "allRoles": "Todos los Roles",
-        "permission": "Permiso",
-        "anyPermission": "Cualquier Permiso",
-        "permissionLevel": "Nivel de Permiso",
-        "anyLevel": "Cualquier Nivel",
-        "sortBy": "Ordenar Por",
-        "created": "Fecha de Creación",
-        "ascending": "Ascendente",
-        "descending": "Descendente",
-        "active": "Filtros Activos",
-        "roleFilter": "Rol",
-        "permissionFilter": "Permiso",
-        "levelFilter": "Nivel",
-        "searchFilter": "Búsqueda"
-      },
-      "actions": {
-        "addUser": "Añadir Usuario",
-        "editUser": "Editar Usuario",
-        "add": "Añadir Usuario",
-        "update": "Actualizar Usuario",
-        "delete": "Eliminar Usuario",
-        "edit": "Editar",
-        "deleteUser": "Eliminar Usuario"
-      },
-      "table": {
-        "username": "Nombre de Usuario",
-        "role": "Rol",
-        "permissions": "Permisos",
-        "actions": "Acciones"
-      },
-      "roles": {
-        "admin": "Administrador",
-        "user": "Usuario"
-      },
-      "permissions": {
-        "users": "Usuarios",
-        "resources": "Recursos",
-        "system": "Sistema",
-        "dashboard": "Tablero",
-        "levels": {
-          "read": "Lectura",
-          "write": "Escritura",
-          "none": "Ninguno"
-        }
-      },
-      "form": {
-        "username": "Nombre de Usuario",
-        "usernamePlaceholder": "Introducir nombre de usuario",
-        "password": "Contraseña",
-        "passwordPlaceholder": "Introducir contraseña",
-        "passwordOptional": "Contraseña (opcional)",
-        "passwordOptionalPlaceholder": "Introducir nueva contraseña o dejar en blanco",
-        "confirmPassword": "Confirmar Contraseña",
-        "confirmPasswordPlaceholder": "Confirmar contraseña",
-        "isAdmin": "Acceso de Administrador",
-        "permissions": "Permisos de Componentes",
-        "cancel": "Cancelar",
-        "optional": "opcional"
-      },
-      "delete": {
-        "title": "Eliminar Usuario",
-        "confirmTitle": "Confirmar Eliminación",
-        "confirmMessage": "¿Estás seguro de que deseas eliminar al usuario \"{{username}}\"? Esta acción no se puede deshacer.",
-        "confirm": "Eliminar Usuario"
-      },
-      "errors": {
-        "fetchFailed": "Error al obtener usuarios",
-        "missingFields": "Por favor completa todos los campos requeridos",
-        "passwordMismatch": "Las contraseñas no coinciden",
-        "addFailed": "Error al añadir usuario",
-        "updateFailed": "Error al actualizar usuario",
-        "deleteFailed": "Error al eliminar usuario"
-      },
-      "success": {
-        "userAdded": "Usuario añadido exitosamente",
-        "userUpdated": "Usuario actualizado exitosamente",
-        "userDeleted": "Usuario eliminado exitosamente"
-      }
-    }
   },
   "installationPage": {
     "successSection": {
@@ -876,17 +780,11 @@
       "selectContainer": "Seleccionar contenedor",
       "noContainersFound": "No se encontraron contenedores"
     },
-    "logs": {
-      "previousLogs": "TODO",
-      "currentLogs": "TODO",
-      "selectLogsContainer": "TODO"
-    },
     "errors": {
       "failedLoadClusterDetails": "No se pudieron cargar los detalles del clúster.",
       "failedLoadDetails": "No se pudieron cargar los detalles de {{type}}.",
       "apiNotImplemented": "API no implementada para actualizar el pod \"{{resourceName}}\"",
-      "failedFetchContainers": "No se pudo obtener la lista de contenedores",
-      "failedFetchLogsContainers": "TODO"
+      "failedFetchContainers": "No se pudo obtener la lista de contenedores"
     },
     "cluster": {
       "active": "Activo"
@@ -1282,7 +1180,8 @@
       "title": "Etiquetas:",
       "key": "Clave",
       "value": "Valor",
-      "add": "Agregar"
+      "add": "Agregar",
+      "count": "{{count}} etiquetas únicas en {{total}}"
     },
     "creatingConnection": "Creando conexión:",
     "previewDialog": {
@@ -1329,6 +1228,10 @@
       "schedulingRules": "Reglas de programación",
       "schedulingTooltip": "Define condiciones que deben cumplirse para que un clúster reciba esta carga de trabajo",
       "resource": "Recurso",
+      "resource.cpu": "Núcleos de CPU",
+      "resource.memory": "Memoria",
+      "resource.storage": "Almacenamiento",
+      "resource.pods": "Pods disponibles",
       "operator": "Operador",
       "activeRules": "Reglas activas:",
       "noSchedulingRules": "No se agregaron reglas de programación. La política se aplicará a todos los clústeres coincidentes independientemente de sus recursos.",
@@ -1739,9 +1642,7 @@
       "successWithUser": "Inicio de sesión exitoso para el usuario: {{username}}. Redirigiendo a {{path}}",
       "invalidCredentials": "Credenciales inválidas",
       "authFailed": "Autenticación fallida. Verifica tus credenciales.",
-      "noToken": "No se recibió token del servidor",
-      "invalidRequest": "TODO",
-      "serverError": "TODO"
+      "noToken": "No se recibió token del servidor"
     }
   },
   "kubestellarData": {
@@ -2036,6 +1937,13 @@
       "arrows": "↑↓",
       "enter": "↵"
     },
+    "sections": {
+      "navigation": "Navegación",
+      "visualizations": "Visualizaciones",
+      "help": "Ayuda",
+      "account": "Cuenta",
+      "admin": "Administración"
+    },
     "commands": {
       "home": {
         "title": "Inicio",
@@ -2078,13 +1986,6 @@
         "description": "Salir de tu cuenta",
         "infoMessage": "Has cerrado sesión exitosamente."
       }
-    },
-    "sections": {
-      "navigation": "Navegación",
-      "admin": "Administración",
-      "visualizations": "Visualizaciones",
-      "help": "Ayuda",
-      "account": "Cuenta"
     }
   },
   "menu": {
@@ -2150,8 +2051,7 @@
         "details": "Detalles",
         "uninstall": "Desinstalar",
         "reload": "Recargar",
-        "settings": "Configuración",
-        "feedback": "TODO"
+        "settings": "Configuración"
       }
     },
     "details": {
@@ -2186,11 +2086,6 @@
         "title": "Confirmar deshabilitación del plugin",
         "message": "Deshabilitar \"{{name}}\" detendrá toda la funcionalidad del plugin. Puedes volver a habilitarlo más tarde.",
         "confirm": "Sí, deshabilitar"
-      },
-      "enable": {
-        "title": "TODO",
-        "message": "TODO",
-        "confirm": "TODO"
       }
     },
     "marketplace": {
@@ -2217,6 +2112,101 @@
       "suggestion": {
         "title": "Sugerencias de mejora",
         "placeholder": "¿Alguna sugerencia para mejorar?"
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Gestión de Usuarios",
+      "subtitle": "Usuarios del Sistema",
+      "description": "Gestionar usuarios del sistema y sus permisos",
+      "searchPlaceholder": "Buscar usuarios por nombre, rol o permisos...",
+      "refresh": "Actualizar Usuarios",
+      "addUser": "Añadir Usuario",
+      "noUsers": "No se encontraron Usuarios",
+      "noUsersDescription": "No hay usuarios en el sistema todavía. Haz clic en 'Añadir Usuario' para crear tu primer usuario.",
+      "noPermissions": "Sin permisos asignados",
+      "filters": {
+        "title": "Filtros",
+        "reset": "Restablecer Filtros",
+        "role": "Rol",
+        "allRoles": "Todos los Roles",
+        "permission": "Permiso",
+        "anyPermission": "Cualquier Permiso",
+        "permissionLevel": "Nivel de Permiso",
+        "anyLevel": "Cualquier Nivel",
+        "sortBy": "Ordenar Por",
+        "created": "Fecha de Creación",
+        "ascending": "Ascendente",
+        "descending": "Descendente",
+        "active": "Filtros Activos",
+        "roleFilter": "Rol",
+        "permissionFilter": "Permiso",
+        "levelFilter": "Nivel",
+        "searchFilter": "Búsqueda"
+      },
+      "actions": {
+        "addUser": "Añadir Usuario",
+        "editUser": "Editar Usuario",
+        "add": "Añadir Usuario",
+        "update": "Actualizar Usuario",
+        "delete": "Eliminar Usuario",
+        "edit": "Editar",
+        "deleteUser": "Eliminar Usuario"
+      },
+      "table": {
+        "username": "Nombre de Usuario",
+        "role": "Rol",
+        "permissions": "Permisos",
+        "actions": "Acciones"
+      },
+      "roles": {
+        "admin": "Administrador",
+        "user": "Usuario"
+      },
+      "permissions": {
+        "users": "Usuarios",
+        "resources": "Recursos",
+        "system": "Sistema",
+        "dashboard": "Tablero",
+        "levels": {
+          "read": "Lectura",
+          "write": "Escritura",
+          "none": "Ninguno"
+        }
+      },
+      "form": {
+        "username": "Nombre de Usuario",
+        "usernamePlaceholder": "Introducir nombre de usuario",
+        "password": "Contraseña",
+        "passwordPlaceholder": "Introducir contraseña",
+        "passwordOptional": "Contraseña (opcional)",
+        "passwordOptionalPlaceholder": "Introducir nueva contraseña o dejar en blanco",
+        "confirmPassword": "Confirmar Contraseña",
+        "confirmPasswordPlaceholder": "Confirmar contraseña",
+        "isAdmin": "Acceso de Administrador",
+        "permissions": "Permisos de Componentes",
+        "cancel": "Cancelar",
+        "optional": "opcional"
+      },
+      "delete": {
+        "title": "Eliminar Usuario",
+        "confirmTitle": "Confirmar Eliminación",
+        "confirmMessage": "¿Estás seguro de que deseas eliminar al usuario \"{{username}}\"? Esta acción no se puede deshacer.",
+        "confirm": "Eliminar Usuario"
+      },
+      "errors": {
+        "fetchFailed": "Error al obtener usuarios",
+        "missingFields": "Por favor completa todos los campos requeridos",
+        "passwordMismatch": "Las contraseñas no coinciden",
+        "addFailed": "Error al añadir usuario",
+        "updateFailed": "Error al actualizar usuario",
+        "deleteFailed": "Error al eliminar usuario"
+      },
+      "success": {
+        "userAdded": "Usuario añadido exitosamente",
+        "userUpdated": "Usuario actualizado exitosamente",
+        "userDeleted": "Usuario eliminado exitosamente"
       }
     }
   }

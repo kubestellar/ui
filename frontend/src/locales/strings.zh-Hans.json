@@ -1,4 +1,176 @@
 {
+  "raiseIssue": "报告问题",
+  "profileSection": {
+    "changePassword": "修改密码",
+    "changePasswordSubtitle": "请输入您当前的密码并选择一个新密码。",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmNewPassword": "确认新密码",
+    "passwordChangedSuccess": "密码修改成功。",
+    "passwordChangedError": "修改密码失败。",
+    "passwordsDoNotMatch": "新密码不匹配。",
+    "passwordRequired": "密码是必填项。",
+    "errorCurrentPasswordIncorrect": "当前密码不正确",
+    "cancel": "取消",
+    "changePasswordButton": "修改密码",
+    "passwordsMatch": "密码匹配！"
+  },
+  "commandPalette": {
+    "ariaLabel": "打开命令面板",
+    "title": "命令面板（Ctrl+K）",
+    "badge": "K",
+    "searchPlaceholder": "搜索命令...",
+    "noCommandsFound": "未找到命令。请尝试其他搜索词。",
+    "footer": {
+      "navigate": "导航",
+      "select": "选择",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "导航",
+      "visualizations": "可视化",
+      "help": "帮助",
+      "account": "账户",
+      "admin": "管理"
+    },
+    "commands": {
+      "home": {
+        "title": "首页",
+        "description": "前往仪表盘"
+      },
+      "plugin": {
+        "title": "插件管理器",
+        "description": "管理和监控 KubeStellar 插件"
+      },
+      "clusters": {
+        "title": "远程集群",
+        "description": "管理 Kubernetes 集群"
+      },
+      "workloads": {
+        "title": "工作负载",
+        "description": "跨集群管理工作负载"
+      },
+      "bindingPolicies": {
+        "title": "绑定策略",
+        "description": "配置绑定策略"
+      },
+      "userManagement": {
+        "title": "用户管理",
+        "description": "管理系统用户和权限"
+      },
+      "wdsTreeview": {
+        "title": "WDS 树视图",
+        "description": "可视化工作负载分布"
+      },
+      "wecsTreeview": {
+        "title": "WECS 树视图",
+        "description": "可视化已部署工作负载结构"
+      },
+      "documentation": {
+        "title": "打开文档",
+        "description": "启动 KubeStellar 文档"
+      },
+      "logout": {
+        "title": "退出登录",
+        "description": "退出您的账户",
+        "infoMessage": "您已成功退出登录。"
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "用户管理",
+      "subtitle": "系统用户",
+      "noUsers": "未找到用户",
+      "noUsersDescription": "系统中还没有用户。点击\"添加用户\"创建您的第一个用户。",
+      "noPermissions": "未分配权限",
+      "actions": {
+        "addUser": "添加用户",
+        "editUser": "编辑用户",
+        "add": "添加用户",
+        "update": "更新用户",
+        "delete": "删除用户",
+        "edit": "编辑",
+        "deleteUser": "删除用户"
+      },
+      "table": {
+        "username": "用户名",
+        "role": "角色",
+        "permissions": "权限",
+        "actions": "操作"
+      },
+      "roles": {
+        "admin": "管理员",
+        "user": "用户"
+      },
+      "permissions": {
+        "users": "用户",
+        "resources": "资源",
+        "system": "系统",
+        "dashboard": "仪表板",
+        "levels": {
+          "read": "读取",
+          "write": "写入",
+          "none": "无"
+        }
+      },
+      "form": {
+        "username": "用户名",
+        "usernamePlaceholder": "输入用户名",
+        "password": "密码",
+        "passwordPlaceholder": "输入密码",
+        "passwordOptional": "密码（可选）",
+        "passwordOptionalPlaceholder": "输入新密码或留空",
+        "confirmPassword": "确认密码",
+        "confirmPasswordPlaceholder": "确认密码",
+        "isAdmin": "管理员访问权限",
+        "permissions": "组件权限",
+        "cancel": "取消",
+        "optional": "可选"
+      },
+      "delete": {
+        "title": "删除用户",
+        "confirmTitle": "确认删除",
+        "confirmMessage": "您确定要删除用户\"{{username}}\"吗？此操作无法撤消。",
+        "confirm": "删除用户"
+      },
+      "errors": {
+        "fetchFailed": "获取用户失败",
+        "missingFields": "请填写所有必填字段",
+        "passwordMismatch": "密码不匹配",
+        "addFailed": "添加用户失败",
+        "updateFailed": "更新用户失败",
+        "deleteFailed": "删除用户失败"
+      },
+      "success": {
+        "userAdded": "用户添加成功",
+        "userUpdated": "用户更新成功",
+        "userDeleted": "用户删除成功"
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "主要",
+      "management": "管理",
+      "plugins": "插件",
+      "admin": "管理"
+    },
+    "items": {
+      "home": "首页",
+      "remoteClusters": "远程集群",
+      "stagedWorkloads": "已暂存工作负载",
+      "bindingPolicies": "绑定策略",
+      "deployedWorkloads": "已部署工作负载",
+      "pluginManager": "插件管理器",
+      "userManagement": "用户管理"
+    }
+  },
   "common": {
     "changes": "更改",
     "clusterLabel": "集群标签",
@@ -68,109 +240,7 @@
     "items_plural": "{{count}} 项",
     "filteredFrom": "筛选自"
   },
-  "admin": {
-    "users": {
-      "title": "用户管理",
-      "subtitle": "系统用户",
-      "description": "TODO",
-      "searchPlaceholder": "TODO",
-      "refresh": "TODO",
-      "addUser": "TODO",
-      "noUsers": "未找到用户",
-      "noUsersDescription": "系统中还没有用户。点击\"添加用户\"创建您的第一个用户。",
-      "noPermissions": "未分配权限",
-      "filters": {
-        "title": "TODO",
-        "reset": "TODO",
-        "role": "TODO",
-        "allRoles": "TODO",
-        "permission": "TODO",
-        "anyPermission": "TODO",
-        "permissionLevel": "TODO",
-        "anyLevel": "TODO",
-        "sortBy": "TODO",
-        "created": "TODO",
-        "ascending": "TODO",
-        "descending": "TODO",
-        "active": "TODO",
-        "roleFilter": "TODO",
-        "permissionFilter": "TODO",
-        "levelFilter": "TODO",
-        "searchFilter": "TODO"
-      },
-      "actions": {
-        "addUser": "添加用户",
-        "editUser": "编辑用户",
-        "add": "添加用户",
-        "update": "更新用户",
-        "delete": "删除用户",
-        "edit": "编辑",
-        "deleteUser": "删除用户"
-      },
-      "table": {
-        "username": "用户名",
-        "role": "角色",
-        "permissions": "权限",
-        "actions": "操作"
-      },
-      "roles": {
-        "admin": "管理员",
-        "user": "用户"
-      },
-      "permissions": {
-        "users": "用户",
-        "resources": "资源",
-        "system": "系统",
-        "dashboard": "仪表板",
-        "levels": {
-          "read": "读取",
-          "write": "写入",
-          "none": "无"
-        }
-      },
-      "form": {
-        "username": "用户名",
-        "usernamePlaceholder": "输入用户名",
-        "password": "密码",
-        "passwordPlaceholder": "输入密码",
-        "passwordOptional": "密码（可选）",
-        "passwordOptionalPlaceholder": "输入新密码或留空",
-        "confirmPassword": "确认密码",
-        "confirmPasswordPlaceholder": "确认密码",
-        "isAdmin": "管理员访问权限",
-        "permissions": "组件权限",
-        "cancel": "取消",
-        "optional": "可选"
-      },
-      "delete": {
-        "title": "删除用户",
-        "confirmTitle": "确认删除",
-        "confirmMessage": "您确定要删除用户\"{{username}}\"吗？此操作无法撤消。",
-        "confirm": "删除用户"
-      },
-      "errors": {
-        "fetchFailed": "获取用户失败",
-        "missingFields": "请填写所有必填字段",
-        "passwordMismatch": "密码不匹配",
-        "addFailed": "添加用户失败",
-        "updateFailed": "更新用户失败",
-        "deleteFailed": "删除用户失败"
-      },
-      "success": {
-        "userAdded": "用户添加成功",
-        "userUpdated": "用户更新成功",
-        "userDeleted": "用户删除成功"
-      }
-    }
-  },
   "installationPage": {
-    "successSection": {
-      "installed": "TODO"
-    },
-    "errorSection": {
-      "title": "TODO",
-      "viewGuide": "TODO"
-    },
     "statusBadge": {
       "installed": "已安装",
       "versionMismatch": "版本不匹配",
@@ -253,11 +323,7 @@
       },
       "afterInstallation": {
         "title": "安装后：",
-        "steps": [
-          "通过检查集群状态验证安装",
-          "查看入门文档",
-          "开始管理您的 KubeStellar 环境"
-        ]
+        "steps": ["通过检查集群状态验证安装", "查看入门文档", "开始管理您的 KubeStellar 环境"]
       },
       "buttons": {
         "backPrerequisites": "上一步：前提条件",
@@ -876,17 +942,11 @@
       "selectContainer": "选择容器",
       "noContainersFound": "未找到容器"
     },
-    "logs": {
-      "previousLogs": "TODO",
-      "currentLogs": "TODO",
-      "selectLogsContainer": "TODO"
-    },
     "errors": {
       "failedLoadClusterDetails": "加载集群详情失败。",
       "failedLoadDetails": "加载 {{type}} 详情失败。",
       "apiNotImplemented": "更新 pod \"{{resourceName}}\" 的 API 未实现",
-      "failedFetchContainers": "获取容器列表失败",
-      "failedFetchLogsContainers": "TODO"
+      "failedFetchContainers": "获取容器列表失败"
     },
     "cluster": {
       "active": "活跃"
@@ -963,21 +1023,11 @@
     "approaches": {
       "automated": {
         "title": "自动化方式（新功能）",
-        "features": [
-          "一键设置流程",
-          "无需手动执行命令",
-          "流线化体验",
-          "减少出错机会"
-        ]
+        "features": ["一键设置流程", "无需手动执行命令", "流线化体验", "减少出错机会"]
       },
       "manual": {
         "title": "手动方式（传统）",
-        "features": [
-          "手动复制并运行命令",
-          "需要多个 CLI 步骤",
-          "更复杂的流程",
-          "需要命令行知识"
-        ]
+        "features": ["手动复制并运行命令", "需要多个 CLI 步骤", "更复杂的流程", "需要命令行知识"]
       }
     },
     "buttons": {
@@ -1186,31 +1236,31 @@
       }
     },
     "loadingCanvas": "正在加载画布数据...",
-    "selection": {
-      "infoAlert": "TODO",
+    "dragDrop": {
+      "infoAlert": "此界面使用模拟响应来创建绑定策略。从列表中选择集群和工作负载将它们添加到画布，然后点击工作负载，再点击集群以创建绑定策略连接。",
       "helpDialog": {
-        "title": "TODO",
-        "intro": "TODO",
+        "title": "通过直接连接创建绑定策略",
+        "intro": "按照以下步骤创建绑定策略：",
         "steps": {
-          "selectClusters": "TODO",
-          "selectWorkloads": "TODO",
-          "createConnection": "TODO",
-          "fillDetails": "TODO",
-          "deploy": "TODO"
+          "selectClusters": "1. 从左侧面板选择集群以包含在画布中",
+          "selectWorkloads": "2. 从右侧面板选择工作负载以包含在画布中",
+          "createConnection": "3. 先点击工作负载，然后点击集群以创建直接连接",
+          "fillDetails": "4. 在出现的对话框中填写策略详细信息",
+          "deploy": "5. 使用\"部署绑定策略\"按钮模拟部署"
         },
-        "gotIt": "TODO",
+        "gotIt": "明白了",
         "helpDialog": {
-          "title": "TODO",
-          "intro": "TODO",
+          "title": "如何创建绑定策略",
+          "intro": "按照以下步骤创建绑定策略：",
           "steps": {
-            "selectLabels": "TODO",
-            "selectLabelsDesc": "TODO",
-            "deploy": "TODO",
-            "deployDesc": "TODO"
+            "selectLabels": "1. 选择标签添加到画布",
+            "selectLabelsDesc": "从左侧面板点击集群，从右侧面板点击工作负载，将它们添加到绑定策略画布",
+            "deploy": "2. 部署您的策略",
+            "deployDesc": "点击\"部署绑定策略\"创建并部署基于选定标签的绑定策略，将工作负载连接到集群"
           },
-          "tip": "TODO",
-          "dontShowAgain": "TODO",
-          "tooltip": "TODO"
+          "tip": "提示：基于标签的方法允许您创建强大的绑定策略，自动应用于所有匹配选定标签的资源，无论是现在还是将来。",
+          "dontShowAgain": "不再显示",
+          "tooltip": "查看选择说明"
         }
       }
     },
@@ -1282,7 +1332,8 @@
       "title": "标签：",
       "key": "键",
       "value": "值",
-      "add": "添加"
+      "add": "添加",
+      "count": "{{total}} 中的 {{count}} 个唯一标签"
     },
     "creatingConnection": "正在创建连接：",
     "previewDialog": {
@@ -1329,6 +1380,10 @@
       "schedulingRules": "调度规则",
       "schedulingTooltip": "定义集群接收此工作负载必须满足的条件",
       "resource": "资源",
+      "resource.cpu": "CPU 核心数",
+      "resource.memory": "内存",
+      "resource.storage": "存储",
+      "resource.pods": "可用 Pod 数",
       "operator": "操作符",
       "activeRules": "活动规则：",
       "noSchedulingRules": "未添加调度规则。策略将应用于所有匹配的集群，不考虑其资源。",
@@ -1483,7 +1538,6 @@
     "helm": {
       "createOwn": "创建您自己的 Helm chart",
       "popularCharts": "从热门 Helm chart 部署",
-      "prevCharts": "TODO",
       "form": {
         "repositoryName": "仓库名称 *",
         "repositoryNameTip": "指定 Helm 仓库的名称",
@@ -1726,11 +1780,11 @@
     "creating": "正在创建...",
     "createContext": "创建上下文"
   },
-  "policySelectionStore": {
-    "labelsAssigned": "TODO",
-    "policyAssigned": "TODO",
-    "clusterAlreadyAssigned": "TODO",
-    "workloadAlreadyAssigned": "TODO"
+  "policyDragDropStore": {
+    "labelsAssigned": "标签已自动分配给 {{itemType}} {{itemId}}",
+    "policyAssigned": "成功将 {{policyName}} 分配给 {{targetType}} {{targetName}}",
+    "clusterAlreadyAssigned": "集群 {{targetName}} 已分配给策略 {{policyName}}",
+    "workloadAlreadyAssigned": "工作负载 {{targetName}} 已分配给策略 {{policyName}}"
   },
   "auth": {
     "login": {
@@ -1739,9 +1793,7 @@
       "successWithUser": "用户 {{username}} 登录成功。正在重定向到 {{path}}",
       "invalidCredentials": "无效凭据",
       "authFailed": "身份验证失败。请检查您的凭据。",
-      "noToken": "未从服务器接收到令牌",
-      "invalidRequest": "TODO",
-      "serverError": "TODO"
+      "noToken": "未从服务器接收到令牌"
     }
   },
   "kubestellarData": {
@@ -1772,27 +1824,6 @@
       "active": "活跃",
       "alwaysMatch": "始终匹配"
     }
-  },
-  "profileSection": {
-    "logoutMessage": "TODO",
-    "account": "TODO",
-    "admin": "TODO",
-    "helpSupport": "TODO",
-    "raiseIssue": "TODO",
-    "signOut": "TODO",
-    "changePassword": "修改密码",
-    "changePasswordSubtitle": "请输入您当前的密码并选择一个新密码。",
-    "currentPassword": "当前密码",
-    "newPassword": "新密码",
-    "confirmNewPassword": "确认新密码",
-    "passwordChangedSuccess": "密码修改成功。",
-    "passwordChangedError": "修改密码失败。",
-    "passwordsDoNotMatch": "新密码不匹配。",
-    "passwordRequired": "密码是必填项。",
-    "errorCurrentPasswordIncorrect": "当前密码不正确",
-    "cancel": "取消",
-    "changePasswordButton": "修改密码",
-    "passwordsMatch": "密码匹配！"
   },
   "onboardingLogs": {
     "onboarding": "入驻",
@@ -2019,205 +2050,5 @@
     "tokenLabel": "个人访问令牌 (PAT) *",
     "tokenPlaceholder": "例如：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tokenTip": "输入您的 GitHub 个人访问令牌"
-  },
-  "commandPalette": {
-    "ariaLabel": "打开命令面板",
-    "title": "命令面板（Ctrl+K）",
-    "badge": "K",
-    "searchPlaceholder": "搜索命令...",
-    "noCommandsFound": "未找到命令。请尝试其他搜索词。",
-    "footer": {
-      "navigate": "导航",
-      "select": "选择",
-      "shortcut": "Ctrl+K"
-    },
-    "kbd": {
-      "esc": "ESC",
-      "arrows": "↑↓",
-      "enter": "↵"
-    },
-    "commands": {
-      "home": {
-        "title": "首页",
-        "description": "前往仪表盘"
-      },
-      "plugin": {
-        "title": "插件管理器",
-        "description": "管理和监控 KubeStellar 插件"
-      },
-      "clusters": {
-        "title": "远程集群",
-        "description": "管理 Kubernetes 集群"
-      },
-      "workloads": {
-        "title": "工作负载",
-        "description": "跨集群管理工作负载"
-      },
-      "bindingPolicies": {
-        "title": "绑定策略",
-        "description": "配置绑定策略"
-      },
-      "userManagement": {
-        "title": "用户管理",
-        "description": "管理系统用户和权限"
-      },
-      "wdsTreeview": {
-        "title": "WDS 树视图",
-        "description": "可视化工作负载分布"
-      },
-      "wecsTreeview": {
-        "title": "WECS 树视图",
-        "description": "可视化已部署工作负载结构"
-      },
-      "documentation": {
-        "title": "打开文档",
-        "description": "启动 KubeStellar 文档"
-      },
-      "logout": {
-        "title": "退出登录",
-        "description": "退出您的账户",
-        "infoMessage": "您已成功退出登录。"
-      }
-    },
-    "sections": {
-      "navigation": "导航",
-      "admin": "管理",
-      "visualizations": "可视化",
-      "help": "帮助",
-      "account": "账户"
-    }
-  },
-  "menu": {
-    "catalogs": {
-      "main": "主要",
-      "management": "管理",
-      "plugins": "插件",
-      "admin": "管理"
-    },
-    "items": {
-      "home": "首页",
-      "remoteClusters": "远程集群",
-      "stagedWorkloads": "已暂存工作负载",
-      "bindingPolicies": "绑定策略",
-      "deployedWorkloads": "已部署工作负载",
-      "pluginManager": "插件管理器",
-      "userManagement": "用户管理"
-    }
-  },
-  "plugins": {
-    "title": "TODO",
-    "description": "TODO",
-    "install": {
-      "title": "TODO",
-      "methods": {
-        "local": "TODO",
-        "github": "TODO"
-      },
-      "localPlaceholder": "TODO",
-      "githubPlaceholder": "TODO",
-      "browse": "TODO",
-      "installLocal": "TODO",
-      "installGithub": "TODO",
-      "localHelp": "TODO",
-      "githubHelp": "TODO",
-      "placeholder": "TODO",
-      "button": "TODO",
-      "installing": "TODO",
-      "success": "TODO",
-      "error": "TODO"
-    },
-    "list": {
-      "title": "TODO",
-      "noPlugins": "TODO",
-      "noPluginsDescription": "TODO",
-      "searchPlaceholder": "TODO",
-      "total": "TODO",
-      "active": "TODO",
-      "inactive": "TODO"
-    },
-    "card": {
-      "version": "TODO",
-      "author": "TODO",
-      "status": {
-        "active": "TODO",
-        "inactive": "TODO",
-        "loading": "TODO",
-        "error": "TODO"
-      },
-      "actions": {
-        "enable": "TODO",
-        "disable": "TODO",
-        "details": "TODO",
-        "uninstall": "TODO",
-        "reload": "TODO",
-        "settings": "TODO",
-        "feedback": "TODO"
-      }
-    },
-    "details": {
-      "title": "TODO",
-      "information": "TODO",
-      "configuration": "TODO",
-      "routes": "TODO",
-      "widgets": "TODO",
-      "assets": "TODO",
-      "noRoutes": "TODO",
-      "noWidgets": "TODO",
-      "noAssets": "TODO"
-    },
-    "notifications": {
-      "enableSuccess": "TODO",
-      "enableError": "TODO",
-      "disableSuccess": "TODO",
-      "disableError": "TODO",
-      "uninstallSuccess": "TODO",
-      "uninstallError": "TODO",
-      "reloadSuccess": "TODO",
-      "reloadError": "TODO",
-      "fetchError": "TODO"
-    },
-    "confirmations": {
-      "uninstall": {
-        "title": "TODO",
-        "message": "TODO",
-        "confirm": "TODO"
-      },
-      "disable": {
-        "title": "TODO",
-        "message": "TODO",
-        "confirm": "TODO"
-      },
-      "enable": {
-        "title": "TODO",
-        "message": "TODO",
-        "confirm": "TODO"
-      }
-    },
-    "marketplace": {
-      "title": "TODO",
-      "browse": "TODO",
-      "featured": "TODO",
-      "categories": "TODO",
-      "search": "TODO"
-    },
-    "development": {
-      "title": "TODO",
-      "createNew": "TODO",
-      "template": "TODO",
-      "documentation": "TODO",
-      "examples": "TODO"
-    },
-    "feedback": {
-      "title": "TODO",
-      "rate": "TODO",
-      "comment": {
-        "title": "TODO",
-        "placeholder": "TODO"
-      },
-      "suggestion": {
-        "title": "TODO",
-        "placeholder": "TODO"
-      }
-    }
   }
 }

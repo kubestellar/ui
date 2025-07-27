@@ -876,17 +876,11 @@
       "selectContainer": "コンテナを選択",
       "noContainersFound": "コンテナが見つかりません"
     },
-    "logs": {
-      "previousLogs": "TODO",
-      "currentLogs": "TODO",
-      "selectLogsContainer": "TODO"
-    },
     "errors": {
       "failedLoadClusterDetails": "クラスターの詳細の読み込みに失敗しました。",
       "failedLoadDetails": "{{type}} の詳細の読み込みに失敗しました。",
       "apiNotImplemented": "Pod「{{resourceName}}」の更新用 API は未実装です",
-      "failedFetchContainers": "コンテナ一覧の取得に失敗しました",
-      "failedFetchLogsContainers": "TODO"
+      "failedFetchContainers": "コンテナ一覧の取得に失敗しました"
     },
     "cluster": {
       "active": "アクティブ"
@@ -1282,7 +1276,8 @@
       "title": "ラベル：",
       "key": "キー",
       "value": "値",
-      "add": "追加"
+      "add": "追加",
+      "count": "{{total}}に対して{{count}}件の一意なラベル"
     },
     "creatingConnection": "接続を作成中：",
     "previewDialog": {
@@ -1329,6 +1324,10 @@
       "schedulingRules": "スケジューリングルール",
       "schedulingTooltip": "このワークロードを受け取るためにクラスターが満たすべき条件を定義します",
       "resource": "リソース",
+      "resource.cpu": "CPUコア数",
+      "resource.memory": "メモリ",
+      "resource.storage": "ストレージ",
+      "resource.pods": "利用可能なPod数",
       "operator": "演算子",
       "activeRules": "有効なルール：",
       "noSchedulingRules": "スケジューリングルールは追加されていません。リソースに関係なく、すべての一致するクラスターにポリシーが適用されます。",
@@ -1739,9 +1738,7 @@
       "successWithUser": "ユーザー「{{username}}」でのログインに成功しました。{{path}} にリダイレクト中です",
       "invalidCredentials": "認証情報が無効です",
       "authFailed": "認証に失敗しました。認証情報を確認してください。",
-      "noToken": "サーバーからトークンを受信できませんでした",
-      "invalidRequest": "TODO",
-      "serverError": "TODO"
+      "noToken": "サーバーからトークンを受信できませんでした"
     }
   },
   "kubestellarData": {
@@ -2036,6 +2033,13 @@
       "arrows": "↑↓",
       "enter": "↵"
     },
+    "sections": {
+      "navigation": "ナビゲーション",
+      "visualizations": "可視化",
+      "help": "ヘルプ",
+      "account": "アカウント",
+      "admin": "管理"
+    },
     "commands": {
       "home": {
         "title": "ホーム",
@@ -2078,13 +2082,6 @@
         "description": "アカウントからサインアウト",
         "infoMessage": "正常にログアウトしました。"
       }
-    },
-    "sections": {
-      "navigation": "ナビゲーション",
-      "admin": "管理",
-      "visualizations": "可視化",
-      "help": "ヘルプ",
-      "account": "アカウント"
     }
   },
   "menu": {
@@ -2150,8 +2147,7 @@
         "details": "詳細",
         "uninstall": "アンインストール",
         "reload": "再読み込み",
-        "settings": "設定",
-        "feedback": "TODO"
+        "settings": "設定"
       }
     },
     "details": {
@@ -2186,11 +2182,6 @@
         "title": "プラグインの無効化確認",
         "message": "「{{name}}」を無効化すると、すべての機能が停止します。後で再度有効化できます。",
         "confirm": "はい、無効化します"
-      },
-      "enable": {
-        "title": "TODO",
-        "message": "TODO",
-        "confirm": "TODO"
       }
     },
     "marketplace": {
