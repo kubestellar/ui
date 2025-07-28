@@ -21,7 +21,7 @@ This guide will help you set up **PostgreSQL and Redis containers**, configure *
 - [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
 - [Installing GolangCI-Lint](#installing-golangci-lint)
 - [Linting & Fixing Code](#linting--fixing-code)
-- [Conclusion](#conclusion)
+- [Contribution Commands Guide](#contribution-commands-guide)
 
 ---
 
@@ -481,19 +481,36 @@ make lint
 
 ---
 
-## Issue Assignment Guide
+##  Contribution Commands Guide
 
-To manage issue assignments using GitHub comments:
+This guide helps contributors manage issue assignments and request helpful labels via GitHub comments. These commands are supported through GitHub Actions or bots configured in the repository.
+
+###  Issue Assignment
 
 - **To assign yourself to an issue**, comment:
-
-`/assign`
+  ```
+  /assign
+  ```
 
 - **To remove yourself from an issue**, comment:
+  ```
+  /unassign
+  ```
 
-`/unassign`
+###  Label Requests via Comments
+
+You can also request labels to be automatically added to issues using the following commands:
+
+- **To request the `help wanted` label**, comment:
+  ```
+  /help-wanted
+  ```
+
+- **To request the `good first issue` label**, comment:
+  ```
+  /good-first-issue
+  ```
+
+These commands help maintainers manage community contributions effectively and allow newcomers to find suitable issues to work on.
 
 ---
-
-
-
