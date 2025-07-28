@@ -41,14 +41,19 @@ jobs:
       - name: Locale Sync Check
         working-directory: frontend
         run: |
-          echo "Checking token availability..."
+          echo "=== TOKEN DEBUG INFO ==="
+          echo "GH_REPO_TOKEN length: ${#GH_REPO_TOKEN}"
+          echo "GITHUB_TOKEN length: ${#GITHUB_TOKEN}"
           if [ -n "$GH_REPO_TOKEN" ]; then
-            echo "✅ GH_REPO_TOKEN is set"
+            echo "✅ GH_REPO_TOKEN is set (length: ${#GH_REPO_TOKEN})"
           elif [ -n "$GITHUB_TOKEN" ]; then
-            echo "✅ GITHUB_TOKEN is set (fallback)"
+            echo "✅ GITHUB_TOKEN is set (length: ${#GITHUB_TOKEN})"
           else
             echo "❌ No token available"
           fi
+          echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "=== END TOKEN DEBUG ==="
           npm run local-sync-check
         env:
           GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
