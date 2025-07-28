@@ -141,6 +141,14 @@ export const ZoomControls = memo<ZoomControlsProps>(
       ...buttonStyles,
       backgroundColor: isCollapsed ? (theme === 'dark' ? '#555' : '#e3f2fd') : 'transparent',
     };
+    const handleEdgeTypeChange = useCallback(
+      (_: React.MouseEvent<HTMLElement>, newEdgeType: 'bezier' | 'step' | null) => {
+        if (newEdgeType) {
+          setEdgeType(newEdgeType);
+        }
+      },
+      [setEdgeType]
+    );
 
     return (
       <Box
@@ -240,31 +248,69 @@ export const ZoomControls = memo<ZoomControlsProps>(
             </MenuItem>
           ))}
         </Menu>
-        <Tooltip title="Edge Style">
-          <ToggleButtonGroup
-            value={edgeType}
-            exclusive
-            onChange={(_, value) => value && setEdgeType(value)}
-            size="small"
-            color="primary"
-            aria-label="Edge Type"
-            sx={{
-              ml: 2,
-              '& .MuiToggleButton-root': {
-                color: theme === 'dark' ? '#fff' : '#6d7f8b',
-                '&:hover': {
-                  backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
-                },
-              },
-            }}
+        <Tooltip title={t('wecsTopology.zoomControls.edgeStyle')}>
+          <Box
+            sx={{ ml: 1, borderLeft: `1px solid ${theme === 'dark' ? '#555' : '#e0e0e0'}`, pl: 1 }}
           >
-            <ToggleButton value="bezier" aria-label="Curvy">
-              Curvy
-            </ToggleButton>
-            <ToggleButton value="step" aria-label="Square">
-              Square
-            </ToggleButton>
-          </ToggleButtonGroup>
+            <ToggleButtonGroup
+              value={edgeType}
+              exclusive
+              onChange={handleEdgeTypeChange}
+              size="small"
+              aria-label="Edge Type"
+              sx={{
+                '& .MuiToggleButtonGroup-grouped': {
+                  border: `1px solid ${theme === 'dark' ? '#555' : '#e0e0e0'}`,
+                  '&.Mui-selected': {
+                    backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
+                    color: theme === 'dark' ? '#fff' : '#1976d2',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:not(.Mui-selected)': {
+                    color: theme === 'dark' ? '#aaa' : '#6d7f8b',
+                  },
+                  '&:hover': {
+                    backgroundColor: theme === 'dark' ? '#444' : '#f5f5f5',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                },
+              }}
+            >
+              <ToggleButton
+                value="bezier"
+                aria-label={t('wecsTopology.zoomControls.curvy')}
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '40px',
+                  height: '32px',
+                  borderRadius: '4px 0 0 4px',
+                }}
+              >
+                <i className="fa fa-bezier-curve" style={{ fontSize: '16px' }} />
+              </ToggleButton>
+              <ToggleButton
+                value="step"
+                aria-label={t('wecsTopology.zoomControls.square')}
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '40px',
+                  height: '32px',
+                  borderRadius: '0 4px 4px 0',
+                }}
+              >
+                <i className="fa fa-project-diagram" style={{ fontSize: '16px' }} />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
         </Tooltip>
       </Box>
     );
