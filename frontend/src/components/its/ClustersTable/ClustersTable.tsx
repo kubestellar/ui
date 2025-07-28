@@ -330,13 +330,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         hasSelectedClusters={selectedClusters.length > 0}
         selectedCount={selectedClusters.length}
         onBulkLabels={() => {
-          if (selectedClusters.length <= 1) {
-            toast.error('Bulk labeling requires multiple clusters to be selected', {
-              icon: '⚠️',
-              duration: 4000,
-            });
-            return;
-          }
           handleEditLabels({
             name: `${selectedClusters.length} selected clusters`,
             context: 'bulk-operation',

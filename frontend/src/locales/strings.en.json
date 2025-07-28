@@ -442,6 +442,8 @@
       "label": "Label",
       "editvalue": "Both key and value are required",
       "manage": "Manage Labels",
+      "bulkTooltipDisabled": "Select at least 2 clusters to enable bulk labeling",
+      "bulkTooltipEnabled": "Manage labels for selected clusters",
       "clearFilter": "Clear Filter",
       "searchLabelsPlaceholder": "Search labels...",
       "bulkEditTitle": "Edit Labels for {{count}} Clusters",

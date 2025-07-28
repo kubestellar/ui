@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Box, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Button, Box, Menu, MenuItem, ListItemIcon, ListItemText, Tooltip } from '@mui/material';
 import { Filter, Plus, Tag } from 'lucide-react';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PostAddIcon from '@mui/icons-material/PostAdd';
@@ -158,59 +158,70 @@ const TableHeader: React.FC<TableHeaderProps> = ({
 
           {hasSelectedClusters && (
             <div className="ml-auto flex">
-              <Button
-                variant="outlined"
-                startIcon={<Tag size={16} />}
-                endIcon={<KeyboardArrowDownIcon />}
-                onClick={selectedCount > 1 ? handleBulkLabelsClick : onBulkLabels}
-                sx={{
-                  color: selectedCount > 1 ? colors.primary : colors.disabled,
-                  borderColor: selectedCount > 1 ? colors.border : colors.disabled,
-                  backgroundColor: isDark ? 'rgba(47, 134, 255, 0.05)' : 'transparent',
-                  opacity: selectedCount <= 1 ? 0.6 : 1,
-                  cursor: selectedCount <= 1 ? 'not-allowed' : 'pointer',
-                  '&:hover': {
-                    borderColor: selectedCount > 1 ? colors.primary : colors.disabled,
-                    backgroundColor:
-                      selectedCount > 1
-                        ? isDark
-                          ? 'rgba(47, 134, 255, 0.1)'
-                          : 'rgba(47, 134, 255, 0.05)'
-                        : 'transparent',
-                    transform: selectedCount > 1 ? 'translateY(-2px)' : 'none',
-                    boxShadow:
-                      selectedCount > 1 ? '0 4px 8px -2px rgba(47, 134, 255, 0.2)' : 'none',
-                    cursor: selectedCount <= 1 ? 'not-allowed' : 'pointer',
-                  },
-                  textTransform: 'none',
-                  fontWeight: '500',
-                  borderRadius: '10px',
-                  padding: '8px 16px',
-                  height: '45px',
-                  transition: 'all 0.2s ease',
-                }}
+              <Tooltip
+                title={
+                  selectedCount <= 1
+                    ? t('clusters.labels.bulkTooltipDisabled')
+                    : t('clusters.labels.bulkTooltipEnabled')
+                }
+                arrow
+                placement="top"
               >
-                {t('clusters.labels.manage')}
-                <Box
-                  component="span"
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: '22px',
-                    height: '22px',
-                    borderRadius: '11px',
-                    backgroundColor: colors.primary,
-                    color: 'white',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    ml: 1,
-                    padding: '0 6px',
-                  }}
-                >
-                  {selectedCount}
-                </Box>
-              </Button>
+                <span>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Tag size={16} />}
+                    endIcon={<KeyboardArrowDownIcon />}
+                    onClick={selectedCount > 1 ? handleBulkLabelsClick : undefined}
+                    disabled={selectedCount <= 1}
+                    sx={{
+                      color: colors.primary,
+                      borderColor: colors.border,
+                      backgroundColor: isDark ? 'rgba(47, 134, 255, 0.05)' : 'transparent',
+                      '&:hover': {
+                        borderColor: colors.primary,
+                        backgroundColor: isDark
+                          ? 'rgba(47, 134, 255, 0.1)'
+                          : 'rgba(47, 134, 255, 0.05)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 8px -2px rgba(47, 134, 255, 0.2)',
+                      },
+                      '&.Mui-disabled': {
+                        color: colors.disabled,
+                        borderColor: colors.disabled,
+                        opacity: 0.6,
+                      },
+                      textTransform: 'none',
+                      fontWeight: '500',
+                      borderRadius: '10px',
+                      padding: '8px 16px',
+                      height: '45px',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {t('clusters.labels.manage')}
+                    <Box
+                      component="span"
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '22px',
+                        height: '22px',
+                        borderRadius: '11px',
+                        backgroundColor: colors.primary,
+                        color: 'white',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        ml: 1,
+                        padding: '0 6px',
+                      }}
+                    >
+                      {selectedCount}
+                    </Box>
+                  </Button>
+                </span>
+              </Tooltip>
               {selectedCount > 1 && (
                 <Menu
                   anchorEl={bulkLabelsAnchorEl}
