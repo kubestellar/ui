@@ -254,4 +254,8 @@ This section covers foundational analysis and planning to improve the structure,
     - Language switcher (for multilingual support)
     - GitHub icon linking to the main repo
   - **Sticky header** with smooth scroll and shadow for better visibility
+
+### 🪐 KubeStellar/docs Landing Page Design – Hero Section
+
+- Designed a **space-themed animated hero section** to reflect KubeStellar’s identity as a multi-cluster orchestration platform with cosmic scalability.
 ---
