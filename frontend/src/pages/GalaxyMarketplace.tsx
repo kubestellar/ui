@@ -465,13 +465,14 @@ const GalaxyMarketplace: React.FC = () => {
                         : 'rgba(249, 250, 251, 0.95)',
                       backdropFilter: 'blur(8px)',
                       border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                      borderRadius: '12px',
                       boxShadow: isDark
                         ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
                         : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
                       '& .MuiMenuItem-root': {
                         color: themeStyles.colors.text.primary,
-                        fontSize: '0.875rem',
-                        padding: '8px 16px',
+                        fontSize: 'inherit',
+                        padding: '12px 16px',
                         '&:hover': {
                           backgroundColor: isDark
                             ? 'rgba(255, 255, 255, 0.08)'
