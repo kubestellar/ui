@@ -1,5 +1,5 @@
 # Spellcheck configuration for check-spelling/check-spelling action
-# This uses a simpler format that's more compatible
+# This uses a format compatible with check-spelling action
 
 # Custom wordlist
 words:
@@ -21,6 +21,15 @@ exclude:
   - "backend/test/**"
   - "**/*.min.js"
   - "**/*.min.css"
+  - "**/*.wasm"
+  - "**/*.gz"
+  - "**/*.tar"
+  - "**/*.zip"
+  - "**/*.lock"
+  - "**/package-lock.json"
+  - "**/go.sum"
+  - "**/yarn.lock"
+  - "**/pnpm-lock.yaml"
 
 # Language settings
 language: en

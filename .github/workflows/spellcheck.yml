@@ -36,4 +36,11 @@ jobs:
         uses: check-spelling/check-spelling@prerelease
         with:
           config: .github/spellcheck/.spellcheck.yml
+          check_file_names: false
+          check_comments: true
+          check_strings: false
+          extra_dictionaries: |
+            cspell:software-terms/dict/softwareTerms.txt
+            cspell:typescript/dict/typescript.txt
+            cspell:k8s/dict/k8s.txt
 

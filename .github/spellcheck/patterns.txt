@@ -1,0 +1,95 @@
+# Patterns to exclude from spellchecking
+# This file tells the spellchecker to ignore certain patterns
+
+# Code blocks (Markdown)
+```.*```
+
+# Inline code (Markdown)
+`.*`
+
+# UUIDs
+\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b
+
+# Hash values
+\b[0-9a-f]{32}\b
+\b[0-9a-f]{40}\b
+\b[0-9a-f]{64}\b
+
+# Base64 encoded strings
+\b[A-Za-z0-9+/]{20,}={0,2}\b
+
+# IP addresses
+\b[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\b
+
+# Email addresses
+\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b
+
+# URLs
+\bhttps?://[^\s]+\b
+
+# File paths
+\b[A-Za-z0-9._-]+/[A-Za-z0-9._-]+\b
+
+# Line numbers
+\b[A-Za-z0-9._-]+:[0-9]+\b
+
+# Anchors
+\b[A-Za-z0-9._-]+#[A-Za-z0-9._-]+\b
+
+# Query parameters
+\b[A-Za-z0-9._-]+\?[A-Za-z0-9._-]+\b
+\b[A-Za-z0-9._-]+&[A-Za-z0-9._-]+\b
+
+# Key-value pairs
+\b[A-Za-z0-9._-]+=[A-Za-z0-9._-]+\b
+
+# Concatenated strings
+\b[A-Za-z0-9._-]+\+[A-Za-z0-9._-]+\b
+
+# Hyphenated strings
+\b[A-Za-z0-9._-]+-[A-Za-z0-9._-]+\b
+
+# Underscore strings
+\b[A-Za-z0-9._-]+_[A-Za-z0-9._-]+\b
+
+# Dot notation
+\b[A-Za-z0-9._-]+\.[A-Za-z0-9._-]+\b
+
+# Colon notation
+\b[A-Za-z0-9._-]+:[A-Za-z0-9._-]+\b
+
+# Semicolon notation
+\b[A-Za-z0-9._-]+;[A-Za-z0-9._-]+\b
+
+# Comma notation
+\b[A-Za-z0-9._-]+,[A-Za-z0-9._-]+\b
+
+# Pipe notation
+\b[A-Za-z0-9._-]+\|[A-Za-z0-9._-]+\b
+
+# Caret notation
+\b[A-Za-z0-9._-]+\^[A-Za-z0-9._-]+\b
+
+# Asterisk notation
+\b[A-Za-z0-9._-]+\*[A-Za-z0-9._-]+\b
+
+# Tilde notation
+\b[A-Za-z0-9._-]+\~[A-Za-z0-9._-]+\b
+
+# Exclamation notation
+\b[A-Za-z0-9._-]+\![A-Za-z0-9._-]+\b
+
+# At notation
+\b[A-Za-z0-9._-]+\@[A-Za-z0-9._-]+\b
+
+# Hash notation
+\b[A-Za-z0-9._-]+\#[A-Za-z0-9._-]+\b
+
+# Dollar notation
+\b[A-Za-z0-9._-]+\$[A-Za-z0-9._-]+\b
+
+# Percent notation
+\b[A-Za-z0-9._-]+\%[A-Za-z0-9._-]+\b
+
+# Ampersand notation
+\b[A-Za-z0-9._-]+\&[A-Za-z0-9._-]+\b 
