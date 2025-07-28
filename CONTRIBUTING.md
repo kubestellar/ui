@@ -22,7 +22,7 @@ This guide will help you set up **PostgreSQL and Redis containers**, configure *
 - [Installing GolangCI-Lint](#installing-golangci-lint)
 - [Linting & Fixing Code](#linting--fixing-code)
 - [Imp Note](#important-note)
-- [Conclusion](#conclusion)
+- [Contribution Commands Guide](#contribution-commands-guide)
 
 ---
 
@@ -510,19 +510,39 @@ Before committing:
 - Test thoroughly to ensure it doesn’t break existing functionality.
 - Refactor and adapt it as per the codebase standards.
 
-## Issue Assignment Guide
-
-To manage issue assignments using GitHub comments:
-
-- **To assign yourself to an issue**, comment:
-
-`/assign`
-
-- **To remove yourself from an issue**, comment:
-
-`/unassign`
-
 ---
 
+##  Contribution Commands Guide
 
 
+This guide helps contributors manage issue assignments and request helpful labels via GitHub comments. These commands are supported through GitHub Actions or bots configured in the repository.
+
+###  Issue Assignment
+
+- **To assign yourself to an issue**, comment:
+  ```
+  /assign
+  ```
+
+- **To remove yourself from an issue**, comment:
+  ```
+  /unassign
+  ```
+
+###  Label Requests via Comments
+
+You can also request labels to be automatically added to issues using the following commands:
+
+- **To request the `help wanted` label**, comment:
+  ```
+  /help-wanted
+  ```
+
+- **To request the `good first issue` label**, comment:
+  ```
+  /good-first-issue
+  ```
+
+These commands help maintainers manage community contributions effectively and allow newcomers to find suitable issues to work on.
+
+---
