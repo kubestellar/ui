@@ -20,6 +20,10 @@ on:
       - ".github/spellcheck/**"
       - ".github/workflows/spellcheck.yml"
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   spellcheck:
     name: Run Spellcheck
@@ -28,9 +32,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Markdown Spellcheck
-        uses: rojopolis/spellcheck-github-actions@v0
+      - name: Run Spellcheck
+        uses: check-spelling/check-spelling@prerelease
         with:
-          config_path: .github/spellcheck/.spellcheck.yml
-          task_name: Markdown
+          config: .github/spellcheck/.spellcheck.yml
 

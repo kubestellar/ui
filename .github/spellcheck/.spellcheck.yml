@@ -1,20 +1,27 @@
-matrix:
-  - name: Markdown and JSON
-    aspell:
-      lang: en
-    dictionary:
-      wordlists:
-        - .github/spellcheck/.wordlist.txt
-      encoding: utf-8
-    pipeline:
-      - pyspelling.filters.markdown:
-      - pyspelling.filters.html:
-          comments: false
-          ignores:
-            - code
-            - pre
-    sources:
-      - '**/*.md'
-      - '**/*.json'
-    default_encoding: utf-8
+# Spellcheck configuration for check-spelling/check-spelling action
+# This uses a simpler format that's more compatible
+
+# Custom wordlist
+words:
+  - wordlist: .github/spellcheck/.wordlist.txt
+
+# File patterns to check
+files:
+  - "**/*.md"
+  - "**/*.json"
+
+# Exclude patterns
+exclude:
+  - "node_modules/**"
+  - "dist/**"
+  - "build/**"
+  - ".git/**"
+  - "coverage/**"
+  - "frontend/coverage/**"
+  - "backend/test/**"
+  - "**/*.min.js"
+  - "**/*.min.css"
+
+# Language settings
+language: en
 
