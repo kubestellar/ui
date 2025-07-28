@@ -75,11 +75,12 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 - Make sure you have "make" installed to directly execute the backend script via makefile
 - Air helps in hot reloading of the backend
-- **Air guide**: [Guide](https://github.com/air-verse/air#installation)
+- **Air Installation Guide**: [Guide](https://github.com/air-verse/air#installation)
 
 ### 6. Golang Migrate
+
 - Make sure you have installed 'golang-migrate' cli tool which helps in database migration
-- **Installation Guide:** [Install](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
+- **Golang-Migrate Installation Guide:** [Install](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 
 ## Installation Steps
 
@@ -110,7 +111,7 @@ cp .env.example .env
 
 **Example `.env` file:**
 
-```
+```env
 VITE_BASE_URL=http://localhost:4000
 VITE_APP_VERSION=0.1.0
 VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH
@@ -169,7 +170,7 @@ cp .env.example .env
 
 **Example `.env` file:**
 
-```
+```env
 REDIS_HOST=localhost
 REDIS_PORT=6379
 CORS_ALLOWED_ORIGIN=http://localhost:5173
@@ -382,7 +383,7 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 ### Migration Commands
 
-```
+```bash
 cd backend
 make migrate-up #for keeping our database in sync with changes in sql code
 make migrate-down #rollback to previous 1 migration version(1 by default) and can specify if needed more than 1
@@ -405,32 +406,36 @@ make migrate-force # Force set migration version (use if out of sync)
 
 There are several ways to communicate with us:
 
-Instantly get access to our documents and meeting invites at http://kubestellar.io/joinus
+- Instantly get access to our documents and meeting invites at our [Join Us Page.](http://kubestellar.io/joinus)
 
-- The [`#kubestellar-dev` channel](https://kubernetes.slack.com/archives/C058SUSL5AA) in the [Kubernetes Slack workspace](https://slack.k8s.io)
+- The [`#kubestellar-dev` channel](https://cloud-native.slack.com/archives/C097094RZ3M) in the [Cloud Native Slack Workspace](https://communityinviter.com/apps/cloud-native/cncf).
+
 - Our mailing lists:
-    - [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) for development discussions
-    - [kubestellar-users](https://groups.google.com/g/kubestellar-users) for discussions among users and potential users
-- Subscribe to the [community meeting calendar](https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=MWM4a2loZDZrOWwzZWQzZ29xanZwa3NuMWdfMjAyMzA1MThUMTQwMDAwWiBiM2Q2NWM5MmJlZDdhOTg4NGVmN2ZlOWUzZjZjOGZlZDE2ZjZmYjJmODExZjU3NTBmNTQ3NTY3YTVkZDU4ZmVkQGc&tmsrc=b3d65c92bed7a9884ef7fe9e3f6c8fed16f6fb2f811f5750f547567a5dd58fed%40group.calendar.google.com&scp=ALL) for community meetings and events
-    - The [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) mailing list is subscribed to this calendar
+  - [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) for development discussions.
+  - [kubestellar-users](https://groups.google.com/g/kubestellar-users) for discussions among users and potential users.
+
+- Subscribe to the [community meeting calendar](https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=MWM4a2loZDZrOWwzZWQzZ29xanZwa3NuMWdfMjAyMzA1MThUMTQwMDAwWiBiM2Q2NWM5MmJlZDdhOTg4NGVmN2ZlOWUzZjZjOGZlZDE2ZjZmYjJmODExZjU3NTBmNTQ3NTY3YTVkZDU4ZmVkQGc&tmsrc=b3d65c92bed7a9884ef7fe9e3f6c8fed16f6fb2f811f5750f547567a5dd58fed%40group.calendar.google.com&scp=ALL) for community meetings and events.
+  - The [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) mailing list is subscribed to this calendar.
+
 - See recordings of past KubeStellar community meetings on [YouTube](https://www.youtube.com/@kubestellar)
-- See [upcoming](https://github.com/kubestellar/kubestellar/issues?q=is%3Aissue+is%3Aopen+label%3Acommunity-meeting) and [past](https://github.com/kubestellar/kubestellar/issues?q=is%3Aissue+is%3Aclosed+label%3Acommunity-meeting) community meeting agendas and notes
+
+- See [upcoming](https://github.com/kubestellar/kubestellar/issues?q=is%3Aissue+is%3Aopen+label%3Acommunity-meeting) and [past](https://github.com/kubestellar/kubestellar/issues?q=is%3Aissue+is%3Aclosed+label%3Acommunity-meeting) community meeting agendas and notes.
+
 - Browse the [shared Google Drive](https://drive.google.com/drive/folders/1p68MwkX0sYdTvtup0DcnAEsnXElobFLS?usp=sharing) to share design docs, notes, etc.
-    - Members of the [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) mailing list can view this drive
+  - Members of the [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) mailing list can view this drive.
+
 - Follow us on:
-   - LinkedIn - [#kubestellar](https://www.linkedin.com/feed/hashtag/?keywords=kubestellar)
-   - Medium - [kubestellar.medium.com](https://medium.com/@kubestellar/list/predefined:e785a0675051:READING_LIST)
+  - LinkedIn - [#kubestellar](https://www.linkedin.com/feed/hashtag/?keywords=kubestellar)
+  - Medium - [kubestellar.medium.com](https://medium.com/@kubestellar/list/predefined:e785a0675051:READING_LIST)
 
 
-<div>
-<h2><font size="6"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> Contributors </font></h2>
-</div>
-<br>
+<h2 align="left">
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" />
+  Contributors
+</h2>
 
-<center>
-<a href="https://github.com/kubestellar/kubestellar/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=kubestellar/kubestellar" />
-</a>
-</center>
-<br>
-<br>
+<p align="center">
+  <a href="https://github.com/kubestellar/kubestellar/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=kubestellar/kubestellar" alt="Contributors" />
+  </a>
+</p>
