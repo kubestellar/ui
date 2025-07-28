@@ -163,7 +163,7 @@ go run main.go
 
 ## **Testing JWT Authentication**
 
-You can either generate your JWT Token with **Postman** or **cURL.**
+You can either generate your JWT Token with **Postman** or **cURL:**
 
 ### **With Postman**
 
@@ -258,7 +258,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 
 ### **With cURL**
 
-If you prefer the terminal, you can use `cURL`:
+If you prefer using the terminal, you can use `cURL`:
 
 ### **Login**
 
