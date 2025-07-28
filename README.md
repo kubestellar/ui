@@ -435,7 +435,7 @@ There are several ways to communicate with us:
 </h2>
 
 <p align="center">
-  <a href="https://github.com/kubestellar/kubestellar/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=kubestellar/kubestellar" alt="Contributors" />
+  <a href="https://github.com/kubestellar/ui/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=kubestellar/ui" alt="Contributors" />
   </a>
 </p>
