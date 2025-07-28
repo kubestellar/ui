@@ -16,9 +16,9 @@ import {
 } from '@mui/material';
 import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useClusterQueries } from '../hooks/queries/useClusterQueries';
-import { api } from '../lib/api';
-import useTheme from '../stores/themeStore';
+import { useClusterQueries } from '../../../hooks/queries/useClusterQueries';
+import { api } from '../../../lib/api';
+import useTheme from '../../../stores/themeStore';
 import ApiUrlImportTab from './ApiUrlImportTab';
 import KubeconfigImportTab from './KubeconfigImportTab';
 import QuickConnectTab from './QuickConnectTab';

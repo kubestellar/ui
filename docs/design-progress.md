@@ -224,4 +224,18 @@ This section covers foundational analysis and planning to improve the structure,
 
 - **Typography Finalized**: Completed the typography hierarchy in Figma, establishing consistent type scales for headings, body text, and labels to improve readability and accessibility.
 
+### 🔍 Research on Next.js framework for Documentation
+
+- **Objective**: Explore better alternatives for the documentation site framework with a focus on SEO, performance, and developer experience.
+- **Findings**:
+  - Next.js offers **strong SEO** capabilities out-of-the-box due to SSR and static generation.
+  - Supports **MDX**, making it easier to write interactive documentation in markdown with React components.
+  - Excellent integration with **search engines** and analytics.
+  - Better **routing flexibility** and support for multilingual content.
+- **Outcome**: Decided to proceed with a Next.js-based setup (considering Nextra or Mintlify) for the redesigned documentation system to enhance visibility and maintainability.
+
+### 🧠 Brainstorming – Program Page Content
+
+- Initiated content brainstorming for a dedicated **Program Page** to showcase KubeStellar-related opportunities such as mentorships, contributor programs, or events.
+- The goal is to provide a structured, user-friendly page that helps visitors quickly understand the program and how to participate.
 ---

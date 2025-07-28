@@ -2098,6 +2098,14 @@
         "title": "ログアウト",
         "description": "アカウントからサインアウト",
         "infoMessage": "正常にログアウトしました。"
+      },
+      "galaxyMarketplace": {
+        "title": "ギャラクシーマーケットプレイス",
+        "description": "ギャラクシーマーケットプレイスからプラグインを見つけてインストールしましょう"
+      },
+      "managedClusters": {
+        "title": "管理クラスター",
+        "description": "Kubernetesクラスターを管理"
       }
     }
   },
@@ -2115,7 +2123,9 @@
       "bindingPolicies": "バインディングポリシー",
       "deployedWorkloads": "デプロイ済みワークロード",
       "pluginManager": "プラグインマネージャー",
-      "userManagement": "ユーザー管理"
+      "userManagement": "ユーザー管理",
+      "galaxyMarketplace": "ギャラクシーマーケットプレイス",
+      "managedClusters": "管理クラスター"
     }
   },
   "plugins": {
@@ -2202,7 +2212,8 @@
       }
     },
     "marketplace": {
-      "title": "プラグインマーケットプレイス",
+      "title": "KubeStellar Galaxy マーケットプレイス",
+      "description": "KubeStellarの体験を向上させるプラグインを見つけてインストール",
       "browse": "利用可能なプラグインを参照",
       "featured": "おすすめプラグイン",
       "categories": "カテゴリ",

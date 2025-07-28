@@ -27,7 +27,7 @@ import MemoryIcon from '@mui/icons-material/Memory';
 import StorageIcon from '@mui/icons-material/Storage';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { Layers, Server, Tag } from 'lucide-react';
-import { useClusterQueries } from '../hooks/queries/useClusterQueries';
+import { useClusterQueries } from '../../../../hooks/queries/useClusterQueries';
 import { Zoom } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 

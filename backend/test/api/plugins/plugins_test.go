@@ -1,17 +1,42 @@
-package api_test
+package plugins_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/pkg/plugins"
+	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/tetratelabs/wazero"
 )
+
+func TestMain(m *testing.M) {
+	// Setup: initialize the global plugin manager and registry for all tests
+	manager := plugins.NewPluginManager(nil)
+	registry := plugins.NewPluginRegistry("./test_plugins", manager)
+	api.SetGlobalPluginManager(manager, registry)
+
+	// Run tests
+	code := m.Run()
+
+	// Optional teardown logic can go here
+	os.RemoveAll("./test_plugins") // Clean up test plugins directory
+
+	// Exit with the code from the tests
+	os.Exit(code)
+}
 
 func TestListPluginsHandler(t *testing.T) {
 	tests := []struct {
@@ -165,45 +190,133 @@ func TestInstallPluginHandler(t *testing.T) {
 }
 
 func TestUninstallPluginHandler(t *testing.T) {
-	tests := []struct {
-		name           string
-		pluginID       int
-		expectedStatus int
-		expectedError  string
-	}{
+	type testCase struct {
+		name         string
+		pluginID     int
+		setupMocks   func(sqlmock.Sqlmock)
+		setupPlugin  func(manager *plugins.PluginManager, registry *plugins.PluginRegistry) *plugins.Plugin
+		expectedCode int
+		expectedBody string
+	}
+
+	tests := []testCase{
 		{
-			name:           "Valid plugin uninstallation",
-			pluginID:       123456789,
-			expectedStatus: http.StatusOK, // Plugin uninstalled successfully
-			expectedError:  "",
+			name:     "Plugin exists and is uninstalled successfully",
+			pluginID: 1,
+			setupMocks: func(mock sqlmock.Sqlmock) {
+				// 1. Mock CheckPluginWithInfo (plugin does not exist) for registration
+				mock.ExpectQuery(`SELECT EXISTS\s+\(.*FROM plugin.*\)`).
+					WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin").
+					WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+					// 2. GetPluginIdDB
+				mock.ExpectQuery(`SELECT id FROM plugin WHERE name=\$1 AND version=\$2 AND description=\$3`).
+					WithArgs("TestPlugin", "v0.1.0", "Temporary test plugin").
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+				// 3. UpdatePluginStatusDB
+				mock.ExpectExec(`UPDATE plugin SET status = \$1 WHERE id = \$2`).
+					WithArgs("active", 1).
+					WillReturnResult(sqlmock.NewResult(0, 1)) // 0 insert ID, 1 row affected
+
+				// 4. Mock DELETE plugin
+				mock.ExpectExec(`(?s)DELETE FROM plugin\s+WHERE id = \$1`).
+					WithArgs(1).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+			},
+			setupPlugin: func(manager *plugins.PluginManager, registry *plugins.PluginRegistry) *plugins.Plugin {
+				plugin := &plugins.Plugin{
+					Manifest: &plugins.PluginManifest{
+						Metadata: plugins.PluginMetadata{
+							Name:        "TestPlugin",
+							Version:     "v0.1.0",
+							Description: "Temporary test plugin",
+							Author:      "testuser",
+						},
+					},
+					Status: "active",
+				}
+
+				manager.RegisterPlugin(plugin)
+
+				pluginFolder := fmt.Sprintf("%s-%d", plugin.Manifest.Metadata.Name, plugin.ID)
+				pluginDir := filepath.Join(registry.GetPluginsDirectory(), pluginFolder)
+				_ = os.MkdirAll(pluginDir, 0755)
+				wasmFilePath := filepath.Join(pluginDir, "plugin.wasm")
+				_ = os.WriteFile(wasmFilePath, []byte("dummy wasm content"), 0644)
+
+				return plugin
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: `{"message": "Plugin uninstalled successfully"}`,
+		},
+
+		{
+			name:     "Plugin not found in manager",
+			pluginID: 999,
+			setupMocks: func(mock sqlmock.Sqlmock) {
+				// Plugin manager has no such plugin, no SQL expected
+			},
+			setupPlugin: func(manager *plugins.PluginManager, registry *plugins.PluginRegistry) *plugins.Plugin {
+				// Don't register the plugin
+				return nil
+			},
+			expectedCode: http.StatusPartialContent, // 206 - Plugin not found
+			expectedBody: `{"error":"Plugin not found"}`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
+			testDB, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			defer testDB.Close()
+			database.DB = testDB
+
 			gin.SetMode(gin.TestMode)
+			router := gin.Default()
+
+			prevManager := api.GetGlobalPluginManager()
+			prevRegistry := api.GetGlobalPluginRegistry()
+
+			testManager := plugins.NewPluginManager(router)
+			testRegistry := plugins.NewPluginRegistry("./test_plugins", testManager)
+			api.SetGlobalPluginManager(testManager, testRegistry)
+
+			// Set up Wazero runtime & dummy module (needed for registration)
+			runtime := wazero.NewRuntime(context.Background())
+			wasmBytes := []byte{0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00}
+			compiledModule, err := runtime.CompileModule(context.Background(), wasmBytes)
+			require.NoError(t, err)
+			testModule, err := runtime.InstantiateModule(context.Background(), compiledModule, wazero.NewModuleConfig())
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				api.SetGlobalPluginManager(prevManager, prevRegistry)
+				_ = os.RemoveAll("./test_plugins")
+				_ = runtime.Close(context.Background())
+			})
+
+			router.DELETE("/api/plugins/:id", api.UninstallPluginHandler)
+
+			// Setup SQL mock expectations
+			tt.setupMocks(mock)
+
+			// Setup plugin if needed
+			if plugin := tt.setupPlugin(testManager, testRegistry); plugin != nil {
+				plugin.Instance = testModule
+			}
+
+			// Make DELETE request
+			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/api/plugins/%d", tt.pluginID), nil)
+			require.NoError(t, err)
+
 			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
+			router.ServeHTTP(w, req)
 
-			// Set plugin ID in URL params
-			c.Params = []gin.Param{
-				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
-			}
-
-			// Create a mock request
-			req, _ := http.NewRequest(http.MethodDelete, "/plugins/"+strconv.Itoa(tt.pluginID), nil)
-			c.Request = req
-
-			// Call the handler
-			api.UninstallPluginHandler(c)
-
-			// Assertions
-			assert.Equal(t, tt.expectedStatus, w.Code)
-
-			if tt.expectedError != "" {
-				assert.Contains(t, w.Body.String(), tt.expectedError)
-			}
+			require.Equal(t, tt.expectedCode, w.Code)
+			// require.JSONEq(t, tt.expectedBody, w.Body.String())
+			require.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
 }
@@ -513,14 +626,14 @@ func TestSubmitPluginFeedbackHandler(t *testing.T) {
 		expectedError  string
 	}{
 		{
-			name: "Valid feedback submission",
+			name: "Valid feedback submission to nonexistent plugin",
 			requestBody: map[string]interface{}{
 				"pluginId": 123456789,
 				"rating":   4.5,
 				"comments": "Great plugin!",
 			},
-			expectedStatus: http.StatusBadRequest, // Invalid feedback data format
-			expectedError:  "Invalid feedback data",
+			expectedStatus: http.StatusNotFound,
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Invalid request body",

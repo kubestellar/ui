@@ -115,11 +115,15 @@ export const HelmTab = ({
     setPopularLoading(true);
 
     try {
+      // Generate unique release name with timestamp to avoid conflicts
+      const timestamp = Date.now();
+      const uniqueReleaseName = `${selectedChart}-${timestamp}`;
+
       const requestBody = {
         repoName: 'bitnami',
         repoURL: 'https://charts.bitnami.com/bitnami',
         chartName: selectedChart,
-        releaseName: selectedChart,
+        releaseName: uniqueReleaseName, // Use unique release name to prevent conflicts
         namespace: selectedChart,
         workloadLabel: formData.workload_label,
       };
@@ -129,7 +133,8 @@ export const HelmTab = ({
       if (response.status === 200 || response.status === 201) {
         toast.success(t('workloads.helm.messages.deploySuccess', { chartName: selectedChart }));
         setSelectedChart(null);
-        setTimeout(() => window.location.reload(), 4000);
+        // Reduce reload delay to minimize confusion
+        setTimeout(() => window.location.reload(), 2000);
       } else {
         throw new Error('Unexpected response status: ' + response.status);
       }
@@ -139,7 +144,13 @@ export const HelmTab = ({
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error(t('workloads.helm.messages.deployFailureReuse'));
+          const errorMessage = (err.response.data as { error?: string })?.error || 'Unknown error';
+          // More specific error handling for release name conflicts
+          if (errorMessage.includes('cannot re-use a name')) {
+            toast.error('Release name already exists. Please try again with a different name.');
+          } else {
+            toast.error(t('workloads.helm.messages.deployFailureReuse'));
+          }
         } else if (err.response.status === 400) {
           toast.error(t('workloads.helm.messages.deployFailure'));
         }

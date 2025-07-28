@@ -19,7 +19,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 1. **Frontend**: Built with React and TypeScript
 2. **Backend**: Built with Golang using the Gin framework.
 
-<a href="https://kubernetes.slack.com/archives/C058SUSL5AA"> 
+<a href="https://cloud-native.slack.com/archives/C097094RZ3M"> 
   <img alt="Join Slack" src="https://img.shields.io/badge/KubeStellar-Join%20Slack-blue?logo=slack">
 </a>
 <a href="https://deepwiki.com/kubestellar/ui">
@@ -401,6 +401,27 @@ make migrate-force # Force set migration version (use if out of sync)
 >
 > This resolves almost 80% of issues caused by overridden changes during installation on existing systems.
 
+## Getting in touch
+
+There are several ways to communicate with us:
+
+Instantly get access to our documents and meeting invites at http://kubestellar.io/joinus
+
+- The [`#kubestellar-dev` channel](https://kubernetes.slack.com/archives/C058SUSL5AA) in the [Kubernetes Slack workspace](https://slack.k8s.io)
+- Our mailing lists:
+    - [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) for development discussions
+    - [kubestellar-users](https://groups.google.com/g/kubestellar-users) for discussions among users and potential users
+- Subscribe to the [community meeting calendar](https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=MWM4a2loZDZrOWwzZWQzZ29xanZwa3NuMWdfMjAyMzA1MThUMTQwMDAwWiBiM2Q2NWM5MmJlZDdhOTg4NGVmN2ZlOWUzZjZjOGZlZDE2ZjZmYjJmODExZjU3NTBmNTQ3NTY3YTVkZDU4ZmVkQGc&tmsrc=b3d65c92bed7a9884ef7fe9e3f6c8fed16f6fb2f811f5750f547567a5dd58fed%40group.calendar.google.com&scp=ALL) for community meetings and events
+    - The [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) mailing list is subscribed to this calendar
+- See recordings of past KubeStellar community meetings on [YouTube](https://www.youtube.com/@kubestellar)
+- See [upcoming](https://github.com/kubestellar/kubestellar/issues?q=is%3Aissue+is%3Aopen+label%3Acommunity-meeting) and [past](https://github.com/kubestellar/kubestellar/issues?q=is%3Aissue+is%3Aclosed+label%3Acommunity-meeting) community meeting agendas and notes
+- Browse the [shared Google Drive](https://drive.google.com/drive/folders/1p68MwkX0sYdTvtup0DcnAEsnXElobFLS?usp=sharing) to share design docs, notes, etc.
+    - Members of the [kubestellar-dev](https://groups.google.com/g/kubestellar-dev) mailing list can view this drive
+- Follow us on:
+   - LinkedIn - [#kubestellar](https://www.linkedin.com/feed/hashtag/?keywords=kubestellar)
+   - Medium - [kubestellar.medium.com](https://medium.com/@kubestellar/list/predefined:e785a0675051:READING_LIST)
+
+
 <div>
 <h2><font size="6"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> Contributors </font></h2>
 </div>
@@ -411,4 +432,5 @@ make migrate-force # Force set migration version (use if out of sync)
   <img src="https://contrib.rocks/image?repo=kubestellar/ui" />
 </a>
 </center>
+<br>
 <br>

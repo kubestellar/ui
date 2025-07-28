@@ -1157,7 +1157,7 @@ func HelmDeployHandler(c *gin.Context) {
 	if store {
 		response["stored_in"] = "kubestellar-helm ConfigMap"
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/deploy").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/deploy", "200").Inc()
 	c.JSON(http.StatusOK, response)
 }
 
@@ -1170,7 +1170,7 @@ func ListGithubDeployments(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "GitHub deployments retrieved successfully",
 		"count":       len(deployments),
@@ -1188,7 +1188,7 @@ func ListHelmDeploymentsHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "Helm deployments retrieved successfully",
 		"count":       len(deployments),
@@ -1205,7 +1205,7 @@ func ListGithubDeploymentsHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "GitHub deployments retrieved successfully",
 		"count":       len(deployments),
@@ -1230,7 +1230,7 @@ func GetHelmDeploymentHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Deployment not found: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployment/:id").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployment/:id", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "Helm deployment retrieved successfully",
 		"deployment": deployment,
@@ -1254,7 +1254,7 @@ func ListHelmDeploymentsByNamespaceHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments/namespace/:namespace").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments/namespace/:namespace", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     fmt.Sprintf("Helm deployments in namespace %s retrieved successfully", namespace),
 		"count":       len(deployments),
@@ -1280,7 +1280,7 @@ func ListHelmDeploymentsByReleaseHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments/release/:release").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments/release/:release", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     fmt.Sprintf("Helm deployments for release %s retrieved successfully", releaseName),
 		"count":       len(deployments),
@@ -1434,7 +1434,7 @@ func DeleteHelmDeploymentHandler(c *gin.Context) {
 		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/helm/deployment/:id").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/helm/deployment/:id", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Helm deployment %s deleted successfully", deploymentID),
 		"id":      deploymentID,
@@ -1462,7 +1462,7 @@ func DeleteGitHubDeploymentHandler(c *gin.Context) {
 		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
 		return
 	}
-	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/github/deployment/:id").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/github/deployment/:id", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("GitHub deployment %s deleted successfully", deploymentID),
 		"id":      deploymentID,

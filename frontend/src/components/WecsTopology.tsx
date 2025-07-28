@@ -46,7 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import useZoomStore from '../stores/zoomStore';
-import WecsDetailsPanel from './WecsDetailsPanel';
+import WecsDetailsPanel from './wecs_details/WecsDetailsPanel';
 import { FlowCanvas } from './wds_topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
 import FullScreenToggle from './skeleton/FullScreenToggle';
@@ -1598,7 +1598,6 @@ const WecsTreeview = () => {
                   containerRef={containerRef}
                   position="top-right"
                   tooltipPosition="left"
-                  tooltipText={t('wecsTopology.fullscreen.toggle')}
                 />
               </ReactFlowProvider>
             </Box>

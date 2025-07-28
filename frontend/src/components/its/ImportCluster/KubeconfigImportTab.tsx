@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, SxProps, Theme } from '@mui/material';
 import { Colors } from './ImportClusters';
-import CancelButton from './common/CancelButton';
+import CancelButton from '../../common/CancelButton';
 import { useTranslation } from 'react-i18next';
 
 interface KubeconfigImportTabProps {

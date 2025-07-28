@@ -13,8 +13,9 @@ const NotFoundPageLazy = lazy(() => import('../pages/NotFoundPage'));
 const TreeViewLazy = lazy(() => import('../components/TreeViewComponent'));
 const WecsTreeviewLazy = lazy(() => import('../components/WecsTopology'));
 const PluginManagerLazy = lazy(() =>
-  import('../components/PluginManager').then(module => ({ default: module.PluginManager }))
+  import('../pages/PluginManager').then(module => ({ default: module.PluginManager }))
 );
+const GalaxyMarketplaceLazy = lazy(() => import('../pages/GalaxyMarketplace'));
 const KubeStellarVisualizationLazy = lazy(() => import('../components/login/index'));
 const InstallationPageLazy = lazy(() => import('../pages/InstallationPage'));
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Dashboard'));
@@ -127,6 +128,18 @@ export const routesConfig: RouteObject[] = [
               fallback={<LoadingFallback message="Loading Plugin Manager..." size="medium" />}
             >
               <PluginManagerLazy />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins/marketplace',
+        element: (
+          <ProtectedRoute>
+            <Suspense
+              fallback={<LoadingFallback message="Loading Galaxy Marketplace..." size="medium" />}
+            >
+              <GalaxyMarketplaceLazy />
             </Suspense>
           </ProtectedRoute>
         ),

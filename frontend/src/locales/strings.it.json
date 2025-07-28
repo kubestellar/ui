@@ -145,7 +145,7 @@
       "delete": {
         "title": "Elimina utente",
         "confirmTitle": "Conferma eliminazione",
-        "confirmMessage": "Sei sicuro di voler eliminare l’utente \"{{username}}\"? Questa azione è irreversibile.",
+        "confirmMessage": "Sei sicuro di voler eliminare l'utente \"{{username}}\"? Questa azione è irreversibile.",
         "confirm": "Elimina utente"
       },
       "errors": {
@@ -169,8 +169,8 @@
       "installed": "è correttamente installato e soddisfa i requisiti di versione."
     },
     "errorSection": {
-      "title": "Istruzioni per l’installazione",
-      "viewGuide": "Visualizza la guida all’installazione"
+      "title": "Istruzioni per l'installazione",
+      "viewGuide": "Visualizza la guida all'installazione"
     },
     "statusBadge": {
       "installed": "Installato",
@@ -184,7 +184,7 @@
     "title": "Installazione",
     "verification": "Verifica",
     "installCommand": "Esegui il comando seguente per installare",
-    "verifyCommand": "Verifica l’installazione con",
+    "verifyCommand": "Verifica l'installazione con",
     "welcome": "Benvenuto in KubeStellar",
     "gettingStarted": "Inizia con KubeStellar configurando il tuo ambiente di sviluppo. Segui il nostro processo guidato per distribuire il sistema demo.",
     "tabs": {
@@ -201,7 +201,7 @@
       "startUsingKubestellar": "Inizia a usare KubeStellar",
       "startUsingKubestellarDescription": "Effettua il login e inizia a gestire i tuoi cluster"
     },
-    "documentationLink": "Visualizza la guida completa all’installazione",
+    "documentationLink": "Visualizza la guida completa all'installazione",
     "prerequisites": {
       "prerequisites": "Prerequisiti",
       "title": "Prerequisiti di sistema",
@@ -246,18 +246,18 @@
       "importantNotes": {
         "title": "Note importanti:",
         "notes": [
-          "L’installazione può richiedere diversi minuti",
+          "L'installazione può richiedere diversi minuti",
           "Assicurati di avere risorse sufficienti",
           "Mantieni aperta la finestra del terminale fino al termine",
           "Controlla il terminale per eventuali errori"
         ]
       },
       "afterInstallation": {
-        "title": "Dopo l’installazione:",
+        "title": "Dopo l'installazione:",
         "steps": [
-          "Verifica l’installazione controllando lo stato del cluster",
+          "Verifica l'installazione controllando lo stato del cluster",
           "Consulta la documentazione per iniziare",
-          "Inizia a gestire l’ambiente KubeStellar"
+          "Inizia a gestire l'ambiente KubeStellar"
         ]
       },
       "buttons": {
@@ -274,7 +274,7 @@
       "title": "Controllo stato fallito",
       "description": "Impossibile verificare se KubeStellar è installato. Potrebbe trattarsi di un problema di connessione o il server non è disponibile.",
       "retryButton": "Riprova connessione",
-      "persistenceNote": "Se il problema persiste, controlla la rete o contatta l’amministratore di sistema."
+      "persistenceNote": "Se il problema persiste, controlla la rete o contatta l'amministratore di sistema."
     },
     "footer": {
       "copyright": "© KubeStellar",
@@ -284,12 +284,12 @@
     },
     "skipPrerequisitesNotice": {
       "title": "Controllo prerequisiti saltato",
-      "description": "Il controllo dei prerequisiti è stato disabilitato in questo ambiente. Puoi procedere direttamente all’installazione.",
+      "description": "Il controllo dei prerequisiti è stato disabilitato in questo ambiente. Puoi procedere direttamente all'installazione.",
       "note": "Nota: assicurati di aver installato manualmente tutti gli strumenti richiesti prima di avviare i comandi."
     },
     "toasts": {
       "alreadyInstalled": "KubeStellar è già installato! Reindirizzamento al login…",
-      "notInstalled": "Cluster Kubeflex non trovato. Segui i passaggi per configurare l’ambiente KubeStellar.",
+      "notInstalled": "Cluster Kubeflex non trovato. Segui i passaggi per configurare l'ambiente KubeStellar.",
       "checkFailed": "Controllo stato KubeStellar non riuscito",
       "preparingInstructions": "Preparazione delle istruzioni di installazione…",
       "followInstructions": "Segui le istruzioni CLI qui sotto per installare KubeStellar",
@@ -960,7 +960,7 @@
         "description": "Il tuo cluster verrà onboardato automaticamente senza comandi manuali"
       }
     },
-    "whyUseAutomated": "Perché Usare l’Onboarding Automatizzato?",
+    "whyUseAutomated": "Perché Usare l'Onboarding Automatizzato?",
     "approaches": {
       "automated": {
         "title": "Approccio Automatizzato (Nuovo)",
@@ -2082,6 +2082,10 @@
         "title": "Logout",
         "description": "Esci dal tuo account",
         "infoMessage": "Disconnessione avvenuta con successo."
+      },
+      "galaxyMarketplace": {
+        "title": "Mercato Galaxy",
+        "description": "Scopri e installa plugin dal Mercato Galaxy"
       }
     },
     "sections": {
@@ -2101,12 +2105,14 @@
     },
     "items": {
       "home": "Home",
+      "managedClusters": "Cluster Gestiti",
       "remoteClusters": "Cluster Remoti",
       "stagedWorkloads": "Carichi di Lavoro In Preparazione",
       "bindingPolicies": "Policy di Binding",
       "deployedWorkloads": "Carichi di Lavoro Distribuiti",
       "pluginManager": "Gestore Plugin",
-      "userManagement": "Gestione Utenti"
+      "userManagement": "Gestione Utenti",
+      "galaxyMarketplace": "Mercato Galaxy"
     }
   },
   "plugins": {
@@ -2199,7 +2205,8 @@
       }
     },
     "marketplace": {
-      "title": "Marketplace Plugin",
+      "title": "KubeStellar Galaxy Marketplace",
+      "description": "Scopri e installa plugin per migliorare la tua esperienza KubeStellar",
       "browse": "Sfoglia Plugin Disponibili",
       "featured": "Plugin In Evidenza",
       "categories": "Categorie",

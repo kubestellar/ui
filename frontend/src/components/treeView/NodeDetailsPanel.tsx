@@ -11,6 +11,7 @@ interface NodeDetailsPanelProps {
     resourceData?: ResourceItem;
     isGroup?: boolean;
     groupItems?: ResourceItem[];
+    initialTab?: number;
   } | null;
   isOpen: boolean;
   onClose: () => void;
@@ -74,6 +75,7 @@ const NodeDetailsPanel = memo<NodeDetailsPanelProps>(
             onClose={onClose}
             isOpen={isOpen}
             onDelete={onDelete}
+            initialTab={selectedNode.initialTab}
           />
         )}
       </div>

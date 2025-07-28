@@ -87,7 +87,7 @@ func OnboardingLogsHandler(c *gin.Context) {
 		zap.String("status", status),
 		zap.Int("logCount", len(events)),
 		zap.Any("events", events))
-	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/onboarding/logs/:cluster").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/onboarding/logs/:cluster", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"clusterName": clusterName,
 		"status":      status,

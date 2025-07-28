@@ -2086,6 +2086,14 @@
         "title": "लॉगआउट",
         "description": "अपने खाते से साइन आउट करें",
         "infoMessage": "आपको सफलतापूर्वक लॉग आउट कर दिया गया है।"
+      },
+      "galaxyMarketplace": {
+        "title": "गैलेक्सी मार्केटप्लेस",
+        "description": "गैलेक्सी मार्केटप्लेस से प्लगइन खोजें और इंस्टॉल करें"
+      },
+      "managedClusters": {
+        "title": "प्रबंधित क्लस्टर",
+        "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
       }
     },
     "sections": {
@@ -2105,13 +2113,15 @@
     },
     "items": {
       "home": "होम",
-      "remoteClusters": "Remote Clusters",
-      "stagedWorkloads": "Staged Workloads",
-      "bindingPolicies": "Binding Policies",
-      "deployedWorkloads": "Deployed Workloads",
-      "pluginManager": "Plugin Manager",
+      "remoteClusters": "Remरिमोट क्लस्टर्स",
+      "stagedWorkloads": "स्टेज्ड वर्कलोड्स",
+      "bindingPolicies": "बाइंडिंग नीतियाँ",
+      "deployedWorkloads": "परिनियोजित वर्कलोड्स",
+      "pluginManager": "उपयोगकर्ता प्रबंधन",
       "userManagement": "User Management",
-      "metricsDashboard": "Metrics Dashboard"
+      "metricsDashboard": "मेट्रिक्स डैशबोर्ड",
+      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस",
+      "managedClusters": "प्रबंधित क्लस्टर"
     }
   },
   "plugins": {
@@ -2204,7 +2214,8 @@
       }
     },
     "marketplace": {
-      "title": "प्लगइन मार्केटप्लेस",
+      "title": "कुबेस्टेलर गैलेक्सी मार्केटप्लेस",
+      "description": "कुबेस्टेलर अनुभव को बेहतर बनाने के लिए प्लगइन खोजें और इंस्टॉल करें",
       "browse": "उपलब्ध प्लगइन्स ब्राउज़ करें",
       "featured": "फीचर्ड प्लगइन्स",
       "categories": "श्रेणियाँ",

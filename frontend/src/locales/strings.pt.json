@@ -120,8 +120,8 @@
         "title": "Gerenciador de Plugins",
         "description": "Gerencie e monitore plugins do KubeStellar"
       },
-      "clusters": {
-        "title": "Clusters Remotos",
+      "managedClusters": {
+        "title": "Clusters Gerenciados",
         "description": "Gerenciar clusters Kubernetes"
       },
       "workloads": {
@@ -152,6 +152,10 @@
         "title": "Sair",
         "description": "Sair da sua conta",
         "infoMessage": "Você saiu com sucesso."
+      },
+      "galaxyMarketplace": {
+        "title": "Mercado Galaxy",
+        "description": "Descubra e instale plugins do Mercado Galaxy"
       }
     }
   },
@@ -164,13 +168,18 @@
     },
     "items": {
       "home": "Início",
-      "remoteClusters": "Clusters Remotos",
+      "managedClusters": "Clusters Gerenciados",
       "stagedWorkloads": "Workloads Preparados",
       "bindingPolicies": "Políticas de binding",
       "deployedWorkloads": "Workloads Implantados",
       "pluginManager": "Gerenciador de Plugins",
-      "userManagement": "Gerenciamento de Usuários"
+      "userManagement": "Gerenciamento de Usuários",
+      "galaxyMarketplace": "Mercado Galaxy"
     }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marketplace",
+    "description": "Descubra e instale plugins para melhorar sua experiência KubeStellar"
   },
   "validation": {
     "missingRequiredFields": "Campos obrigatórios ausentes"

@@ -3,6 +3,7 @@ import {
   HiOutlineCommandLine,
   HiOutlinePuzzlePiece,
   HiOutlineUsers,
+  HiOutlineRocketLaunch,
   HiOutlineViewfinderCircle,
 } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
@@ -38,7 +39,7 @@ export const useMenuData = (): MenuItemData[] => {
           isLink: true,
           url: '/its',
           icon: HiOutlineCube,
-          label: t('menu.items.remoteClusters'),
+          label: t('menu.items.managedClusters'),
         },
         {
           isLink: true,
@@ -77,6 +78,12 @@ export const useMenuData = (): MenuItemData[] => {
       centered: true,
       marginTop: '1rem',
       listItems: [
+        {
+          isLink: true,
+          url: '/plugins/marketplace',
+          icon: HiOutlineRocketLaunch,
+          label: t('menu.items.galaxyMarketplace', 'Galaxy Marketplace'),
+        },
         {
           isLink: true,
           url: '/plugins/manage',
