@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import useTheme from '../../stores/themeStore';
 import { lazy, Suspense } from 'react';
 import { CircularProgress } from '@mui/material';
+import ButtonTooltip from '../common/ButtonTooltip';
 
 // Lazy load Monaco Editor
 const MonacoEditor = lazy(() => import('@monaco-editor/react'));
@@ -328,28 +329,34 @@ export const UploadFileTab = ({
         <CancelButton onClick={handleCancelClick} disabled={loading}>
           {t('common.cancel')}
         </CancelButton>
-        <Button
-          variant="contained"
-          onClick={() => handleFileUpload(autoNs)}
+        <ButtonTooltip
+          tooltip={t('validation.missingRequiredFields')}
           disabled={!selectedFile || loading || (selectedFile && hasLabelsError)}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            backgroundColor: '#1976d2',
-            color: '#fff',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            '&:hover': {
-              backgroundColor: '#1565c0',
-            },
-            '&:disabled': {
-              backgroundColor: '#b0bec5',
-              color: '#fff',
-            },
-          }}
+          placement="top"
         >
-          {t('bindingPolicy.upload.uploadAndDeploy')}
-        </Button>
+          <Button
+            variant="contained"
+            onClick={() => handleFileUpload(autoNs)}
+            disabled={!selectedFile || loading || (selectedFile && hasLabelsError)}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              backgroundColor: '#1976d2',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              '&:hover': {
+                backgroundColor: '#1565c0',
+              },
+              '&:disabled': {
+                backgroundColor: '#b0bec5',
+                color: '#fff',
+              },
+            }}
+          >
+            {t('bindingPolicy.upload.uploadAndDeploy')}
+          </Button>
+        </ButtonTooltip>
       </Box>
 
       <Snackbar

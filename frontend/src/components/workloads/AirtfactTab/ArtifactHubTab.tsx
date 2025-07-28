@@ -12,6 +12,7 @@ import { CircularProgress } from '@mui/material';
 import WorkloadLabelInput from '../WorkloadLabelInput';
 import CancelButton from '../../common/CancelButton';
 import { useTranslation } from 'react-i18next'; // Add this import
+import ButtonTooltip from '../../common/ButtonTooltip';
 
 export interface Repository {
   name: string;
@@ -378,34 +379,40 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           {selectedOption !== 'repositories' && (
             <CancelButton onClick={onCancel}>{t('common.cancel')}</CancelButton>
           )}
-          <Button
-            variant="contained"
-            onClick={() => handleArtifactHubDeploy()}
+          <ButtonTooltip
+            tooltip={t('validation.missingRequiredFields')}
             disabled={isApplyDisabled()}
-            sx={{
-              textTransform: 'none',
-              fontWeight: '600',
-              backgroundColor: '#1976d2',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: '#1565c0',
-              },
-              '&:disabled': {
-                backgroundColor: '#b0bec5',
-                color: '#fff',
-              },
-            }}
+            placement="top"
           >
-            {deployLoading ? (
-              <CircularProgress size={20} sx={{ color: '#fff' }} />
-            ) : selectedOption === 'repositories' ? (
-              t('workloads.artifactHub.buttons.close')
-            ) : (
-              t('workloads.artifactHub.buttons.apply')
-            )}
-          </Button>
+            <Button
+              variant="contained"
+              onClick={() => handleArtifactHubDeploy()}
+              disabled={isApplyDisabled()}
+              sx={{
+                textTransform: 'none',
+                fontWeight: '600',
+                backgroundColor: '#1976d2',
+                color: '#fff',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                '&:hover': {
+                  backgroundColor: '#1565c0',
+                },
+                '&:disabled': {
+                  backgroundColor: '#b0bec5',
+                  color: '#fff',
+                },
+              }}
+            >
+              {deployLoading ? (
+                <CircularProgress size={20} sx={{ color: '#fff' }} />
+              ) : selectedOption === 'repositories' ? (
+                t('workloads.artifactHub.buttons.close')
+              ) : (
+                t('workloads.artifactHub.buttons.apply')
+              )}
+            </Button>
+          </ButtonTooltip>
         </Box>
       </Box>
     </StyledContainer>

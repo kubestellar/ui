@@ -2060,5 +2060,8 @@
   "marketplace": {
     "title": "KubeStellar Galaxy 市场",
     "description": "发现并安装插件以增强您的 KubeStellar 体验"
+  },
+  "validation": {
+    "missingRequiredFields": "缺少必填字段"
   }
 }
