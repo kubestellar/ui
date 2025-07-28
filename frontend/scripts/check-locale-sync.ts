@@ -116,18 +116,20 @@ class LocaleSyncChecker {
         state: 'open',
       });
 
-      const foundIssue = issues.find(issue => 
+      const foundIssue = issues.find(issue =>
         issue.title.includes(`${this.issueTitlePrefix} Missing translations for ${locale}`)
       );
-      
+
       if (!foundIssue) return null;
-      
+
       return {
         number: foundIssue.number,
         title: foundIssue.title,
         body: foundIssue.body || '',
         state: foundIssue.state as 'open' | 'closed',
-        labels: foundIssue.labels.map(label => ({ name: typeof label === 'string' ? label : label.name || '' }))
+        labels: foundIssue.labels.map(label => ({
+          name: typeof label === 'string' ? label : label.name || '',
+        })),
       };
     } catch (error) {
       console.error('Error fetching issues:', error);
@@ -135,7 +137,11 @@ class LocaleSyncChecker {
     }
   }
 
-  private async createOrUpdateIssue(locale: string, missing: string[], extra: string[]): Promise<number | null> {
+  private async createOrUpdateIssue(
+    locale: string,
+    missing: string[],
+    extra: string[]
+  ): Promise<number | null> {
     if (!this.octokit || !this.owner || !this.repo) return null;
 
     const title = `${this.issueTitlePrefix} Missing translations for ${locale}`;
@@ -224,7 +230,9 @@ class LocaleSyncChecker {
           body: `🎉 **Translation sync completed!**\n\nAll translation keys for \`${locale}\` are now in sync with the master English locale. This issue has been automatically closed.\n\n*Updated at: ${new Date().toISOString()}*`,
         });
 
-        console.log(`Closed issue #${existingIssue.number} for ${locale} - translations are now in sync`);
+        console.log(
+          `Closed issue #${existingIssue.number} for ${locale} - translations are now in sync`
+        );
       }
     } catch (error) {
       console.error(`Error closing issue for ${locale}:`, error);
@@ -290,8 +298,10 @@ Missing keys should be added, and extra keys should be removed.`;
 
         if (issues.missing.length > 0 || issues.extra.length > 0) {
           hasIssues = true;
-          console.log(`  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`);
-          
+          console.log(
+            `  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`
+          );
+
           // Create or update GitHub issue
           const issueNumber = await this.createOrUpdateIssue(locale, issues.missing, issues.extra);
           if (issueNumber) {
