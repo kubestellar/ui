@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import useZoomStore, { zoomPresets } from '../../stores/zoomStore';
 import useEdgeTypeStore from '../../stores/edgeTypeStore';
 
+
 interface ZoomControlsProps {
   theme: string;
   onToggleCollapse: () => void;
@@ -23,6 +24,7 @@ interface ZoomControlsProps {
   onCollapseAll: () => void;
 }
 
+
 export const ZoomControls = memo<ZoomControlsProps>(
   ({ theme, onToggleCollapse, isCollapsed, onExpandAll, onCollapseAll }) => {
     const { t } = useTranslation();
@@ -30,13 +32,16 @@ export const ZoomControls = memo<ZoomControlsProps>(
     const [zoomLevel, setZoomLevel] = useState<number>(120);
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
 
+
     const { setZoom } = useZoomStore();
     const { edgeType, setEdgeType } = useEdgeTypeStore();
+
 
     const snapToStep = useCallback((zoom: number) => {
       const step = 10;
       return Math.round(zoom / step) * step;
     }, []);
+
 
     useEffect(() => {
       const updateZoomLevel = () => {
@@ -46,12 +51,16 @@ export const ZoomControls = memo<ZoomControlsProps>(
         setZoom(getZoom());
       };
 
+
       updateZoomLevel();
+
 
       const interval = setInterval(updateZoomLevel, 100);
 
+
       return () => clearInterval(interval);
     }, [getZoom, snapToStep, setViewport, setZoom]);
+
 
     const animateZoom = useCallback(
       (targetZoom: number, duration: number = 200) => {
@@ -59,16 +68,19 @@ export const ZoomControls = memo<ZoomControlsProps>(
         const currentViewport = getViewport();
         const startTime = performance.now();
 
+
         const step = (currentTime: number) => {
           const elapsed = currentTime - startTime;
           const progress = Math.min(elapsed / duration, 1);
           const newZoom = startZoom + (targetZoom - startZoom) * progress;
+
 
           setViewport({
             zoom: newZoom,
             x: currentViewport.x,
             y: currentViewport.y,
           });
+
 
           if (progress < 1) {
             requestAnimationFrame(step);
@@ -78,10 +90,12 @@ export const ZoomControls = memo<ZoomControlsProps>(
           }
         };
 
+
         requestAnimationFrame(step);
       },
       [getZoom, getViewport, setViewport, snapToStep, setZoom]
     );
+
 
     const handleZoomIn = useCallback(() => {
       const currentZoom = getZoom();
@@ -89,10 +103,12 @@ export const ZoomControls = memo<ZoomControlsProps>(
       const newZoomPercentage = Math.min(snapToStep(currentZoomPercentage + 10), 200);
       const newZoom = newZoomPercentage / 100;
 
+
       if (Math.abs(newZoom - currentZoom) > 0.01) {
         animateZoom(newZoom);
       }
     }, [animateZoom, getZoom, snapToStep]);
+
 
     const handleZoomOut = useCallback(() => {
       const currentZoom = getZoom();
@@ -100,10 +116,12 @@ export const ZoomControls = memo<ZoomControlsProps>(
       const newZoomPercentage = Math.max(snapToStep(currentZoomPercentage - 10), 10);
       const newZoom = newZoomPercentage / 100;
 
+
       if (Math.abs(newZoom - currentZoom) > 0.01) {
         animateZoom(newZoom);
       }
     }, [animateZoom, getZoom, snapToStep]);
+
 
     const handlePresetClick = useCallback(
       (preset: (typeof zoomPresets)[0]) => {
@@ -113,19 +131,23 @@ export const ZoomControls = memo<ZoomControlsProps>(
       [animateZoom]
     );
 
+
     const handlePresetMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
       setPresetMenuAnchor(event.currentTarget);
     }, []);
 
+
     const handlePresetMenuClose = useCallback(() => {
       setPresetMenuAnchor(null);
     }, []);
+
 
     const handleResetZoom = useCallback(() => {
       setViewport({ ...getViewport(), zoom: 1 }, { duration: 200 });
       setZoomLevel(100);
       setZoom(1);
     }, [setViewport, getViewport, setZoom]);
+
 
     return (
       <Box
@@ -253,6 +275,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
           {zoomLevel}%
         </Typography>
 
+
         <Menu
           anchorEl={presetMenuAnchor}
           open={Boolean(presetMenuAnchor)}
@@ -295,7 +318,23 @@ export const ZoomControls = memo<ZoomControlsProps>(
             size="small"
             color="primary"
             aria-label="Edge Type"
-            sx={{ ml: 2 }}
+            sx={{ 
+              ml: 2,
+              '& .MuiToggleButton-root': {
+                color: theme === 'dark' ? '#fff' : '#6d7f8b',
+                borderColor: theme === 'dark' ? '#555' : '#e0e0e0',
+                '&:hover': {
+                  backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
+                },
+                '&.Mui-selected': {
+                  color: theme === 'dark' ? '#fff' : '#1976d2',
+                  backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
+                  '&:hover': {
+                    backgroundColor: theme === 'dark' ? '#666' : '#bbdefb',
+                  },
+                },
+              },
+            }}
           >
             <ToggleButton value="bezier" aria-label="Curvy">
               Curvy
