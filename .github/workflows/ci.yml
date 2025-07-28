@@ -38,6 +38,17 @@ jobs:
         if: success()
         run: echo "Linting successful ✅"
 
+      - name: Locale Sync Check
+        working-directory: frontend
+        run: npm run local-sync-check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF: ${{ github.ref }}
+      - name: ✅ Locale Sync Check Passed
+        if: success()
+        run: echo "Locale sync check passed ✅"
+
       - name: Run Frontend Tests
         working-directory: frontend
         run: npm test -- --ci --coverage --passWithNoTests
