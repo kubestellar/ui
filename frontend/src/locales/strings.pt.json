@@ -180,5 +180,8 @@
   "marketplace": {
     "title": "KubeStellar Galaxy Marketplace",
     "description": "Descubra e instale plugins para melhorar sua experiência KubeStellar"
+  },
+  "validation": {
+    "missingRequiredFields": "Campos obrigatórios ausentes"
   }
 }
