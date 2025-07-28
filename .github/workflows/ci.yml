@@ -42,7 +42,7 @@ jobs:
         working-directory: frontend
         run: npm run local-sync-check
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
       - name: ✅ Locale Sync Check Passed
