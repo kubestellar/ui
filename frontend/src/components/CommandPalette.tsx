@@ -794,68 +794,86 @@ const CommandListItem: React.FC<CommandListItemProps> = ({
 
     switch (type) {
       case 'admin':
-        return isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)';
+        return isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)';
       default:
-        return isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)';
+        return isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)';
     }
   };
 
-  // Set border color based on command type
-  const getBorderColor = (isSelected: boolean, type: CommandType) => {
-    if (!isSelected) return '2px solid transparent';
+  // Set border style based on command type
+  const getBorderStyle = (isSelected: boolean, type: CommandType) => {
+    if (!isSelected)
+      return {
+        border: '1px solid transparent',
+        borderRadius: '6px',
+      };
 
     switch (type) {
       case 'admin':
-        return `2px solid ${isDark ? '#f87171' : '#ef4444'}`;
+        return {
+          border: `2px solid ${isDark ? '#f87171' : '#ef4444'}`,
+          borderRadius: '6px',
+          boxShadow: isDark
+            ? '0 0 0 1px rgba(248, 113, 113, 0.2)'
+            : '0 0 0 1px rgba(239, 68, 68, 0.1)',
+        };
       default:
-        return `2px solid ${themeStyles.colors.brand.primary}`;
+        return {
+          border: `2px solid ${themeStyles.colors.brand.primary}`,
+          borderRadius: '6px',
+          boxShadow: isDark
+            ? '0 0 0 1px rgba(59, 130, 246, 0.3)'
+            : '0 0 0 1px rgba(59, 130, 246, 0.2)',
+        };
     }
   };
 
   return (
-    <motion.button
-      className={`flex w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-200`}
-      style={{
-        background: getItemBackground(selectedIndex === index, command.type),
-        borderLeft: getBorderColor(selectedIndex === index, command.type),
-      }}
-      onClick={() => executeCommand(command)}
-      onMouseEnter={() => setSelectedIndex(index)}
-      whileHover={{ x: 2 }}
-    >
-      <div
-        className="flex h-8 min-w-8 items-center justify-center rounded-md"
+    <div className="px-2 py-1">
+      <motion.button
+        className={`flex w-full items-center gap-3 px-3 py-2 text-left transition-all duration-200`}
         style={{
-          background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(243, 244, 246, 0.7)',
+          background: getItemBackground(selectedIndex === index, command.type),
+          ...getBorderStyle(selectedIndex === index, command.type),
         }}
+        onClick={() => executeCommand(command)}
+        onMouseEnter={() => setSelectedIndex(index)}
+        whileHover={{ x: 2 }}
       >
-        <command.icon className="text-base" style={{ color: getIconColor(command.type) }} />
-      </div>
-      <div className="min-w-0 flex-1">
         <div
-          className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium"
-          style={{ color: themeStyles.colors.text.primary }}
+          className="flex h-8 min-w-8 items-center justify-center rounded-md"
+          style={{
+            background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(243, 244, 246, 0.7)',
+          }}
         >
-          {command.title}
+          <command.icon className="text-base" style={{ color: getIconColor(command.type) }} />
         </div>
-        {!compact && (
+        <div className="min-w-0 flex-1">
           <div
-            className="overflow-hidden text-ellipsis whitespace-nowrap text-xs"
-            style={{ color: themeStyles.colors.text.secondary }}
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium"
+            style={{ color: themeStyles.colors.text.primary }}
           >
-            {command.description}
+            {command.title}
           </div>
-        )}
-        {compact && (
-          <div
-            className="overflow-hidden text-ellipsis whitespace-nowrap text-xs"
-            style={{ color: themeStyles.colors.text.tertiary }}
-          >
-            {command.description}
-          </div>
-        )}
-      </div>
-    </motion.button>
+          {!compact && (
+            <div
+              className="overflow-hidden text-ellipsis whitespace-nowrap text-xs"
+              style={{ color: themeStyles.colors.text.secondary }}
+            >
+              {command.description}
+            </div>
+          )}
+          {compact && (
+            <div
+              className="overflow-hidden text-ellipsis whitespace-nowrap text-xs"
+              style={{ color: themeStyles.colors.text.tertiary }}
+            >
+              {command.description}
+            </div>
+          )}
+        </div>
+      </motion.button>
+    </div>
   );
 };
 
