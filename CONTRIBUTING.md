@@ -21,6 +21,7 @@ This guide will help you set up **PostgreSQL and Redis containers**, configure *
 - [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
 - [Installing GolangCI-Lint](#installing-golangci-lint)
 - [Linting & Fixing Code](#linting--fixing-code)
+- [Imp Note](#important-note)
 - [Conclusion](#conclusion)
 
 ---
@@ -480,6 +481,34 @@ make lint
 ```
 
 ---
+
+## Important Note
+
+### 1. Localize All Frontend Strings
+If you're adding any **new string** in the frontend UI:
+- Localize the string using our existing localization setup.
+- Add the string to the appropriate language file (`locales/strings.en.json`).
+#### How to Localize a String:
+1. Open `strings.en.json` located under `/locales/` (or appropriate path).
+2. Add your new string as a key-value pair. Example:
+```json
+{
+"greeting": "Hello, welcome!"
+}
+```
+3. In your component, use the localization[+] hook.[/+][-] hook or method (depending on your i18n setup). Example using `react-i18next`:[/-]
+```tsx
+const { t } = useTranslation();
+<p>{t("greeting")}</p>
+```
+---
+### 2. Be Cautious With AI-Generated Code
+> AI tools (like GitHub Copilot or ChatGPT) are helpful but **not always context-aware**.
+**Please DO NOT blindly copy-paste AI-generated code.**
+Before committing:
+- Double-check if the code aligns with our project’s architecture.
+- Test thoroughly to ensure it doesn’t break existing functionality.
+- Refactor and adapt it as per the codebase standards.
 
 ## Issue Assignment Guide
 
