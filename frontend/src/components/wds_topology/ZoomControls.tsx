@@ -127,6 +127,21 @@ export const ZoomControls = memo<ZoomControlsProps>(
       setZoom(1);
     }, [setViewport, getViewport, setZoom]);
 
+    // Common button styles
+    const buttonStyles = {
+      color: theme === 'dark' ? '#fff' : '#6d7f8b',
+      '&:hover': {
+        backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
+      },
+      minWidth: '36px',
+      padding: '4px',
+    };
+
+    const activeButtonStyles = {
+      ...buttonStyles,
+      backgroundColor: isCollapsed ? (theme === 'dark' ? '#555' : '#e3f2fd') : 'transparent',
+    };
+
     return (
       <Box
         sx={{
@@ -141,95 +156,33 @@ export const ZoomControls = memo<ZoomControlsProps>(
           alignItems: 'center',
         }}
       >
-        <Button
-          variant="text"
-          onClick={onToggleCollapse}
-          title={t('wecsTopology.zoomControls.groupByResource')}
-          sx={{
-            color: theme === 'dark' ? '#fff' : '#6d7f8b',
-            backgroundColor: isCollapsed ? (theme === 'dark' ? '#555' : '#e3f2fd') : 'transparent',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
-            },
-            minWidth: '36px',
-            padding: '4px',
-          }}
-        >
-          <i className="fa fa-object-group fa-fw" style={{ fontSize: '17px' }} />
-        </Button>
-        <Button
-          variant="text"
-          onClick={onExpandAll}
-          title={t('wecsTopology.zoomControls.expandAll')}
-          sx={{
-            color: theme === 'dark' ? '#fff' : '#6d7f8b',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
-            },
-            minWidth: '36px',
-            padding: '4px',
-          }}
-        >
-          <i className="fa fa-plus fa-fw" style={{ fontSize: '17px' }} />
-        </Button>
-        <Button
-          variant="text"
-          onClick={onCollapseAll}
-          title={t('wecsTopology.zoomControls.collapseAll')}
-          sx={{
-            color: theme === 'dark' ? '#fff' : '#6d7f8b',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
-            },
-            minWidth: '36px',
-            padding: '4px',
-          }}
-        >
-          <i className="fa fa-minus fa-fw" style={{ fontSize: '17px' }} />
-        </Button>
-        <Button
-          variant="text"
-          onClick={handleZoomIn}
-          title={t('wecsTopology.zoomControls.zoomIn')}
-          sx={{
-            color: theme === 'dark' ? '#fff' : '#6d7f8b',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
-            },
-            minWidth: '36px',
-            padding: '4px',
-          }}
-        >
-          <ZoomIn />
-        </Button>
-        <Button
-          variant="text"
-          onClick={handleZoomOut}
-          title={t('wecsTopology.zoomControls.zoomOut')}
-          sx={{
-            color: theme === 'dark' ? '#fff' : '#6d7f8b',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
-            },
-            minWidth: '36px',
-            padding: '4px',
-          }}
-        >
-          <ZoomOut />
-        </Button>
+        <Tooltip title={t('wecsTopology.zoomControls.groupByResource')}>
+          <Button variant="text" onClick={onToggleCollapse} sx={activeButtonStyles}>
+            <i className="fa fa-object-group fa-fw" style={{ fontSize: '17px' }} />
+          </Button>
+        </Tooltip>
+        <Tooltip title={t('wecsTopology.zoomControls.expandAll')}>
+          <Button variant="text" onClick={onExpandAll} sx={buttonStyles}>
+            <i className="fa fa-plus fa-fw" style={{ fontSize: '17px' }} />
+          </Button>
+        </Tooltip>
+        <Tooltip title={t('wecsTopology.zoomControls.collapseAll')}>
+          <Button variant="text" onClick={onCollapseAll} sx={buttonStyles}>
+            <i className="fa fa-minus fa-fw" style={{ fontSize: '17px' }} />
+          </Button>
+        </Tooltip>
+        <Tooltip title={t('wecsTopology.zoomControls.zoomIn')}>
+          <Button variant="text" onClick={handleZoomIn} sx={buttonStyles}>
+            <ZoomIn />
+          </Button>
+        </Tooltip>
+        <Tooltip title={t('wecsTopology.zoomControls.zoomOut')}>
+          <Button variant="text" onClick={handleZoomOut} sx={buttonStyles}>
+            <ZoomOut />
+          </Button>
+        </Tooltip>
         <Tooltip title="Reset Zoom">
-          <Button
-            variant="text"
-            onClick={handleResetZoom}
-            sx={{
-              color: theme === 'dark' ? '#fff' : '#6d7f8b',
-              '&:hover': {
-                backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
-              },
-              minWidth: '36px',
-              padding: '4px',
-            }}
-          >
+          <Button variant="text" onClick={handleResetZoom} sx={buttonStyles}>
             <i className="fa fa-refresh fa-fw" style={{ fontSize: '17px' }} />
           </Button>
         </Tooltip>
@@ -295,7 +248,15 @@ export const ZoomControls = memo<ZoomControlsProps>(
             size="small"
             color="primary"
             aria-label="Edge Type"
-            sx={{ ml: 2 }}
+            sx={{
+              ml: 2,
+              '& .MuiToggleButton-root': {
+                color: theme === 'dark' ? '#fff' : '#6d7f8b',
+                '&:hover': {
+                  backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
+                },
+              },
+            }}
           >
             <ToggleButton value="bezier" aria-label="Curvy">
               Curvy
