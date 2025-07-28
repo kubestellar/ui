@@ -40,8 +40,19 @@ class LocaleSyncChecker {
     this.issueLabel = 'locale-sync';
     this.issueTitlePrefix = '[Locale Sync]';
     const repository = process.env.GITHUB_REPOSITORY;
-    const token = process.env.GH_REPO_TOKEN || process.env.GITHUB_TOKEN;
+    const ghRepoToken = process.env.GH_REPO_TOKEN;
+    const githubToken = process.env.GITHUB_TOKEN;
+    const token = ghRepoToken || githubToken;
     this.prNumber = process.env.PR_NUMBER || process.env.GITHUB_PR_NUMBER || this.detectPRNumber();
+
+    // Debug token availability
+    if (ghRepoToken) {
+      console.log('✅ Using GH_REPO_TOKEN for GitHub API access');
+    } else if (githubToken) {
+      console.log('⚠️  Using GITHUB_TOKEN (limited permissions) for GitHub API access');
+    } else {
+      console.log('❌ No GitHub token available');
+    }
 
     if (repository && token) {
       [this.owner, this.repo] = repository.split('/');
