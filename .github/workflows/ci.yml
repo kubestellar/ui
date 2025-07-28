@@ -44,12 +44,15 @@ jobs:
           echo "Checking token availability..."
           if [ -n "$GH_REPO_TOKEN" ]; then
             echo "✅ GH_REPO_TOKEN is set"
+          elif [ -n "$GITHUB_TOKEN" ]; then
+            echo "✅ GITHUB_TOKEN is set (fallback)"
           else
-            echo "❌ GH_REPO_TOKEN is empty"
+            echo "❌ No token available"
           fi
           npm run local-sync-check
         env:
           GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
       - name: ✅ Locale Sync Check Passed
