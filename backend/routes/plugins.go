@@ -3,11 +3,13 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/middleware"
 )
 
 // setupPluginRoutes registers all plugin management routes
 func setupPluginRoutes(router *gin.Engine) {
 	plugins := router.Group("/api/plugins")
+	plugins.Use(middleware.AuthenticateMiddleware())
 	{
 		// Plugin Management
 		plugins.GET("", api.ListPluginsHandler)

@@ -218,7 +218,7 @@ func TestAuthComponentRoutes(t *testing.T) {
 				// Should be unauthorized without proper token, but route should exist
 				assert.NotEqual(t, http.StatusNotFound, w.Code, "Component route should be registered")
 				// Accept various error codes since we don't have proper dependencies
-				assert.True(t, w.Code == http.StatusUnauthorized || w.Code == http.StatusInternalServerError || w.Code == http.StatusBadRequest,
+				assert.True(t, w.Code == http.StatusUnauthorized || w.Code == http.StatusInternalServerError || w.Code == http.StatusBadRequest || w.Code == http.StatusForbidden,
 					"Should handle authentication or dependency errors, got %d", w.Code)
 			})
 		}
@@ -428,8 +428,8 @@ func TestAuthInvalidMethods(t *testing.T) {
 			}()
 
 			// Accept various status codes for invalid methods since some routes may have dependency/auth issues
-			assert.True(t, w.Code == http.StatusUnauthorized || w.Code == http.StatusNotFound || w.Code == http.StatusMethodNotAllowed || w.Code == http.StatusInternalServerError || w.Code == http.StatusBadRequest,
-				"Invalid method should return 401, 404, 405, 500, or 400, got %d", w.Code)
+			assert.True(t, w.Code == http.StatusUnauthorized || w.Code == http.StatusNotFound || w.Code == http.StatusMethodNotAllowed || w.Code == http.StatusInternalServerError || w.Code == http.StatusBadRequest || w.Code == http.StatusForbidden,
+				"Invalid method should return 401, 404, 405, 500, 400, or 403, got %d", w.Code)
 		})
 	}
 }

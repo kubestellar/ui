@@ -14,7 +14,7 @@ func TestInitJWT(t *testing.T) {
 		utils.InitJWT(secret)
 
 		// Test by generating and validating a token
-		token, err := utils.GenerateToken("testuser", false, map[string]string{})
+		token, err := utils.GenerateToken("testuser", false, map[string]string{}, 1)
 		if err != nil {
 			t.Errorf("Failed to generate token after InitJWT: %v", err)
 		}
@@ -42,7 +42,7 @@ func TestGenerateToken(t *testing.T) {
 			"write": "true",
 		}
 
-		token, err := utils.GenerateToken(username, isAdmin, permissions)
+		token, err := utils.GenerateToken(username, isAdmin, permissions, 1)
 		if err != nil {
 			t.Errorf("Failed to generate token: %v", err)
 		}
@@ -83,7 +83,7 @@ func TestGenerateToken(t *testing.T) {
 			"read": "true",
 		}
 
-		token, err := utils.GenerateToken(username, isAdmin, permissions)
+		token, err := utils.GenerateToken(username, isAdmin, permissions, 1)
 		if err != nil {
 			t.Errorf("Failed to generate token: %v", err)
 		}
@@ -100,7 +100,7 @@ func TestGenerateToken(t *testing.T) {
 
 	t.Run("should generate token with correct expiration", func(t *testing.T) {
 		beforeGeneration := time.Now()
-		token, err := utils.GenerateToken("testuser", false, map[string]string{})
+		token, err := utils.GenerateToken("testuser", false, map[string]string{}, 1)
 		afterGeneration := time.Now()
 
 		if err != nil {
@@ -131,7 +131,7 @@ func TestValidateToken(t *testing.T) {
 	utils.InitJWT("test-secret-key")
 
 	t.Run("should validate correct token", func(t *testing.T) {
-		token, err := utils.GenerateToken("testuser", true, map[string]string{"read": "true"})
+		token, err := utils.GenerateToken("testuser", true, map[string]string{"read": "true"}, 1)
 		if err != nil {
 			t.Fatalf("Failed to generate token: %v", err)
 		}
@@ -164,7 +164,7 @@ func TestValidateToken(t *testing.T) {
 	t.Run("should reject token with wrong secret", func(t *testing.T) {
 		// Generate token with one secret
 		utils.InitJWT("secret1")
-		token, err := utils.GenerateToken("testuser", false, map[string]string{})
+		token, err := utils.GenerateToken("testuser", false, map[string]string{}, 1)
 		if err != nil {
 			t.Fatalf("Failed to generate token: %v", err)
 		}

@@ -22,7 +22,7 @@ func TestAuthenticateMiddleware_ValidToken(t *testing.T) {
 
 	// Create a valid token
 	permissions := map[string]string{"clusters": "read"}
-	token, err := utils.GenerateToken("testuser", false, permissions)
+	token, err := utils.GenerateToken("testuser", false, permissions, 1)
 	assert.NoError(t, err)
 
 	router := setupTestRouter()
