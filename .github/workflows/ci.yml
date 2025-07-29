@@ -10,6 +10,11 @@ jobs:
   frontend:
     name: Frontend Checks
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +58,7 @@ jobs:
           fi
           echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
           echo "GITHUB_REF: $GITHUB_REF"
+          echo "PR_NUMBER: $PR_NUMBER"
           echo "=== END TOKEN DEBUG ==="
           npm run local-sync-check
         env:
@@ -60,6 +66,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
       - name: ✅ Locale Sync Check Passed
         if: success()
         run: echo "Locale sync check passed ✅"

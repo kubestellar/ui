@@ -54,9 +54,14 @@ class LocaleSyncChecker {
       console.log('❌ No GitHub token available');
     }
 
+    // Debug PR number detection
+    console.log(`🔍 PR Number detection: ${this.prNumber || 'Not found'}`);
+    console.log(`🔍 GITHUB_REF: ${process.env.GITHUB_REF || 'Not set'}`);
+
     if (repository && token) {
       [this.owner, this.repo] = repository.split('/');
       this.octokit = new Octokit({ auth: token });
+      console.log(`✅ GitHub API initialized for ${this.owner}/${this.repo}`);
     } else {
       console.log(
         '⚠️  GITHUB_REPOSITORY or token not set; running in local-only mode (no PR comments or issues will be created).'
@@ -70,6 +75,13 @@ class LocaleSyncChecker {
       const match = process.env.GITHUB_REF.match(/refs\/pull\/(\d+)\//);
       if (match) return match[1];
     }
+    
+    // Try alternative patterns
+    if (process.env.GITHUB_REF && process.env.GITHUB_REF.includes('/pull/')) {
+      const match = process.env.GITHUB_REF.match(/\/pull\/(\d+)/);
+      if (match) return match[1];
+    }
+    
     return undefined;
   }
 
@@ -271,11 +283,17 @@ Missing keys should be added, and extra keys should be removed.`;
   private async postPRComment(results: LocaleResults) {
     if (!this.octokit || !this.owner || !this.repo || !this.prNumber) {
       console.log('⚠️  Skipping PR comment - missing GitHub context or token');
+      console.log(`   - octokit: ${!!this.octokit}`);
+      console.log(`   - owner: ${this.owner}`);
+      console.log(`   - repo: ${this.repo}`);
+      console.log(`   - prNumber: ${this.prNumber}`);
       return;
     }
 
     try {
       const comment = this.generatePRComment(results);
+      console.log(`📝 Attempting to post PR comment to PR #${this.prNumber}...`);
+      
       await this.octokit.rest.issues.createComment({
         owner: this.owner,
         repo: this.repo,
@@ -283,8 +301,23 @@ Missing keys should be added, and extra keys should be removed.`;
         body: comment,
       });
       console.log('✅ PR comment posted successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to post PR comment:', error);
+      
+      // Provide specific guidance based on error type
+      if (error.status === 403) {
+        console.error('🔒 Permission denied. This is likely due to:');
+        console.error('   1. GITHUB_TOKEN lacks sufficient permissions');
+        console.error('   2. PR is from a fork and token cannot comment on fork PRs');
+        console.error('   3. Need to use GH_REPO_TOKEN with proper permissions');
+      } else if (error.status === 404) {
+        console.error('🔍 PR not found. Check if PR number is correct:', this.prNumber);
+      } else if (error.status === 401) {
+        console.error('🔑 Authentication failed. Check token validity');
+      }
+      
+      // Log the full error for debugging
+      console.error('Full error details:', JSON.stringify(error, null, 2));
     }
   }
 
@@ -331,7 +364,20 @@ Missing keys should be added, and extra keys should be removed.`;
 
     if (hasIssues) {
       console.log('\n❌ Locale synchronization issues found!');
-      await this.postPRComment(results);
+      console.log('\n📊 Summary:');
+      Object.entries(results).forEach(([locale, issues]) => {
+        if (issues.missing.length > 0 || issues.extra.length > 0) {
+          console.log(`  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`);
+        }
+      });
+      
+      // Try to post PR comment, but don't fail the entire check if it fails
+      try {
+        await this.postPRComment(results);
+      } catch (error) {
+        console.error('⚠️  PR commenting failed, but continuing with check...');
+      }
+      
       process.exit(1); // Fail the check
     } else {
       console.log('\n✅ All locale files are synchronized!');
@@ -346,5 +392,5 @@ async function main() {
 
 main().catch(error => {
   console.error('Script failed:', error);
-  process.exit(1);
-});
+    process.exit(1);
+  });
