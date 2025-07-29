@@ -11,21 +11,6 @@ import (
 	"github.com/kubestellar/ui/backend/telemetry"
 )
 
-// SetupAllRoutes initializes all API routes
-func SetupAllRoutes(router *gin.Engine) {
-	// Setup all route groups
-	setupHealthRoutes(router)
-	setupGitopsRoutes(router)
-	setupHelmRoutes(router)
-	setupGitHubRoutes(router)
-	setupDeploymentHistoryRoutes(router)
-	setupWebhookRoutes(router)
-	setupValidationRoutes(router)
-	setupResourceRoutes(router)
-	setupClusterRoutes(router)
-	setupBindingPolicyRoutes(router)
-}
-
 // setupHealthRoutes registers health check and monitoring routes
 func setupHealthRoutes(router *gin.Engine) {
 	health := router.Group("/api/health")
@@ -37,22 +22,22 @@ func setupHealthRoutes(router *gin.Engine) {
 }
 
 // setupGitopsRoutes registers general GitOps deployment routes
-func setupGitopsRoutes(router *gin.Engine) {
-	gitops := router.Group("/api")
+func setupGitopsRoutes(router *gin.Engine, apiGroup *gin.RouterGroup, deployGroup *gin.RouterGroup) {
+	gitops := apiGroup.Group("/deploy")
 	{
 		// Main deployment endpoint
-		gitops.POST("/deploy", api.DeployHandler)
+		gitops.POST("", api.DeployHandler)
 
 		// Enhanced deployment endpoints
-		gitops.GET("/deployments/status/:id", api.DeploymentStatusHandler)
-		gitops.GET("/deployments/list", api.ListDeploymentsHandler)
-		gitops.DELETE("/deployments/:id", api.DeleteDeploymentHandler)
+		gitops.GET("/status/:id", api.DeploymentStatusHandler)
+		gitops.GET("/list", api.ListDeploymentsHandler)
+		gitops.DELETE("/:id", api.DeleteDeploymentHandler)
 	}
 }
 
 // setupHelmRoutes registers all Helm chart related routes
-func setupHelmRoutes(router *gin.Engine) {
-	helm := router.Group("/api/deployments/helm")
+func setupHelmRoutes(router *gin.Engine, deployGroup *gin.RouterGroup) {
+	helm := deployGroup.Group("/helm")
 	{
 		// Deployment routes
 		helm.POST("/deploy", k8s.HelmDeployHandler)
@@ -67,13 +52,13 @@ func setupHelmRoutes(router *gin.Engine) {
 		helm.DELETE("/:id", k8s.DeleteHelmDeploymentHandler)
 	}
 
-	// Legacy route for backward compatibility
-	router.POST("/deploy/helm", k8s.HelmDeployHandler)
+	// Legacy route for backward compatibility (protected)
+	deployGroup.POST("/helm", k8s.HelmDeployHandler)
 }
 
 // setupGitHubRoutes registers all GitHub related routes
-func setupGitHubRoutes(router *gin.Engine) {
-	github := router.Group("/api/deployments/github")
+func setupGitHubRoutes(router *gin.Engine, apiGroup *gin.RouterGroup) {
+	github := apiGroup.Group("/deployments/github")
 	{
 		// List deployments
 		github.GET("/list", k8s.ListGithubDeployments)
@@ -351,8 +336,8 @@ func setupValidationRoutes(router *gin.Engine) {
 }
 
 // setupDeploymentHistoryRoutes registers routes for deployment history
-func setupDeploymentHistoryRoutes(router *gin.Engine) {
-	history := router.Group("/api/deployments")
+func setupDeploymentHistoryRoutes(router *gin.Engine, apiGroup *gin.RouterGroup) {
+	history := apiGroup.Group("/deployments")
 	{
 		// GitHub config routes - for viewing stored deployment data
 		history.GET("/github", func(c *gin.Context) {

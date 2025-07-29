@@ -5,7 +5,7 @@ import (
 	"github.com/kubestellar/ui/backend/wds"
 )
 
-func setupWdsCookiesRoute(router *gin.Engine) {
-	router.POST("/wds/set/context", wds.SetWdsContextCookies) // set wds context in cookie
-	router.GET("/wds/get/context", wds.GetWdsContextCookies)  // get all context from wds, system-context, ui-cookies-saved context
+func setupWdsCookiesRoute(router *gin.Engine, apiGroup *gin.RouterGroup) {
+	apiGroup.POST("/wds/set/context", wds.SetWdsContextCookies) // set wds context in cookie
+	apiGroup.GET("/wds/get/context", wds.GetWdsContextCookies)  // get all context from wds, system-context, ui-cookies-saved context
 }

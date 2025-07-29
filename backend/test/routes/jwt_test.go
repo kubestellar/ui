@@ -312,9 +312,9 @@ func TestAuthDebugRoutes(t *testing.T) {
 		path   string
 		method string
 	}{
-		{"Debug admin", "/debug/admin", "GET"},
-		{"Debug users", "/debug/users", "GET"},
-		{"Debug permissions", "/debug/permissions", "GET"},
+		{"Debug admin", "/api/debug/admin", "GET"},
+		{"Debug users", "/api/debug/users", "GET"},
+		{"Debug permissions", "/api/debug/permissions", "GET"},
 	}
 
 	for _, route := range debugRoutes {

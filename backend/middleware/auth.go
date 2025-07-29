@@ -11,19 +11,25 @@ import (
 // AuthenticateMiddleware validates JWT token
 func AuthenticateMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var tokenString string
 
+		// Check Authorization header first
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
-			c.Abort()
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Bearer token required"})
-			c.Abort()
-			return
+		if authHeader != "" {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == authHeader {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Bearer token required"})
+				c.Abort()
+				return
+			}
+		} else {
+			// Check query parameter for WebSocket connections
+			tokenString = c.Query("token")
+			if tokenString == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header or token query parameter required"})
+				c.Abort()
+				return
+			}
 		}
 
 		claims, err := utils.ValidateToken(tokenString)

@@ -8,9 +8,9 @@ import (
 	"github.com/kubestellar/ui/backend/api"
 )
 
-func setupArtifactHubRoutes(router *gin.Engine) {
+func setupArtifactHubRoutes(router *gin.Engine, apiGroup *gin.RouterGroup) {
 	// Artifact Hub routes - clearly identify all endpoints as Artifact Hub operations
-	artifactHub := router.Group("/api/v1/artifact-hub")
+	artifactHub := apiGroup.Group("/v1/artifact-hub")
 	{
 		// Deploy a Helm chart from Artifact Hub
 		artifactHub.POST("/helm-deploy", api.DeployFromArtifactHub)
@@ -51,6 +51,5 @@ func setupArtifactHubRoutes(router *gin.Engine) {
 				c.JSON(http.StatusNotFound, gin.H{"error": "Endpoint not found"})
 			}
 		})
-
 	}
 }

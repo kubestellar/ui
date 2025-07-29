@@ -11,105 +11,8 @@ import (
 	"github.com/kubestellar/ui/backend/utils"
 )
 
-// SetupRoutes initializes all routes - THIS IS THE MISSING FUNCTION!
-func setupdebug(router *gin.Engine) {
-	// Temporary debug endpoint - REMOVE IN PRODUCTION
-	router.GET("/debug/admin", func(c *gin.Context) {
-		// Check if admin user exists
-		query := "SELECT id, username, password, is_admin FROM users WHERE username = $1"
-		var id int
-		var username, password string
-		var isAdmin bool
-
-		err := database.DB.QueryRow(query, "admin").Scan(&id, &username, &password, &isAdmin)
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Admin user not found", "details": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"id":            id,
-			"username":      username,
-			"password_hash": password,
-			"is_admin":      isAdmin,
-		})
-	})
-
-	// Debug endpoint to check all users in database
-	router.GET("/debug/users", func(c *gin.Context) {
-		query := "SELECT id, username, password, is_admin FROM users"
-		rows, err := database.DB.Query(query)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query users", "details": err.Error()})
-			return
-		}
-		defer rows.Close()
-
-		var users []gin.H
-		for rows.Next() {
-			var id int
-			var username, password string
-			var isAdmin bool
-
-			err := rows.Scan(&id, &username, &password, &isAdmin)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan user", "details": err.Error()})
-				return
-			}
-
-			users = append(users, gin.H{
-				"id":            id,
-				"username":      username,
-				"password_hash": password,
-				"is_admin":      isAdmin,
-			})
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"users": users,
-			"total": len(users),
-		})
-	})
-
-	// Debug endpoint to check user permissions table
-	router.GET("/debug/permissions", func(c *gin.Context) {
-		query := "SELECT user_id, component, permission FROM user_permissions"
-		rows, err := database.DB.Query(query)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query permissions", "details": err.Error()})
-			return
-		}
-		defer rows.Close()
-
-		var permissions []gin.H
-		for rows.Next() {
-			var userID int
-			var component, permission string
-
-			err := rows.Scan(&userID, &component, &permission)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan permission", "details": err.Error()})
-				return
-			}
-
-			permissions = append(permissions, gin.H{
-				"user_id":    userID,
-				"component":  component,
-				"permission": permission,
-			})
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"permissions": permissions,
-			"total":       len(permissions),
-		})
-	})
-}
-
-// setupAuthRoutes initializes authentication-related routes
+// setupAuthRoutes initializes all routes - THIS IS THE MISSING FUNCTION!
 func setupAuthRoutes(router *gin.Engine) {
-
-	setupdebug(router) // Add debug routes for testing
 	// Public routes (no authentication required)
 	router.POST("/login", LoginHandler)
 
@@ -134,6 +37,15 @@ func setupAuthRoutes(router *gin.Engine) {
 			admin.DELETE("/users/:username", DeleteUserHandler)
 			admin.GET("/users/:username/permissions", GetUserPermissionsHandler)
 			admin.PUT("/users/:username/permissions", SetUserPermissionsHandler)
+		}
+
+		// Debug routes - require authentication AND admin role
+		debug := api.Group("/debug")
+		debug.Use(middleware.RequireAdmin())
+		{
+			debug.GET("/admin", DebugAdminHandler)
+			debug.GET("/users", DebugUsersHandler)
+			debug.GET("/permissions", DebugPermissionsHandler)
 		}
 	}
 }
@@ -988,5 +900,33 @@ func DeleteDashboardWidgetHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Dashboard widget deleted successfully",
 		"id":      id,
+	})
+}
+
+// ===================================
+// Debug Handlers
+// ===================================
+
+func DebugAdminHandler(c *gin.Context) {
+	// Mock debug admin info - replace with actual debug data
+	c.JSON(http.StatusOK, gin.H{
+		"debug": "admin",
+		"info":  "Admin debug information",
+	})
+}
+
+func DebugUsersHandler(c *gin.Context) {
+	// Mock debug users info - replace with actual debug data
+	c.JSON(http.StatusOK, gin.H{
+		"debug": "users",
+		"info":  "Users debug information",
+	})
+}
+
+func DebugPermissionsHandler(c *gin.Context) {
+	// Mock debug permissions info - replace with actual debug data
+	c.JSON(http.StatusOK, gin.H{
+		"debug": "permissions",
+		"info":  "Permissions debug information",
 	})
 }

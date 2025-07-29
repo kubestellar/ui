@@ -67,8 +67,8 @@ type RuntimeMetrics struct {
 }
 
 // setupMetricsRoutes registers metrics and monitoring routes
-func setupMetricsRoutes(router *gin.Engine) {
-	metrics := router.Group("/api/metrics")
+func setupMetricsRoutes(router *gin.Engine, apiGroup *gin.RouterGroup) {
+	metrics := apiGroup.Group("/metrics")
 	{
 		// Deployment statistics
 		metrics.GET("/deployments", getDeploymentMetrics)

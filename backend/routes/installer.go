@@ -5,12 +5,13 @@ import (
 	"github.com/kubestellar/ui/backend/api"
 )
 
-func setupInstallerRoutes(router *gin.Engine) {
-	// API Routes
+func setupInstallerRoutes(router *gin.Engine, apiGroup *gin.RouterGroup, wsGroup *gin.RouterGroup) {
+	// Public routes for initial setup (no authentication required)
 	router.GET("/api/prerequisites", api.CheckPrerequisitesHandler)
-	router.POST("/api/install", api.InstallHandler)
-	router.GET("/api/logs/:id", api.GetLogsHandler)
-	router.GET("/api/ws/logs/:id", api.LogsWebSocketHandler)
-	// Add new status check endpoint
 	router.GET("/api/kubestellar/status", api.CheckKubeStellarStatusHandler)
+
+	// Protected routes (require authentication)
+	apiGroup.POST("/install", api.InstallHandler)
+	apiGroup.GET("/logs/:id", api.GetLogsHandler)
+	wsGroup.GET("/logs/:id", api.LogsWebSocketHandler)
 }

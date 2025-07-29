@@ -89,10 +89,15 @@ api.interceptors.response.use(
 // Helper function to get WebSocket URL with proper protocol and base URL
 export const getWebSocketUrl = (path: string): string => {
   const baseUrl = process.env.VITE_BASE_URL || '';
-
   const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
-
   const baseUrlWithoutProtocol = baseUrl.replace(/^https?:\/\//, '');
 
-  return `${wsProtocol}://${baseUrlWithoutProtocol}${path}`;
+  // Get the JWT token for authentication
+  const token = getAccessToken();
+
+  // Add token as query parameter if it exists
+  const separator = path.includes('?') ? '&' : '?';
+  const authPath = token ? `${path}${separator}token=${encodeURIComponent(token)}` : path;
+
+  return `${wsProtocol}://${baseUrlWithoutProtocol}${authPath}`;
 };

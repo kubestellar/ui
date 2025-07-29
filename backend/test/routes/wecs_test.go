@@ -46,7 +46,7 @@ func TestGetWecsResources(t *testing.T) {
 		},
 		{
 			name:           "Get pod containers",
-			path:           "/list/container/default/test-pod",
+			path:           "/api/list/container/default/test-pod",
 			method:         "GET",
 			queryParams:    map[string]string{"context": "wds1"},
 			expectedStatus: http.StatusOK, // Might be 500 due to missing dependencies
@@ -73,12 +73,13 @@ func TestGetWecsResources(t *testing.T) {
 			// Main test is that route exists (not 404)
 			assert.NotEqual(t, http.StatusNotFound, w.Code, "Route should be registered")
 
-			// Accept various error codes that occur due to missing external dependencies
+			// Accept various error codes that occur due to missing external dependencies or authentication
 			validCodes := []int{
 				http.StatusOK,
 				http.StatusBadRequest,
 				http.StatusInternalServerError,
 				http.StatusServiceUnavailable,
+				http.StatusUnauthorized,
 			}
 
 			isValidCode := false
@@ -118,12 +119,13 @@ func TestWecsWebSocketRoutes(t *testing.T) {
 			// Without proper headers, should fail upgrade
 			assert.NotEqual(t, http.StatusSwitchingProtocols, w.Code, "Should not upgrade without proper headers")
 
-			// Accept various error codes that occur due to missing external dependencies
+			// Accept various error codes that occur due to missing external dependencies or authentication
 			validCodes := []int{
 				http.StatusOK,
 				http.StatusBadRequest,
 				http.StatusInternalServerError,
 				http.StatusServiceUnavailable,
+				http.StatusUnauthorized,
 			}
 
 			isValidCode := false
@@ -160,7 +162,7 @@ func TestWecsParameterizedRoutes(t *testing.T) {
 		},
 		{
 			name:      "Container list with parameters",
-			path:      "/list/container/default/nginx-pod?context=wds1",
+			path:      "/api/list/container/default/nginx-pod?context=wds1",
 			namespace: "default",
 			pod:       "nginx-pod",
 		},
@@ -176,12 +178,13 @@ func TestWecsParameterizedRoutes(t *testing.T) {
 			// Route should exist, not 404
 			assert.NotEqual(t, http.StatusNotFound, w.Code, "Parameterized route should be registered")
 
-			// Accept various error codes that occur due to missing external dependencies
+			// Accept various error codes that occur due to missing external dependencies or authentication
 			validCodes := []int{
 				http.StatusOK,
 				http.StatusBadRequest,
 				http.StatusInternalServerError,
 				http.StatusServiceUnavailable,
+				http.StatusUnauthorized,
 			}
 
 			isValidCode := false
@@ -244,7 +247,7 @@ func TestWecsContainerListRoute(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("Container list for "+tc.namespace+"/"+tc.pod, func(t *testing.T) {
-			path := "/list/container/" + tc.namespace + "/" + tc.pod + "?context=wds1"
+			path := "/api/list/container/" + tc.namespace + "/" + tc.pod + "?context=wds1"
 			req, _ := http.NewRequest("GET", path, nil)
 			w := httptest.NewRecorder()
 
@@ -253,12 +256,13 @@ func TestWecsContainerListRoute(t *testing.T) {
 			// Route should exist
 			assert.NotEqual(t, http.StatusNotFound, w.Code, "Container list route should be registered")
 
-			// Accept various error codes that occur due to missing external dependencies
+			// Accept various error codes that occur due to missing external dependencies or authentication
 			validCodes := []int{
 				http.StatusOK,
 				http.StatusBadRequest,
 				http.StatusInternalServerError,
 				http.StatusServiceUnavailable,
+				http.StatusUnauthorized,
 			}
 
 			isValidCode := false

@@ -5,15 +5,14 @@ import (
 	"github.com/kubestellar/ui/backend/wds/bp"
 )
 
-func setupBindingPolicyRoutes(router *gin.Engine) {
-	router.GET("/api/bp", bp.GetAllBp)
-	router.GET("/api/bp/status", bp.GetBpStatus)
-	router.POST("/api/bp/create", bp.CreateBp)
-	router.POST("/api/bp/create-json", bp.CreateBpFromJson)
-	router.POST("/api/bp/quick-connect", bp.CreateQuickBindingPolicy)
-	router.POST("/api/bp/generate-yaml", bp.GenerateQuickBindingPolicyYAML)
-	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
-	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
-	router.PATCH("/api/bp/update/:name", bp.UpdateBp)
-
+func setupBindingPolicyRoutes(router *gin.Engine, apiGroup *gin.RouterGroup) {
+	apiGroup.GET("/bp", bp.GetAllBp)
+	apiGroup.GET("/bp/status", bp.GetBpStatus)
+	apiGroup.POST("/bp/create", bp.CreateBp)
+	apiGroup.POST("/bp/create-json", bp.CreateBpFromJson)
+	apiGroup.POST("/bp/quick-connect", bp.CreateQuickBindingPolicy)
+	apiGroup.POST("/bp/generate-yaml", bp.GenerateQuickBindingPolicyYAML)
+	apiGroup.DELETE("/bp/delete/:name", bp.DeleteBp)
+	apiGroup.DELETE("/bp/delete", bp.DeleteAllBp)
+	apiGroup.PATCH("/bp/update/:name", bp.UpdateBp)
 }

@@ -26,7 +26,7 @@ func TestGetDeploymentStatus(t *testing.T) {
 		{
 			name:           "Empty deployment name",
 			deploymentName: "",
-			expectedStatus: http.StatusInternalServerError, // Expected to fail due to no k8s connection
+			expectedStatus: http.StatusBadRequest, // Function returns 400 for empty deployment name
 		},
 		{
 			name:           "Another deployment name",

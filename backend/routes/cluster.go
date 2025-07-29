@@ -8,7 +8,8 @@ import (
 	"github.com/kubestellar/ui/backend/its/manual/handlers"
 )
 
-func setupClusterRoutes(router *gin.Engine) {
+func setupClusterRoutes(router *gin.Engine, apiGroup *gin.RouterGroup, clusterGroup *gin.RouterGroup, wsGroup *gin.RouterGroup) {
+	// Public route for basic cluster info (needed for initial frontend setup)
 	router.GET("/api/clusters", func(c *gin.Context) {
 		contexts, clusters, currentContext, err, itsData := handlers.GetKubeInfo()
 		if err != nil {
@@ -23,33 +24,33 @@ func setupClusterRoutes(router *gin.Engine) {
 		})
 	})
 
-	// Cluster onboarding, status, and detachment
-	router.POST("/clusters/onboard", api.OnboardClusterHandler)
-	router.GET("/clusters/status", api.GetClusterStatusHandler)
-	router.POST("/clusters/detach", api.DetachClusterHandler)
+	// Protected cluster operations
+	clusterGroup.POST("/onboard", api.OnboardClusterHandler)
+	clusterGroup.GET("/status", api.GetClusterStatusHandler)
+	clusterGroup.POST("/detach", api.DetachClusterHandler)
 
-	// Logs and WebSocket
-	router.GET("/clusters/onboard/logs/:cluster", api.OnboardingLogsHandler)
-	router.GET("/clusters/detach/logs/:cluster", api.GetDetachmentLogsHandler)
-	router.GET("/ws/onboarding", api.WSOnboardingHandler)
+	// Protected logs and WebSocket
+	clusterGroup.GET("/onboard/logs/:cluster", api.OnboardingLogsHandler)
+	clusterGroup.GET("/detach/logs/:cluster", api.GetDetachmentLogsHandler)
+	wsGroup.GET("/onboarding", api.WSOnboardingHandler)
 
-	// Certificate Signing Requests
-	router.GET("/clusters/watch-csr", handlers.GetCSRsExecHandler)
+	// Protected Certificate Signing Requests
+	clusterGroup.GET("/watch-csr", handlers.GetCSRsExecHandler)
 
-	// Available clusters
-	router.GET("/api/clusters/available", handlers.GetAvailableClustersHandler)
+	// Protected available clusters
+	apiGroup.GET("/clusters/available", handlers.GetAvailableClustersHandler)
 
-	// Managed cluster label update
-	router.PATCH("/api/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
+	// Protected managed cluster label update
+	apiGroup.PATCH("/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
 
-	router.GET("/ws/detachment", api.HandleDetachmentWebSocket)
+	wsGroup.GET("/detachment", api.HandleDetachmentWebSocket)
 
-	// Import cluster
-	router.POST("/clusters/import", handlers.ImportClusterHandler)
+	// Protected import cluster
+	clusterGroup.POST("/import", handlers.ImportClusterHandler)
 
-	// Remote Tree View Cluster details
-	router.GET("/api/cluster/details/:name", handlers.GetClusterDetailsHandler)
+	// Protected Remote Tree View Cluster details
+	apiGroup.GET("/cluster/details/:name", handlers.GetClusterDetailsHandler)
 
-	router.GET("api/new/clusters", api.GetManagedClustersHandler)
-	router.GET("api/clusters/:name", api.GetManagedClusterHandler)
+	apiGroup.GET("/new/clusters", api.GetManagedClustersHandler)
+	apiGroup.GET("/clusters/:name", api.GetManagedClusterHandler)
 }

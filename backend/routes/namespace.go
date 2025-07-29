@@ -9,28 +9,28 @@ import (
 	nsresources "github.com/kubestellar/ui/backend/namespace/resources"
 )
 
-func setupNamespaceRoutes(router *gin.Engine) {
-	router.GET("/api/namespaces", nsresources.GetAllNamespaces)
-	router.GET("/api/namespaces/:name", nsresources.GetNamespaceDetails)
-	router.POST("/api/namespaces/create", nsresources.CreateNamespace)
-	router.PUT("/api/namespaces/update/:name", nsresources.UpdateNamespace)
-	router.DELETE("/api/namespaces/delete/:name", nsresources.DeleteNamespace)
-	router.GET("/ws/namespaces", nsresources.NamespaceWebSocketHandler)
-	router.GET("/api/all-contexts/namespaces", func(c *gin.Context) {
+func setupNamespaceRoutes(router *gin.Engine, apiGroup *gin.RouterGroup, wsGroup *gin.RouterGroup) {
+	apiGroup.GET("/namespaces", nsresources.GetAllNamespaces)
+	apiGroup.GET("/namespaces/:name", nsresources.GetNamespaceDetails)
+	apiGroup.POST("/namespaces/create", nsresources.CreateNamespace)
+	apiGroup.PUT("/namespaces/update/:name", nsresources.UpdateNamespace)
+	apiGroup.DELETE("/namespaces/delete/:name", nsresources.DeleteNamespace)
+	wsGroup.GET("/namespaces", nsresources.NamespaceWebSocketHandler)
+	apiGroup.GET("/all-contexts/namespaces", func(c *gin.Context) {
 		ns.GetAllContextsNamespaces(c.Writer, c.Request)
 	})
 
 	// WebSocket endpoints
-	router.GET("/ws/all-contexts", func(c *gin.Context) {
+	wsGroup.GET("/all-contexts", func(c *gin.Context) {
 		ns.WatchAllContextsNamespaces(c.Writer, c.Request)
 	})
 
 	// Context-specific watch endpoint
-	router.GET("/ws/context-namespace", func(c *gin.Context) {
+	wsGroup.GET("/context-namespace", func(c *gin.Context) {
 		ns.WatchNamespaceInContext(c.Writer, c.Request)
 	})
 
-	router.GET("/api/compare-namespace/:name", func(c *gin.Context) {
+	apiGroup.GET("/compare-namespace/:name", func(c *gin.Context) {
 		// Extract the namespace name from URL parameters
 		namespaceName := c.Param("name")
 
@@ -56,7 +56,7 @@ func setupNamespaceRoutes(router *gin.Engine) {
 	})
 
 	// Namespace synchronization endpoint
-	router.POST("/api/sync-namespace/:name", func(c *gin.Context) {
+	apiGroup.POST("/sync-namespace/:name", func(c *gin.Context) {
 		// Extract the namespace name from URL parameters
 		namespaceName := c.Param("name")
 
@@ -66,5 +66,4 @@ func setupNamespaceRoutes(router *gin.Engine) {
 		// Call our synchronization function
 		ns.SynchronizeNamespace(c.Writer, req)
 	})
-
 }

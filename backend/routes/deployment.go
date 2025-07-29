@@ -13,16 +13,16 @@ import (
 	"k8s.io/client-go/informers"
 )
 
-func setupDeploymentRoutes(router *gin.Engine) {
-	router.GET("/api/wds/workloads", deployment.GetWDSWorkloads)
-	router.GET("/api/wds/:name", deployment.GetDeploymentByName)
-	router.GET("/api/wds/status", deployment.GetDeploymentStatus)
+func setupDeploymentRoutes(router *gin.Engine, apiGroup *gin.RouterGroup, wsGroup *gin.RouterGroup) {
+	apiGroup.GET("/wds/workloads", deployment.GetWDSWorkloads)
+	apiGroup.GET("/wds/:name", deployment.GetDeploymentByName)
+	apiGroup.GET("/wds/status", deployment.GetDeploymentStatus)
 
 	// websocket
-	router.GET("/ws", func(ctx *gin.Context) {
+	wsGroup.GET("", func(ctx *gin.Context) {
 		deployment.HandleDeploymentLogs(ctx.Writer, ctx.Request)
 	})
-	router.GET("/api/wds/logs", func(ctx *gin.Context) {
+	apiGroup.GET("/wds/logs", func(ctx *gin.Context) {
 		var upgrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
@@ -55,7 +55,7 @@ func setupDeploymentRoutes(router *gin.Engine) {
 	})
 
 	// context
-	router.GET("/api/context", func(c *gin.Context) {
+	apiGroup.GET("/context", func(c *gin.Context) {
 		currentContext, context, err := wds.ListContexts()
 		if err != nil {
 			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/context", "500").Inc()
@@ -68,5 +68,4 @@ func setupDeploymentRoutes(router *gin.Engine) {
 			"current-context": currentContext, // current context can be anything
 		})
 	})
-
 }
