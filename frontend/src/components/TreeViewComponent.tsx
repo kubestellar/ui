@@ -155,7 +155,13 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   }, []);
 
   const handleResourceFiltersChange = useCallback((filters: ResourceFilter) => {
-    setResourceFilters(filters);
+    // Only update if filters actually changed to prevent unnecessary re-renders
+    setResourceFilters(prevFilters => {
+      if (JSON.stringify(prevFilters) === JSON.stringify(filters)) {
+        return prevFilters; // No change, return same reference
+      }
+      return filters;
+    });
   }, []);
 
   // Update node styles when theme or highlighting changes

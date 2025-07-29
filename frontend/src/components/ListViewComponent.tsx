@@ -86,23 +86,26 @@ const ListViewComponent = ({
   const [resourceFilters, setResourceFilters] = useState<ResourceFilter>(initialResourceFilters);
   const prevFiltersRef = useRef({ filteredContext, resourceFilters: initialResourceFilters });
   const isInitialMountRef = useRef(true);
+  const lastInitialFiltersRef = useRef<ResourceFilter>(initialResourceFilters);
 
   // Initialize filters from props only on mount or meaningful changes from parent
   useEffect(() => {
     // On initial mount, always use the provided filters
     if (isInitialMountRef.current) {
       setResourceFilters(initialResourceFilters);
+      lastInitialFiltersRef.current = initialResourceFilters;
       isInitialMountRef.current = false;
       return;
     }
 
-    // After mount, only update if the parent explicitly passed different filters
-    // This prevents filter reset during SSE updates or data refreshes
-    const hasContentChanged =
-      JSON.stringify(resourceFilters) !== JSON.stringify(initialResourceFilters);
-    if (hasContentChanged && Object.keys(initialResourceFilters).length > 0) {
-      // Only update if parent is setting non-empty filters (e.g., switching from tree view with filters)
+    // Only update if the initialResourceFilters actually changed from what we last received
+    // This prevents loops where parent updates filters in response to our onResourceFiltersChange
+    const initialFiltersChanged = 
+      JSON.stringify(lastInitialFiltersRef.current) !== JSON.stringify(initialResourceFilters);
+    
+    if (initialFiltersChanged && Object.keys(initialResourceFilters).length > 0) {
       setResourceFilters(initialResourceFilters);
+      lastInitialFiltersRef.current = initialResourceFilters;
     }
   }, [initialResourceFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -612,10 +615,15 @@ const ListViewComponent = ({
 
   // Handle resource filter changes
   const handleResourceFiltersChange = (filters: ResourceFilter) => {
-    setResourceFilters(filters);
-    // Notify parent component about filter changes
-    if (onResourceFiltersChange) {
-      onResourceFiltersChange(filters);
+    // Only update if filters actually changed to prevent unnecessary re-renders and loops
+    const filtersChanged = JSON.stringify(resourceFilters) !== JSON.stringify(filters);
+    
+    if (filtersChanged) {
+      setResourceFilters(filters);
+      // Notify parent component about filter changes
+      if (onResourceFiltersChange) {
+        onResourceFiltersChange(filters);
+      }
     }
   };
 
