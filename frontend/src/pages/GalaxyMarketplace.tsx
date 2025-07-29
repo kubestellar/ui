@@ -418,9 +418,7 @@ const GalaxyMarketplace: React.FC = () => {
                 value={sortBy}
                 onChange={handleSortChange}
                 displayEmpty
-                renderValue={selected => (
-                  <span className="capitalize">{selected}</span>
-                )}
+                renderValue={selected => <span className="capitalize">{selected}</span>}
                 sx={{
                   borderRadius: '12px',
                   minWidth: 120,
