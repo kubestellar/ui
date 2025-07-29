@@ -329,13 +329,13 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         onFilterChange={setFilter}
         hasSelectedClusters={selectedClusters.length > 0}
         selectedCount={selectedClusters.length}
-        onBulkLabels={() =>
+        onBulkLabels={() => {
           handleEditLabels({
             name: `${selectedClusters.length} selected clusters`,
             context: 'bulk-operation',
             labels: {},
-          })
-        }
+          });
+        }}
         onShowCreateOptions={() => {
           setShowCreateOptions(true);
           setActiveOption('quickconnect');
