@@ -63,7 +63,7 @@ func TestAuthenticateMiddleware_NoAuthHeader(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-	assert.Contains(t, w.Body.String(), "Authorization header required")
+	assert.Contains(t, w.Body.String(), "Authorization header or token query parameter required")
 }
 
 func TestAuthenticateMiddleware_NoBearerPrefix(t *testing.T) {
