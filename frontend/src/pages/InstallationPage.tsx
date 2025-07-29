@@ -1091,7 +1091,7 @@ const InstallationPage = () => {
                 {t('installationPage.footer.github')}
               </a>
               <a
-                href="https://docs.kubestellar.io/latest/direct/get-started"
+                href="https://docs.kubestellar.io/latest/direct/get-started/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`group flex items-center text-sm font-medium transition-colors ${
