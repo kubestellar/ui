@@ -560,7 +560,7 @@ const InstallationScript = ({
   isDark?: boolean;
 }) => {
   const { t } = useTranslation();
-  const scriptCommand = `bash <(curl -s https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/v0.28.0/scripts/create-kubestellar-demo-env.sh) --platform ${platform}`;
+  const scriptCommand = `bash <(curl -s https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/v0.27.2/scripts/create-kubestellar-demo-env.sh) --platform ${platform}`;
 
   return (
     <div>
