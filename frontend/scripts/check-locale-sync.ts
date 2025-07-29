@@ -75,13 +75,13 @@ class LocaleSyncChecker {
       const match = process.env.GITHUB_REF.match(/refs\/pull\/(\d+)\//);
       if (match) return match[1];
     }
-    
+
     // Try alternative patterns
     if (process.env.GITHUB_REF && process.env.GITHUB_REF.includes('/pull/')) {
       const match = process.env.GITHUB_REF.match(/\/pull\/(\d+)/);
       if (match) return match[1];
     }
-    
+
     return undefined;
   }
 
@@ -293,7 +293,7 @@ Missing keys should be added, and extra keys should be removed.`;
     try {
       const comment = this.generatePRComment(results);
       console.log(`📝 Attempting to post PR comment to PR #${this.prNumber}...`);
-      
+
       await this.octokit.rest.issues.createComment({
         owner: this.owner,
         repo: this.repo,
@@ -301,19 +301,22 @@ Missing keys should be added, and extra keys should be removed.`;
         body: comment,
       });
       console.log('✅ PR comment posted successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Failed to post PR comment:', error);
       
       // Provide specific guidance based on error type
-      if (error.status === 403) {
-        console.error('🔒 Permission denied. This is likely due to:');
-        console.error('   1. GITHUB_TOKEN lacks sufficient permissions');
-        console.error('   2. PR is from a fork and token cannot comment on fork PRs');
-        console.error('   3. Need to use GH_REPO_TOKEN with proper permissions');
-      } else if (error.status === 404) {
-        console.error('🔍 PR not found. Check if PR number is correct:', this.prNumber);
-      } else if (error.status === 401) {
-        console.error('🔑 Authentication failed. Check token validity');
+      if (error && typeof error === 'object' && 'status' in error) {
+        const status = (error as { status: number }).status;
+        if (status === 403) {
+          console.error('🔒 Permission denied. This is likely due to:');
+          console.error('   1. GITHUB_TOKEN lacks sufficient permissions');
+          console.error('   2. PR is from a fork and token cannot comment on fork PRs');
+          console.error('   3. Need to use GH_REPO_TOKEN with proper permissions');
+        } else if (status === 404) {
+          console.error('🔍 PR not found. Check if PR number is correct:', this.prNumber);
+        } else if (status === 401) {
+          console.error('🔑 Authentication failed. Check token validity');
+        }
       }
       
       // Log the full error for debugging
@@ -367,17 +370,19 @@ Missing keys should be added, and extra keys should be removed.`;
       console.log('\n📊 Summary:');
       Object.entries(results).forEach(([locale, issues]) => {
         if (issues.missing.length > 0 || issues.extra.length > 0) {
-          console.log(`  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`);
+          console.log(
+            `  • ${locale}: ${issues.missing.length} missing, ${issues.extra.length} extra`
+          );
         }
       });
-      
+
       // Try to post PR comment, but don't fail the entire check if it fails
       try {
         await this.postPRComment(results);
-      } catch (error) {
+      } catch {
         console.error('⚠️  PR commenting failed, but continuing with check...');
       }
-      
+
       process.exit(1); // Fail the check
     } else {
       console.log('\n✅ All locale files are synchronized!');
@@ -392,5 +397,5 @@ async function main() {
 
 main().catch(error => {
   console.error('Script failed:', error);
-    process.exit(1);
-  });
+  process.exit(1);
+});
