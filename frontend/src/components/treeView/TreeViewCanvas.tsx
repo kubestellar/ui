@@ -44,6 +44,7 @@ interface TreeViewCanvasProps {
   isCollapsed: boolean;
   containerRef: React.RefObject<HTMLDivElement>;
   resourceFilters?: ResourceFilter;
+  onResourceFiltersChange?: (filters: ResourceFilter) => void;
 }
 
 const TreeViewCanvas = memo<TreeViewCanvasProps>(
@@ -62,6 +63,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
     isCollapsed,
     containerRef,
     resourceFilters,
+    onResourceFiltersChange,
   }) => {
     const { t } = useTranslation();
     const theme = useTheme(state => state.theme);
@@ -101,6 +103,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
           filteredContext={filteredContext}
           onResourceDataChange={handleResourceDataChange}
           initialResourceFilters={resourceFilters}
+          onResourceFiltersChange={onResourceFiltersChange}
         />
       );
     }

@@ -207,11 +207,13 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
           />
         )}
 
-        <TreeViewFilters
-          filteredContext={filteredContext}
-          resources={allResources}
-          onResourceFiltersChange={handleResourceFiltersChange}
-        />
+        {viewMode !== 'list' && (
+          <TreeViewFilters
+            filteredContext={filteredContext}
+            resources={allResources}
+            onResourceFiltersChange={handleResourceFiltersChange}
+          />
+        )}
 
         <Box sx={{ width: '100%', height: 'calc(100% - 80px)', position: 'relative' }}>
           <TreeViewCanvas
@@ -229,6 +231,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             isCollapsed={isCollapsed}
             containerRef={containerRef}
             resourceFilters={resourceFilters}
+            onResourceFiltersChange={handleResourceFiltersChange}
           />
 
           <TreeViewContextMenu
