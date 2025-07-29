@@ -874,11 +874,8 @@ func GetPluginReviewsHandler(c *gin.Context) {
 		return
 	}
 
-	feedbackMutex.RLock()
-	defer feedbackMutex.RUnlock()
-
 	reviews := []PluginFeedback{}
-	for _, feedback := range pluginFeedbacks {
+	for _, feedback := range getAllPluginFeedbacks() {
 		if feedback.PluginID == pluginID {
 			reviews = append(reviews, feedback)
 		}
@@ -1051,4 +1048,13 @@ func copyDir(src, dst string) error {
 	}
 
 	return nil
+}
+
+// getAllPluginFeedbacks returns a copy of all plugin feedbacks (thread-safe)
+func getAllPluginFeedbacks() []PluginFeedback {
+	feedbackMutex.RLock()
+	defer feedbackMutex.RUnlock()
+	feedbacksCopy := make([]PluginFeedback, len(pluginFeedbacks))
+	copy(feedbacksCopy, pluginFeedbacks)
+	return feedbacksCopy
 }
