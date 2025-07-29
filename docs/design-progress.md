@@ -258,4 +258,8 @@ This section covers foundational analysis and planning to improve the structure,
 ### 🪐 KubeStellar/docs Landing Page Design – Hero Section
 
 - Designed a **space-themed animated hero section** to reflect KubeStellar’s identity as a multi-cluster orchestration platform with cosmic scalability.
+
+### 🛠️ KubeStellar/docs Landing Page Design – How It Works Section
+
+- Designed an **interactive, visually engaging** "How It Works" section to explain KubeStellar’s architecture and workflow in simple, digestible steps.
 ---
