@@ -100,9 +100,9 @@ const ListViewComponent = ({
 
     // Only update if the initialResourceFilters actually changed from what we last received
     // This prevents loops where parent updates filters in response to our onResourceFiltersChange
-    const initialFiltersChanged = 
+    const initialFiltersChanged =
       JSON.stringify(lastInitialFiltersRef.current) !== JSON.stringify(initialResourceFilters);
-    
+
     if (initialFiltersChanged && Object.keys(initialResourceFilters).length > 0) {
       setResourceFilters(initialResourceFilters);
       lastInitialFiltersRef.current = initialResourceFilters;
@@ -617,7 +617,7 @@ const ListViewComponent = ({
   const handleResourceFiltersChange = (filters: ResourceFilter) => {
     // Only update if filters actually changed to prevent unnecessary re-renders and loops
     const filtersChanged = JSON.stringify(resourceFilters) !== JSON.stringify(filters);
-    
+
     if (filtersChanged) {
       setResourceFilters(filters);
       // Notify parent component about filter changes
