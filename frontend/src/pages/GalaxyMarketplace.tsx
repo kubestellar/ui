@@ -9,7 +9,6 @@ import {
   HiSparkles,
   HiOutlineGlobeAlt,
   HiOutlineStar,
-  HiOutlineFunnel,
 } from 'react-icons/hi2';
 import { FaRocket, FaGlobeAsia, FaSpaceShuttle } from 'react-icons/fa';
 import { Select, MenuItem, FormControl } from '@mui/material';
@@ -419,7 +418,9 @@ const GalaxyMarketplace: React.FC = () => {
                 value={sortBy}
                 onChange={handleSortChange}
                 displayEmpty
-                renderValue={selected => <span className="capitalize">{selected}</span>}
+                renderValue={selected => (
+                  <span className="capitalize">{selected}</span>
+                )}
                 sx={{
                   borderRadius: '12px',
                   minWidth: 120,
