@@ -419,12 +419,7 @@ const GalaxyMarketplace: React.FC = () => {
                 value={sortBy}
                 onChange={handleSortChange}
                 displayEmpty
-                renderValue={selected => (
-                  <div className="flex items-center gap-2">
-                    <HiOutlineFunnel className="h-5 w-5" />
-                    <span className="capitalize">{selected}</span>
-                  </div>
-                )}
+                renderValue={selected => <span className="capitalize">{selected}</span>}
                 sx={{
                   borderRadius: '12px',
                   minWidth: 120,
