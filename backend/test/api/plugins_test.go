@@ -515,7 +515,7 @@ func TestSubmitPluginFeedbackHandler(t *testing.T) {
 		{
 			name: "Valid feedback submission",
 			requestBody: map[string]interface{}{
-				"pluginId": 123456789,
+				"pluginId": "123456789",
 				"rating":   4.5,
 				"comments": "Great plugin!",
 			},
