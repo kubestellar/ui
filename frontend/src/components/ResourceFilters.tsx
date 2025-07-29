@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -51,10 +51,6 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
 
-  // Keep a ref to maintain layout stability during typing
-  const searchBoxRef = useRef<HTMLDivElement>(null);
-  const [searchBoxWidth, setSearchBoxWidth] = useState<number | undefined>(undefined);
-
   const [searchQuery, setSearchQuery] = useState(activeFilters.searchQuery || '');
   const [kindMenuAnchor, setKindMenuAnchor] = useState<null | HTMLElement>(null);
   const [namespaceMenuAnchor, setNamespaceMenuAnchor] = useState<null | HTMLElement>(null);
@@ -81,13 +77,6 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
 
   // Count active filters
   const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
-
-  // Set initial search box width
-  useEffect(() => {
-    if (searchBoxRef.current) {
-      setSearchBoxWidth(searchBoxRef.current.offsetWidth);
-    }
-  }, []);
 
   // Debounce search to improve performance
   const debouncedSearch = useCallback(
@@ -142,6 +131,8 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
       borderRadius: '8px',
       border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
       zIndex: 1300,
+      position: 'fixed',
+      transformOrigin: 'top left',
     },
   };
 
@@ -176,24 +167,32 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: { xs: 'column', md: 'row' },
-        alignItems: { xs: 'stretch', md: 'center' },
-        gap: 2,
-        p: 2,
-        backgroundColor: isDark ? '#111827' : '#f8fafc',
-        borderRadius: '8px',
-        mb: 2,
-        boxShadow: isDark ? darkTheme.shadow.sm : lightTheme.shadow.sm,
+        width: '100%',
+        overflow: 'hidden',
       }}
     >
-      {/* Search field with fixed width to prevent collapse when typing */}
       <Box
-        ref={searchBoxRef}
         sx={{
-          flex: 2,
-          width: searchBoxWidth,
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'stretch', md: 'center' },
+          gap: 2,
+          p: 2,
+          backgroundColor: isDark ? '#111827' : '#f8fafc',
+          borderRadius: '8px',
+          mb: 2,
+          boxShadow: isDark ? darkTheme.shadow.sm : lightTheme.shadow.sm,
+          minHeight: '72px', 
+          position: 'relative',
+          transition: 'none', 
+        }}
+      >
+      {/* Search field with stable layout */}
+      <Box
+        sx={{
+          flex: { xs: '1 1 100%', md: '1 1 300px' },
           minWidth: { xs: '100%', md: '300px' },
+          maxWidth: { xs: '100%', md: '500px' },
         }}
       >
         <TextField
@@ -248,11 +247,13 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
         sx={{
           display: 'flex',
           gap: 1,
-          flex: { xs: 1, md: 'none' },
-          justifyContent: 'space-between',
+          flex: { xs: '1 1 auto', md: '0 0 auto' },
+          justifyContent: { xs: 'space-between', md: 'flex-end' },
+          alignItems: 'center',
+          minHeight: '40px', // Consistent height to prevent shifts
         }}
       >
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {/* Kind filter */}
           <Tooltip title={t('resources.filterByKind')}>
             <Badge color="primary" variant="dot" invisible={!activeFilters.kind}>
@@ -476,9 +477,18 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
         )}
       </Box>
 
-      {/* Active filters */}
+      {/* Active filters - with consistent positioning */}
       {activeFilterCount > 0 && (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, width: '100%' }}>
+        <Box 
+          sx={{ 
+            display: 'flex',
+            flexWrap: 'wrap', 
+            gap: 1, 
+            width: '100%',
+            minHeight: '32px',
+            mt: { xs: 1, md: 0 },
+          }}
+        >
           {activeFilters.kind && (
             <Chip
               label={`${t('resources.kind')}: ${activeFilters.kind}`}
@@ -541,6 +551,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
           )}
         </Box>
       )}
+      </Box>
     </Box>
   );
 };
