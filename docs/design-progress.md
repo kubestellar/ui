@@ -262,4 +262,10 @@ This section covers foundational analysis and planning to improve the structure,
 ### 🛠️ KubeStellar/docs Landing Page Design – How It Works Section
 
 - Designed an **interactive, visually engaging** "How It Works" section to explain KubeStellar’s architecture and workflow in simple, digestible steps.
+
+### 🚀 KubeStellar/docs Landing Page Design – Use Cases Section
+
+> **Discover how organizations leverage KubeStellar for their multi-cluster needs.**
+- Designed to highlight **real-world applications** of KubeStellar with concise, impactful cards that visually connect use cases to features.
+
 ---
