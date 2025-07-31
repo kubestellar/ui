@@ -8,7 +8,6 @@ export interface ActivityItem {
   status: 'Created' | 'Updated';
 }
 
-// Define proper type instead of `any`
 interface APIUser {
   username: string;
   created_at: string;
@@ -52,27 +51,9 @@ export const useUserActivityQuery = () => {
         return activity;
       });
 
-      // Sort by latest timestamp
       activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       return activities;
-    },
-  });
-};
-
-export const useDeletedUsersActivityQuery = () => {
-  return useQuery<ActivityItem[]>({
-    queryKey: ['deletedUserActivity'],
-    queryFn: async () => {
-      const logs = localStorage.getItem('deletedUserLogs');
-      const parsed: ActivityItem[] = logs ? JSON.parse(logs) : [];
-
-      // Optional: sort by timestamp
-      parsed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-      console.log(parsed);
-
-      return parsed;
     },
   });
 };

@@ -7,13 +7,6 @@ const getAuthHeader = () => {
   return { Authorization: `Bearer ${token}` };
 };
 
-interface ActivityItem {
-  type: string;
-  name: string;
-  timestamp: string;
-  status: string;
-}
-
 export const UserService = {
   /**
    * Fetch all users
@@ -118,16 +111,6 @@ export const UserService = {
       await api.delete(`/api/admin/users/${username}`, {
         headers: { ...getAuthHeader() },
       });
-      const activity: ActivityItem = {
-        type: 'user',
-        name: username,
-        timestamp: new Date().toISOString(),
-        status: 'Deleted',
-      };
-
-      const existingLogs = JSON.parse(localStorage.getItem('deletedUserLogs') || '[]');
-      existingLogs.push(activity);
-      localStorage.setItem('deletedUserLogs', JSON.stringify(existingLogs));
     } catch (error) {
       console.error('Error deleting user:', error);
       throw error;

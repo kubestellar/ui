@@ -31,10 +31,7 @@ import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { useTranslation } from 'react-i18next';
-import {
-  useDeletedUsersActivityQuery,
-  useUserActivityQuery,
-} from '../hooks/queries/useUserActivityQuery.ts';
+import { useUserActivityQuery } from '../hooks/queries/useUserActivityQuery.ts';
 
 // Lazy load the ClusterDetailDialog component
 const ClusterDetailDialog = lazy(
@@ -503,7 +500,6 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
   const { useClusters } = useClusterQueries();
   const { useBindingPolicies } = useBPQueries();
   const { data: userActivities = [], isLoading: userLoading } = useUserActivityQuery();
-  const { data: deletedUserActivities = [] } = useDeletedUsersActivityQuery();
 
   // Use the existing query hooks to fetch data
   const {
@@ -552,8 +548,6 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
         }
         items.push(...userActivities.slice(0, 5));
 
-        items.push(...deletedUserActivities.slice(0, 3));
-
         // Sort by timestamp (newest first)
         items.sort((a, b) => {
           // Safely parse dates - if parsing fails, treat as recent (at the top)
@@ -579,15 +573,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
         setIsLoading(false);
       }
     }
-  }, [
-    clustersLoading,
-    bpLoading,
-    clusterData,
-    bindingPoliciesData,
-    userLoading,
-    userActivities,
-    deletedUserActivities,
-  ]);
+  }, [clustersLoading, bpLoading, clusterData, bindingPoliciesData, userLoading, userActivities]);
 
   useEffect(() => {
     processData();
@@ -673,8 +659,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
       status === 'Available' ||
       status === 'Synced' ||
       status === 'Created' ||
-      status === 'Updated' ||
-      status === 'Deleted'
+      status === 'Updated'
     ) {
       return <CheckCircle size={12} />;
     } else if (status === 'Warning' || status === 'Pending') {
@@ -740,8 +725,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                     status === 'Available' ||
                     status === 'Synced' ||
                     status === 'Created' ||
-                    status === 'Updated' ||
-                    status === 'Deleted'
+                    status === 'Updated'
                   ) {
                     return {
                       bgColor: isDark ? 'bg-green-900/30' : 'bg-green-100',
