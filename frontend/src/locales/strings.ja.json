@@ -1418,8 +1418,8 @@
         "packageIdPlaceholder": "helm/bitnami/nginx",
         "packageIdTip": "Helm チャートのパッケージ ID を指定（例: helm/bitnami/nginx）",
         "version": "バージョン（デフォルト: 最新）",
-        "versionTooltip": "デプロイするチャートのバージョン（例: 13.2.10）。未指定の場合は最新が使用されます。",
-        "versionPlaceholder": "13.2.10（空欄で最新）",
+        "versionTooltip": "デプロイするチャートのバージョン（例: 13.2.12）。未指定の場合は最新が使用されます。",
+        "versionPlaceholder": "13.2.12（空欄で最新）",
         "versionTip": "デプロイするバージョンを指定（空欄で最新）",
         "releaseName": "リリース名 *",
         "releaseNameTooltip": "Helm リリースを識別するための名前",
@@ -2102,6 +2102,10 @@
       "galaxyMarketplace": {
         "title": "ギャラクシーマーケットプレイス",
         "description": "ギャラクシーマーケットプレイスからプラグインを見つけてインストールしましょう"
+      },
+      "managedClusters": {
+        "title": "管理クラスター",
+        "description": "Kubernetesクラスターを管理"
       }
     }
   },
@@ -2120,7 +2124,8 @@
       "deployedWorkloads": "デプロイ済みワークロード",
       "pluginManager": "プラグインマネージャー",
       "userManagement": "ユーザー管理",
-      "galaxyMarketplace": "ギャラクシーマーケットプレイス"
+      "galaxyMarketplace": "ギャラクシーマーケットプレイス",
+      "managedClusters": "管理クラスター"
     }
   },
   "plugins": {
@@ -2207,7 +2212,8 @@
       }
     },
     "marketplace": {
-      "title": "プラグインマーケットプレイス",
+      "title": "KubeStellar Galaxy マーケットプレイス",
+      "description": "KubeStellarの体験を向上させるプラグインを見つけてインストール",
       "browse": "利用可能なプラグインを参照",
       "featured": "おすすめプラグイン",
       "categories": "カテゴリ",
@@ -2261,5 +2267,8 @@
         "author": "アラン・ターニング"
       }
     ]
+  },
+  "validation": {
+    "missingRequiredFields": "必須フィールドがありません"
   }
 }

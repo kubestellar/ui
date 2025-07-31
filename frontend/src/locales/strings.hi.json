@@ -1423,8 +1423,8 @@
         "packageIdPlaceholder": "helm/bitnami/nginx",
         "packageIdTip": "Helm chart package ID निर्दिष्ट करें (उदा., helm/bitnami/nginx)",
         "version": "Version (डिफ़ॉल्ट: latest)",
-        "versionTooltip": "डिप्लॉय करने वाला chart version (उदा., 13.2.10)। यदि निर्दिष्ट नहीं है, तो latest का उपयोग होगा।",
-        "versionPlaceholder": "13.2.10 (latest के लिए खाली छोड़ें)",
+        "versionTooltip": "डिप्लॉय करने वाला chart version (उदा., 13.2.12)। यदि निर्दिष्ट नहीं है, तो latest का उपयोग होगा।",
+        "versionPlaceholder": "13.2.12 (latest के लिए खाली छोड़ें)",
         "versionTip": "डिप्लॉय करने वाला version निर्दिष्ट करें (latest के लिए खाली छोड़ें)",
         "releaseName": "Release Name *",
         "releaseNameTooltip": "आपकी Helm release की पहचान के लिए नाम",
@@ -2090,6 +2090,10 @@
       "galaxyMarketplace": {
         "title": "गैलेक्सी मार्केटप्लेस",
         "description": "गैलेक्सी मार्केटप्लेस से प्लगइन खोजें और इंस्टॉल करें"
+      },
+      "managedClusters": {
+        "title": "प्रबंधित क्लस्टर",
+        "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
       }
     },
     "sections": {
@@ -2116,7 +2120,8 @@
       "pluginManager": "उपयोगकर्ता प्रबंधन",
       "userManagement": "User Management",
       "metricsDashboard": "मेट्रिक्स डैशबोर्ड",
-      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस"
+      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस",
+      "managedClusters": "प्रबंधित क्लस्टर"
     }
   },
   "plugins": {
@@ -2209,7 +2214,8 @@
       }
     },
     "marketplace": {
-      "title": "प्लगइन मार्केटप्लेस",
+      "title": "कुबेस्टेलर गैलेक्सी मार्केटप्लेस",
+      "description": "कुबेस्टेलर अनुभव को बेहतर बनाने के लिए प्लगइन खोजें और इंस्टॉल करें",
       "browse": "उपलब्ध प्लगइन्स ब्राउज़ करें",
       "featured": "फीचर्ड प्लगइन्स",
       "categories": "श्रेणियाँ",
@@ -2263,5 +2269,8 @@
         "author": "एलन टर्निंग"
       }
     ]
+  },
+  "validation": {
+    "missingRequiredFields": "आवश्यक फ़ील्ड्स गायब हैं"
   }
 }

@@ -15,6 +15,7 @@ import StatusBadge from './StatusBadge';
 import LabelChip from './LabelChip';
 import { ActionButton } from './ActionMenu';
 import EmptyState from './EmptyState';
+import ClusterVisualization from './ClusterVisualization';
 
 interface TableContentProps {
   clusters: ManagedClusterInfo[];
@@ -170,7 +171,14 @@ const TableContent: React.FC<TableContentProps> = ({
                   />
                 </TableCell>
                 <TableCell>
-                  <div className="text-base font-medium">{cluster.name}</div>
+                  <div className="flex items-center gap-4">
+                    <ClusterVisualization
+                      available={!!cluster.available}
+                      isDark={isDark}
+                      colors={colors}
+                    />
+                    <div className="text-base font-medium">{cluster.name}</div>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-between">

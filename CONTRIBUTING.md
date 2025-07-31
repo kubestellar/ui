@@ -21,7 +21,8 @@ This guide will help you set up **PostgreSQL and Redis containers**, configure *
 - [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
 - [Installing GolangCI-Lint](#installing-golangci-lint)
 - [Linting & Fixing Code](#linting--fixing-code)
-- [Conclusion](#conclusion)
+- [Imp Note](#important-note)
+- [Contribution Commands Guide](#contribution-commands-guide)
 
 ---
 
@@ -38,7 +39,8 @@ Before proceeding, ensure you have the following installed:
 - **Make** (For running backend scripts via makefile)
 - **Air** (For hot reloading - optional but recommended)
 
-> [!NOTE] > **Recommended Setup**: Use Docker Compose for the easiest setup experience. This automatically handles PostgreSQL and Redis containers with proper configuration.
+> [!NOTE]
+> **Recommended Setup**: Use Docker Compose for the easiest setup experience. This automatically handles PostgreSQL and Redis containers with proper configuration.
 
 ---
 
@@ -162,7 +164,7 @@ go run main.go
 
 ## **Testing JWT Authentication**
 
-You can either generate your JWT Token with **Postman** or **cURL.**
+You can either generate your JWT Token with **Postman** or **cURL:**
 
 ### **With Postman**
 
@@ -257,7 +259,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 
 ### **With cURL**
 
-If you prefer the terminal, you can use `cURL`:
+If you prefer using the terminal, you can use `cURL`:
 
 ### **Login**
 
@@ -480,19 +482,67 @@ make lint
 
 ---
 
-## Issue Assignment Guide
+## Important Note
 
-To manage issue assignments using GitHub comments:
-
-- **To assign yourself to an issue**, comment:
-
-`/assign`
-
-- **To remove yourself from an issue**, comment:
-
-`/unassign`
+### 1. Localize All Frontend Strings
+If you're adding any **new string** in the frontend UI:
+- Localize the string using our existing localization setup.
+- Add the string to the appropriate language file (`locales/strings.en.json`).
+#### How to Localize a String:
+1. Open `strings.en.json` located under `/locales/` (or appropriate path).
+2. Add your new string as a key-value pair. Example:
+```json
+{
+"greeting": "Hello, welcome!"
+}
+```
+3. In your component, use the localization[+] hook.[/+][-] hook or method (depending on your i18n setup). Example using `react-i18next`:[/-]
+```tsx
+const { t } = useTranslation();
+<p>{t("greeting")}</p>
+```
+---
+### 2. Be Cautious With AI-Generated Code
+> AI tools (like GitHub Copilot or ChatGPT) are helpful but **not always context-aware**.
+**Please DO NOT blindly copy-paste AI-generated code.**
+Before committing:
+- Double-check if the code aligns with our project’s architecture.
+- Test thoroughly to ensure it doesn’t break existing functionality.
+- Refactor and adapt it as per the codebase standards.
 
 ---
 
+##  Contribution Commands Guide
 
 
+This guide helps contributors manage issue assignments and request helpful labels via GitHub comments. These commands are supported through GitHub Actions or bots configured in the repository.
+
+###  Issue Assignment
+
+- **To assign yourself to an issue**, comment:
+  ```
+  /assign
+  ```
+
+- **To remove yourself from an issue**, comment:
+  ```
+  /unassign
+  ```
+
+###  Label Requests via Comments
+
+You can also request labels to be automatically added to issues using the following commands:
+
+- **To request the `help wanted` label**, comment:
+  ```
+  /help-wanted
+  ```
+
+- **To request the `good first issue` label**, comment:
+  ```
+  /good-first-issue
+  ```
+
+These commands help maintainers manage community contributions effectively and allow newcomers to find suitable issues to work on.
+
+---

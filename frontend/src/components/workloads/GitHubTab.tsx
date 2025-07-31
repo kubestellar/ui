@@ -29,6 +29,7 @@ import { api } from '../../lib/api';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
+import ButtonTooltip from '../common/ButtonTooltip';
 
 interface FormData {
   repositoryUrl: string;
@@ -1081,44 +1082,54 @@ export const GitHubTab = ({
         >
           {t('common.cancel')}
         </CancelButton>
-        <Button
-          variant="contained"
-          onClick={() => {
-            if (selectedOption === 'createOwn') {
-              if (validateForm()) handleDeploy();
-            } else if (selectedOption === 'popularRepos') {
-              handlePopularRepoDeploy();
-            } else if (selectedOption === 'previousDeployments') {
-              handlePreviousDeploymentDeploy();
-            }
-          }}
+        <ButtonTooltip
+          tooltip={t('validation.missingRequiredFields')}
           disabled={
             (selectedOption === 'createOwn' && (!hasChanges || loading)) ||
             (selectedOption === 'popularRepos' && (!selectedRepo || popularLoading)) ||
             (selectedOption === 'previousDeployments' && (!selectedRepo || previousLoading))
           }
-          sx={{
-            textTransform: 'none',
-            fontWeight: '600',
-            backgroundColor: '#1976d2',
-            color: '#fff',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            '&:hover': {
-              backgroundColor: '#1565c0',
-            },
-            '&:disabled': {
-              backgroundColor: '#b0bec5',
-              color: '#fff',
-            },
-          }}
+          placement="top"
         >
-          {(selectedOption === 'createOwn' && loading) ||
-          (selectedOption === 'popularRepos' && popularLoading) ||
-          (selectedOption === 'previousDeployments' && previousLoading)
-            ? t('workloads.github.deploying')
-            : t('workloads.github.apply')}
-        </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (selectedOption === 'createOwn') {
+                if (validateForm()) handleDeploy();
+              } else if (selectedOption === 'popularRepos') {
+                handlePopularRepoDeploy();
+              } else if (selectedOption === 'previousDeployments') {
+                handlePreviousDeploymentDeploy();
+              }
+            }}
+            disabled={
+              (selectedOption === 'createOwn' && (!hasChanges || loading)) ||
+              (selectedOption === 'popularRepos' && (!selectedRepo || popularLoading)) ||
+              (selectedOption === 'previousDeployments' && (!selectedRepo || previousLoading))
+            }
+            sx={{
+              textTransform: 'none',
+              fontWeight: '600',
+              backgroundColor: '#1976d2',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              '&:hover': {
+                backgroundColor: '#1565c0',
+              },
+              '&:disabled': {
+                backgroundColor: '#b0bec5',
+                color: '#fff',
+              },
+            }}
+          >
+            {(selectedOption === 'createOwn' && loading) ||
+            (selectedOption === 'popularRepos' && popularLoading) ||
+            (selectedOption === 'previousDeployments' && previousLoading)
+              ? t('workloads.github.deploying')
+              : t('workloads.github.apply')}
+          </Button>
+        </ButtonTooltip>
       </Box>
     </StyledContainer>
   );

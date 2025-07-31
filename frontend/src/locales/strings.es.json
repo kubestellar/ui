@@ -1321,8 +1321,8 @@
         "packageIdPlaceholder": "helm/bitnami/nginx",
         "packageIdTip": "Especifica el ID del paquete de Helm (p. ej., helm/bitnami/nginx)",
         "version": "Versión (por defecto: última)",
-        "versionTooltip": "Versión del chart a desplegar (p. ej., 13.2.10). Si no se especifica, se usará la última.",
-        "versionPlaceholder": "13.2.10 (dejar vacío para la última)",
+        "versionTooltip": "Versión del chart a desplegar (p. ej., 13.2.12). Si no se especifica, se usará la última.",
+        "versionPlaceholder": "13.2.12 (dejar vacío para la última)",
         "versionTip": "Especifica la versión a desplegar (dejar vacío para la última)",
         "releaseName": "Nombre del Despliegue *",
         "releaseNameTooltip": "Nombre para identificar tu despliegue de Helm",
@@ -1954,8 +1954,8 @@
         "description": "Gestionar y supervisar los plugins de KubeStellar"
       },
       "clusters": {
-        "title": "Clusters Remotos",
-        "description": "Administrar clusters de Kubernetes"
+        "title": "Clústeres Administrados",
+        "description": "Administrar clústeres de Kubernetes"
       },
       "workloads": {
         "title": "Cargas de trabajo",
@@ -2005,7 +2005,7 @@
     },
     "items": {
       "home": "Inicio",
-      "remoteClusters": "Clústeres Remotos",
+      "managedClusters": "Clústeres Administrados",
       "stagedWorkloads": "Cargas de Trabajo Preparadas",
       "bindingPolicies": "Políticas de Vinculación",
       "deployedWorkloads": "Cargas de Trabajo Desplegadas",
@@ -2098,7 +2098,8 @@
       }
     },
     "marketplace": {
-      "title": "Mercado de Plugins",
+      "title": "Mercado Galaxy de KubeStellar",
+      "description": "Descubre e instala plugins para mejorar tu experiencia con KubeStellar",
       "browse": "Explorar Plugins Disponibles",
       "featured": "Plugins Destacados",
       "categories": "Categorías",
@@ -2248,5 +2249,8 @@
         "author": "Alan Turning"
       }
     ]
+  },
+  "validation": {
+    "missingRequiredFields": "Faltan campos obligatorios"
   }
 }

@@ -1,7 +1,32 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
-import { CustomNode, CustomEdge, DeleteNodeDetails, ContextMenuState } from '../types';
+import {
+  CustomNode,
+  CustomEdge,
+  DeleteNodeDetails,
+  ContextMenuState,
+  ResourceItem,
+} from '../types';
 import { kindToPluralMap } from '../types';
+
+// Define the tab configuration - this can be easily modified if tabs are reordered
+const TAB_CONFIG = {
+  SUMMARY: 0,
+  EDIT: 1,
+  LOGS: 2,
+} as const;
+
+// Map actions to tab indices dynamically
+const getTabIndexForAction = (action: string): number => {
+  const actionToTabMap: Record<string, keyof typeof TAB_CONFIG> = {
+    Details: 'SUMMARY',
+    Edit: 'EDIT',
+    Logs: 'LOGS',
+  };
+
+  const tabKey = actionToTabMap[action];
+  return tabKey ? TAB_CONFIG[tabKey] : TAB_CONFIG.SUMMARY; // Default to summary tab
+};
 
 interface UseTreeViewActionsProps {
   nodes: CustomNode[];
@@ -9,6 +34,15 @@ interface UseTreeViewActionsProps {
   onNodesUpdate: (nodes: CustomNode[]) => void;
   onEdgesUpdate: (edges: CustomEdge[]) => void;
   getDescendantEdges: (nodeId: string, edges: CustomEdge[]) => CustomEdge[];
+  onNodeSelect?: (nodeData: {
+    namespace: string;
+    name: string;
+    type: string;
+    resourceData?: ResourceItem;
+    isGroup?: boolean;
+    groupItems?: ResourceItem[];
+    initialTab?: number;
+  }) => void;
 }
 
 export const useTreeViewActions = ({
@@ -17,6 +51,7 @@ export const useTreeViewActions = ({
   onNodesUpdate,
   onEdgesUpdate,
   getDescendantEdges,
+  onNodeSelect,
 }: UseTreeViewActionsProps) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -39,22 +74,17 @@ export const useTreeViewActions = ({
   const handleDeleteNode = useCallback(
     async (namespace: string, nodeType: string, nodeName: string, nodeId: string) => {
       try {
-        let endpoint: string;
+        const plural = kindToPluralMap[nodeType.toLowerCase()] || nodeType.toLowerCase() + 's';
+        const url = `/api/wds/${plural}/${nodeName}`;
+        const params = namespace ? { namespace } : {};
 
-        if (nodeType.toLowerCase() === 'namespace') {
-          endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
-        } else {
-          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
-          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`;
-          endpoint = `${process.env.VITE_BASE_URL}/api/${pluralForm}/${namespace}/${nodeName}`;
-        }
+        await axios.delete(url, { params });
 
-        await axios.delete(endpoint);
+        // Remove the node and its descendants from the graph
+        const nodesToDelete = [nodeId, ...getDescendantEdges(nodeId, edges).map(e => e.target)];
+        const uniqueNodesToDelete = [...new Set(nodesToDelete)];
 
-        const descendantNodeIds = getDescendantEdges(nodeId, edges).map(edge => edge.target);
-        const nodesToDelete = [nodeId, ...descendantNodeIds];
-
-        onNodesUpdate(nodes.filter(n => !nodesToDelete.includes(n.id)));
+        onNodesUpdate(nodes.filter(n => !uniqueNodesToDelete.includes(n.id)));
         onEdgesUpdate(
           edges.filter(e => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target))
         );
@@ -95,6 +125,8 @@ export const useTreeViewActions = ({
             return;
           }
 
+          const resourceData = node.data.label.props.resourceData;
+
           switch (action) {
             case 'Delete':
               setDeleteNodeDetails({
@@ -108,8 +140,15 @@ export const useTreeViewActions = ({
             case 'Details':
             case 'Edit':
             case 'Logs':
-              // These actions would be handled by the parent component
-              // through the onNodeSelect callback
+              if (onNodeSelect) {
+                onNodeSelect({
+                  namespace: namespace || 'default',
+                  name: nodeName,
+                  type: nodeType,
+                  resourceData,
+                  initialTab: getTabIndexForAction(action),
+                });
+              }
               break;
             default:
               break;
@@ -118,7 +157,7 @@ export const useTreeViewActions = ({
       }
       handleMenuClose();
     },
-    [contextMenu, nodes, handleMenuClose]
+    [contextMenu, nodes, handleMenuClose, onNodeSelect]
   );
 
   const handleDeleteConfirm = useCallback(async () => {

@@ -1,4 +1,4 @@
-import { Box, Button, FormControlLabel, Checkbox, CircularProgress } from '@mui/material'; // Added Checkbox and FormControlLabel
+import { Box, Button, FormControlLabel, Checkbox, CircularProgress } from '@mui/material'; // Added Checkbox, FormControlLabel, Tooltip
 import { StyledContainer } from '../StyledComponents';
 import yaml from 'js-yaml';
 import { useState, useEffect, lazy, Suspense } from 'react';
@@ -6,6 +6,7 @@ import useTheme from '../../stores/themeStore';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
+import ButtonTooltip from '../common/ButtonTooltip';
 
 // Lazy load Monaco Editor
 const MonacoEditor = lazy(() => import('@monaco-editor/react'));
@@ -224,28 +225,34 @@ export const YamlTab = ({
         <CancelButton onClick={handleCancelClick} disabled={loading}>
           {t('common.cancel')}
         </CancelButton>
-        <Button
-          variant="contained"
-          onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
+        <ButtonTooltip
+          tooltip={t('validation.missingRequiredFields')}
           disabled={hasLabelsError || !isEditorContentEdited || loading || !hasLabels()}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            backgroundColor: '#1976d2',
-            color: '#fff',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            '&:hover': {
-              backgroundColor: '#1565c0',
-            },
-            '&:disabled': {
-              backgroundColor: '#b0bec5',
-              color: '#fff',
-            },
-          }}
+          placement="top"
         >
-          {t('workloads.yaml.deploy')}
-        </Button>
+          <Button
+            variant="contained"
+            onClick={() => handleRawUpload(autoNs)}
+            disabled={hasLabelsError || !isEditorContentEdited || loading || !hasLabels()}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              backgroundColor: '#1976d2',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              '&:hover': {
+                backgroundColor: '#1565c0',
+              },
+              '&:disabled': {
+                backgroundColor: '#b0bec5',
+                color: '#fff',
+              },
+            }}
+          >
+            {t('workloads.yaml.deploy')}
+          </Button>
+        </ButtonTooltip>
       </Box>
     </StyledContainer>
   );

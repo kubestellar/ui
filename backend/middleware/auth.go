@@ -11,6 +11,7 @@ import (
 // AuthenticateMiddleware validates JWT token
 func AuthenticateMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
@@ -35,6 +36,7 @@ func AuthenticateMiddleware() gin.HandlerFunc {
 		c.Set("username", claims.Username)
 		c.Set("is_admin", claims.IsAdmin)
 		c.Set("permissions", claims.Permissions)
+		c.Set("user_id", claims.UserID)
 		c.Next()
 	}
 }

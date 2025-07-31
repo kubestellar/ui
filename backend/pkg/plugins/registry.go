@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -18,6 +20,7 @@ type PluginRegistry struct {
 
 // PluginInfo contains metadata about a discovered plugin
 type PluginInfo struct {
+	ID           int       `json:"id"`
 	Name         string    `json:"name"`
 	Version      string    `json:"version"`
 	Author       string    `json:"author,omitempty"`
@@ -104,6 +107,27 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, fmt.Errorf("failed to parse manifest: %v", err)
 	}
 
+	// Get plugin ID from the folder name
+	parts := strings.Split(filepath.Base(dirPath), "-")
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("invalid plugin folder name: %s", filepath.Base(dirPath))
+	}
+	pluginIdStr := parts[len(parts)-1]
+	pluginIdFolder, err := strconv.Atoi(pluginIdStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid plugin ID in folder name: %s", filepath.Base(dirPath))
+	}
+
+	exist, err := CheckInstalledPluginWithID(pluginIdFolder)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the plugin ID from the database matches the folder name
+	if !exist {
+		return nil, fmt.Errorf("plugin ID mismatch: plugin not found, DB ID %d", pluginIdFolder)
+	}
+
 	// Check if WASM file exists
 	// Determine WASM file name
 	wasmFileName := manifest.Metadata.Name + ".wasm"
@@ -112,29 +136,40 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 	wasmPath := filepath.Join(dirPath, wasmFileName)
 	wasmInfo, err := os.Stat(wasmPath)
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginInfo{
+				ID:           pluginIdFolder,
 				Name:         manifest.Metadata.Name,
 				Path:         dirPath,
 				ManifestPath: manifestPath,
 				WasmPath:     wasmPath,
 				DiscoveredAt: time.Now(),
 				LastModified: manifestInfo.ModTime(),
-				Status:       "error",
+				Status:       "inactive",
 				Error:        "WASM file not found",
 			}, nil
 		}
 		return nil, err
 	}
 
-	// Determine status based on whether plugin is loaded
-	status := "discovered"
-	if _, loaded := pr.manager.GetPlugin(manifest.Metadata.Name); loaded {
-		status = "loaded"
+	// // Determine status based on whether plugin is loaded
+	// if _, loaded := pr.manager.GetPlugin(manifest.Name); loaded {
+	// 	status = "loaded"
+	// }
+
+	status := "inactive" // Default status if not loaded
+
+	if exist {
+		status, err = GetPluginStatusDB(pluginIdFolder)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get plugin status: %v", err)
+		}
 	}
 
 	return &PluginInfo{
+		ID:           pluginIdFolder,
 		Name:         manifest.Metadata.Name,
 		Version:      manifest.Metadata.Version,
 		Author:       manifest.Metadata.Author,
@@ -152,7 +187,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 func (pr *PluginRegistry) LoadPlugin(name string) error {
 	// Find the plugin directory
 	pluginPath := filepath.Join(pr.pluginsDirectory, name)
-
+	fmt.Println("pluginPath", pluginPath)
 	// Check if directory exists
 	if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
 		return fmt.Errorf("plugin directory not found: %s", pluginPath)
@@ -162,20 +197,21 @@ func (pr *PluginRegistry) LoadPlugin(name string) error {
 	return pr.manager.LoadPlugin(pluginPath)
 }
 
-// UnloadPlugin unloads a plugin by name
-func (pr *PluginRegistry) UnloadPlugin(name string) error {
-	return pr.manager.UnloadPlugin(name)
+// UnloadPlugin unloads a plugin by ID
+func (pr *PluginRegistry) UnloadPlugin(ID int) error {
+	return pr.manager.UnloadPlugin(ID)
 }
 
 // ReloadPlugin reloads a plugin by name
-func (pr *PluginRegistry) ReloadPlugin(name string) error {
+func (pr *PluginRegistry) ReloadPlugin(pluginID int) error {
 	// First unload the plugin
-	if err := pr.UnloadPlugin(name); err != nil {
+	if err := pr.UnloadPlugin(pluginID); err != nil {
 		return fmt.Errorf("failed to unload plugin: %v", err)
 	}
 
+	pluginName := pr.manager.plugins[pluginID].Manifest.Metadata.Name
 	// Then load it again
-	if err := pr.LoadPlugin(name); err != nil {
+	if err := pr.LoadPlugin(pluginName); err != nil {
 		return fmt.Errorf("failed to reload plugin: %v", err)
 	}
 
@@ -185,6 +221,7 @@ func (pr *PluginRegistry) ReloadPlugin(name string) error {
 // GetPluginInfo returns information about a specific plugin
 func (pr *PluginRegistry) GetPluginInfo(name string) (*PluginInfo, error) {
 	pluginPath := filepath.Join(pr.pluginsDirectory, name)
+	// TODO: get user ID from context when it is implemented
 	return pr.discoverPluginInDirectory(pluginPath)
 }
 

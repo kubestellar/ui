@@ -47,9 +47,9 @@
         "title": "插件管理器",
         "description": "管理和监控 KubeStellar 插件"
       },
-      "clusters": {
-        "title": "远程集群",
-        "description": "管理 Kubernetes 集群"
+      "managedClusters": {
+        "title": "管理集群",
+        "description": "管理Kubernetes集群"
       },
       "workloads": {
         "title": "工作负载",
@@ -168,7 +168,7 @@
     },
     "items": {
       "home": "首页",
-      "remoteClusters": "远程集群",
+      "managedClusters": "管理集群",
       "stagedWorkloads": "已暂存工作负载",
       "bindingPolicies": "绑定策略",
       "deployedWorkloads": "已部署工作负载",
@@ -1479,8 +1479,8 @@
         "packageIdPlaceholder": "helm/bitnami/nginx",
         "packageIdTip": "指定 Helm chart 包 ID（例如：helm/bitnami/nginx）",
         "version": "版本（默认：latest）",
-        "versionTooltip": "要部署的 chart 版本（例如：13.2.10）。如果未指定，将使用最新版本。",
-        "versionPlaceholder": "13.2.10（留空表示使用最新版本）",
+        "versionTooltip": "要部署的 chart 版本（例如：13.2.12）。如果未指定，将使用最新版本。",
+        "versionPlaceholder": "13.2.12（留空表示使用最新版本）",
         "versionTip": "指定要部署的版本（留空表示使用最新版本）",
         "releaseName": "发布名称 *",
         "releaseNameTooltip": "用于标识您的 Helm 发布的名称",
@@ -2056,5 +2056,12 @@
     "tokenLabel": "个人访问令牌 (PAT) *",
     "tokenPlaceholder": "例如：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tokenTip": "输入您的 GitHub 个人访问令牌"
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy 市场",
+    "description": "发现并安装插件以增强您的 KubeStellar 体验"
+  },
+  "validation": {
+    "missingRequiredFields": "缺少必填字段"
   }
 }

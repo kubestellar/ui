@@ -17,6 +17,7 @@ presubmits:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-build
     always_run: true
     decorate: true
@@ -29,12 +30,14 @@ presubmits:
             - -c
             - |
               cd frontend
+              rm -rf ~/.npm ~/.cache node_modules
               npm ci
               npm run build
           resources:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-test
     always_run: true
     decorate: true
@@ -47,12 +50,14 @@ presubmits:
             - -c
             - |
               cd frontend
+              rm -rf ~/.npm ~/.cache node_modules
               npm ci
               npm test
           resources:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-backend-verify
     always_run: true
     decorate: true
@@ -71,6 +76,7 @@ presubmits:
             requests:
               memory: 1Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-backend-test
     always_run: true
     decorate: true
@@ -101,6 +107,7 @@ presubmits:
             requests:
               memory: 1Gi
               cpu: 1
+              ephemeral-storage: 4Gi
 
 postsubmits:
   - name: post-kubestellar-ui-build-main
@@ -133,6 +140,7 @@ postsubmits:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
 
   - name: post-kubestellar-ui-build-dev
     branches:
@@ -164,3 +172,4 @@ postsubmits:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi

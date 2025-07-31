@@ -122,6 +122,15 @@ func main() {
 		logger.Info("Plugin system initialized successfully")
 	}
 
+	// DEVELOPMENT: Uninstall all plugins (for testing purposes)
+	defer func() {
+		if err := pluginManager.UninstallAllPlugins(); err != nil {
+			logger.Error("Failed to uninstall all plugins", zap.Error(err))
+		} else {
+			logger.Info("All plugins uninstalled successfully")
+		}
+	}()
+
 	// Add webhook endpoint (you may want to protect this with auth too)
 	router.POST("/api/webhook", api.GitHubWebhookHandler)
 
@@ -422,8 +431,10 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 	logger.Info("Discovered plugins", zap.Int("count", len(pluginInfos)))
 
 	// Load each discovered plugin
+	// We need to fetch the plugin ID as well
 	for _, pluginInfo := range pluginInfos {
 		logger.Info("Loading plugin",
+			zap.Int("id", pluginInfo.ID),
 			zap.String("name", pluginInfo.Name),
 			zap.String("version", pluginInfo.Version),
 			zap.String("status", pluginInfo.Status))
@@ -436,7 +447,9 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 		}
 
 		// Load the plugin
-		if err := registry.LoadPlugin(pluginInfo.Name); err != nil {
+		pluginFolderName := fmt.Sprintf("%s-%d", pluginInfo.Name, pluginInfo.ID)
+		fmt.Println("pluginFolderName", pluginFolderName)
+		if err := registry.LoadPlugin(pluginFolderName); err != nil {
 			logger.Error("Failed to load plugin",
 				zap.String("name", pluginInfo.Name),
 				zap.Error(err))

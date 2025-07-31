@@ -39,7 +39,7 @@ export const useMenuData = (): MenuItemData[] => {
           isLink: true,
           url: '/its',
           icon: HiOutlineCube,
-          label: t('menu.items.remoteClusters'),
+          label: t('menu.items.managedClusters'),
         },
         {
           isLink: true,
