@@ -232,8 +232,8 @@ func TestPluginInvalidMethods(t *testing.T) {
 
 			// Since the routes are registered with specific methods, using wrong method should return 404 or 405
 			// Accept both 404 and 405 as valid responses for invalid methods
-			assert.True(t, w.Code == http.StatusNotFound || w.Code == http.StatusMethodNotAllowed || w.Code == http.StatusBadRequest,
-				"Invalid method should return 404 or 405, got %d", w.Code)
+			assert.True(t, w.Code == http.StatusNotFound || w.Code == http.StatusMethodNotAllowed || w.Code == http.StatusBadRequest || w.Code == http.StatusUnauthorized,
+				"Invalid method should return 404, 405, 400, or 401, got %d", w.Code)
 		})
 	}
 }

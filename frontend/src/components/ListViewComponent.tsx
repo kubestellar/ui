@@ -79,10 +79,10 @@ const ListViewComponent = ({
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(25);
-  const [totalItems, setTotalItems] = useState<number>(0);
 
   // Add resource filters state
   const [resourceFilters, setResourceFilters] = useState<ResourceFilter>(initialResourceFilters);
+  const prevFiltersRef = useRef({ filteredContext, resourceFilters: initialResourceFilters });
 
   // Initialize filters from props when they change
   useEffect(() => {
@@ -147,7 +147,6 @@ const ListViewComponent = ({
     }
 
     setFilteredResources(filtered);
-    setTotalItems(filtered.length);
 
     // Log resources stats for debugging
     console.log(`[ListViewComponent] Resource counts: 
@@ -156,8 +155,14 @@ const ListViewComponent = ({
       - Filtered resources (${filteredContext}): ${filtered.length}
     `);
 
-    // Reset to first page when filter changes
-    setCurrentPage(1);
+    const filtersChanged =
+      prevFiltersRef.current.filteredContext !== filteredContext ||
+      JSON.stringify(prevFiltersRef.current.resourceFilters) !== JSON.stringify(resourceFilters);
+
+    if (filtersChanged) {
+      setCurrentPage(1);
+      prevFiltersRef.current = { filteredContext, resourceFilters };
+    }
   }, [filteredContext, resources, totalRawResources, resourceFilters]);
 
   // Function to format date strings properly
@@ -527,7 +532,8 @@ const ListViewComponent = ({
   }, [t]); // Keep original dependencies
 
   // Calculate pagination values using filteredResources instead of resources
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const actualTotalItems = filteredResources.length;
+  const totalPages = Math.ceil(actualTotalItems / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredResources.slice(indexOfFirstItem, indexOfLastItem);
@@ -539,28 +545,39 @@ const ListViewComponent = ({
     }
   };
 
-  // Generate page numbers
   const getPageNumbers = useCallback((): (number | string)[] => {
     if (totalPages <= 1) return [1];
+    if (totalPages <= 7) {
+      // If we have 7 or fewer pages, show them all
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
 
     const range: (number | string)[] = [];
-    let lastNumber: number | null = null;
 
     range.push(1);
 
-    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-      if (i > 1 && i < totalPages) {
-        if (lastNumber && i > lastNumber + 1) {
-          range.push('...');
-        }
+    if (currentPage <= 4) {
+      for (let i = 2; i <= Math.min(5, totalPages - 1); i++) {
         range.push(i);
-        lastNumber = i;
       }
-    }
-
-    if (lastNumber && totalPages > lastNumber + 1) {
+      if (totalPages > 6) {
+        range.push('...');
+      }
+    } else if (currentPage >= totalPages - 3) {
+      if (totalPages > 6) {
+        range.push('...');
+      }
+      for (let i = Math.max(totalPages - 4, 2); i <= totalPages - 1; i++) {
+        range.push(i);
+      }
+    } else {
+      range.push('...');
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        range.push(i);
+      }
       range.push('...');
     }
+
     if (totalPages > 1) {
       range.push(totalPages);
     }
@@ -922,8 +939,8 @@ const ListViewComponent = ({
               >
                 {t('listView.pagination.showing', {
                   from: indexOfFirstItem + 1,
-                  to: Math.min(indexOfLastItem, totalItems),
-                  total: totalItems,
+                  to: Math.min(indexOfLastItem, actualTotalItems),
+                  total: actualTotalItems,
                 })}
                 {filteredContext !== 'all' &&
                   t('listView.pagination.filtered', { context: filteredContext })}
@@ -961,7 +978,7 @@ const ListViewComponent = ({
                 variant="outlined"
                 size="small"
                 onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || totalPages === 0}
                 sx={{
                   minWidth: { xs: 60, sm: 70 },
                   px: { xs: 1, sm: 1.5 },
@@ -1010,13 +1027,15 @@ const ListViewComponent = ({
                     sx={{
                       display: {
                         xs:
-                          typeof pageNumber === 'number' &&
-                          Math.abs((pageNumber as number) - currentPage) > 1 &&
-                          pageNumber !== 1 &&
-                          pageNumber !== totalPages
-                            ? 'none'
-                            : 'inline-flex',
-                        sm: 'inline-flex',
+                          // On mobile, show: first page, current page ±1, last page, and ellipsis
+                          pageNumber === '...' ||
+                          pageNumber === 1 ||
+                          pageNumber === totalPages ||
+                          (typeof pageNumber === 'number' &&
+                            Math.abs(pageNumber - currentPage) <= 1)
+                            ? 'inline-flex'
+                            : 'none',
+                        sm: 'inline-flex', // On larger screens, show all pages from our improved algorithm
                       },
                       minWidth: { xs: 30, sm: 36 },
                       height: { xs: 30, sm: 32 },
@@ -1051,7 +1070,7 @@ const ListViewComponent = ({
                 variant="outlined"
                 size="small"
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
                 sx={{
                   minWidth: { xs: 60, sm: 70 },
                   px: { xs: 1, sm: 1.5 },

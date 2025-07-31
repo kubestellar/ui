@@ -2,16 +2,62 @@ package models
 
 import "time"
 
-type Plugin struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name" binding:"required"`
-	Version     string    `json:"version" binding:"required"`
-	Enabled     bool      `json:"enabled" binding:"required"`
-	Description string    `json:"description,omitempty"`
-	UserID      int       `json:"user_id" binding:"required"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+// PluginDetails represents the metadata for a plugin (plugin_details table)
+type PluginDetails struct {
+	ID                    int            `json:"id"`
+	Name                  string         `json:"name" binding:"required"`
+	Version               string         `json:"version" binding:"required"`
+	Description           string         `json:"description,omitempty"`
+	AuthorName            string         `json:"author_name" binding:"required"`
+	AuthorID              int            `json:"author_id" binding:"required"`
+	Website               string         `json:"website,omitempty"`
+	Repository            string         `json:"repository,omitempty"`
+	License               string         `json:"license,omitempty"`
+	Tags                  []string       `json:"tags,omitempty"`
+	MinKubeStellarVersion string         `json:"min_kubestellar_version" binding:"required"`
+	MaxKubeStellarVersion string         `json:"max_kubestellar_version" binding:"required"`
+	Dependencies          []Dependencies `json:"dependencies,omitempty"`
+	PluginS3Key           string         `json:"plugin_s3_key" binding:"required"`
+	FileSize              int            `json:"file_size,omitempty"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
+}
+
+type Dependencies struct {
+	Name     string `json:"name" binding:"required"`
+	Version  string `json:"version" binding:"required"`
+	Required bool   `json:"required" binding:"required"` // if true, the plugin will not work without this dependency
+}
+
+type MarketplacePlugin struct {
+	ID              int       `json:"id"`
+	PluginDetailsID int       `json:"plugin_details_id" binding:"required"`
+	Featured        bool      `json:"featured"`
+	Verified        bool      `json:"verified"`
+	PriceType       string    `json:"price_type"`
+	Price           float64   `json:"price"`
+	Currency        string    `json:"currency"`
+	RatingAverage   float32   `json:"rating_average"`
+	RatingCount     int       `json:"rating_count"`
+	Downloads       int       `json:"downloads"`
+	ActiveInstalls  int       `json:"active_installs"`
+	PublishedAt     time.Time `json:"published_at"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type InstalledPlugin struct {
+	ID                  int       `json:"id"`
+	PluginDetailsID     int       `json:"plugin_details_id" binding:"required"`
+	MarketplacePluginID *int      `json:"marketplace_plugin_id,omitempty"`
+	UserID              int       `json:"user_id" binding:"required"`
+	InstalledMethod     string    `json:"installed_method" binding:"required"`
+	Enabled             bool      `json:"enabled"`
+	Status              string    `json:"status"`
+	InstalledPath       string    `json:"installed_path" binding:"required"`
+	LoadTime            int       `json:"loadtime"` // tracks the time taken to load the plugin in seconds
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
 }
 
 type PluginFeedback struct {

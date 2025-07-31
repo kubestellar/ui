@@ -239,7 +239,7 @@ func LoginHandler(c *gin.Context) {
 			}
 
 			// Generate JWT token
-			token, err := utils.GenerateToken(user.Username, user.IsAdmin, user.Permissions)
+			token, err := utils.GenerateToken(user.Username, user.IsAdmin, user.Permissions, user.ID)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
 				return
@@ -313,7 +313,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token, err := utils.GenerateToken(username, isAdmin, permissions)
+	token, err := utils.GenerateToken(username, isAdmin, permissions, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
 		return

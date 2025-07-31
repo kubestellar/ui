@@ -238,4 +238,34 @@ This section covers foundational analysis and planning to improve the structure,
 
 - Initiated content brainstorming for a dedicated **Program Page** to showcase KubeStellar-related opportunities such as mentorships, contributor programs, or events.
 - The goal is to provide a structured, user-friendly page that helps visitors quickly understand the program and how to participate.
+
+### 🎨 KubeStellar/docs Landing Page Design – Navigation Bar
+
+- Designed a clean and accessible **navbar** for the documentation landing page:
+  - **Logo** (top-left) links to the home page
+  - **Top-level navigation links**:
+    - Docs
+    - Community
+    - Contribute
+    - Blog
+
+  - **Right-aligned utilities**:
+    - Version dropdown (e.g., v0.9.0, v1.0.0)
+    - Language switcher (for multilingual support)
+    - GitHub icon linking to the main repo
+  - **Sticky header** with smooth scroll and shadow for better visibility
+
+### 🪐 KubeStellar/docs Landing Page Design – Hero Section
+
+- Designed a **space-themed animated hero section** to reflect KubeStellar’s identity as a multi-cluster orchestration platform with cosmic scalability.
+
+### 🛠️ KubeStellar/docs Landing Page Design – How It Works Section
+
+- Designed an **interactive, visually engaging** "How It Works" section to explain KubeStellar’s architecture and workflow in simple, digestible steps.
+
+### 🚀 KubeStellar/docs Landing Page Design – Use Cases Section
+
+> **Discover how organizations leverage KubeStellar for their multi-cluster needs.**
+- Designed to highlight **real-world applications** of KubeStellar with concise, impactful cards that visually connect use cases to features.
+
 ---

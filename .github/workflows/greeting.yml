@@ -29,10 +29,10 @@ jobs:
           issue-message: |
             👋 Hello! @${{ github.actor }} Welcome to the Kubestellar. 
 
-            We're excited to have you here! Please make sure to check out our [contribution guide](./CONTRIBUTING.md) and feel free to join our [Slack channel](https://kubernetes.slack.com/archives/C058SUSL5AA) for any questions.
+            We're excited to have you here! Please make sure to check out our [Contribution Guide](https://github.com/kubestellar/ui/blob/dev/CONTRIBUTING.md) and feel free to join our [Slack channel](https://cloud-native.slack.com/archives/C097094RZ3M) for any questions.
 
           pr-message: |
             👋 Hello! @${{ github.actor }} Welcome to the Kubestellar. 
 
             Thank you for submitting your first Pull Request to KubeStellar. We are delighted to have you in our Universe!
-            Please make sure to check out our [contribution guide](./CONTRIBUTING.md) and feel free to join our [Slack channel](https://kubernetes.slack.com/archives/C058SUSL5AA) for any questions.
+            Please make sure to check out our [Contribution Guide](https://github.com/kubestellar/ui/blob/dev/CONTRIBUTING.md) and feel free to join our [Slack channel](https://cloud-native.slack.com/archives/C097094RZ3M) for any questions.

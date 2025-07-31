@@ -1321,8 +1321,8 @@
         "packageIdPlaceholder": "helm/bitnami/nginx",
         "packageIdTip": "Especifica el ID del paquete de Helm (p. ej., helm/bitnami/nginx)",
         "version": "Versión (por defecto: última)",
-        "versionTooltip": "Versión del chart a desplegar (p. ej., 13.2.10). Si no se especifica, se usará la última.",
-        "versionPlaceholder": "13.2.10 (dejar vacío para la última)",
+        "versionTooltip": "Versión del chart a desplegar (p. ej., 13.2.12). Si no se especifica, se usará la última.",
+        "versionPlaceholder": "13.2.12 (dejar vacío para la última)",
         "versionTip": "Especifica la versión a desplegar (dejar vacío para la última)",
         "releaseName": "Nombre del Despliegue *",
         "releaseNameTooltip": "Nombre para identificar tu despliegue de Helm",
@@ -2249,5 +2249,8 @@
         "author": "Alan Turning"
       }
     ]
+  },
+  "validation": {
+    "missingRequiredFields": "Faltan campos obligatorios"
   }
 }
