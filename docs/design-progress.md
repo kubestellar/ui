@@ -275,4 +275,14 @@ This section covers foundational analysis and planning to improve the structure,
 - **💬 Join Community** – Connect with developers  
 - **📚 Explore Docs** – Browse guides and references
 
+### 📞 KubeStellar/docs Landing Page Design – Get in Touch Section
+
+> **Have questions about KubeStellar? We're here to help!**
+- Simple, approachable section encouraging user engagement.
+- **Includes**:
+  - Brief message with supportive tone
+  - Two clear CTAs:
+    - **💬 Join Our Slack** – Real-time help & discussions
+    - **📧 Contact Us** – Reach out via email or form
+
 ---
