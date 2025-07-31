@@ -268,4 +268,11 @@ This section covers foundational analysis and planning to improve the structure,
 > **Discover how organizations leverage KubeStellar for their multi-cluster needs.**
 - Designed to highlight **real-world applications** of KubeStellar with concise, impactful cards that visually connect use cases to features.
 
+### ✨ KubeStellar/docs Landing Page Design – Get Started Section
+
+> **Kickstart your journey with KubeStellar.**
+- **🚀 Quick Installation** – Set up in minutes  
+- **💬 Join Community** – Connect with developers  
+- **📚 Explore Docs** – Browse guides and references
+
 ---
