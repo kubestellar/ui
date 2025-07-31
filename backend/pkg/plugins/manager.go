@@ -18,6 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/middleware"
 	"github.com/kubestellar/ui/backend/models"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
@@ -257,6 +258,9 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 // registerPluginRoutes maps each declared route from plugin manifest to Gin route group.
 func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 	group := pm.router.Group("/api/plugins/" + strconv.Itoa(plugin.ID))
+
+	// middleware to check if plugin is disabled
+	group.Use(middleware.PluginMiddleware(pm.IsPluginDisabled))
 
 	// Track routes for this plugin
 	pm.routeMutex.Lock()
@@ -613,4 +617,13 @@ func extractPluginPathID(s string) (int, error) {
 		return 0, fmt.Errorf("not a number: %w", err)
 	}
 	return num, nil
+}
+
+// IsPluginDisabled checks if a plugin is disabled
+func (pm *PluginManager) IsPluginDisabled(id int) bool {
+	plugin, exists := pm.GetPlugin(id)
+	if !exists {
+		return false
+	}
+	return plugin.Status == "inactive"
 }
