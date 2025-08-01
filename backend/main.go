@@ -107,6 +107,8 @@ func main() {
 	// Setup authentication routes
 	routes.SetupRoutes(router)
 
+	// Initialize Marketplace
+
 	// Initialize plugin system
 	logger.Info("Initializing plugin system...")
 	pluginManager := plugins.NewPluginManager(router)

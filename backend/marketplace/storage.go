@@ -2,12 +2,13 @@ package marketplace
 
 import (
 	"context"
-	"fmt"
 	"io"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/models"
 	"go.uber.org/zap"
 )
 
@@ -17,37 +18,70 @@ type StorageProvider interface {
 	DeleteFile(ctx context.Context, key string) error
 }
 
-type R2Storage struct {
-	Client *s3.Client
-	Bucket string // bucket key
-	Domain string
+type StorageType string
+
+const (
+	StorageR2    StorageType = "r2"
+	StorageLocal StorageType = "local"
+)
+
+type StorageConfig struct {
+	Type StorageType
+
+	Bucket     string
+	PublicBase string
+
+	// R2 option
+	AccessKey string
+	SecretKey string
+	Endpoint  string
+
+	// local option
+	LocalBase string
 }
 
-func (r *R2Storage) UploadFile(ctx context.Context, key string, data io.Reader) error {
-	_, err := r.Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(r.Bucket),
-		Key:    aws.String(key),
-		Body:   data,
-	})
-	if err != nil {
-		log.LogError("error s3 client couldn't put object", zap.String("error", err.Error()))
-		return err
+type MarketplaceManager struct {
+	store   StorageProvider
+	plugins map[int]*models.MarketplacePlugin
+}
+
+func NewMarketPlaceManager(store StorageProvider) *MarketplaceManager {
+	return &MarketplaceManager{
+		store:   store,
+		plugins: make(map[int]*models.MarketplacePlugin),
 	}
-	return nil
 }
 
-func (r *R2Storage) GetFileURL(ctx context.Context, key string) (string, error) {
-	return fmt.Sprintf("https://%s/%s", r.Domain, key), nil
-}
+func NewStorageProvider(cfg StorageConfig) (StorageProvider, error) {
+	switch cfg.Type {
+	case StorageR2:
+		awsCfg, err := config.LoadDefaultConfig(context.TODO(),
+			config.WithCredentialsProvider(
+				credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, ""),
+			),
+			config.WithRegion("auto"),
+			config.WithEndpointResolver(R2Resolver{
+				URL: cfg.Endpoint,
+			}),
+		)
+		if err != nil {
+			log.LogError("error loading aws configuration", zap.String("error", err.Error()))
+			return nil, err
+		}
 
-func (r *R2Storage) DeleteFile(ctx context.Context, key string) error {
-	_, err := r.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(r.Bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		log.LogError("error delete s3 client object", zap.String("error", err.Error()))
-		return err
+		client := s3.NewFromConfig(awsCfg)
+
+		return &R2Storage{
+			Client: client,
+			Bucket: cfg.Bucket,
+		}, nil
+
+	case StorageLocal:
+		return &LocalStorage{
+			BasePath:  cfg.LocalBase,
+			PublicURL: cfg.PublicBase,
+		}, nil
+	default:
+		return nil, nil
 	}
-	return nil
 }
