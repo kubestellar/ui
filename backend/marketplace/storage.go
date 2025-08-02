@@ -2,14 +2,18 @@ package marketplace
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"net/url"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kubestellar/ui/backend/log"
-	"github.com/kubestellar/ui/backend/models"
 	"go.uber.org/zap"
+
+	smithyendpoints "github.com/aws/smithy-go/endpoints"
 )
 
 type StorageProvider interface {
@@ -34,46 +38,59 @@ type StorageConfig struct {
 	// R2 option
 	AccessKey string
 	SecretKey string
-	Endpoint  string
+	Endpoint  string // e.g. for R2: https://<account>.r2.cloudflarestorage.com
 
 	// local option
 	LocalBase string
 }
 
-type MarketplaceManager struct {
-	store   StorageProvider
-	plugins map[int]*models.MarketplacePlugin
+type staticResolver struct {
+	endpointURL string
 }
 
-func NewMarketPlaceManager(store StorageProvider) *MarketplaceManager {
-	return &MarketplaceManager{
-		store:   store,
-		plugins: make(map[int]*models.MarketplacePlugin),
+func (r staticResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (
+	smithyendpoints.Endpoint, error,
+) {
+	u, err := url.Parse(r.endpointURL)
+	if err != nil {
+		log.LogError("error parsing resolver endpoint", zap.String("error", err.Error()))
+		return smithyendpoints.Endpoint{}, err
 	}
+
+	return smithyendpoints.Endpoint{URI: *u}, nil
 }
 
 func NewStorageProvider(cfg StorageConfig) (StorageProvider, error) {
 	switch cfg.Type {
 	case StorageR2:
-		awsCfg, err := config.LoadDefaultConfig(context.TODO(),
+		if cfg.Endpoint == "" || cfg.AccessKey == "" || cfg.SecretKey == "" {
+			return nil, fmt.Errorf("incomplete R2 configuration")
+		}
+
+		awsCfg, err := config.LoadDefaultConfig(
+			context.TODO(),
 			config.WithCredentialsProvider(
 				credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, ""),
 			),
 			config.WithRegion("auto"),
-			config.WithEndpointResolver(R2Resolver{
-				URL: cfg.Endpoint,
-			}),
 		)
+
 		if err != nil {
-			log.LogError("error loading aws configuration", zap.String("error", err.Error()))
+			log.LogError("error loading AWS configuration", zap.String("error", err.Error()))
 			return nil, err
 		}
 
-		client := s3.NewFromConfig(awsCfg)
+		client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(cfg.Endpoint)
+			o.EndpointResolverV2 = staticResolver{
+				endpointURL: cfg.Endpoint,
+			}
+		})
 
 		return &R2Storage{
-			Client: client,
-			Bucket: cfg.Bucket,
+			Client:     client,
+			Bucket:     cfg.Bucket,
+			PublicBase: cfg.PublicBase,
 		}, nil
 
 	case StorageLocal:
