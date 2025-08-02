@@ -551,9 +551,7 @@ const ProfileSection = () => {
         <button
           ref={buttonRef}
           onClick={() => setShowUserMenu(!showUserMenu)}
-          className="\ hover:bg-primary/10\ btn btn-circle border-2 border-primary/30 bg-primary/5
-            shadow-sm transition-all duration-300 hover:scale-105
-            hover:shadow-md active:scale-95"
+          className="\ hover:bg-primary/10\ btn btn-circle border-2 border-primary/30 bg-primary/5 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md active:scale-95"
           aria-label="Open user menu"
           aria-expanded={showUserMenu}
           aria-haspopup="menu"
@@ -566,8 +564,7 @@ const ProfileSection = () => {
       {showUserMenu && (
         <div
           ref={userMenuRef}
-          className="animate-in fade-in slide-in-from-top-5 \ absolute right-0 top-full z-50 mt-2
-            w-64 origin-top-right overflow-hidden rounded-xl duration-300 ease-out"
+          className="animate-in fade-in slide-in-from-top-5 \ absolute right-0 top-full z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-xl duration-300 ease-out"
           style={{
             backgroundColor: styles.profileMenu.backgroundColor,
             borderWidth: '1px',
@@ -631,8 +628,7 @@ const ProfileSection = () => {
             <div className="grid grid-cols-1 gap-1">
               <button
                 onClick={() => setShowChangePasswordModal(true)}
-                className="py-3\ group flex w-full items-center rounded-lg px-4
-                  text-sm font-medium transition-colors duration-150"
+                className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
                   backgroundColor: styles.helpButton.backgroundColor,
@@ -670,8 +666,7 @@ const ProfileSection = () => {
               </button>
               <button
                 onClick={openRaiseIssue}
-                className="py-3\ group flex w-full items-center rounded-lg px-4
-                  text-sm font-medium transition-colors duration-150"
+                className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
                   backgroundColor: styles.helpButton.backgroundColor,
@@ -705,8 +700,7 @@ const ProfileSection = () => {
               </button>
               <button
                 onClick={openDocs}
-                className="py-3\ group flex w-full items-center rounded-lg px-4
-                  text-sm font-medium transition-colors duration-150"
+                className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
                   backgroundColor: styles.helpButton.backgroundColor,
@@ -751,8 +745,7 @@ const ProfileSection = () => {
           >
             <button
               onClick={handleLogout}
-              className="py-3\ group flex w-full items-center rounded-lg px-4
-                text-sm font-medium transition-all duration-200"
+              className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-all duration-200"
               style={{
                 color: styles.logoutButton.color,
                 backgroundColor: styles.logoutButton.backgroundColor,

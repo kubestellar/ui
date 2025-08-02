@@ -593,11 +593,7 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [
-    "infrastructure",
-    "system",
-    "kubestellar"
-  ],
+  "tags": ["infrastructure", "system", "kubestellar"],
   "templating": {
     "list": []
   },

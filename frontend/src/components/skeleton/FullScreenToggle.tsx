@@ -162,13 +162,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
 
   return (
     <motion.div
-      className={`
-        tooltip font-normal
-        ${tooltipClasses[tooltipPosition]} 
-        ${position !== 'inline' ? positionClasses[position] : ''} 
-        ${className}
-        relative
-      `}
+      className={`tooltip font-normal ${tooltipClasses[tooltipPosition]} ${position !== 'inline' ? positionClasses[position] : ''} ${className} relative`}
       initial="rest"
       whileHover="hover"
       whileTap="tap"

@@ -68,7 +68,6 @@ This document tracks the progress of the design system foundation efforts for th
 6. **Type Hierarchy**  
    🔗 [Type Hierarchy – Figma](https://www.figma.com/design/Gi24EeUOBqcWbdutYEPlE4/Type-Hierarchy?node-id=0-1&t=XXfQVjh9T7DgVtXB-1)
 
-
 ---
 
 ## 📌 Progress Update
@@ -209,7 +208,6 @@ This section covers foundational analysis and planning to improve the structure,
 - Used layout grid and spacing tokens from the design system
 - Aligned wireframes with IA improvements
 
-
 ### 🔤 Type Hierarchy Defined
 
 - Established a consistent typography system for the documentation and UI
@@ -266,18 +264,21 @@ This section covers foundational analysis and planning to improve the structure,
 ### 🚀 KubeStellar/docs Landing Page Design – Use Cases Section
 
 > **Discover how organizations leverage KubeStellar for their multi-cluster needs.**
+
 - Designed to highlight **real-world applications** of KubeStellar with concise, impactful cards that visually connect use cases to features.
 
 ### ✨ KubeStellar/docs Landing Page Design – Get Started Section
 
 > **Kickstart your journey with KubeStellar.**
-- **🚀 Quick Installation** – Set up in minutes  
-- **💬 Join Community** – Connect with developers  
+
+- **🚀 Quick Installation** – Set up in minutes
+- **💬 Join Community** – Connect with developers
 - **📚 Explore Docs** – Browse guides and references
 
 ### 📞 KubeStellar/docs Landing Page Design – Get in Touch Section
 
 > **Have questions about KubeStellar? We're here to help!**
+
 - Simple, approachable section encouraging user engagement.
 - **Includes**:
   - Brief message with supportive tone

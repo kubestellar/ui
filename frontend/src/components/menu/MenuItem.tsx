@@ -105,8 +105,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
       {/* Category header */}
       <div className="rounded-lg px-3 py-1.5">
         <span
-          className={`text-sm font-semibold uppercase tracking-[0.15em] transition-colors 
-          duration-300 ${centered || collapsed ? 'text-center' : 'pl-2'}`}
+          className={`text-sm font-semibold uppercase tracking-[0.15em] transition-colors duration-300 ${centered || collapsed ? 'text-center' : 'pl-2'}`}
           style={{
             color: isDark ? 'rgba(226, 232, 240, 0.9)' : 'rgba(30, 41, 59, 0.9)',
           }}
@@ -130,10 +129,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
               >
                 {({ isActive }) => (
                   <div
-                    className={`relative flex items-center ${collapsed ? 'h-10 min-h-0 w-10 justify-center p-0' : 'w-full justify-start px-4 py-3'} 
-                      rounded-xl transition-all duration-200 ease-out
-                      ${collapsed ? '' : 'hover:translate-x-1'} 
-                      group/item relative hover:shadow-md focus:outline-none`}
+                    className={`relative flex items-center ${collapsed ? 'h-10 min-h-0 w-10 justify-center p-0' : 'w-full justify-start px-4 py-3'} rounded-xl transition-all duration-200 ease-out ${collapsed ? '' : 'hover:translate-x-1'} group/item relative hover:shadow-md focus:outline-none`}
                     style={
                       isActive || hoveredItem === index
                         ? {
@@ -260,10 +256,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
               <button
                 key={index}
                 onClick={listItem.onClick}
-                className={`relative flex items-center ${collapsed ? 'h-10 w-10 justify-center' : 'w-full gap-4'} 
-                rounded-xl px-4 py-3 transition-all duration-200 
-                hover:${collapsed ? 'scale-110' : 'translate-x-1'} group/item
-                group hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
+                className={`relative flex items-center ${collapsed ? 'h-10 w-10 justify-center' : 'w-full gap-4'} rounded-xl px-4 py-3 transition-all duration-200 hover:${collapsed ? 'scale-110' : 'translate-x-1'} group/item group hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
                 style={{
                   backgroundImage: collapsed
                     ? 'none'
@@ -300,7 +293,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 
                 {!collapsed && (
                   <motion.span
-                    className="ml-3 whitespace-nowrap text-sm  font-medium "
+                    className="ml-3 whitespace-nowrap text-sm font-medium"
                     style={{
                       color:
                         hoveredItem === index

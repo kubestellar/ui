@@ -11,9 +11,7 @@ const HeaderSkeleton: React.FC = () => {
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-[3] flex 
-        w-full justify-between gap-4 bg-base-100 px-3 py-3 xl:gap-0 xl:px-6 
-        xl:py-4 ${isDark ? 'border-b border-slate-800/60' : ''}`}
+      className={`fixed left-0 right-0 top-0 z-[3] flex w-full justify-between gap-4 bg-base-100 px-3 py-3 xl:gap-0 xl:px-6 xl:py-4 ${isDark ? 'border-b border-slate-800/60' : ''}`}
     >
       <div className="flex items-center gap-3">
         {/* Mobile menu button skeleton */}

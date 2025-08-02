@@ -320,8 +320,7 @@ const ScrollToTop = () => {
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.2 }}
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 rounded-full p-3 text-white shadow-lg
-            transition-all duration-300 hover:shadow-xl"
+          className="fixed bottom-6 right-6 z-50 rounded-full p-3 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
           style={{
             background: themeStyles.effects.gradients.primary,
             boxShadow: themeStyles.colors.shadow.lg,

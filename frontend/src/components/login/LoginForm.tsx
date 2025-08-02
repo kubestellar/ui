@@ -178,13 +178,7 @@ const LoginForm = () => {
             placeholder={t('login.form.username')}
             className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-4 ${
               errors.username ? 'border-red-400' : 'border-blue-300/20'
-            } [&:-webkit-autofill]:!-webkit-text-fill-color-white rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all duration-200 
-            [-webkit-text-fill-color:white] focus:border-blue-400 focus:outline-none
-            focus:ring-1
-            focus:ring-blue-400/30
-            [&:-webkit-autofill]:!text-white
-            [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
-            [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]`}
+            } [&:-webkit-autofill]:!-webkit-text-fill-color-white rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all duration-200 [-webkit-text-fill-color:white] focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400/30 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e] [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]`}
             required
             disabled={isPending}
           />
@@ -222,16 +216,7 @@ const LoginForm = () => {
             placeholder={t('login.form.password')}
             className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-12 ${
               errors.password ? 'border-red-400' : 'border-blue-300/20'
-            } [&:-webkit-autofill]:!-webkit-text-fill-color-white [-ms-reveal]:hidden rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all 
-            duration-200 [-webkit-text-fill-color:white] focus:border-blue-400
-            focus:outline-none
-            focus:ring-1
-            focus:ring-blue-400/30
-            [&:-webkit-autofill]:!text-white
-            [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
-            [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]
-            [&::-ms-clear]:hidden
-            [&::-ms-reveal]:hidden`}
+            } [&:-webkit-autofill]:!-webkit-text-fill-color-white [-ms-reveal]:hidden rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all duration-200 [-webkit-text-fill-color:white] focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400/30 [&:-webkit-autofill]:!text-white [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e] [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s] [&::-ms-clear]:hidden [&::-ms-reveal]:hidden`}
             required
           />
           <button
