@@ -23,8 +23,8 @@ const LanguageSwitcher = () => {
     { code: 'de', name: 'Deutsch' },
     { code: 'fr', name: 'Français' },
     { code: 'it', name: 'Italiano' },
-    { code: 'zh-Hans', name: '简体中文' },
-    { code: 'zh-Hant', name: '繁體中文' },
+    { code: 'SC', name: '简体中文' }, // zh-Hans
+    { code: 'TC', name: '繁體中文' }, // zh-Hant
     { code: 'pt', name: 'Português' },
   ];
 
