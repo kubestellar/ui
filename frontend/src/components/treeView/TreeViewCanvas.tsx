@@ -6,11 +6,11 @@ import { useTranslation } from 'react-i18next';
 import useTheme from '../../stores/themeStore';
 import { FlowCanvas } from '../wds_topology/FlowCanvas';
 import { ZoomControls } from '../wds_topology/ZoomControls';
-import FullScreenToggle from '../skeleton/FullScreenToggle';
+
 import ListViewComponent, { ResourceItem as ListViewResourceItem } from '../ListViewComponent';
 import ListViewSkeleton from '../skeleton/ListViewSkeleton';
-import TreeViewSkeleton from '../skeleton/TreeViewSkeleton';
-import { darkTheme, lightTheme } from '../../lib/theme-utils';
+import UnifiedSkeleton from '../skeleton/UnifiedSkeleton';
+
 import { CustomNode, CustomEdge, ResourceDataChangeEvent, ResourceItem } from './types';
 import { ResourceFilter } from '../ResourceFilters';
 
@@ -44,6 +44,8 @@ interface TreeViewCanvasProps {
   isCollapsed: boolean;
   containerRef: React.RefObject<HTMLDivElement>;
   resourceFilters?: ResourceFilter;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 const TreeViewCanvas = memo<TreeViewCanvasProps>(
@@ -60,8 +62,9 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
     onExpandAll,
     onCollapseAll,
     isCollapsed,
-    containerRef,
     resourceFilters,
+    onToggleFullscreen,
+    isFullscreen = false,
   }) => {
     const { t } = useTranslation();
     const theme = useTheme(state => state.theme);
@@ -92,7 +95,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
     }, [onResourceDataChange]);
 
     if (isLoading) {
-      return viewMode === 'list' ? <ListViewSkeleton itemCount={8} /> : <TreeViewSkeleton />;
+      return viewMode === 'list' ? <ListViewSkeleton itemCount={8} /> : <UnifiedSkeleton />;
     }
 
     if (viewMode === 'list') {
@@ -127,60 +130,223 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 1,
-                  backgroundColor:
-                    theme === 'dark' ? darkTheme.element.card : lightTheme.element.card,
-                  padding: 4,
-                  borderRadius: 2,
-                  boxShadow: theme === 'dark' ? darkTheme.shadow.md : lightTheme.shadow.md,
+                  gap: 3,
+                  background:
+                    theme === 'dark'
+                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95))',
+                  padding: 6,
+                  borderRadius: '20px',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                      : '0 20px 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  border:
+                    theme === 'dark'
+                      ? '1px solid rgba(148, 163, 184, 0.2)'
+                      : '1px solid rgba(148, 163, 184, 0.3)',
+                  backdropFilter: 'blur(20px)',
+                  maxWidth: '400px',
+                  textAlign: 'center',
+                  animation: 'bounceIn 0.8s ease-out',
+                  position: 'relative',
                 }}
               >
-                <Typography
+                {/* Adorable empty state illustration */}
+                <Box
                   sx={{
-                    color: theme === 'dark' ? darkTheme.text.primary : lightTheme.text.primary,
-                    fontWeight: 500,
-                    fontSize: '22px',
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    background:
+                      theme === 'dark'
+                        ? 'linear-gradient(135deg, #3b82f6, #6366f1)'
+                        : 'linear-gradient(135deg, #60a5fa, #3b82f6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 2,
+                    position: 'relative',
+                    boxShadow: '0 8px 32px rgba(59, 130, 246, 0.3)',
+                    animation: 'float 3s ease-in-out infinite',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '-4px',
+                      left: '-4px',
+                      right: '-4px',
+                      bottom: '-4px',
+                      borderRadius: '50%',
+                      background:
+                        theme === 'dark'
+                          ? 'linear-gradient(135deg, #1e293b, #334155)'
+                          : 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                      zIndex: -1,
+                    },
                   }}
                 >
-                  {t('treeView.emptyState.title')}
-                </Typography>
+                  <Plus
+                    size={50}
+                    color="white"
+                    style={{
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}
+                  />
+
+                  {/* Floating sparkles */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#fbbf24',
+                      animation: 'sparkle 2s ease-in-out infinite',
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: '20px',
+                      left: '15px',
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: '#34d399',
+                      animation: 'sparkle 2s ease-in-out infinite 0.5s',
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '30px',
+                      left: '5px',
+                      width: '4px',
+                      height: '4px',
+                      borderRadius: '50%',
+                      background: '#f472b6',
+                      animation: 'sparkle 2s ease-in-out infinite 1s',
+                    }}
+                  />
+                </Box>
+
                 <Typography
-                  variant="body2"
                   sx={{
-                    color: theme === 'dark' ? darkTheme.text.secondary : lightTheme.text.secondary,
-                    fontSize: '17px',
-                    mb: 2,
+                    background:
+                      theme === 'dark'
+                        ? 'linear-gradient(135deg, #f1f5f9, #e2e8f0)'
+                        : 'linear-gradient(135deg, #1e293b, #334155)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontWeight: 700,
+                    fontSize: '28px',
+                    letterSpacing: '0.5px',
+                    marginBottom: 1,
+                  }}
+                >
+                  ✨ {t('treeView.emptyState.title')} ✨
+                </Typography>
+
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: theme === 'dark' ? '#94a3b8' : '#64748b',
+                    fontSize: '16px',
+                    lineHeight: 1.6,
+                    marginBottom: 3,
+                    fontWeight: '500',
                   }}
                 >
                   {t('treeView.emptyState.description')}
                 </Typography>
+
                 <Button
                   variant="contained"
                   startIcon={<Plus size={20} />}
                   onClick={onCreateWorkload}
                   sx={{
-                    backgroundColor:
-                      theme === 'dark' ? darkTheme.brand.primary : lightTheme.brand.primary,
-                    color: '#fff',
+                    background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                    color: '#ffffff',
+                    fontWeight: '600',
+                    fontSize: '16px',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    textTransform: 'none',
                     '&:hover': {
-                      backgroundColor:
-                        theme === 'dark'
-                          ? darkTheme.brand.primaryDark
-                          : lightTheme.brand.primaryDark,
+                      background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
+                      transform: 'translateY(-2px) scale(1.02)',
+                      boxShadow: '0 12px 32px rgba(59, 130, 246, 0.4)',
                     },
-                    boxShadow: theme === 'dark' ? darkTheme.shadow.md : lightTheme.shadow.md,
+                    '&:active': {
+                      transform: 'translateY(0) scale(0.98)',
+                    },
                   }}
                 >
                   {t('treeView.createWorkload')}
                 </Button>
+
+                {/* Decorative elements */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '-10px',
+                    right: '-10px',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+                    animation: 'bounce 2s ease-in-out infinite',
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: '-8px',
+                    left: '-8px',
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #10b981, #34d399)',
+                    animation: 'bounce 2s ease-in-out infinite 1s',
+                  }}
+                />
               </Box>
             </Box>
-            <FullScreenToggle
-              containerRef={containerRef}
-              position="top-right"
-              tooltipPosition="left"
-            />
           </ReactFlowProvider>
+
+          {/* Enhanced animations for adorable empty state - GPU optimized */}
+          <style>{`
+            @keyframes float {
+              0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+              33% { transform: translate3d(0, -10px, 0) rotate(1deg); }
+              66% { transform: translate3d(0, -5px, 0) rotate(-1deg); }
+            }
+            @keyframes sparkle {
+              0%, 100% { opacity: 0; transform: scale3d(0, 0, 1) rotate(0deg); }
+              50% { opacity: 1; transform: scale3d(1, 1, 1) rotate(180deg); }
+            }
+            @keyframes bounce {
+              0%, 100% { transform: translate3d(0, 0, 0); }
+              50% { transform: translate3d(0, -10px, 0); }
+            }
+            @keyframes pulse {
+              0%, 100% { transform: scale3d(1, 1, 1); }
+              50% { transform: scale3d(1.1, 1.1, 1); }
+            }
+            @keyframes bounceIn {
+              0% { transform: scale3d(0.3, 0.3, 1) translate3d(0, 20px, 0); opacity: 0; }
+              50% { transform: scale3d(1.05, 1.05, 1) translate3d(0, -10px, 0); }
+              70% { transform: scale3d(0.9, 0.9, 1) translate3d(0, 5px, 0); }
+              100% { transform: scale3d(1, 1, 1) translate3d(0, 0, 0); opacity: 1; }
+            }
+          `}</style>
         </Box>
       );
     }
@@ -195,11 +361,9 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
             isCollapsed={isCollapsed}
             onExpandAll={onExpandAll}
             onCollapseAll={onCollapseAll}
-          />
-          <FullScreenToggle
-            containerRef={containerRef}
-            position="top-right"
-            tooltipPosition="left"
+            onToggleFullscreen={onToggleFullscreen}
+            isFullscreen={isFullscreen}
+            translationPrefix="treeView"
           />
         </ReactFlowProvider>
       </Box>
