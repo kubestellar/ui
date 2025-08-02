@@ -285,4 +285,10 @@ This section covers foundational analysis and planning to improve the structure,
     - **💬 Join Our Slack** – Real-time help & discussions
     - **📧 Contact Us** – Reach out via email or form
 
+### 📞 KubeStellar/docs Landing Page Design – Footer
+
+Redesigned the footer to enhance usability and user engagement:
+- ⚓️ **Quick Navigation**: Added streamlined links to key sections (Home, Docs, Community, GitHub, etc)
+- 📬 **Stay Updated**: Integrated a simple email input for newsletter subscriptions
+
 ---
