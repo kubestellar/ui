@@ -833,9 +833,12 @@
       "collapseAll": "Collapse all the child nodes of all parent nodes",
       "zoomIn": "Zoom In",
       "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
       "edgeStyle": "Edge Style",
       "curvy": "Curvy",
-      "square": "Square"
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
     },
     "nodeLabel": {
       "labels": "Labels:",
@@ -938,6 +941,19 @@
     },
     "fullscreen": {
       "toggle": "Toggle fullscreen view"
+    },
+    "zoomControls": {
+      "groupByResource": "Group By Resource/Kind",
+      "expandAll": "Expand all the child nodes of all parent nodes",
+      "collapseAll": "Collapse all the child nodes of all parent nodes",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
     },
     "contextMenu": {
       "details": "Details",
