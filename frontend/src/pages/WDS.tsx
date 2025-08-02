@@ -1,7 +1,7 @@
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import TreeView from '../components/TreeViewComponent'; // Replace with your TreeView component path
 // import useTheme from "../stores/themeStore";
-import WDSSkeleton from '../components/skeleton/WDSSkeleton';
+import UnifiedSkeleton from '../components/skeleton/UnifiedSkeleton';
 
 const WDS = () => {
   // const theme = useTheme((state) => state.theme);
@@ -9,7 +9,7 @@ const WDS = () => {
   const { useWorkloads } = useWDSQueries();
   const { isLoading, isError } = useWorkloads();
 
-  if (isLoading) return <WDSSkeleton />;
+  if (isLoading) return <UnifiedSkeleton variant="wds" />;
   if (isError) {
     return (
       <div className="p-4 text-center text-red-600 dark:text-red-400">
