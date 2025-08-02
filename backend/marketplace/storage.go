@@ -32,16 +32,15 @@ const (
 type StorageConfig struct {
 	Type StorageType
 
-	Bucket     string
-	PublicBase string
-
 	// R2 option
+	Bucket    string // r2 bucket name
 	AccessKey string
 	SecretKey string
 	Endpoint  string // e.g. for R2: https://<account>.r2.cloudflarestorage.com
 
 	// local option
-	LocalBase string
+	LocalBase string // e.g. location of the plugin files "./data/plugins"
+	BaseURL   string // e.g. the URL to get all the plugins http://localhost:8080/marketplace/plugins
 }
 
 type staticResolver struct {
@@ -90,13 +89,13 @@ func NewStorageProvider(cfg StorageConfig) (StorageProvider, error) {
 		return &R2Storage{
 			Client:     client,
 			Bucket:     cfg.Bucket,
-			PublicBase: cfg.PublicBase,
+			PublicBase: cfg.Endpoint,
 		}, nil
 
 	case StorageLocal:
 		return &LocalStorage{
-			BasePath:  cfg.LocalBase,
-			PublicURL: cfg.PublicBase,
+			BasePath: cfg.LocalBase,
+			BaseURL:  cfg.BaseURL,
 		}, nil
 	default:
 		return nil, nil

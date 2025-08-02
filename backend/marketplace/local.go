@@ -6,8 +6,8 @@ import (
 )
 
 type LocalStorage struct {
-	BasePath  string
-	PublicURL string
+	BasePath string
+	BaseURL  string
 }
 
 func (l *LocalStorage) UploadFile(ctx context.Context, key string, data io.Reader) error {
