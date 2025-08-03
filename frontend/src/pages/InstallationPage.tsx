@@ -79,13 +79,14 @@ interface PrereqToolData {
   installed: boolean;
 }
 
+
 // Initial prerequisites definition
 const initialPrerequisites: Prerequisite[] = [
   {
     name: 'kubeflex',
     displayName: 'KubeFlex',
     category: PrereqCategory.Core,
-    description: 'KubeFlex CLI tool (required version ≥ 0.8.0)',
+    description: 'installationPage.prerequisites.kubeflexDescription',
     minVersion: '0.8.0',
     installCommand:
       'bash <(curl -s https://raw.githubusercontent.com/kubestellar/kubeflex/main/scripts/install-kubeflex.sh) --ensure-folder /usr/local/bin --strip-bin',
@@ -97,7 +98,7 @@ const initialPrerequisites: Prerequisite[] = [
     name: 'clusteradm',
     displayName: 'OCM CLI',
     category: PrereqCategory.Core,
-    description: 'Open Cluster Management CLI (required version between 0.7 and 0.11)',
+    description: 'installationPage.prerequisites.ocmDescription',
     minVersion: '0.7.0',
     maxVersion: '0.11.0',
     installCommand:
@@ -111,7 +112,7 @@ const initialPrerequisites: Prerequisite[] = [
     name: 'helm',
     displayName: 'Helm',
     category: PrereqCategory.Core,
-    description: 'Kubernetes package manager (required version ≥ 3.0.0)',
+    description: 'installationPage.prerequisites.helmDescription',
     minVersion: '3.0.0',
     installCommand:
       'curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash',
@@ -123,7 +124,7 @@ const initialPrerequisites: Prerequisite[] = [
     name: 'kubectl',
     displayName: 'kubectl',
     category: PrereqCategory.Core,
-    description: 'Kubernetes command-line tool (required version ≥ 1.27.0)',
+    description: 'installationPage.prerequisites.kubectlDescription',
     minVersion: '1.27.0',
     installCommand:
       'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && sudo mv kubectl /usr/local/bin/',
@@ -135,7 +136,7 @@ const initialPrerequisites: Prerequisite[] = [
     name: 'kind',
     displayName: 'kind',
     category: PrereqCategory.Setup,
-    description: 'Tool for running local Kubernetes clusters (required version ≥ 0.20.0)',
+    description: 'installationPage.prerequisites.kindDescription',
     minVersion: '0.20.0',
     installCommand:
       'curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64 && chmod +x ./kind && sudo mv ./kind /usr/local/bin/kind',
@@ -147,7 +148,7 @@ const initialPrerequisites: Prerequisite[] = [
     name: 'docker',
     displayName: 'Docker',
     category: PrereqCategory.Setup,
-    description: 'Container runtime (required version ≥ 20.0.0)',
+    description: 'installationPage.prerequisites.dockerDescription',
     minVersion: '20.0.0',
     installCommand: 'curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh',
     installUrl: 'https://docs.docker.com/engine/install/',
@@ -155,6 +156,7 @@ const initialPrerequisites: Prerequisite[] = [
     status: PrereqStatus.Checking,
   },
 ];
+
 
 // Helper function to parse and compare versions
 const compareVersions = (version1: string, version2: string): number => {
@@ -436,7 +438,7 @@ const PrerequisiteCard = ({
               <StatusBadge status={prerequisite.status} isDark={isDark} />
             </div>
             <p className={`mt-0.5 text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
-              {prerequisite.description}
+              {t(prerequisite.description)}
             </p>
           </div>
         </div>
@@ -1427,7 +1429,6 @@ const InstallationPage = () => {
                       description={t('installationPage.prerequisites.description')}
                       isDark={isDark}
                     />
-
                     {/* Status summary */}
                     <div className="mb-6 flex flex-wrap gap-4">
                       <div
