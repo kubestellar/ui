@@ -449,9 +449,7 @@ const PrerequisiteCard = ({
         <div className={`border-t p-4 pt-0 ${isDark ? 'border-slate-800/60' : 'border-gray-200'}`}>
           {prerequisite.status === PrereqStatus.Error && (
             <div className="mb-4">
-              <h4
-                className={`mb-2 mt-2 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
-              >
+              <h4 className={`mb-2 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {t('installationPage.errorSection.title')}
               </h4>
               {prerequisite.installCommand && (
