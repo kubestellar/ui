@@ -206,6 +206,12 @@
       "prerequisites": "Prerequisites",
       "title": "System Prerequisites",
       "description": "Ensure these tools are installed before proceeding",
+      "kubeflexDescription": "KubeFlex CLI tool (required version ≥ 0.8.0)",
+      "ocmDescription": "Open Cluster Management CLI (required version between 0.7 and 0.11)",
+      "helmDescription": "Kubernetes package manager (required version ≥ 3.0.0)",
+      "kubectlDescription": "Kubernetes command-line tool (required version ≥ 1.27.0)",
+      "kindDescription": "Tool for running local Kubernetes clusters (required version ≥ 0.20.0)",
+      "dockerDescription": "Container runtime (required version ≥ 20.0.0)",
       "status": {
         "success": "Success",
         "warnings": "Warnings",
