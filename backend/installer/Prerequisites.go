@@ -268,7 +268,7 @@ func checkPrerequisite(name, command string, args []string, versionArgs []string
 		// it ran, but we couldn’t recognize any version string
 		return PrerequisiteStatus{
 			Name:         name,
-			Installed:    false,
+			Installed:    true, // command exists but version check fails
 			Version:      "Unknown",
 			Required:     required,
 			InstallGuide: installGuide,
