@@ -207,11 +207,11 @@
       "title": "सिस्टम पूर्वापेक्षाएं",
       "description": "आगे बढ़ने से पहले सुनिश्चित करें कि ये टूल्स इंस्टॉल हैं",
       "kubeflexDescription": "KubeFlex CLI टूल (आवश्यक संस्करण ≥ 0.8.0)",
-    "ocmDescription": "Open Cluster Management CLI (आवश्यक संस्करण 0.7 से 0.11 के बीच)",
-    "helmDescription": "Kubernetes पैकेज मैनेजर (आवश्यक संस्करण ≥ 3.0.0)",
-    "kubectlDescription": "Kubernetes कमांड-लाइन टूल (आवश्यक संस्करण ≥ 1.27.0)",
-    "kindDescription": "स्थानीय Kubernetes क्लस्टर चलाने के लिए टूल (आवश्यक संस्करण ≥ 0.20.0)",
-    "dockerDescription": "कंटेनर रनटाइम (आवश्यक संस्करण ≥ 20.0.0)",
+      "ocmDescription": "Open Cluster Management CLI (आवश्यक संस्करण 0.7 से 0.11 के बीच)",
+      "helmDescription": "Kubernetes पैकेज मैनेजर (आवश्यक संस्करण ≥ 3.0.0)",
+      "kubectlDescription": "Kubernetes कमांड-लाइन टूल (आवश्यक संस्करण ≥ 1.27.0)",
+      "kindDescription": "स्थानीय Kubernetes क्लस्टर चलाने के लिए टूल (आवश्यक संस्करण ≥ 0.20.0)",
+      "dockerDescription": "कंटेनर रनटाइम (आवश्यक संस्करण ≥ 20.0.0)",
       "status": {
         "success": "सफल",
         "warnings": "चेतावनी",
@@ -271,7 +271,6 @@
         "startInstallation": "इंस्टॉलेशन शुरू करें",
         "installing": "इंस्टॉल हो रहा है..."
       }
-
     },
     "checkingStatus": {
       "title": "KubeStellar इंस्टॉलेशन स्थिति जांच रहे हैं...",

@@ -79,7 +79,6 @@ interface PrereqToolData {
   installed: boolean;
 }
 
-
 // Initial prerequisites definition
 const initialPrerequisites: Prerequisite[] = [
   {
@@ -156,7 +155,6 @@ const initialPrerequisites: Prerequisite[] = [
     status: PrereqStatus.Checking,
   },
 ];
-
 
 // Helper function to parse and compare versions
 const compareVersions = (version1: string, version2: string): number => {
