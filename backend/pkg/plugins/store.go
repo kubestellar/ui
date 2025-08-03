@@ -4,6 +4,7 @@ package plugins
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"github.com/lib/pq"
@@ -296,6 +297,58 @@ func UninstallAllPluginFromDB(pluginID int) error {
 	_, err := database.DB.Exec(query, pluginID)
 	if err != nil {
 		return fmt.Errorf("failed to uninstall all plugin: %w", err)
+	}
+
+	return nil
+}
+
+func AddMarketplacePluginToDB(
+	pluginDetailsID int,
+	featured bool,
+	verified bool,
+	priceType string,
+	price float64,
+	currency string,
+	ratingAverage float64,
+	ratingCount int,
+	downloads int,
+	activeInstalls int,
+	publishedAt time.Time,
+) error {
+	query := `
+		INSERT INTO marketplace_plugins (
+			plugin_details_id,
+			featured,
+			verified,
+			price_type,
+			price,
+			currency,
+			rating_average,
+			rating_count,
+			downloads,
+			active_installs,
+			published_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`
+
+	_, err := database.DB.Exec(
+		query,
+		pluginDetailsID,
+		featured,
+		verified,
+		priceType,
+		price,
+		currency,
+		ratingAverage,
+		ratingCount,
+		downloads,
+		activeInstalls,
+		publishedAt,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to add marketplace plugin: %w", err)
 	}
 
 	return nil
