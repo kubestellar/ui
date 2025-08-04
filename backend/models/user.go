@@ -84,6 +84,29 @@ func GetUserByUsername(username string) (*User, error) {
 	return user, nil
 }
 
+// GetUserByID retrieves a user by ID
+func GetUserByID(userID int) (*User, error) {
+	query := `
+		SELECT id, username, is_admin, created_at, updated_at
+		FROM users WHERE id = $1
+	`
+	var user User
+	err := database.DB.QueryRow(query, userID).Scan(
+		&user.ID, &user.Username, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by ID: %v", err)
+	}
+
+	permissions, err := GetUserPermissions(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user permissions: %v", err)
+	}
+	user.Permissions = permissions
+
+	return &user, nil
+}
+
 // AuthenticateUser validates user credentials
 func AuthenticateUser(username, password string) (*User, error) {
 	user, err := GetUserByUsername(username)

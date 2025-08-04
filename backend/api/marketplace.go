@@ -111,7 +111,7 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 	}
 
 	// add to marketplace_plugins table
-	err = pluginpkg.AddMarketplacePluginToDB(
+	marketplaceID, err := pluginpkg.AddMarketplacePluginToDB(
 		pluginDetailsID,
 		false,      // featured
 		false,      // verified
@@ -129,6 +129,41 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 			"error": "Unable to add plugin to marketplace " + manifest.Metadata.Name,
 		})
 		log.LogError("unable to add plugin to marketplace", zap.String("error", err.Error()))
+		return "", nil, err
+	}
+
+	// add to manager
+	marketplacePlugin := &models.MarketplacePlugin{
+		ID:              marketplaceID,
+		PluginDetailsID: pluginDetailsID,
+		Featured:        false,
+		Verified:        false,
+		PriceType:       "free",
+		Price:           0,
+		Currency:        "USD",
+		RatingAverage:   0,
+		RatingCount:     0,
+		Downloads:       0,
+		ActiveInstalls:  0,
+		PublishedAt:     time.Now(),
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+	manager := marketplace.GetGlobalMarketplaceManager()
+	if manager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Marketplace manager not initialized",
+		})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return "", nil, errors.New("marketplace manager not initialized")
+	}
+	err = manager.AddPlugin(marketplacePlugin)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Unable to add plugin to marketplace " + manifest.Metadata.Name,
+		})
+		log.LogError("unable to add plugin to marketplace", zap.String("error", err.Error()))
+
 		return "", nil, err
 	}
 
@@ -309,6 +344,14 @@ func DeleteMarketplacePluginHandler(c *gin.Context) {
 		}
 	}
 
+	// remove from marketplace manager
+	err = manager.RemovePlugin(pluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove plugin from marketplace manager"})
+		log.LogError("error removing plugin from marketplace manager", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+
 	// we may need to implement a backup in case any error occurs afterwards, we will need to rollback the deletion
 	// can use database transaction or soft delete
 
@@ -330,6 +373,79 @@ func DeleteMarketplacePluginHandler(c *gin.Context) {
 	})
 }
 
+type MarketplacePlugin struct {
+	PluginName    string                  `json:"plugin_name"`
+	Author        string                  `json:"author"`
+	Description   string                  `json:"description"`
+	Version       string                  `json:"version"`
+	RatingAverage float32                 `json:"rating_average"`
+	Downloads     int                     `json:"downloads"`
+	License       string                  `json:"license"`
+	Tags          []string                `json:"tags"`
+	MinVersion    string                  `json:"min_version"`
+	MaxVersion    string                  `json:"max_version"`
+	Dependencies  models.DependenciesList `json:"dependencies"`
+	UpdatedAt     time.Time               `json:"updated_at"`
+	CreatedAt     time.Time               `json:"created_at"`
+	Feedback      []models.PluginFeedback `json:"feedback"`
+}
+
+func getMarketplacePluginDetails(plugin *models.MarketplacePlugin) (*MarketplacePlugin, error) {
+	pluginDetails, err := pluginpkg.GetPluginDetailsByID(plugin.PluginDetailsID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get plugin details: %w", err)
+	}
+	// get author name
+	author, err := models.GetUserByID(pluginDetails.AuthorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get author: %w", err)
+	}
+
+	// get feedback
+	feedback, err := pluginpkg.GetPluginFeedback(plugin.ID) // use the marketplace plugin ID
+	if err != nil {
+		return nil, fmt.Errorf("failed to get feedback: %w", err)
+	}
+
+	return &MarketplacePlugin{
+		PluginName:    pluginDetails.Name,
+		Author:        author.Username,
+		Description:   pluginDetails.Description,
+		Version:       pluginDetails.Version,
+		RatingAverage: plugin.RatingAverage,
+		Downloads:     plugin.Downloads,
+		License:       pluginDetails.License,
+		Tags:          pluginDetails.Tags,
+		MinVersion:    pluginDetails.MinKubeStellarVersion,
+		MaxVersion:    pluginDetails.MaxKubeStellarVersion,
+		Dependencies:  pluginDetails.Dependencies,
+		UpdatedAt:     plugin.UpdatedAt,
+		CreatedAt:     plugin.CreatedAt,
+		Feedback:      feedback,
+	}, nil
+}
+
 func GetMarketplacePluginsHandler(c *gin.Context) {
-	// get all the marketplace plugins from the database
+	var marketplacePlugins []MarketplacePlugin
+	marketplaceManager := marketplace.GetGlobalMarketplaceManager()
+	if marketplaceManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return
+	}
+	for _, plugin := range marketplaceManager.GetAllPlugins() {
+		// get the plugin details from the database by plugin_details ID
+		pluginAllInfo, err := getMarketplacePluginDetails(plugin)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin details"})
+			log.LogError("error getting plugin details", zap.Int("plugin_id", plugin.ID), zap.String("error", err.Error()))
+			return
+		}
+		marketplacePlugins = append(marketplacePlugins, *pluginAllInfo)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":             "Marketplace plugins retrieved successfully",
+		"marketplace_plugins": marketplacePlugins,
+	})
 }

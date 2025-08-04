@@ -393,7 +393,7 @@ func AddMarketplacePluginToDB(
 	downloads int,
 	activeInstalls int,
 	publishedAt time.Time,
-) error {
+) (int, error) {
 	query := `
 		INSERT INTO marketplace_plugins (
 			plugin_details_id,
@@ -409,9 +409,12 @@ func AddMarketplacePluginToDB(
 			published_at
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING id
 	`
 
-	_, err := database.DB.Exec(
+	var marketplacePluginID int
+
+	err := database.DB.QueryRow(
 		query,
 		pluginDetailsID,
 		featured,
@@ -424,11 +427,118 @@ func AddMarketplacePluginToDB(
 		downloads,
 		activeInstalls,
 		publishedAt,
-	)
+	).Scan(&marketplacePluginID)
 
 	if err != nil {
-		return fmt.Errorf("failed to add marketplace plugin: %w", err)
+		return -1, fmt.Errorf("failed to add marketplace plugin: %w", err)
 	}
 
-	return nil
+	return marketplacePluginID, nil
+}
+
+func GetMarketplacePluginByID(pluginID int) (*models.MarketplacePlugin, error) {
+	query := `
+		SELECT * FROM marketplace_plugins
+		WHERE id = $1
+	`
+
+	var plugin models.MarketplacePlugin
+	row := database.DB.QueryRow(query, pluginID)
+	if err := row.Scan(
+		&plugin.ID,
+		&plugin.PluginDetailsID,
+		&plugin.Featured,
+		&plugin.Verified,
+		&plugin.PriceType,
+		&plugin.Price,
+		&plugin.Currency,
+		&plugin.RatingAverage,
+		&plugin.RatingCount,
+		&plugin.Downloads,
+		&plugin.ActiveInstalls,
+		&plugin.PublishedAt,
+		&plugin.CreatedAt,
+		&plugin.UpdatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("marketplace plugin not found: %w", err)
+		}
+		return nil, fmt.Errorf("failed to get marketplace plugin: %w", err)
+	}
+
+	return &plugin, nil
+}
+
+func GetAllMarketplacePlugins() ([]*models.MarketplacePlugin, error) {
+	query := `
+		SELECT * FROM marketplace_plugins
+	`
+	rows, err := database.DB.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all marketplace plugins: %w", err)
+	}
+	defer rows.Close()
+
+	var plugins []*models.MarketplacePlugin
+	for rows.Next() {
+		var plugin models.MarketplacePlugin
+		if err := rows.Scan(
+			&plugin.ID,
+			&plugin.PluginDetailsID,
+			&plugin.Featured,
+			&plugin.Verified,
+			&plugin.PriceType,
+			&plugin.Price,
+			&plugin.Currency,
+			&plugin.RatingAverage,
+			&plugin.RatingCount,
+			&plugin.Downloads,
+			&plugin.ActiveInstalls,
+			&plugin.PublishedAt,
+			&plugin.CreatedAt,
+			&plugin.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan DB rows: %w", err)
+		}
+		plugins = append(plugins, &plugin)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+	return plugins, nil
+}
+
+////////////////////////////////////////////////////////////////////////
+// FOR PLUGIN FEEDBACK TABLE QUERIES
+////////////////////////////////////////////////////////////////////////
+
+func GetPluginFeedback(marketplacePluginID int) ([]models.PluginFeedback, error) {
+	query := `
+		SELECT * FROM plugin_feedback
+		WHERE marketplace_plugin_id = $1
+	`
+
+	rows, err := database.DB.Query(query, marketplacePluginID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get plugin feedback: %w", err)
+	}
+	defer rows.Close()
+	var feedback []models.PluginFeedback
+	for rows.Next() {
+		var f models.PluginFeedback
+		if err := rows.Scan(
+			&f.ID,
+			&f.PluginID,
+			&f.UserID,
+			&f.Rating,
+			&f.Comment,
+			&f.Suggestions,
+			&f.CreatedAt,
+			&f.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan feedback row: %w", err)
+		}
+		feedback = append(feedback, f)
+	}
+	return feedback, nil
 }
