@@ -1,548 +1,378 @@
-# **Contributing to Kubestellar UI**
-
-This guide will help you set up **PostgreSQL and Redis containers**, configure **JWT authentication**, test the authentication flow using different tools, and log into Kubestellar UI.
+Here’s the **final, fully production-ready `CONTRIBUTING.md`** including everything:
+✔ Industry-level structure
+✔ Commit message guidelines
+✔ PR checklist
+✔ Issue & PR templates in Markdown
 
 ---
 
-## **Contents**
+# **Contributing to Kubestellar UI**
+
+Thank you for contributing to **Kubestellar UI**!
+This guide provides everything you need to set up the environment, follow coding standards, and make high-quality contributions.
+
+---
+
+## **Table of Contents**
 
 - [Prerequisites](#prerequisites)
-- [Setup PostgreSQL and Redis with Docker Compose](#setup-postgresql-and-redis-with-docker-compose)
-- [Alternative: Setup Individual Containers](#alternative-setup-individual-containers)
-- [Verify Services are Running](#verify-services-are-running)
-- [Setting Up JWT Authentication](#setting-up-jwt-authentication)
-- [Set Up Environment Variables](#set-up-environment-variables)
-- [Export Environment Variables](#export-environment-variables-linuxmac)
-- [Running the Go Backend](#running-the-go-backend)
-- [Testing JWT Authentication](#testing-jwt-authentication)
-- [Stopping and Removing Containers](#stopping-and-removing-containers)
-- [Login to Kubestellar UI](#login-to-kubestellar-ui)
-- [Docker Compose Development Cycle](#docker-compose-development-cycle)
-- [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
-- [Installing GolangCI-Lint](#installing-golangci-lint)
-- [Linting & Fixing Code](#linting--fixing-code)
-- [Imp Note](#important-note)
-- [Contribution Commands Guide](#contribution-commands-guide)
+- [Setup Environment](#setup-environment)
+
+  - [Using Docker Compose (Recommended)](#using-docker-compose-recommended)
+  - [Alternative: Individual Containers](#alternative-individual-containers)
+
+- [Environment Variables](#environment-variables)
+- [Run Backend](#run-backend)
+- [Test JWT Authentication](#test-jwt-authentication)
+- [Run Frontend](#run-frontend)
+- [Stop and Clean Containers](#stop-and-clean-containers)
+- [Docker Workflow](#docker-workflow)
+- [Docker Image Versioning](#docker-image-versioning)
+- [Code Quality and Linting](#code-quality-and-linting)
+- [Localization Guidelines](#localization-guidelines)
+- [AI-Generated Code Policy](#ai-generated-code-policy)
+- [Commit Message Guidelines](#commit-message-guidelines)
+- [Pull Request Checklist](#pull-request-checklist)
+- [Contribution Workflow](#contribution-workflow)
+- [Issue Assignment and Labels](#issue-assignment-and-labels)
 
 ---
 
 ## **Prerequisites**
 
-Before proceeding, ensure you have the following installed:
+Install:
 
-- **Docker** (For running PostgreSQL and Redis containers)
-- **PostgreSQL** (Optional - if not using Docker)
-- **Redis** (Optional - if not using Docker)
-- **Postman or cURL** (For API testing)
-- **Go** (For running the backend)
-- **OpenSSL** (For generating JWT secrets securely)
-- **Make** (For running backend scripts via makefile)
-- **Air** (For hot reloading - optional but recommended)
-
-> [!NOTE]
-> **Recommended Setup**: Use Docker Compose for the easiest setup experience. This automatically handles PostgreSQL and Redis containers with proper configuration.
+- Docker & Docker Compose
+- Go
+- Node.js & npm
+- OpenSSL (for JWT)
+- Postman or cURL
+- Make (backend scripts)
+- Air (optional hot reload)
 
 ---
 
-## **Setup PostgreSQL and Redis with Docker Compose**
+## **Setup Environment**
 
-**Recommended approach for the best contributor experience**
-
-Navigate to the backend directory and start PostgreSQL and Redis services:
+### **Using Docker Compose (Recommended)**
 
 ```bash
-# Navigate to the backend directory
 cd backend
-
-# Start PostgreSQL and Redis services in detached mode
 docker compose up -d
-
-# Verify that services are running
 docker ps
 ```
 
-This will start:
+Services:
 
-- **PostgreSQL** on port **5432** (for persistent data storage)
-- **Redis** on port **6379** (for caching WebSocket updates)
-
-Both services are configured with appropriate volumes to persist data between restarts.
+- PostgreSQL → 5432
+- Redis → 6379
 
 ---
 
-## **Setting Up JWT Authentication**
-
-### **Generate a JWT Secret Key**
-
-There are multiple ways to generate a secure JWT secret key.
-
-#### **(1) Using OpenSSL**
+### **Alternative: Individual Containers**
 
 ```bash
-openssl rand -base64 32
-```
-
-This generates a **random 32-byte** secret key.
-
-#### **(2) Using a Python One-Liner**
-
-```bash
-python3 -c "import secrets; print(secrets.token_hex(32))"
-```
-
-#### **(3) Manually Define in a `.env` File**
-
-```ini
-JWT_SECRET=mysecurekeygeneratedhere
+docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+docker run --name redis -p 6379:6379 -d redis
 ```
 
 ---
 
-## **Set Up Environment Variables**
+## **Environment Variables**
 
-Create a **`.env`** file in the **`/backend`** directory (where `main.go` is located):
+Create `.env` in `/backend`:
 
 ```ini
-# PostgreSQL Configuration
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=kubestellar
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
-
-# Redis Configuration
 REDIS_HOST=localhost
 REDIS_PORT=6379
+JWT_SECRET=your_secure_key
+```
 
-# JWT Secret Key (Replace with your generated key)
-JWT_SECRET=mysecurekeygeneratedhere
+Generate secret:
+
+```bash
+openssl rand -base64 32
 ```
 
 ---
 
-## **Export Environment Variables (Linux/Mac)**
-
-If you prefer not to use a `.env` file, you can export variables manually in your terminal:
+## **Run Backend**
 
 ```bash
-export POSTGRES_HOST=localhost
-export POSTGRES_PORT=5432
-export POSTGRES_DB=kubestellar
-export POSTGRES_USER=postgres
-export POSTGRES_PASSWORD=postgres
-export REDIS_HOST=localhost
-export REDIS_PORT=6379
-export JWT_SECRET=mysecurekeygeneratedhere
-```
-
----
-
-## **Running the Go Backend**
-
-Ensure you have Go installed, then run:
-
-```bash
-# Navigate to backend directory
 cd backend
-
-# Download dependencies
 go mod download
-
-# Option 1: Start backend with hot reloading (recommended)
-make dev
-
-# Option 2: Start backend without hot reloading
+make dev    # Hot reload
+# OR
 go run main.go
 ```
 
-**Your API is now running on port 4000!**
-
-> [!TIP]
-> The `make dev` command uses Air for hot reloading, which automatically restarts the server when you make code changes.
+API: `http://localhost:4000`
 
 ---
 
-## **Testing JWT Authentication**
-
-You can either generate your JWT Token with **Postman** or **cURL:**
-
-### **With Postman**
-
-### **Step 1: Login and Get JWT Token**
-
-#### **Request:**
-
-- **Method:** `POST`
-- **Endpoint:** `http://localhost:4000/login`
-- **Headers:**
-  ```
-  Content-Type: application/json
-  ```
-- **Body:**
-  ```json
-  {
-    "username": "admin",
-    "password": "admin"
-  }
-  ```
-
-#### **Response:**
-
-```json
-{
-  "token": "your_generated_jwt_token"
-}
-```
-
----
-
-### **Step 2: Access Protected Route**
-
-#### **Request:**
-
-- **Method:** `GET`
-- **Endpoint:** `http://localhost:4000/protected`
-- **Headers:**
-  ```
-  Authorization: Bearer <your_generated_jwt_token>
-  ```
-
-#### **Response (Valid Token):**
-
-```json
-{
-  "message": "Welcome to the protected route!",
-  "user": "admin"
-}
-```
-
-#### **Response (Missing Token):**
-
-```json
-{
-  "error": "Missing token"
-}
-```
-
-#### **Response (Invalid Token):**
-
-```json
-{
-  "error": "Invalid token"
-}
-```
-
----
-
-### **Step 3: Testing with Postman**
-
-1. **Login and Get a Token**
-   - Open **Postman** and make a `POST` request to `http://localhost:4000/login`
-   - Add the JSON payload:
-     ```json
-     {
-       "username": "admin",
-       "password": "admin"
-     }
-     ```
-   - Click **Send**, and copy the `token` from the response.
-
-2. **Access Protected Route**
-   - Make a `GET` request to `http://localhost:4000/protected`
-   - Go to the **Headers** section and add:
-     ```
-     Authorization: Bearer <your_token>
-     ```
-   - Click **Send** and verify the response.
-
----
-
-### **With cURL**
-
-If you prefer using the terminal, you can use `cURL`:
+## **Test JWT Authentication**
 
 ### **Login**
 
-```bash
-curl -X POST http://localhost:4000/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "admin"
-  }'
+```
+POST http://localhost:4000/login
+{
+  "username": "admin",
+  "password": "admin"
+}
 ```
 
-### **Access Protected Route**
+Response:
 
-```bash
-curl -X GET http://localhost:4000/protected \
-  -H "Authorization: Bearer <your_token>"
+```json
+{ "token": "your_jwt_token" }
 ```
 
----
+### **Access Protected**
 
-## **Stopping and Removing Containers**
-
-### **If using Docker Compose:**
-
-```bash
-# Stop and remove containers
-docker compose down
-
-# To also remove volumes (this will delete all data)
-docker compose down -v
 ```
-
-### **If using individual containers:**
-
-**Stop the containers:**
-
-```bash
-docker stop postgres redis
-```
-
-**Remove the containers:**
-
-```bash
-docker rm postgres redis
-```
-
-**Remove volumes (optional - this will delete all data):**
-
-```bash
-docker volume rm postgres_data
+GET http://localhost:4000/protected
+Authorization: Bearer <your_jwt_token>
 ```
 
 ---
 
-## **Login to Kubestellar UI**
-
-Run the Frontend if you haven't already:
+## **Run Frontend**
 
 ```bash
-# Navigate to project root
-cd ..
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-Login with these credentials:
+Login:
 
-- **Username:** `admin`
-- **Password:** `admin`
-
-> [!NOTE]
-> You can input any word or strings of letters and numbers. Just as long as you have the username **admin**.
+```
+Username: admin
+Password: admin
+```
 
 ---
 
-## **Docker Compose Development Cycle**
-
-For ongoing development with Docker Compose, follow these steps:
-
-### **Step 1: Stop the running Application**
+## **Stop and Clean Containers**
 
 ```bash
 docker compose down
+docker compose down -v  # remove volumes
 ```
 
-### **Step 2: Pull the Latest Source Code Changes**
+---
+
+## **Docker Workflow**
 
 ```bash
+docker compose down
 git pull origin main
-```
-
-### **Step 3: Rebuild and Restart the Application**
-
-```bash
 docker compose up --build
 ```
 
-This will:
+---
 
-- Stop the running containers.
-- Pull the latest source code changes.
-- Rebuild and restart the application.
+## **Docker Image Versioning**
+
+Images:
+
+- `quay.io/kubestellar/ui:frontend`
+- `quay.io/kubestellar/ui:backend`
+
+Pull:
+
+```bash
+docker pull quay.io/kubestellar/ui:frontend
+docker pull quay.io/kubestellar/ui:backend
+```
 
 ---
 
-## **Docker Image Versioning and Pulling**
+## **Code Quality and Linting**
 
-If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
-
-### **Available Images**
-
-1. **Frontend Image**:
-   - Tag: `quay.io/kubestellar/ui:frontend`
-   - Latest Version: `latest`
-   - Specific Version (Commit Hash): `frontend-<commit-hash>`
-
-2. **Backend Image**:
-   - Tag: `quay.io/kubestellar/ui:backend`
-   - Latest Version: `latest`
-   - Specific Version (Commit Hash): `backend-<commit-hash>`
-
-### **How to Pull the Latest Images**
-
-- **Frontend Image**:
-
-  ```bash
-  docker pull quay.io/kubestellar/ui:frontend
-  ```
-
-- **Backend Image**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:backend
-  ```
-
-### **How to Pull Specific Version (Commit Hash)**
-
-If you want to pull an image for a specific version (e.g., commit hash), use:
-
-- **Frontend Image with Version**:
-
-  ```bash
-  docker pull quay.io/kubestellar/ui:frontend-abcd1234
-  ```
-
-- **Backend Image with Version**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:backend-abcd1234
-  ```
-
----
-
-## **Installing GolangCI-Lint**
-
-To install **GolangCI-Lint** for code quality checks, follow these steps:
-
-### **Linux & macOS**
-
-Run the following command:
+Install **GolangCI-Lint**:
 
 ```bash
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
 ```
 
-Ensure `$(go env GOPATH)/bin` is in your `PATH`:
-
-```bash
-export PATH=$(go env GOPATH)/bin:$PATH
-```
-
-### **Windows**
-
-Use **scoop** (recommended):
-
-```powershell
-scoop install golangci-lint
-```
-
-Or **Go install**:
-
-```bash
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-```
-
-### **Verify Installation**
-
 Run:
 
 ```bash
-golangci-lint --version
-```
-
----
-
-## **Linting & Fixing Code**
-
-Maintaining code quality is essential for collaboration. Use these commands to check and fix linting issues:
-
-### **Check for Issues**
-
-```bash
 make check-lint
-```
-
-### **Auto-Fix Issues**
-
-```bash
 make fix-lint
-```
-
-### **Run Both**
-
-```bash
 make lint
 ```
 
 ---
 
-## Important Note
+## **Localization Guidelines**
 
-### 1. Localize All Frontend Strings
-If you're adding any **new string** in the frontend UI:
-- Localize the string using our existing localization setup.
-- Add the string to the appropriate language file (`locales/strings.en.json`).
-#### How to Localize a String:
-1. Open `strings.en.json` located under `/locales/` (or appropriate path).
-2. Add your new string as a key-value pair. Example:
+- Localize all strings using `react-i18next`.
+- Add keys in `locales/strings.en.json`.
+
+Example:
+
 ```json
-{
-"greeting": "Hello, welcome!"
-}
+{ "welcome": "Welcome to Kubestellar UI" }
 ```
-3. In your component, use the localization[+] hook.[/+][-] hook or method (depending on your i18n setup). Example using `react-i18next`:[/-]
+
+Usage:
+
 ```tsx
 const { t } = useTranslation();
-<p>{t("greeting")}</p>
+<p>{t("welcome")}</p>;
 ```
----
-### 2. Be Cautious With AI-Generated Code
-> AI tools (like GitHub Copilot or ChatGPT) are helpful but **not always context-aware**.
-**Please DO NOT blindly copy-paste AI-generated code.**
-Before committing:
-- Double-check if the code aligns with our project’s architecture.
-- Test thoroughly to ensure it doesn’t break existing functionality.
-- Refactor and adapt it as per the codebase standards.
 
 ---
 
-##  Contribution Commands Guide
+## **AI-Generated Code Policy**
 
-
-This guide helps contributors manage issue assignments and request helpful labels via GitHub comments. These commands are supported through GitHub Actions or bots configured in the repository.
-
-###  Issue Assignment
-
-- **To assign yourself to an issue**, comment:
-  ```
-  /assign
-  ```
-
-- **To remove yourself from an issue**, comment:
-  ```
-  /unassign
-  ```
-
-###  Label Requests via Comments
-
-You can also request labels to be automatically added to issues using the following commands:
-
-- **To request the `help wanted` label**, comment:
-  ```
-  /help-wanted
-  ```
-
-- **To request the `good first issue` label**, comment:
-  ```
-  /good-first-issue
-  ```
-
-These commands help maintainers manage community contributions effectively and allow newcomers to find suitable issues to work on.
+- Do **not** copy blindly.
+- Verify code fits architecture.
+- Test before committing.
 
 ---
+
+## **Commit Message Guidelines**
+
+Follow **Conventional Commits**:
+
+```
+<type>(scope): short description
+```
+
+Types:
+
+- `feat` → New feature
+- `fix` → Bug fix
+- `docs` → Docs changes
+- `style` → Code formatting
+- `refactor` → Code restructuring
+- `test` → Tests
+- `chore` → Build/CI changes
+
+Examples:
+
+```
+feat(auth): add JWT authentication
+fix(ui): align login button
+```
+
+---
+
+## **Pull Request Checklist**
+
+- [ ] PR title follows Conventional Commits
+- [ ] All tests pass
+- [ ] Code linted & formatted
+- [ ] No console errors
+- [ ] Documentation updated
+- [ ] Added tests (if applicable)
+
+---
+
+## **Contribution Workflow**
+
+1. **Fork** repository
+2. Create branch:
+
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+
+3. Commit using guidelines
+4. Push & open PR
+
+---
+
+## **Issue Assignment and Labels**
+
+Assign:
+
+```
+/assign
+```
+
+Unassign:
+
+```
+/unassign
+```
+
+Labels:
+
+```
+/help-wanted
+/good-first-issue
+```
+
+---
+
+✅ **Following this guide ensures production-grade contributions.**
+
+---
+
+### **ISSUE TEMPLATE (issue_template.md)**
+
+```markdown
+## **Issue Description**
+
+(Explain the issue clearly)
+
+### **Steps to Reproduce**
+
+1.
+2.
+3.
+
+### **Expected Behavior**
+
+(What should happen?)
+
+### **Actual Behavior**
+
+(What is happening?)
+
+### **Screenshots/Logs**
+
+(If applicable)
+
+---
+
+**Additional Info:**
+(Add context, environment, etc.)
+```
+
+---
+
+### **PR TEMPLATE (pull_request_template.md)**
+
+```markdown
+## **Description**
+
+(Explain what this PR does)
+
+### **Changes**
+
+-
+-
+-
+
+### **Checklist**
+
+- Title follows Conventional Commits
+- Tests added (if needed)
+- Code formatted & linted
+- No console errors
+- Docs updated (if applicable)
+
+### **Related Issues**
+
+Closes #
+```
