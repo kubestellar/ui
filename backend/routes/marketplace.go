@@ -15,5 +15,7 @@ func setupMarketplaceRoutes(router *gin.Engine) {
 		marketplace.DELETE("/plugins/:id", api.DeleteMarketplacePluginHandler)
 		marketplace.GET("/plugins", api.GetAllMarketplacePluginsHandler)
 		marketplace.GET("/plugins/:id", api.GetSingleMarketplacePluginHandler)
+		marketplace.GET("/plugins/:id/reviews", api.GetMarketplacePluginReviewsHandler)
+		marketplace.POST("/plugins/:id/reviews", api.SubmitMarketplacePluginFeedbackHandler)
 	}
 }

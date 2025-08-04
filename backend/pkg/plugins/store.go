@@ -508,6 +508,22 @@ func GetAllMarketplacePlugins() ([]*models.MarketplacePlugin, error) {
 	return plugins, nil
 }
 
+func GetMarketplacePluginID(pluginDetailsID int) (int, error) {
+	query := `
+		SELECT id FROM marketplace_plugins
+		WHERE plugin_details_id = $1
+	`
+	var marketplacePluginID int
+	err := database.DB.QueryRow(query, pluginDetailsID).Scan(&marketplacePluginID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return -1, fmt.Errorf("marketplace plugin not found for plugin details ID %d: %w", pluginDetailsID, err)
+		}
+		return -1, fmt.Errorf("failed to get marketplace plugin ID: %w", err)
+	}
+	return marketplacePluginID, nil
+}
+
 ////////////////////////////////////////////////////////////////////////
 // FOR PLUGIN FEEDBACK TABLE QUERIES
 ////////////////////////////////////////////////////////////////////////
@@ -541,4 +557,22 @@ func GetPluginFeedback(marketplacePluginID int) ([]models.PluginFeedback, error)
 		feedback = append(feedback, f)
 	}
 	return feedback, nil
+}
+
+func AddPluginFeedbackToDB(marketplacePluginID, userID, rating int, comment string, suggessions string) error {
+	query := `
+		INSERT INTO plugin_feedback (
+			marketplace_plugin_id,
+			user_id,
+			rating,
+			comment,
+			suggestions
+		)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+	_, err := database.DB.Exec(query, marketplacePluginID, userID, rating, comment, suggessions)
+	if err != nil {
+		return fmt.Errorf("failed to add plugin feedback to the database: %w", err)
+	}
+	return nil
 }

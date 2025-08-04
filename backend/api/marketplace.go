@@ -496,3 +496,80 @@ func GetSingleMarketplacePluginHandler(c *gin.Context) {
 		"marketplace_plugin": pluginDetails,
 	})
 }
+
+func GetMarketplacePluginReviewsHandler(c *gin.Context) {
+	pluginIDStr := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID"})
+		log.LogError(
+			"error converting plugin ID from string to int",
+			zap.String("plugin_id", pluginIDStr),
+			zap.String("error", err.Error()),
+		)
+		return
+	}
+
+	// find the corresponding marketplace_plugin_ID
+	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(pluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get marketplace plugin ID"})
+		log.LogError("error getting marketplace plugin ID", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	reviews, err := pluginpkg.GetPluginFeedback(marketplacePluginID) // use the marketplace plugin ID
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin reviews"})
+		log.LogError("error getting plugin reviews", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Plugin reviews retrieved successfully",
+		"reviews": reviews,
+	})
+}
+
+func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
+	// TODO: the proper pluginID field in the models.PluginFeedback should be marketplace_plugin_ID
+	// but currently we are using pluginID as the plugin_details_ID
+	var feedback models.PluginFeedback
+	if err := c.ShouldBindJSON(&feedback); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback format"})
+		log.LogError("error binding JSON to feedback", zap.String("error", err.Error()))
+		return
+	}
+
+	// find the corresponding marketplace_plugin_ID
+	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(feedback.PluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get marketplace plugin ID"})
+		log.LogError("error getting marketplace plugin ID", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	// add to the database and get the ID
+	err = pluginpkg.AddPluginFeedbackToDB(
+		marketplacePluginID, feedback.UserID, feedback.Rating, feedback.Comment, feedback.Suggestions,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add feedback to database"})
+		log.LogError("error adding feedback to database", zap.String("error", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Feedback submitted successfully",
+		"feedback": gin.H{
+			"plugin_id":             feedback.PluginID,
+			"marketplace_plugin_id": marketplacePluginID,
+			"user_id":               feedback.UserID,
+			"rating":                feedback.Rating,
+			"comment":               feedback.Comment,
+			"suggestions":           feedback.Suggestions,
+			"created_at":            feedback.CreatedAt,
+			"updated_at":            feedback.UpdatedAt,
+		},
+	})
+}
