@@ -498,7 +498,7 @@ const PrerequisiteCard = ({
 
           {prerequisite.status === PrereqStatus.Success && (
             <div
-              className={`flex items-start rounded-md border p-3 ${
+              className={`mt-4 flex items-start rounded-md border p-3 ${
                 isDark
                   ? 'border-emerald-800/30 bg-emerald-950/20'
                   : 'border-emerald-200 bg-emerald-50'
@@ -1141,7 +1141,7 @@ const InstallationPage = () => {
                 href="https://kubestellar.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex transform items-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all hover:scale-105 hover:from-blue-500 hover:to-indigo-500 hover:shadow-indigo-500/25"
+                className="flex transform items-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all hover:scale-105 hover:from-blue-500 hover:to-indigo-500 hover:text-white hover:shadow-indigo-500/25"
               >
                 <Globe size={16} className="mr-1.5" />
                 {t('common.help')}
@@ -1615,7 +1615,7 @@ const InstallationPage = () => {
                             href="https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-500"
+                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-500 hover:text-white"
                           >
                             <Book size={16} className="mr-2" />
                             {t('installationPage.installation.installPrerequisitesFirst.button')}
