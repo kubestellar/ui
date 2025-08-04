@@ -101,7 +101,7 @@ services:
       - '5400:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./backend/postgresql/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U authuser -d authdb"]
       interval: 10s
