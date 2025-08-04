@@ -1,6 +1,8 @@
 package marketplace
 
 import (
+	"fmt"
+
 	"github.com/kubestellar/ui/backend/log"
 	"github.com/kubestellar/ui/backend/models"
 	"go.uber.org/zap"
@@ -66,4 +68,12 @@ func (m *MarketplaceManager) GetAllPlugins() []*models.MarketplacePlugin {
 		plugins = append(plugins, plugin)
 	}
 	return plugins
+}
+
+func (m *MarketplaceManager) GetPluginByID(pluginID int) (*models.MarketplacePlugin, error) {
+	plugin, exists := m.plugins[pluginID]
+	if !exists {
+		return nil, fmt.Errorf("plugin with ID %d not found", pluginID)
+	}
+	return plugin, nil
 }
