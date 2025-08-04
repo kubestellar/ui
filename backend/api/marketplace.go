@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -96,8 +98,8 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 		[]string{"monitoring", "cluster"},
 		"0.0.1",  // will change this after we have a versioning system
 		"0.28.0", // will change this after we have a versioning system
-		[]byte(`{"dependencies": "not mentioned"}`),
-		"unknown",
+		[]byte(`[{"dependencies": "not mentioned"}]`),
+		"unknown", // update this with the pluginID-pluginName.tar.gz
 		int(header.Size),
 	)
 	if err != nil {
@@ -149,7 +151,6 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 }
 
 func UploadPluginHandler(c *gin.Context) {
-	// TODO: check the user is admin or has write permission
 	isAdmin, isAdminExists := c.Get("is_admin")
 	permissions, permissionExists := c.Get("permissions")
 	if !isAdminExists && !permissionExists {
@@ -187,8 +188,6 @@ func UploadPluginHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: change the key to pluginName-pluginId
-
 	newTarPath, newFile, err := HandleFile(c, file, header)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to handle file"})
@@ -223,5 +222,111 @@ func UploadPluginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin uploaded successfully",
 		"key":     key,
+	})
+}
+
+func DeleteMarketplacePluginHandler(c *gin.Context) {
+	isAdmin, isAdminExists := c.Get("is_admin")
+	permission, permissionExists := c.Get("permissions")
+	if !isAdminExists && !permissionExists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to check user permissions"})
+		log.LogError(
+			"request context does not have user permissions/is_admin",
+			zap.Bool("is_admin_exists", isAdminExists),
+			zap.Bool("permission_exists", permissionExists),
+		)
+		return
+	}
+
+	permMap, ok := permission.(map[string]string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid permissions format"})
+		log.LogError("invalid permissions format", zap.Any("permissions", permission))
+		return
+
+	}
+	haveWritePermission := permMap["resources"] == "write"
+	if !isAdmin.(bool) && !haveWritePermission {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User does not have permission to delete plugins"})
+		log.LogError(
+			"user does not have permission to delete plugins",
+			zap.Bool("is_admin", isAdmin.(bool)),
+			zap.Any("permissions", permission),
+		)
+		return
+	}
+
+	// get plugin ID from URL
+	pluginIDStr := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID"})
+		log.LogError(
+			"error converting plugin ID from string to int",
+			zap.String("plugin_id", pluginIDStr),
+			zap.String("error", err.Error()),
+		)
+		return
+	}
+
+	// check if plugin exists
+	exists, err := pluginpkg.CheckPluginDetailsExistByID(pluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check plugin existence"})
+		log.LogError("error checking plugin existence", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
+		log.LogWarn("plugin not found", zap.Int("plugin_id", pluginID))
+		return
+	}
+
+	// delete from storage
+	manager := marketplace.GetGlobalMarketplaceManager()
+	if manager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogWarn("marketplace manager not initialized", zap.Any("manager", manager))
+		return
+	}
+
+	// get the plugin key - e.g. monitor-plugin-123.tar.gz
+	pluginDetails, err := pluginpkg.GetPluginDetailsByID(pluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin details"})
+		log.LogError("error getting plugin details", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	key := fmt.Sprintf("%s-%d.tar.gz", pluginDetails.Name, pluginID)
+	err = manager.Store.DeleteFile(c.Request.Context(), key)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			log.LogWarn("plugin file not found in storage", zap.String("key", key))
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete plugin file from storage"})
+			log.LogError("error deleting plugin file from storage", zap.String("key", key), zap.String("error", err.Error()))
+			return
+		}
+	}
+
+	// we may need to implement a backup in case any error occurs afterwards, we will need to rollback the deletion
+	// can use database transaction or soft delete
+
+	// delete from database - only need to delete from plugin_details AS there's foreign key constraint
+	err = pluginpkg.DeletePluginDetailsByID(pluginID)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			log.LogWarn("plugin details not found in database", zap.Int("plugin_id", pluginID))
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete plugin from database"})
+			log.LogError("error deleting plugin from database", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":   "Plugin deleted successfully",
+		"plugin_id": pluginID,
 	})
 }

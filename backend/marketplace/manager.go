@@ -6,6 +6,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type MarketplaceManager struct {
+	Store   StorageProvider
+	plugins map[int]*models.MarketplacePlugin
+}
+
 var (
 	GlobalMarketplaceManager *MarketplaceManager
 )
@@ -23,11 +28,6 @@ func SetGlobalMarketplaceManager(storageCfg StorageConfig) error {
 
 func GetGlobalMarketplaceManager() *MarketplaceManager {
 	return GlobalMarketplaceManager
-}
-
-type MarketplaceManager struct {
-	Store   StorageProvider
-	plugins map[int]*models.MarketplacePlugin
 }
 
 func NewMarketPlaceManager(store StorageProvider) *MarketplaceManager {

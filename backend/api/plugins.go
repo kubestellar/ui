@@ -359,7 +359,7 @@ func InstallPluginHandler(c *gin.Context) {
 			[]string{"monitoring", "cluster"},
 			"0.0.1",  // will change this after we have a versioning system
 			"0.28.0", // will change this after we have a versioning system
-			[]byte(`{"dependencies": "not mentioned"}`),
+			[]byte(`[{"dependencies": "not mentioned"}]`),
 			"unknown",
 			int(file.Size),
 		)
