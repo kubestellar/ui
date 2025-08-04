@@ -1,0 +1,37 @@
+.chatbot-launcher {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+/* Dark theme */
+.chatbot-launcher.dark {
+  background-color: #38b2ac;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.chatbot-launcher.dark:hover {
+  background-color: #319795;
+}
+
+/* Light theme */
+.chatbot-launcher.light {
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.chatbot-launcher.light:hover {
+  background-color: #2563eb;
+}

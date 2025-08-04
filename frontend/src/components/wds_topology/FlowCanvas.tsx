@@ -5,18 +5,19 @@ import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import useZoomStore from '../../stores/zoomStore';
 import useEdgeTypeStore from '../../stores/edgeTypeStore';
 import { CustomEdge, CustomNode } from '../TreeViewComponent';
+import { useTreeViewEdges } from '../../components/treeView/TreeViewEdges';
 
 interface FlowCanvasProps {
   nodes: CustomNode[];
   edges: CustomEdge[];
   renderStartTime: React.MutableRefObject<number>;
-  theme: string; // Add theme prop
+  theme: string;
 }
 
 /**
- * Renders a flow diagram canvas with custom nodes and edges in a ReactFlow container.
- * Provides zooming, panning, and auto-centering functionality for the Kubernetes resource visualization.
- * Handles viewport positioning and maintains view state between renders.
+ * Renders a beautiful flow diagram canvas with custom nodes and edges in a ReactFlow container.
+ * Features stunning gradients, patterns, and animations for an adorable user experience.
+ * Provides smooth zooming, panning, and auto-centering functionality for the Kubernetes resource visualization.
  */
 export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const { setViewport, getViewport } = useReactFlow();
@@ -27,6 +28,9 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const lastTouchDistance = useRef<number | null>(null);
   const reactFlowContainerRef = useRef<HTMLDivElement>(null);
   const { edgeType } = useEdgeTypeStore();
+
+  // Get enhanced edge gradients
+  const { edgeGradients } = useTreeViewEdges({ theme: theme as 'light' | 'dark' });
 
   /**
    * Calculates the boundaries of all nodes in the flow to determine positioning and scaling.
@@ -139,7 +143,6 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       const reactFlowContainer = reactFlowContainerRef.current;
       const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
       if (isInsideTree) {
-        event.preventDefault();
         const { zoom, x, y } = getViewport();
         const scrollSpeed = 0.5;
         const zoomSpeed = 0.05;
@@ -158,14 +161,91 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     [getViewport, setViewport]
   );
 
+  // Add a separate wheel event handler with passive: false
+  useEffect(() => {
+    const reactFlowContainer = reactFlowContainerRef.current;
+    if (!reactFlowContainer) return;
+
+    const wheelHandler = (e: WheelEvent) => {
+      const isInsideTree = reactFlowContainer.contains(e.target as Node);
+      if (isInsideTree) {
+        e.preventDefault();
+      }
+    };
+
+    reactFlowContainer.addEventListener('wheel', wheelHandler, { passive: false });
+
+    return () => {
+      reactFlowContainer.removeEventListener('wheel', wheelHandler);
+    };
+  }, []);
+
   /**
    * Updates visualization when label highlighting state changes.
    * Allows nodes with highlighted labels to be visually distinct without resetting the viewport.
    */
   useEffect(() => {}, [highlightedLabels]);
 
+  // Beautiful background styles based on theme
+  const backgroundStyle =
+    theme === 'dark'
+      ? {
+          background: `
+          radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+          linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)
+        `,
+        }
+      : {
+          background: `
+          radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+          linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)
+        `,
+        };
+
   return (
-    <div ref={reactFlowContainerRef} style={{ width: '100%', height: '100%' }}>
+    <div className="relative h-full w-full" ref={reactFlowContainerRef}>
+      {/* Animated background overlay */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          ...backgroundStyle,
+          zIndex: -1,
+        }}
+      />
+
+      {/* Subtle animated particles for extra adorableness */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            theme === 'dark'
+              ? `
+              radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+              radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+              radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.01) 1px, transparent 1px)
+            `
+              : `
+              radial-gradient(circle at 10% 20%, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+              radial-gradient(circle at 90% 80%, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+              radial-gradient(circle at 50% 10%, rgba(0, 0, 0, 0.01) 1px, transparent 1px)
+            `,
+          animation: 'float 20s ease-in-out infinite',
+          zIndex: -1,
+        }}
+      />
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -177,21 +257,93 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         panOnScroll={false}
         onMoveEnd={onMoveEnd}
         style={{
-          background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',
+          background: 'transparent',
           width: '100%',
           height: '100%',
-          borderRadius: '4px',
+          borderRadius: '12px',
+          border:
+            theme === 'dark'
+              ? '1px solid rgba(148, 163, 184, 0.1)'
+              : '1px solid rgba(148, 163, 184, 0.2)',
+          boxShadow:
+            theme === 'dark'
+              ? 'inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+              : 'inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          pointerEvents: 'auto', // Ensure events are captured
         }}
         onWheel={handleWheel}
         defaultEdgeOptions={{ type: edgeType }}
       >
+        {/* Enhanced edge gradients for beautiful connections */}
+        <svg style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0 }}>
+          {edgeGradients}
+        </svg>
+
         <Background
           variant={BackgroundVariant.Dots}
           gap={12}
           size={1}
-          color={theme === 'dark' ? '#555' : '#bbb'}
+          color={theme === 'dark' ? '#334155' : '#cbd5e1'}
+          style={{ opacity: 0.4 }}
+        />
+
+        {/* Additional decorative background pattern */}
+        <Background
+          variant={BackgroundVariant.Lines}
+          gap={64}
+          size={0.5}
+          color={theme === 'dark' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.03)'}
+          style={{
+            opacity: 0.3,
+          }}
         />
       </ReactFlow>
+
+      {/* Enhanced animations */}
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+          33% { transform: translate3d(0, -10px, 0) rotate(1deg); }
+          66% { transform: translate3d(0, -5px, 0) rotate(-1deg); }
+        }
+        
+        @keyframes edge-pulse {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+
+        /* Hide connection handles but keep edges */
+        .react-flow__handle {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          background: transparent !important;
+          border: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+
+        /* Keep edges visible and interactive */
+        .react-flow__edge {
+          pointer-events: all !important;
+        }
+
+        /* Ensure edge paths remain visible */
+        .react-flow__edge-path {
+          stroke-width: 2;
+          stroke-dasharray: none;
+        }
+
+        /* Ensure menu buttons are always clickable */
+        .react-flow__node button {
+          pointer-events: auto !important;
+          z-index: 10 !important;
+        }
+
+        /* Ensure node content is interactive */
+        .react-flow__node > div {
+          pointer-events: auto !important;
+        }
+      `}</style>
     </div>
   );
 });

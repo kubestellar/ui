@@ -16,7 +16,6 @@ import (
 	"github.com/kubestellar/ui/backend/marketplace"
 	"github.com/kubestellar/ui/backend/models"
 	pluginpkg "github.com/kubestellar/ui/backend/pkg/plugins"
-	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +35,7 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 	}
 	defer os.RemoveAll(tempDir)
 
-	err = utils.ExtractTarGz(file, tempDir)
+	err = marketplace.ExtractTarGz(file, tempDir)
 	if err != nil {
 		log.LogError("error extracting tar.gz file", zap.String("error", err.Error()))
 		return "", nil, err
@@ -44,7 +43,7 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 
 	// read plugin.yml
 	pluginYAMLPath := filepath.Join(tempDir, "plugin.yml")
-	manifest, err := utils.ParsePluginYML(pluginYAMLPath)
+	manifest, err := marketplace.ParsePluginYML(pluginYAMLPath)
 	if err != nil {
 		log.LogError("error parsing plugin.yml", zap.String("error", err.Error()))
 		return "", nil, err
@@ -136,7 +135,7 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 	// 5. Compress the plugin file
 	newFileName := manifest.Metadata.Name + "-" + strconv.Itoa(pluginDetailsID) + ".tar.gz"
 	newTarPath := filepath.Join(os.TempDir(), newFileName)
-	err = utils.CompressTarGz(tempDir, newTarPath)
+	err = marketplace.CompressTarGz(tempDir, newTarPath)
 	if err != nil {
 		log.LogError("error compressing tar.gz file", zap.String("error", err.Error()))
 		return "", nil, err
@@ -329,4 +328,8 @@ func DeleteMarketplacePluginHandler(c *gin.Context) {
 		"message":   "Plugin deleted successfully",
 		"plugin_id": pluginID,
 	})
+}
+
+func GetMarketplacePluginsHandler(c *gin.Context) {
+	// get all the marketplace plugins from the database
 }

@@ -45,9 +45,10 @@ func SetupRoutes(router *gin.Engine) {
 	setupAuthRoutes(router)
 	setupArtifactHubRoutes(router)
 	setupPluginRoutes(router)
-	setupMetricsRoutes(router)
 	setupMarketplaceRoutes(router)
-	router.GET("/api/v1/metrics", func(c *gin.Context) {
-		api.GetMetrics(c)
+	// setupChatbotRoutes(router)
+	router.GET("/api/v1/chatbot", func(c *gin.Context) {
+		api.ChatbotHandler(c)
 	})
+	setupMetricsRoutes(router)
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/kubestellar/ui/backend/pkg/plugins"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"github.com/kubestellar/ui/backend/routes"
+	_ "github.com/kubestellar/ui/backend/routes"
 	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
 )

@@ -8,7 +8,7 @@ interface EdgeTypeState {
 }
 
 const useEdgeTypeStore = create<EdgeTypeState>(set => ({
-  edgeType: 'bezier',
+  edgeType: 'step',
   setEdgeType: (type: EdgeType) => set({ edgeType: type }),
 }));
 
