@@ -1110,7 +1110,7 @@
     "table": {
       "name": "Binding Policy Name",
       "clusters": "Clusters",
-      "workload": "Workload",
+      "workload": "Resources",
       "creationDate": "Creation Date",
       "status": "Status",
       "actions": "Actions",
