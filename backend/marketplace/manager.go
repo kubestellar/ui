@@ -152,7 +152,36 @@ func (m *MarketplaceManager) AddFeedback(feedback *models.PluginFeedback, plugin
 		return fmt.Errorf("plugin with ID %d not found", pluginID)
 	}
 
+	// update the rating average and count
+	var totalRating float32
+	var totalCount int
+	for _, f := range m.plugins[pluginID].Feedback {
+		totalRating += float32(f.Rating)
+	}
+	totalCount = len(m.plugins[pluginID].Feedback)
+	if totalCount == 0 {
+		m.plugins[pluginID].RatingAverage = 0
+	} else {
+		m.plugins[pluginID].RatingAverage = totalRating / float32(totalCount)
+		m.plugins[pluginID].RatingCount = totalCount
+	}
+
 	return nil
+}
+
+func (m *MarketplaceManager) GetRatingAverage(pluginID int) (float32, error) {
+	plugin, exists := m.plugins[pluginID]
+	if !exists {
+		return 0, fmt.Errorf("plugin with ID %d not found", pluginID)
+	}
+	return plugin.RatingAverage, nil
+}
+func (m *MarketplaceManager) GetRatingCount(pluginID int) (int, error) {
+	plugin, exists := m.plugins[pluginID]
+	if !exists {
+		return 0, fmt.Errorf("plugin with ID %d not found", pluginID)
+	}
+	return plugin.RatingCount, nil
 }
 
 func (m *MarketplaceManager) GetPluginFeedback(pluginID int) ([]models.PluginFeedback, error) {

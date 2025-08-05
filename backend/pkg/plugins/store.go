@@ -528,6 +528,19 @@ func GetMarketplacePluginID(pluginDetailsID int) (int, error) {
 	return marketplacePluginID, nil
 }
 
+func UpdateRating(pluginDetailsID int, ratingAvg float32, ratingCnt int) error {
+	query := `
+		UPDATE marketplace_plugins
+		SET rating_average = $2, rating_count = $3
+		WHERE plugin_details_id = $1
+	`
+	_, err := database.DB.Exec(query, pluginDetailsID, ratingAvg, ratingCnt)
+	if err != nil {
+		return fmt.Errorf("failed to update rating average and count: %w", err)
+	}
+	return nil
+}
+
 ////////////////////////////////////////////////////////////////////////
 // FOR PLUGIN FEEDBACK TABLE QUERIES
 ////////////////////////////////////////////////////////////////////////

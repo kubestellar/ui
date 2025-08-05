@@ -464,7 +464,7 @@ func GetMarketplacePluginReviewsHandler(c *gin.Context) {
 }
 
 func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
-	// TODO: update the plugin rating average and count
+	// TODO: update the plugin rating average and count for both manager and database
 	var feedback models.PluginFeedback
 	if err := c.ShouldBindJSON(&feedback); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback format"})
@@ -495,6 +495,7 @@ func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
 	}
 
 	// find the corresponding marketplace_plugin_ID
+	// we need to do this because the plugin_feedback table uses marketplace_plugin_ID
 	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(feedback.PluginID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get marketplace plugin ID"})
@@ -519,6 +520,31 @@ func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
 		return
 	}
 	err = manager.AddFeedback(&feedback, feedback.PluginID)
+
+	// update the plugin rating average and count in the DB
+	ratingAvg, err := manager.GetRatingAverage(feedback.PluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get rating average"})
+		log.LogError("error getting rating average", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	ratingCnt, err := manager.GetRatingCount(feedback.PluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get rating count"})
+		log.LogError("error getting rating count", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	err = pluginpkg.UpdateRating(feedback.PluginID, ratingAvg, ratingCnt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update plugin rating in database"})
+		log.LogError(
+			"error updating plugin rating in database",
+			zap.Int("plugin_id", feedback.PluginID),
+			zap.String("error", err.Error()),
+		)
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Feedback submitted successfully",
