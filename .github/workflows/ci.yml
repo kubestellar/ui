@@ -44,6 +44,7 @@ jobs:
         run: echo "Linting successful ✅"
 
       - name: Locale Sync Check
+        id: locale-sync
         working-directory: frontend
         run: |
           echo "=== TOKEN DEBUG INFO ==="
@@ -67,9 +68,13 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_OUTPUT: ${{ github.output }}
       - name: ✅ Locale Sync Check Passed
         if: success()
-        run: echo "Locale sync check passed ✅"
+        run: |
+          echo "Locale sync check passed ✅"
+          echo "Has issues: ${{ steps.locale-sync.outputs.has-issues }}"
+          echo "Comment posted: ${{ steps.locale-sync.outputs.comment-posted }}"
 
       - name: Run Frontend Tests
         working-directory: frontend
