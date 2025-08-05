@@ -2,6 +2,8 @@ package marketplace
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/kubestellar/ui/backend/log"
@@ -191,4 +193,53 @@ func (m *MarketplaceManager) GetPluginDependencies(pluginID int) (models.Depende
 		return nil, fmt.Errorf("plugin with ID %d not found", pluginID)
 	}
 	return plugin.Dependencies, nil
+}
+
+func (m *MarketplaceManager) SearchPlugins(keyword, sortBy, tag string) []*MarketplacePlugin {
+	var results []*MarketplacePlugin
+	for _, plugin := range m.plugins {
+		if keyword != "" &&
+			!strings.Contains(strings.ToLower(plugin.PluginName), keyword) &&
+			!strings.Contains(strings.ToLower(plugin.Description), keyword) {
+			continue
+		}
+
+		if tag != "" {
+			found := false
+			for _, t := range plugin.Tags {
+				if strings.EqualFold(t, tag) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+
+		results = append(results, plugin)
+	}
+
+	// sort
+	switch sortBy {
+	case "created_at":
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].CreatedAt.After(results[j].CreatedAt)
+		})
+	case "rating":
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].RatingAverage > results[j].RatingAverage
+		})
+	case "downloads":
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].Downloads > results[j].Downloads
+		})
+	default:
+		// sort by created_at
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].CreatedAt.After(results[j].CreatedAt)
+		})
+	}
+
+	return results
 }

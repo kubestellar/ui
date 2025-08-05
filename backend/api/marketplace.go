@@ -464,8 +464,7 @@ func GetMarketplacePluginReviewsHandler(c *gin.Context) {
 }
 
 func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
-	// TODO: the proper pluginID field in the models.PluginFeedback should be marketplace_plugin_ID
-	// but currently we are using pluginID as the plugin_details_ID
+	// TODO: update the plugin rating average and count
 	var feedback models.PluginFeedback
 	if err := c.ShouldBindJSON(&feedback); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback format"})
@@ -602,5 +601,33 @@ func GetMarketplacePluginDependenciesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "Plugin dependencies retrieved successfully",
 		"dependencies": dependencies,
+	})
+}
+
+// handler for search plugins with parameters name, author, description, tags
+// filter by tags/categories, sort by rating, downloads, recent created
+func SearchMarketplacePluginsHandler(c *gin.Context) {
+	// get search keyword
+	keyword := strings.ToLower(c.Query("keyword"))
+	sortBy := c.DefaultQuery("sort_by", "created_at") // default to created_at
+	filterTag := strings.ToLower(c.Query("tag"))      // single tag
+
+	manager := marketplace.GetGlobalMarketplaceManager()
+	if manager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return
+	}
+
+	plugins := manager.SearchPlugins(keyword, sortBy, filterTag)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Marketplace plugins search successfully",
+		"filters": gin.H{
+			"keyword": keyword,
+			"sort":    sortBy,
+			"tag":     filterTag,
+		},
+		"plugins": plugins,
 	})
 }

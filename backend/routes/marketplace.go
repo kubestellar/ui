@@ -20,5 +20,6 @@ func setupMarketplaceRoutes(router *gin.Engine) {
 		marketplace.GET("/plugins/categories", api.GetMarketplacePluginCategoriesHandler)
 		marketplace.GET("/plugins/featured", api.GetMarketplaceFeaturedPluginsHandler)
 		marketplace.GET("/plugins/:id/dependencies", api.GetMarketplacePluginDependenciesHandler)
+		marketplace.GET("/plugins/search", api.SearchMarketplacePluginsHandler)
 	}
 }
