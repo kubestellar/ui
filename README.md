@@ -112,6 +112,7 @@ cp .env.example .env
 **Example `.env` file:**
 
 ```env
+VITE_PROMETHEUS_URL=http://localhost:9090
 VITE_BASE_URL=http://localhost:4000
 VITE_APP_VERSION=0.1.0
 VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH
