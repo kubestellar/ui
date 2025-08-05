@@ -514,6 +514,8 @@
       "welcome": "Bienvenue sur le tableau de bord de gestion KubeStellar",
       "errorLoading": "Erreur lors du chargement des informations du cluster",
       "addCluster": "Ajouter un cluster",
+      "manageClusters": "Gérer les clusters",
+      "objectExplorer": "Explorateur d'objets",
       "notAvailable": "N/D",
       "invalidDate": "Date invalide",
       "managedClusters": "Clusters gérés",

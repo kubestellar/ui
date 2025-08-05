@@ -628,6 +628,8 @@
       "welcome": "Welcome to the KubeStellar management dashboard",
       "errorLoading": "Error loading cluster information",
       "addCluster": "Add Cluster",
+      "manageClusters": "Manage Clusters",
+      "objectExplorer": "Object Explorer",
       "notAvailable": "N/A",
       "invalidDate": "Invalid Date",
       "managedClusters": "Managed Clusters",

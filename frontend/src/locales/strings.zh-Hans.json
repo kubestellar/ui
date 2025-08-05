@@ -681,6 +681,8 @@
       "welcome": "欢迎使用 KubeStellar 管理仪表盘",
       "errorLoading": "加载集群信息时出错",
       "addCluster": "添加集群",
+      "manageClusters": "管理集群",
+      "objectExplorer": "对象浏览器",
       "notAvailable": "不可用",
       "invalidDate": "无效日期",
       "managedClusters": "受管集群",

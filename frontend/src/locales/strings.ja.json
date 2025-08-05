@@ -610,6 +610,8 @@
       "welcome": "KubeStellar 管理ダッシュボードへようこそ",
       "errorLoading": "クラスター情報の読み込みエラー",
       "addCluster": "クラスターを追加",
+      "manageClusters": "クラスターを管理",
+      "objectExplorer": "オブジェクトエクスプローラー",
       "notAvailable": "該当なし",
       "invalidDate": "無効な日付",
       "managedClusters": "管理中のクラスター",

@@ -610,6 +610,8 @@
       "welcome": "Benvenuto nel pannello di controllo di gestione di KubeStellar",
       "errorLoading": "Errore nel caricamento delle informazioni del cluster",
       "addCluster": "Aggiungi cluster",
+      "manageClusters": "Gestisci cluster",
+      "objectExplorer": "Esploratore oggetti",
       "notAvailable": "N/D",
       "invalidDate": "Data non valida",
       "managedClusters": "Cluster gestiti",

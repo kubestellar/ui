@@ -616,6 +616,8 @@
       "welcome": "KubeStellar प्रबंधन डैशबोर्ड में आपका स्वागत है",
       "errorLoading": "क्लस्टर जानकारी लोड करने में त्रुटि",
       "addCluster": "क्लस्टर जोड़ें",
+      "manageClusters": "क्लस्टर प्रबंधित करें",
+      "objectExplorer": "ऑब्जेक्ट एक्सप्लोरर",
       "notAvailable": "उपलब्ध नहीं",
       "invalidDate": "अमान्य दिनांक",
       "managedClusters": "प्रबंधित क्लस्टर्स",

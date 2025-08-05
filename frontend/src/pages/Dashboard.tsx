@@ -24,6 +24,8 @@ import {
   ClipboardList,
   Shield,
   User,
+  Settings,
+  Search,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useTheme from '../stores/themeStore';
@@ -1210,20 +1212,19 @@ const K8sInfo = () => {
           </p>
         </div>
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
-          <button
-            className="dark:hover:bg-gray-750 flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCcw size={16} className={`${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{t('common.refresh')}</span>
-          </button>
           <Link
             to="/its"
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-md active:scale-95"
           >
-            <Plus size={16} />
-            <span>{t('clusters.dashboard.addCluster')}</span>
+            <Settings size={16}/>
+            <span className="font-medium">{t('clusters.dashboard.manageClusters')}</span>
+          </Link>
+          <Link
+            to="/resources"
+            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-all duration-200 hover:bg-green-700 hover:shadow-md active:scale-95"
+          >
+            <Search size={16}/>
+            <span>{t('clusters.dashboard.objectExplorer')}</span>
           </Link>
         </div>
       </div>
