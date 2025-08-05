@@ -148,3 +148,25 @@ func (m *MarketplaceManager) AddFeedback(feedback *models.PluginFeedback, plugin
 
 	return nil
 }
+
+func (m *MarketplaceManager) GetPluginFeedback(pluginID int) ([]models.PluginFeedback, error) {
+	plugin, exists := m.plugins[pluginID]
+	if !exists {
+		return nil, fmt.Errorf("plugin with ID %d not found", pluginID)
+	}
+	return plugin.Feedback, nil
+}
+
+func (m *MarketplaceManager) GetAllPluginTags() []string {
+	tagsMap := make(map[string]struct{})
+	for _, plugin := range m.plugins {
+		for _, tag := range plugin.Tags {
+			tagsMap[tag] = struct{}{}
+		}
+	}
+	var tags []string
+	for tag := range tagsMap {
+		tags = append(tags, tag)
+	}
+	return tags
+}

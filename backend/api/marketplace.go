@@ -441,15 +441,14 @@ func GetMarketplacePluginReviewsHandler(c *gin.Context) {
 		return
 	}
 
-	// find the corresponding marketplace_plugin_ID
-	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(pluginID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get marketplace plugin ID"})
-		log.LogError("error getting marketplace plugin ID", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+	marketplaceManager := marketplace.GetGlobalMarketplaceManager()
+	if marketplaceManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
 		return
 	}
 
-	reviews, err := pluginpkg.GetPluginFeedback(marketplacePluginID) // use the marketplace plugin ID
+	reviews, err := marketplaceManager.GetPluginFeedback(pluginID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin reviews"})
 		log.LogError("error getting plugin reviews", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
@@ -532,5 +531,25 @@ func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
 			"created_at":            feedback.CreatedAt,
 			"updated_at":            feedback.UpdatedAt,
 		},
+	})
+}
+
+func GetMarketplacePluginCategoriesHandler(c *gin.Context) {
+	// get all the marketplace plugins tags
+	marketplaceManager := marketplace.GetGlobalMarketplaceManager()
+	if marketplaceManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return
+	}
+	tags := marketplaceManager.GetAllPluginTags()
+	if tags == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No marketplace plugins found"})
+		log.LogWarn("no marketplace plugins found", zap.String("tags", "nil"))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Marketplace plugin categories retrieved successfully",
+		"tags":    tags,
 	})
 }
