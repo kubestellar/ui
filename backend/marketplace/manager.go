@@ -17,9 +17,11 @@ type MarketplacePlugin struct {
 	Author          string                  `json:"author"`
 	Description     string                  `json:"description"`
 	Version         string                  `json:"version"`
+	Featured        bool                    `json:"featured"`
 	RatingAverage   float32                 `json:"rating_average"`
 	RatingCount     int                     `json:"rating_count"`
 	Downloads       int                     `json:"downloads"`
+	ActiveInstalls  int                     `json:"active_installs"`
 	License         string                  `json:"license"`
 	Tags            []string                `json:"tags"`
 	MinVersion      string                  `json:"min_version"`
@@ -87,9 +89,11 @@ func NewMarketplaceManager(store StorageProvider) (*MarketplaceManager, error) {
 			Author:          author.Username,
 			Description:     pluginDetails.Description,
 			Version:         pluginDetails.Version,
+			Featured:        plugin.Featured,
 			RatingAverage:   plugin.RatingAverage,
 			RatingCount:     plugin.RatingCount,
 			Downloads:       plugin.Downloads,
+			ActiveInstalls:  plugin.ActiveInstalls,
 			License:         pluginDetails.License,
 			Tags:            pluginDetails.Tags,
 			MinVersion:      pluginDetails.MinKubeStellarVersion,
@@ -169,4 +173,22 @@ func (m *MarketplaceManager) GetAllPluginTags() []string {
 		tags = append(tags, tag)
 	}
 	return tags
+}
+
+func (m *MarketplaceManager) GetFeaturedPlugins() []*MarketplacePlugin {
+	featuredPlugins := make([]*MarketplacePlugin, 0)
+	for _, plugin := range m.plugins {
+		if plugin.Featured {
+			featuredPlugins = append(featuredPlugins, plugin)
+		}
+	}
+	return featuredPlugins
+}
+
+func (m *MarketplaceManager) GetPluginDependencies(pluginID int) (models.DependenciesList, error) {
+	plugin, exists := m.plugins[pluginID]
+	if !exists {
+		return nil, fmt.Errorf("plugin with ID %d not found", pluginID)
+	}
+	return plugin.Dependencies, nil
 }

@@ -98,7 +98,7 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 		"0.0.1",  // will change this after we have a versioning system
 		"0.28.0", // will change this after we have a versioning system
 		[]byte(`[{"dependencies": "not mentioned"}]`),
-		"unknown", // update this with the pluginID-pluginName.tar.gz
+		"unknown", // TODO: update this with the pluginID-pluginName.tar.gz
 		int(header.Size),
 	)
 	if err != nil {
@@ -139,9 +139,11 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 		Author:          manifest.Metadata.Author,
 		Description:     manifest.Metadata.Description,
 		Version:         manifest.Metadata.Version,
+		Featured:        false, // default to false, can be updated later
 		RatingAverage:   0,
 		RatingCount:     0,
 		Downloads:       0,
+		ActiveInstalls:  0,
 		License:         "unknown",                         // manifest.Metadata.License,
 		Tags:            []string{"monitoring", "cluster"}, // manifest.Metadata.Tags,
 		MinVersion:      "0.0.1",                           // manifest.Metadata.MinVersion,
@@ -551,5 +553,54 @@ func GetMarketplacePluginCategoriesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Marketplace plugin categories retrieved successfully",
 		"tags":    tags,
+	})
+}
+
+func GetMarketplaceFeaturedPluginsHandler(c *gin.Context) {
+	// get all featured marketplace plugins from database
+	marketplaceManager := marketplace.GetGlobalMarketplaceManager()
+	if marketplaceManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return
+	}
+	featuredPlugins := marketplaceManager.GetFeaturedPlugins()
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Featured marketplace plugins retrieved successfully",
+		"plugins": featuredPlugins,
+	})
+}
+
+func GetMarketplacePluginDependenciesHandler(c *gin.Context) {
+	pluginIDStr := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID"})
+		log.LogError(
+			"error converting plugin ID from string to int",
+			zap.String("plugin_id", pluginIDStr),
+			zap.String("error", err.Error()),
+		)
+		return
+	}
+
+	marketplaceManager := marketplace.GetGlobalMarketplaceManager()
+	if marketplaceManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return
+	}
+
+	dependencies, err := marketplaceManager.GetPluginDependencies(pluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin dependencies"})
+		log.LogError("error getting plugin dependencies", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "Plugin dependencies retrieved successfully",
+		"dependencies": dependencies,
 	})
 }
