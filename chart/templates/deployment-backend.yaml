@@ -1,0 +1,348 @@
+# This chart was originally developed by @MAVRICK-1
+# Source: https://github.com/MAVRICK-1/kubestellar-ui
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: backend-admin-binding
+subjects:
+  - kind: ServiceAccount
+    name: backend-sa
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      serviceAccountName: backend-sa
+      volumes:
+        - name: kubeconfig-volume
+          emptyDir: {}
+      initContainers:
+      - name: init-kubeconfig
+        image: quay.io/kubestellar/kubectl:{{.Values.KUBECTL_VERSION}}
+        command: ["/bin/bash", "-c"]
+        args:
+            - |
+                set -e
+                echo "Creating kubeconfig directory..."
+                mkdir -p /home/kubeconfig/
+
+                echo "Setting up the kind-kubeflex context first..."
+                # Get current cluster connection details
+                KUBERNETES_SERVICE_HOST=${KUBERNETES_SERVICE_HOST:-kubernetes.default.svc}
+                KUBERNETES_SERVICE_PORT=${KUBERNETES_SERVICE_PORT:-443}
+                CLUSTER_IP="${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+
+                # Use the serviceaccount token
+                SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                CA_FILE="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+                # Create initial kubeconfig for the host cluster
+                cat > /home/kubeconfig/host-config << ENDOFCONFIG
+                apiVersion: v1
+                kind: Config
+                current-context: kind-kubeflex
+                clusters:
+                - name: kind-kubeflex
+                  cluster:
+                    server: https://${CLUSTER_IP}
+                    certificate-authority: ${CA_FILE}
+                contexts:
+                - name: kind-kubeflex
+                  context:
+                    cluster: kind-kubeflex
+                    user: default-user
+                    namespace: default
+                users:
+                - name: default-user
+                  user:
+                    token: ${SA_TOKEN}
+                ENDOFCONFIG
+
+                export KUBECONFIG="/home/kubeconfig/host-config"
+
+                # Test the initial connection
+                echo "Testing initial connection..."
+                if ! kubectl get ns &>/dev/null; then
+                    echo "Initial connection failed. Checking service account token..."
+                    if [ ! -f "/var/run/secrets/kubernetes.io/serviceaccount/token" ]; then
+                        echo "Service account token file doesn't exist!"
+                        ls -la /var/run/secrets/kubernetes.io/serviceaccount/
+                    fi
+                    echo "API server details: ${CLUSTER_IP}"
+                    echo "Cannot proceed without cluster access. Exiting."
+                    exit 1
+                fi
+
+                echo "Initial connection successful. Proceeding to gather context configs..."
+
+                # Get all Control Planes
+                echo "Getting information about all ControlPlanes..."
+                if kubectl get crd controlplanes.tenancy.kflex.kubestellar.org &>/dev/null; then
+                    CPS=$(kubectl get cp -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || echo "")
+                    for CP in $CPS; do
+                      echo "Processing ControlPlane: $CP"
+
+                      # Get the secretRef details
+                      SECRET_NAME=$(kubectl get cp $CP -o jsonpath='{.status.secretRef.name}' 2>/dev/null || echo "")
+                      SECRET_NS=$(kubectl get cp $CP -o jsonpath='{.status.secretRef.namespace}' 2>/dev/null || echo "")
+                      IN_CLUSTER_KEY=$(kubectl get cp $CP -o jsonpath='{.status.secretRef.inClusterKey}' 2>/dev/null || echo "")
+
+                      if [ -n "$SECRET_NAME" ] && [ -n "$SECRET_NS" ] && [ -n "$IN_CLUSTER_KEY" ]; then
+                        echo "Found secret details for $CP: $SECRET_NAME in namespace $SECRET_NS, key: $IN_CLUSTER_KEY"
+
+                        # Get the kubeconfig from the secret
+                        if kubectl get secret $SECRET_NAME -n $SECRET_NS &>/dev/null; then
+                          echo "Retrieving kubeconfig for $CP..."
+                          kubectl get secret $SECRET_NAME -n $SECRET_NS -o jsonpath="{.data.$IN_CLUSTER_KEY}" | base64 -d > /home/kubeconfig/${CP}-config
+                          echo "Saved kubeconfig for $CP to /home/kubeconfig/${CP}-config"
+                        else
+                          echo "Warning: Secret $SECRET_NAME not found in namespace $SECRET_NS"
+                        fi
+                      else
+                        echo "Warning: Could not get secret details for $CP"
+                      fi
+                    done
+                else
+                    echo "ControlPlane CRD not found, skipping CP discovery"
+                fi
+
+                # Specifically check for wds1 and its1
+                echo "Checking for wds1 kubeconfig..."
+                if [ ! -f "/home/kubeconfig/wds1-config" ] && kubectl get ns wds1-system &>/dev/null; then
+                  if kubectl get secret admin-kubeconfig -n wds1-system &>/dev/null; then
+                    echo "Retrieving wds1 kubeconfig directly..."
+                    kubectl get secret admin-kubeconfig -n wds1-system -o jsonpath='{.data.kubeconfig-incluster}' | base64 -d > /home/kubeconfig/wds1-config
+                    echo "Saved kubeconfig for wds1 to /home/kubeconfig/wds1-config"
+                  else
+                    echo "admin-kubeconfig secret not found in wds1-system namespace"
+                  fi
+                fi
+
+                echo "Checking for its1 kubeconfig..."
+                if [ ! -f "/home/kubeconfig/its1-config" ] && kubectl get ns its1-system &>/dev/null; then
+                  if kubectl get secret vc-vcluster -n its1-system &>/dev/null; then
+                    echo "Retrieving its1 kubeconfig directly..."
+                    kubectl get secret vc-vcluster -n its1-system -o jsonpath='{.data.config-incluster}' | base64 -d > /home/kubeconfig/its1-config-temp && \
+                    kubectl --kubeconfig=/home/kubeconfig/its1-config-temp config rename-context $(kubectl --kubeconfig=/home/kubeconfig/its1-config-temp config current-context) its1 && \
+                    mv /home/kubeconfig/its1-config-temp /home/kubeconfig/its1-config
+                    echo "Saved kubeconfig for its1 to /home/kubeconfig/its1-config"
+                  else
+                    echo "vc-vcluster secret not found in its1-system namespace"
+                  fi
+                fi
+
+                echo "Merging all kubeconfigs..."
+                # Collect all config files
+                CONFIG_FILES="/home/kubeconfig/host-config"
+                for CONFIG in /home/kubeconfig/*-config; do
+                  if [ -f "$CONFIG" ] && [ "$CONFIG" != "/home/kubeconfig/host-config" ]; then
+                    CONFIG_FILES="$CONFIG_FILES:$CONFIG"
+                  fi
+                done
+
+                # Merge all configs
+                export KUBECONFIG="$CONFIG_FILES"
+                echo "Merged KUBECONFIG paths: $KUBECONFIG"
+
+                # Use a simpler approach to flatten the config
+                kubectl config view --flatten > /home/kubeconfig/merged-config
+                cp /home/kubeconfig/merged-config /home/kubeconfig/config
+
+                echo "Setting permissions..."
+                chmod 600 /home/kubeconfig/*
+
+                kubectl config get-contexts || echo "Error listing contexts"
+
+                # Create a startup script for the backend container to rename context
+                cat > /home/kubeconfig/rename-context.sh << 'EOF'
+                #!/bin/bash
+
+                # Function to rename context
+                rename_context() {
+                  echo "Checking for my-vcluster context..."
+
+                  # Check if my-vcluster context exists
+                  if kubectl config get-contexts my-vcluster &>/dev/null; then
+                    echo "Found my-vcluster context, renaming to its1..."
+
+                    # Try the standard rename first
+                    if kubectl config rename-context my-vcluster its1; then
+                      echo "Successfully renamed my-vcluster to its1"
+                    else
+                      echo "Standard rename failed, trying alternative method..."
+
+                      # Get details from my-vcluster context
+                      CLUSTER=$(kubectl config view -o jsonpath='{.contexts[?(@.name=="my-vcluster")].context.cluster}')
+                      USER=$(kubectl config view -o jsonpath='{.contexts[?(@.name=="my-vcluster")].context.user}')
+                      NAMESPACE=$(kubectl config view -o jsonpath='{.contexts[?(@.name=="my-vcluster")].context.namespace}')
+
+                      # Create new context with same details but different name
+                      kubectl config set-context its1 --cluster="$CLUSTER" --user="$USER" --namespace="$NAMESPACE"
+
+                      # Delete old context
+                      kubectl config delete-context my-vcluster
+
+                      echo "Created its1 context and deleted my-vcluster"
+                    fi
+                  else
+                    # Check if its1 already exists
+                    if kubectl config get-contexts its1 &>/dev/null; then
+                      echo "its1 context already exists, no action needed"
+                    else
+                      echo "my-vcluster context not found and its1 doesn't exist. Something is wrong!"
+                    fi
+                  fi
+
+                  echo "Available contexts after renaming:"
+                  kubectl config get-contexts
+                }
+
+                # Main execution
+                for i in {1..5}; do
+                  echo "Attempt $i to rename context..."
+                  rename_context
+
+                  # Check if its1 now exists
+                  if kubectl config get-contexts its1 &>/dev/null; then
+                    echo "its1 context exists, renaming successful!"
+                    break
+                  else
+                    echo "its1 context still doesn't exist, will retry in 5 seconds..."
+                    sleep 5
+                  fi
+                done
+
+                # Update the config file after renaming
+                kubectl config view --flatten > /home/kubeconfig/updated-config
+                cp /home/kubeconfig/updated-config /home/kubeconfig/config
+
+                echo "Context renaming process completed"
+                EOF
+
+                chmod +x /home/kubeconfig/rename-context.sh
+                echo "Created context renaming script for backend container"
+                echo "Init container completed successfully"
+        volumeMounts:
+          - name: kubeconfig-volume
+            mountPath: /home/kubeconfig
+      containers:
+        - name: backend
+          image: {{ .Values.backend.image }}
+          imagePullPolicy: {{ .Values.backend.imagePullPolicy | default "Always" }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              # Run the context renaming script
+              echo "Running context renaming script..."
+              /home/kubeconfig/rename-context.sh
+
+              # Source the .env file if it exists (as per Dockerfile)
+              if [ -f "/root/.env" ]; then
+                echo "Sourcing environment variables from /root/.env"
+                source /root/.env
+              fi
+
+              # Execute the backend (which is in /root according to Dockerfile)
+              echo "Starting backend from /root/backend"
+              exec /root/backend
+          ports:
+            - containerPort: {{ .Values.backend.port }}
+          volumeMounts:
+            - name: kubeconfig-volume
+              mountPath: /home/kubeconfig
+            # Mount kubeconfig to /root/.kube as expected by the Dockerfile
+            - name: kubeconfig-volume
+              mountPath: /root/.kube
+          env:
+            - name: KUBECONFIG
+              value: "/home/kubeconfig/config"
+            # Database Configuration
+            - name: DATABASE_URL
+              value: "postgres://{{ .Values.postgresql.username }}:{{ .Values.postgresql.password }}@postgresql:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}?sslmode=disable"
+            - name: DB_HEALTH_TIMEOUT
+              value: "5s"
+            # Redis Configuration
+            - name: REDIS_HOST
+              value: "{{ .Release.Name }}-redis-master"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_HEALTH_TIMEOUT
+              value: "3s"
+            # Application Configuration
+            - name: PORT
+              value: "{{ .Values.backend.port }}"
+            - name: GIN_MODE
+              value: "{{ .Values.backendConfig.ginMode }}"
+            - name: JWT_SECRET
+              value: "{{ .Values.backendConfig.jwtSecret }}"
+            # Service Configuration
+            - name: SERVICE_NAME
+              value: "{{ .Values.backendConfig.serviceName }}"
+            - name: SERVICE_VERSION
+              value: "{{ .Values.backendConfig.serviceVersion }}"
+            - name: ENVIRONMENT
+              value: "{{ .Values.backendConfig.environment }}"
+            # Health Check Configuration
+            - name: ENABLE_HEALTH_ENDPOINTS
+              value: "{{ .Values.backendConfig.enableHealthEndpoints }}"
+            - name: ENABLE_METRICS
+              value: "{{ .Values.backendConfig.enableMetrics }}"
+            - name: HEALTH_ENDPOINT
+              value: "/health"
+            - name: LIVENESS_ENDPOINT
+              value: "/healthz"
+            - name: READINESS_ENDPOINT
+              value: "/readyz"
+            - name: METRICS_ENDPOINT
+              value: "/api/v1/metrics"
+            - name: HEALTH_CHECK_TIMEOUT
+              value: "{{ .Values.backendConfig.healthCheckTimeout }}"
+            - name: HEALTH_COMPONENTS
+              value: "database,redis,memory,disk"
+            # Performance Configuration
+            - name: MEMORY_THRESHOLD
+              value: "{{ .Values.backendConfig.memoryThreshold }}"
+            - name: DISK_THRESHOLD
+              value: "{{ .Values.backendConfig.diskThreshold }}"
+            - name: DISK_PATH
+              value: "/"
+            # CORS Configuration
+            - name: CORS_ALLOWED_ORIGIN
+              value: "{{ .Values.backendConfig.corsAllowedOrigin }}"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3

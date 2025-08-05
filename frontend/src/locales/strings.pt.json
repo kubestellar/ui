@@ -1,0 +1,187 @@
+{
+  "raiseIssue": "Reportar um problema",
+  "admin": {
+    "users": {
+      "title": "Gerenciamento de Usuários",
+      "subtitle": "Usuários do Sistema",
+      "noUsers": "Nenhum Usuário Encontrado",
+      "noUsersDescription": "Não há usuários no sistema ainda. Clique em 'Adicionar Usuário' para criar seu primeiro usuário.",
+      "noPermissions": "Nenhuma permissão atribuída",
+      "actions": {
+        "addUser": "Adicionar Usuário",
+        "editUser": "Editar Usuário",
+        "add": "Adicionar Usuário",
+        "update": "Atualizar Usuário",
+        "delete": "Excluir Usuário",
+        "edit": "Editar",
+        "deleteUser": "Excluir Usuário"
+      },
+      "table": {
+        "username": "Nome de Usuário",
+        "role": "Função",
+        "permissions": "Permissões",
+        "actions": "Ações"
+      },
+      "roles": {
+        "admin": "Administrador",
+        "user": "Usuário"
+      },
+      "permissions": {
+        "users": "Usuários",
+        "resources": "Recursos",
+        "system": "Sistema",
+        "dashboard": "Painel",
+        "levels": {
+          "read": "Leitura",
+          "write": "Escrita",
+          "none": "Nenhuma"
+        }
+      },
+      "form": {
+        "username": "Nome de Usuário",
+        "usernamePlaceholder": "Digite o nome de usuário",
+        "password": "Senha",
+        "passwordPlaceholder": "Digite a senha",
+        "passwordOptional": "Senha (opcional)",
+        "passwordOptionalPlaceholder": "Digite nova senha ou deixe em branco",
+        "confirmPassword": "Confirmar Senha",
+        "confirmPasswordPlaceholder": "Confirme a senha",
+        "isAdmin": "Acesso de Administrador",
+        "permissions": "Permissões de Componentes",
+        "cancel": "Cancelar",
+        "optional": "opcional"
+      },
+      "delete": {
+        "title": "Excluir Usuário",
+        "confirmTitle": "Confirmar Exclusão",
+        "confirmMessage": "Tem certeza que deseja excluir o usuário \"{{username}}\"? Esta ação não pode ser desfeita.",
+        "confirm": "Excluir Usuário"
+      },
+      "errors": {
+        "fetchFailed": "Falha ao buscar usuários",
+        "missingFields": "Por favor, preencha todos os campos obrigatórios",
+        "passwordMismatch": "As senhas não coincidem",
+        "addFailed": "Falha ao adicionar usuário",
+        "updateFailed": "Falha ao atualizar usuário",
+        "deleteFailed": "Falha ao excluir usuário",
+        "invalidUsername": "O nome de usuário pode conter apenas letras, números, underscore e hífen"
+      },
+      "success": {
+        "userAdded": "Usuário adicionado com sucesso",
+        "userUpdated": "Usuário atualizado com sucesso",
+        "userDeleted": "Usuário excluído com sucesso"
+      }
+    }
+  },
+  "profileSection": {
+    "changePassword": "Alterar senha",
+    "changePasswordSubtitle": "Por favor, insira sua senha atual e escolha uma nova.",
+    "currentPassword": "Senha atual",
+    "newPassword": "Nova senha",
+    "confirmNewPassword": "Confirmar nova senha",
+    "passwordChangedSuccess": "Senha alterada com sucesso.",
+    "passwordChangedError": "Falha ao alterar a senha.",
+    "passwordsDoNotMatch": "As novas senhas não coincidem.",
+    "passwordRequired": "A senha é obrigatória.",
+    "errorCurrentPasswordIncorrect": "A senha atual está incorreta",
+    "cancel": "Cancelar",
+    "changePasswordButton": "Alterar senha",
+    "passwordsMatch": "As senhas coincidem!"
+  },
+  "commandPalette": {
+    "ariaLabel": "Abrir paleta de comandos",
+    "title": "Paleta de comandos (Ctrl+K)",
+    "badge": "K",
+    "searchPlaceholder": "Buscar comandos...",
+    "noCommandsFound": "Nenhum comando encontrado. Tente outro termo de busca.",
+    "footer": {
+      "navigate": "navegar",
+      "select": "selecionar",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "Navegação",
+      "visualizations": "Visualizações",
+      "help": "Ajuda",
+      "account": "Conta",
+      "admin": "Administração"
+    },
+    "commands": {
+      "home": {
+        "title": "Início",
+        "description": "Ir para o painel"
+      },
+      "plugin": {
+        "title": "Gerenciador de Plugins",
+        "description": "Gerencie e monitore plugins do KubeStellar"
+      },
+      "managedClusters": {
+        "title": "Clusters Gerenciados",
+        "description": "Gerenciar clusters Kubernetes"
+      },
+      "workloads": {
+        "title": "Workloads",
+        "description": "Gerenciar workloads entre clusters"
+      },
+      "bindingPolicies": {
+        "title": "Políticas de binding",
+        "description": "Configurar políticas de binding"
+      },
+      "userManagement": {
+        "title": "Gerenciamento de Usuários",
+        "description": "Gerenciar usuários do sistema e permissões"
+      },
+      "wdsTreeview": {
+        "title": "Árvore WDS",
+        "description": "Visualizar distribuição de workloads"
+      },
+      "wecsTreeview": {
+        "title": "Árvore WECS",
+        "description": "Visualizar estrutura de workloads implantados"
+      },
+      "documentation": {
+        "title": "Abrir documentação",
+        "description": "Abrir documentação do KubeStellar"
+      },
+      "logout": {
+        "title": "Sair",
+        "description": "Sair da sua conta",
+        "infoMessage": "Você saiu com sucesso."
+      },
+      "galaxyMarketplace": {
+        "title": "Mercado Galaxy",
+        "description": "Descubra e instale plugins do Mercado Galaxy"
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "Principal",
+      "management": "Gerenciamento",
+      "plugins": "Plugins",
+      "admin": "Administração"
+    },
+    "items": {
+      "home": "Início",
+      "managedClusters": "Clusters Gerenciados",
+      "stagedWorkloads": "Workloads Preparados",
+      "bindingPolicies": "Políticas de binding",
+      "deployedWorkloads": "Workloads Implantados",
+      "pluginManager": "Gerenciador de Plugins",
+      "userManagement": "Gerenciamento de Usuários",
+      "galaxyMarketplace": "Mercado Galaxy"
+    }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marketplace",
+    "description": "Descubra e instale plugins para melhorar sua experiência KubeStellar"
+  },
+  "validation": {
+    "missingRequiredFields": "Campos obrigatórios ausentes"
+  }
+}

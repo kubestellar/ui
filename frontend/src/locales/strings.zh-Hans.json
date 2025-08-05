@@ -1,0 +1,2067 @@
+{
+  "raiseIssue": "报告问题",
+  "profileSection": {
+    "changePassword": "修改密码",
+    "changePasswordSubtitle": "请输入您当前的密码并选择一个新密码。",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmNewPassword": "确认新密码",
+    "passwordChangedSuccess": "密码修改成功。",
+    "passwordChangedError": "修改密码失败。",
+    "passwordsDoNotMatch": "新密码不匹配。",
+    "passwordRequired": "密码是必填项。",
+    "errorCurrentPasswordIncorrect": "当前密码不正确",
+    "cancel": "取消",
+    "changePasswordButton": "修改密码",
+    "passwordsMatch": "密码匹配！"
+  },
+  "commandPalette": {
+    "ariaLabel": "打开命令面板",
+    "title": "命令面板（Ctrl+K）",
+    "badge": "K",
+    "searchPlaceholder": "搜索命令...",
+    "noCommandsFound": "未找到命令。请尝试其他搜索词。",
+    "footer": {
+      "navigate": "导航",
+      "select": "选择",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "导航",
+      "visualizations": "可视化",
+      "help": "帮助",
+      "account": "账户",
+      "admin": "管理"
+    },
+    "commands": {
+      "home": {
+        "title": "首页",
+        "description": "前往仪表盘"
+      },
+      "plugin": {
+        "title": "插件管理器",
+        "description": "管理和监控 KubeStellar 插件"
+      },
+      "managedClusters": {
+        "title": "管理集群",
+        "description": "管理Kubernetes集群"
+      },
+      "workloads": {
+        "title": "工作负载",
+        "description": "跨集群管理工作负载"
+      },
+      "bindingPolicies": {
+        "title": "绑定策略",
+        "description": "配置绑定策略"
+      },
+      "userManagement": {
+        "title": "用户管理",
+        "description": "管理系统用户和权限"
+      },
+      "wdsTreeview": {
+        "title": "WDS 树视图",
+        "description": "可视化工作负载分布"
+      },
+      "wecsTreeview": {
+        "title": "WECS 树视图",
+        "description": "可视化已部署工作负载结构"
+      },
+      "documentation": {
+        "title": "打开文档",
+        "description": "启动 KubeStellar 文档"
+      },
+      "logout": {
+        "title": "退出登录",
+        "description": "退出您的账户",
+        "infoMessage": "您已成功退出登录。"
+      },
+      "galaxyMarketplace": {
+        "title": "银河市场",
+        "description": "在银河市场中发现并安装插件"
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "用户管理",
+      "subtitle": "系统用户",
+      "noUsers": "未找到用户",
+      "noUsersDescription": "系统中还没有用户。点击\"添加用户\"创建您的第一个用户。",
+      "noPermissions": "未分配权限",
+      "actions": {
+        "addUser": "添加用户",
+        "editUser": "编辑用户",
+        "add": "添加用户",
+        "update": "更新用户",
+        "delete": "删除用户",
+        "edit": "编辑",
+        "deleteUser": "删除用户"
+      },
+      "table": {
+        "username": "用户名",
+        "role": "角色",
+        "permissions": "权限",
+        "actions": "操作"
+      },
+      "roles": {
+        "admin": "管理员",
+        "user": "用户"
+      },
+      "permissions": {
+        "users": "用户",
+        "resources": "资源",
+        "system": "系统",
+        "dashboard": "仪表板",
+        "levels": {
+          "read": "读取",
+          "write": "写入",
+          "none": "无"
+        }
+      },
+      "form": {
+        "username": "用户名",
+        "usernamePlaceholder": "输入用户名",
+        "password": "密码",
+        "passwordPlaceholder": "输入密码",
+        "passwordOptional": "密码（可选）",
+        "passwordOptionalPlaceholder": "输入新密码或留空",
+        "confirmPassword": "确认密码",
+        "confirmPasswordPlaceholder": "确认密码",
+        "isAdmin": "管理员访问权限",
+        "permissions": "组件权限",
+        "cancel": "取消",
+        "optional": "可选"
+      },
+      "delete": {
+        "title": "删除用户",
+        "confirmTitle": "确认删除",
+        "confirmMessage": "您确定要删除用户\"{{username}}\"吗？此操作无法撤消。",
+        "confirm": "删除用户"
+      },
+      "errors": {
+        "fetchFailed": "获取用户失败",
+        "missingFields": "请填写所有必填字段",
+        "passwordMismatch": "密码不匹配",
+        "addFailed": "添加用户失败",
+        "updateFailed": "更新用户失败",
+        "deleteFailed": "删除用户失败",
+        "invalidUsername": "用户名只能包含字母、数字、下划线和连字符"
+      },
+      "success": {
+        "userAdded": "用户添加成功",
+        "userUpdated": "用户更新成功",
+        "userDeleted": "用户删除成功"
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "主要",
+      "management": "管理",
+      "plugins": "插件",
+      "admin": "管理"
+    },
+    "items": {
+      "home": "首页",
+      "managedClusters": "管理集群",
+      "stagedWorkloads": "已暂存工作负载",
+      "bindingPolicies": "绑定策略",
+      "deployedWorkloads": "已部署工作负载",
+      "pluginManager": "插件管理器",
+      "userManagement": "用户管理",
+      "galaxyMarketplace": "银河市场"
+    }
+  },
+  "common": {
+    "changes": "更改",
+    "clusterLabel": "集群标签",
+    "workloadLabel": "工作负载标签",
+    "workloads": "工作负载",
+    "clearCanvas": "清除画布",
+    "clearFilter": "清除筛选器",
+    "cancel": "取消",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "create": "创建",
+    "add": "添加",
+    "refresh": "刷新",
+    "search": "搜索",
+    "connect": "连接",
+    "import": "导入",
+    "loading": "加载中...",
+    "success": "成功",
+    "error": "错误",
+    "warning": "警告",
+    "actions": "操作",
+    "status": {
+      "status": "状态",
+      "active": "活动中",
+      "inactive": "未激活",
+      "pending": "待定",
+      "checking": "检查中",
+      "success": "成功",
+      "warning": "版本不匹配",
+      "error": "缺失",
+      "installed": "已安装"
+    },
+    "noResource": "未指定{{resource}}",
+    "copy": "复制",
+    "close": "关闭",
+    "update": "更新",
+    "unknown": "未知",
+    "workload": "工作负载",
+    "tryAgain": "重试",
+    "confirm": "确认",
+    "continue": "继续",
+    "back": "返回",
+    "submit": "提交",
+    "settings": "设置",
+    "help": "帮助",
+    "details": "详情",
+    "view": "查看",
+    "yes": "是",
+    "no": "否",
+    "all": "全部",
+    "none": "无",
+    "ok": "确定",
+    "finish": "完成",
+    "next": "下一步",
+    "retry": "重试",
+    "previous": "上一步",
+    "page": "页面",
+    "sync": "同步",
+    "clearAll": "全部清除",
+    "fitView": "适应视图",
+    "clearSearch": "清除搜索",
+    "clearFilters": "清除筛选条件",
+    "clear": "清除",
+    "of": "共",
+    "items": "{{count}} 项",
+    "items_plural": "{{count}} 项",
+    "filteredFrom": "筛选自"
+  },
+  "installationPage": {
+    "statusBadge": {
+      "installed": "已安装",
+      "versionMismatch": "版本不匹配",
+      "missing": "缺失",
+      "checking": "检查中"
+    },
+    "codeBlock": {
+      "bash": "bash"
+    },
+    "title": "安装",
+    "verification": "验证",
+    "installCommand": "运行以下命令进行安装",
+    "verifyCommand": "使用以下命令验证安装",
+    "welcome": "欢迎使用 KubeStellar",
+    "gettingStarted": "通过设置开发环境开始使用 KubeStellar。按照引导式安装流程部署演示系统。",
+    "tabs": {
+      "prerequisites": "前提条件",
+      "installation": "安装"
+    },
+    "sidebarSteps": {
+      "title": "安装步骤",
+      "description": "按照以下步骤设置 KubeStellar",
+      "checkPrerequisites": "检查前提条件",
+      "checkPrerequisitesDescription": "确保已安装所有必需工具",
+      "installKubestellar": "安装 KubeStellar",
+      "installKubestellarDescription": "使用 CLI 命令部署 KubeStellar",
+      "startUsingKubestellar": "开始使用 KubeStellar",
+      "startUsingKubestellarDescription": "登录并开始管理集群"
+    },
+    "documentationLink": "查看完整安装指南",
+    "prerequisites": {
+      "prerequisites": "前提条件",
+      "title": "系统前提条件",
+      "description": "请在继续之前确保已安装以下工具",
+      "status": {
+        "success": "成功",
+        "warnings": "警告",
+        "missing": "缺失",
+        "checking": "检查中"
+      },
+      "coreRequirements": "核心要求",
+      "demoEnvironmentRequirements": "演示环境要求",
+      "buttons": {
+        "refresh": "刷新",
+        "nextInstallation": "下一步：安装"
+      }
+    },
+    "installation": {
+      "title": "安装 KubeStellar",
+      "description": "选择您的平台并运行安装脚本",
+      "installPrerequisitesFirst": {
+        "title": "先安装前提条件",
+        "description": "在运行安装脚本之前，请确保系统中已安装所有必需的前提条件。",
+        "button": "查看安装前提条件"
+      },
+      "platform": "平台",
+      "platforms": {
+        "kind": "kind",
+        "k3d": "k3d"
+      },
+      "installationScript": "安装脚本",
+      "scriptInstructions": "在终端中运行此命令以使用以下方式安装 KubeStellar",
+      "installationProcess": {
+        "title": "安装过程：",
+        "steps": [
+          "创建并配置本地集群",
+          "安装 KubeStellar 组件及其依赖项",
+          "设置正确的网络和权限",
+          "配置演示环境"
+        ]
+      },
+      "importantNotes": {
+        "title": "重要说明：",
+        "notes": [
+          "安装可能需要几分钟才能完成",
+          "请确保系统资源充足",
+          "在安装完成前请保持终端窗口打开",
+          "检查终端输出中的任何错误信息"
+        ]
+      },
+      "afterInstallation": {
+        "title": "安装后：",
+        "steps": ["通过检查集群状态验证安装", "查看入门文档", "开始管理您的 KubeStellar 环境"]
+      },
+      "buttons": {
+        "backPrerequisites": "上一步：前提条件",
+        "startInstallation": "开始安装",
+        "installing": "正在安装..."
+      }
+    },
+    "checkingStatus": {
+      "title": "正在检查 KubeStellar 安装状态...",
+      "description": "这只需片刻时间。我们正在检查系统中是否已安装 KubeStellar。"
+    },
+    "checkError": {
+      "title": "状态检查失败",
+      "description": "无法检查 KubeStellar 是否已安装。可能是由于后端服务连接问题或服务器暂时不可用。",
+      "retryButton": "重试连接",
+      "persistenceNote": "如果问题仍然存在，请检查您的网络连接或联系系统管理员。"
+    },
+    "footer": {
+      "copyright": "KubeStellar",
+      "documentation": "文档",
+      "github": "GitHub",
+      "description": "KubeStellar 是一个开源项目。如需支持、功能请求或报告错误，请访问我们的 GitHub 仓库。"
+    },
+    "skipPrerequisitesNotice": {
+      "title": "已跳过前提条件检查",
+      "description": "当前环境中已禁用前提条件检查。您可以直接进行安装。",
+      "note": "注意：请确保在运行安装命令之前手动安装所有必需工具。"
+    },
+    "toasts": {
+      "alreadyInstalled": "KubeStellar 已安装！正在跳转到登录页面...",
+      "notInstalled": "未发现 Kubeflex 集群。请按照步骤设置 KubeStellar 环境。",
+      "checkFailed": "检查 KubeStellar 状态失败",
+      "preparingInstructions": "正在准备安装指令...",
+      "followInstructions": "请按照以下 CLI 安装指令安装 KubeStellar",
+      "loadInstructionsFailed": "加载安装指令失败。请刷新页面并重试。",
+      "installationDetected": "检测到已安装 KubeStellar。正在跳转到登录页面..."
+    }
+  },
+  "header": {
+    "themeToggle": "切换主题",
+    "dashboard": "仪表盘",
+    "clusters": "集群",
+    "workloads": "工作负载",
+    "policies": "策略",
+    "settings": "设置",
+    "logout": "退出登录",
+    "language": "语言",
+    "importCluster": "导入集群",
+    "menu": "菜单",
+    "goToHome": "返回主页",
+    "logoAlt": "KubeStellar 标志",
+    "themeToggleTip": "Alt+Q 切换主题",
+    "switchTheme": "切换为 {{mode}} 模式"
+  },
+  "login": {
+    "controlPlane": "控制平面",
+    "layout": {
+      "logoAlt": "KubeStellar",
+      "tagline": "无缝多集群管理",
+      "taglineEmphasis": "为未来而生。",
+      "fullscreen": "切换全屏",
+      "welcomeBack": "欢迎回来",
+      "accessDashboard": "进入仪表盘",
+      "enterCredentials": "请输入您的凭据",
+      "needHelp": "需要帮助？",
+      "contactSupport": "联系支持"
+    },
+    "loading": {
+      "logoAlt": "KubeStellar",
+      "initializing": "正在初始化 KubeStellar 环境..."
+    },
+    "form": {
+      "username": "用户名",
+      "password": "密码",
+      "rememberMe": "记住我",
+      "signIn": "登录 KubeStellar",
+      "signingIn": "正在登录...",
+      "showPassword": "显示密码",
+      "hidePassword": "隐藏密码",
+      "errors": {
+        "usernameRequired": "用户名为必填项",
+        "passwordRequired": "密码为必填项"
+      }
+    }
+  },
+  "clusters": {
+    "title": "管理集群",
+    "subtitle": "管理和监控您的 Kubernetes 集群",
+    "searchPlaceholder": "按名称、标签、状态或上下文搜索集群...",
+    "importCluster": "导入集群",
+    "activeFilters": "活动筛选器：",
+    "search": "搜索",
+    "noClustersFound": "未找到集群",
+    "noClustersMatchBoth": "没有集群同时匹配您的搜索和筛选条件",
+    "noClustersMatchSearch": "没有集群匹配您的搜索词",
+    "noClustersMatchFilter": "没有集群匹配您的筛选选择",
+    "noClustersAvailable": "尚无可用集群。导入您的第一个集群以开始使用。",
+    "importYourFirst": "导入您的第一个集群",
+    "filteredByLabel": "按标签筛选",
+    "actions": {
+      "viewDetails": "查看详情",
+      "editLabels": "编辑标签",
+      "copyName": "复制名称",
+      "detachCluster": "分离集群"
+    },
+    "status": {
+      "title": "状态",
+      "active": "活跃",
+      "inactive": "非活跃",
+      "pending": "待处理"
+    },
+    "table": {
+      "name": "名称",
+      "labels": "标签",
+      "creationTime": "创建时间",
+      "context": "上下文",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "quickConnect": {
+      "title": "通过快速连接进行连接",
+      "description": "使用快速连接功能导入您的集群",
+      "clusterName": "集群名称",
+      "clusterNamePlaceholder": "为您的集群输入名称",
+      "token": "令牌",
+      "tokenPlaceholder": "输入您的令牌",
+      "hubApiServer": "中心 API 服务器",
+      "hubApiServerPlaceholder": "输入中心 API 服务器 URL",
+      "steps": {
+        "step1": {
+          "title": "选择您的集群",
+          "description": "从上面的下拉列表中选择一个集群"
+        },
+        "step2": {
+          "title": "一键入驻",
+          "description": "点击\"入驻集群\"按钮开始自动化流程"
+        },
+        "step3": {
+          "title": "即时连接",
+          "description": "您的集群将自动入驻，无需手动命令"
+        }
+      }
+    },
+    "manualImport": {
+      "title": "手动集群设置",
+      "subtitle": "推荐",
+      "description": "按照以下步骤使用 kubectl 命令手动导入您的集群",
+      "generateCommand": "生成命令",
+      "copyCommand": "复制命令",
+      "runInTerminal": "在终端中运行",
+      "commandGenerated": "命令生成成功",
+      "selectCluster": "选择集群",
+      "generateImportCommand": "生成导入命令",
+      "importCommand": "导入命令"
+    },
+    "apiUrl": {
+      "title": "通过 API/URL 连接",
+      "description": "通过提供 API 端点和身份验证详细信息来导入您的集群",
+      "endpoint": "API/URL 端点",
+      "endpointPlaceholder": "https://kubernetes.example.com:6443",
+      "token": "身份验证令牌（可选）",
+      "tokenPlaceholder": "如果需要，请输入身份验证令牌",
+      "connectImport": "连接并导入"
+    },
+    "excluded": [
+      "kubestellar-report",
+      "kube-node-lease",
+      "kube-public",
+      "default",
+      "kube-system",
+      "open-cluster-management-hub",
+      "open-cluster-management",
+      "local-path-storage"
+    ],
+    "labels": {
+      "label": "标签",
+      "editvalue": "键和值都是必需的",
+      "manage": "管理标签",
+      "clearFilter": "清除筛选器",
+      "searchLabelsPlaceholder": "搜索标签...",
+      "bulkEditTitle": "编辑 {{count}} 个集群的标签",
+      "editTitle": "编辑 {{name}} 的标签",
+      "bulkEditDescription": "您正在编辑 {{count}} 个集群的标签。更改将应用于所有选定的集群。",
+      "keyPlaceholder": "例如：environment",
+      "valuePlaceholder": "例如：production",
+      "protectedLabelsCannotBeModified": "🔒 受保护的标签无法修改。",
+      "exitSearch": "退出搜索",
+      "saveChanges": "保存更改",
+      "saveChangesButton": "保存更改",
+      "tooltipTitle": "集群：",
+      "noLabelsAvailable": "没有可用的集群标签。请添加带有标签的集群以在绑定策略中使用。",
+      "noLabelsMatchSearch": "没有标签匹配您的搜索。",
+      "noLabelsFound": "在可用集群中未找到标签。",
+      "clickToAdd": "点击标签将其添加到画布",
+      "edit": "编辑标签",
+      "add": "添加标签",
+      "for": "为",
+      "bulkEdit": "批量编辑模式",
+      "appendToExisting": "附加到现有标签",
+      "key": "标签键",
+      "value": "标签值",
+      "noLabels": "尚未添加标签",
+      "noMatchingLabels": "未找到匹配的标签",
+      "addYourFirst": "使用上面的字段添加您的第一个标签，以帮助组织此集群。",
+      "tip": "提示：按 Enter 键在字段间移动，或双击标签进行编辑",
+      "tryDifferentSearch": "尝试不同的搜索词或清除搜索",
+      "count": "{{count}} 个标签{{count, plural, one {} other {}}}",
+      "description": "添加、编辑或删除标签以组织和分类您的集群。",
+      "defaultProtected": "默认标签 - 无法修改",
+      "bindingProtected": "在绑定策略中使用 - 无法修改",
+      "manageLabels": "管理标签",
+      "bulkLabels": "批量标签",
+      "editValue": "编辑标签",
+      "removeLabel": "删除标签",
+      "cancelEdit": "取消编辑",
+      "added": "已添加新标签：{{key}}",
+      "updated": "已更新现有标签：{{key}}",
+      "removed": "已删除标签：{{key}}",
+      "updateSuccess": "标签更新成功",
+      "duplicate": "键为\"{{key}}\"的标签已存在",
+      "protected": "无法修改受保护的标签：{{key}}",
+      "finishEditing": "完成编辑",
+      "noClustersToEdit": "没有可编辑的集群",
+      "noClustersSelected": "未选择集群",
+      "cannotDeleteUsed": "标签在绑定策略中使用，无法删除。请先删除策略。",
+      "bulkUpdateSuccess": "已为所有 {{count}} 个集群更新标签",
+      "bulkUpdatePartial": "已为 {{success}} 个集群更新标签，{{failures}} 个集群失败",
+      "bulkUpdateFail": "为所有 {{count}} 个集群更新标签失败"
+    },
+    "dialog": {
+      "selectMultipleClusters": "选择多个集群",
+      "selectClusterToEdit": "选择要编辑的集群",
+      "selectedCount": "已选择 {{count}} 个",
+      "editClustersButton": "编辑 {{count}} 个集群"
+    },
+    "list": {
+      "more": "更多",
+      "title": "管理集群",
+      "subtitle": "管理和监控您的 Kubernetes 集群",
+      "searchPlaceholder": "按名称、标签、状态或上下文搜索集群...",
+      "import": "导入集群",
+      "noResults": "未找到集群",
+      "name": "名称",
+      "creationTime": "创建时间",
+      "context": "上下文",
+      "description": "管理和监控您的 Kubernetes 集群",
+      "filter": "状态筛选器",
+      "activeFilters": "活动筛选器：",
+      "searchFilter": "搜索：\"{{query}}\"",
+      "statusFilter": "状态：{{value}}",
+      "labelFilter": "标签：{{key}}={{value}}",
+      "clearAll": "清除全部",
+      "showingResults": "{{count}} 个结果{{count, plural, one {} other {}}}",
+      "clearSearch": "按 Esc 键清除搜索",
+      "importCluster": "导入集群",
+      "importYourFirst": "导入您的第一个集群",
+      "searchLabelsPlaceholder": "搜索标签...",
+      "search": "搜索",
+      "label": "标签",
+      "filteredByLabel": "按标签筛选：",
+      "filterByLabel": "点击按此标签筛选",
+      "noClustersFound": "未找到集群",
+      "noClustersMatchBoth": "没有集群同时匹配您的搜索和筛选条件",
+      "noClustersMatchSearch": "没有集群匹配您的搜索词",
+      "noClustersMatchFilter": "没有集群匹配您的筛选选择",
+      "noClustersAvailable": "尚无可用集群。导入您的第一个集群以开始使用。",
+      "table": {
+        "name": "名称",
+        "labels": "标签",
+        "creationTime": "创建时间",
+        "context": "上下文",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "status": {
+        "active": "活跃",
+        "inactive": "非活跃",
+        "pending": "待处理"
+      },
+      "actions": {
+        "viewDetails": "查看详情",
+        "editLabels": "编辑标签",
+        "copyName": "复制名称",
+        "detachCluster": "分离集群"
+      },
+      "labels": {
+        "edit": "编辑标签",
+        "add": "添加标签",
+        "bulkEdit": "批量编辑模式",
+        "appendToExisting": "附加到现有标签",
+        "key": "标签键",
+        "value": "标签值",
+        "noLabels": "尚未添加标签",
+        "noMatchingLabels": "未找到匹配的标签",
+        "addYourFirst": "使用上面的字段添加您的第一个标签，以帮助组织此集群。",
+        "tip": "提示：按 Enter 键在字段间移动，或双击标签进行编辑",
+        "tryDifferentSearch": "尝试不同的搜索词或清除搜索",
+        "count": "{{count}} 个标签{{count, plural, one {} other {}}}",
+        "description": "添加、编辑或删除标签以组织和分类您的集群。",
+        "defaultProtected": "默认标签 - 无法修改",
+        "bindingProtected": "在绑定策略中使用 - 无法修改",
+        "manage": "管理标签"
+      }
+    },
+    "details": {
+      "title": "集群详情",
+      "overview": "概览",
+      "labels": "标签",
+      "resources": "资源",
+      "status": "状态",
+      "events": "事件",
+      "logs": "日志"
+    },
+    "clusterDetailDialog": {
+      "title": "集群详情",
+      "loading": "正在加载集群信息...",
+      "error": {
+        "title": "加载集群详情失败",
+        "description": "检索此集群信息时出错。"
+      },
+      "status": {
+        "available": "可用",
+        "unavailable": "不可用"
+      },
+      "kubernetes": "Kubernetes {{version}}",
+      "createdOn": "创建于 {{date}}",
+      "labels": "标签",
+      "labelCount": "{{count}} 个标签",
+      "noLabels": "此集群未分配标签",
+      "capacityResources": "容量和资源",
+      "cpuCores": "CPU 核心数",
+      "memory": "内存",
+      "podCapacity": "Pod 容量",
+      "lastRefreshed": "最后刷新时间",
+      "noClusterSelected": "未选择集群"
+    },
+    "dashboard": {
+      "title": "仪表盘",
+      "lastUpdatedJustNow": "最后更新：刚刚",
+      "status": "状态：良好",
+      "other": "其他",
+      "distribution": "分布",
+      "state": "待处理或非活跃",
+      "otherClusters": "其他集群",
+      "hoverFormula": "悬停查看公式明细",
+      "healthScore": "健康评分公式",
+      "clusterHealth": "整体集群健康状况",
+      "clusterStatus": "集群状态",
+      "welcome": "欢迎使用 KubeStellar 管理仪表盘",
+      "errorLoading": "加载集群信息时出错",
+      "addCluster": "添加集群",
+      "notAvailable": "不可用",
+      "invalidDate": "无效日期",
+      "managedClusters": "受管集群",
+      "total": "总计",
+      "viewAll": "查看全部",
+      "cpuCapacity": "CPU 容量",
+      "memoryCapacity": "内存容量",
+      "podCapacity": "Pod 容量",
+      "podCapacityLabel": "Pod 容量",
+      "active": "活跃",
+      "inactive": "非活跃",
+      "noManagedClusters": "未找到受管集群",
+      "importCluster": "导入集群",
+      "showMoreClusters": "显示更多集群",
+      "clustersActive": "集群活跃",
+      "systemHealth": "系统健康状况",
+      "refresh": "刷新",
+      "noRecentActivity": "未找到最近活动",
+      "recentActivity": "最近活动",
+      "resourceUtilization": "资源利用率",
+      "clusterMetrics": "基于集群指标",
+      "pods": {
+        "formula": "Pod 健康公式",
+        "calculation": "基于所有命名空间中健康 Pod 与总 Pod 的比率计算。",
+        "status": "考虑 Pod 状态、就绪探针和存活检查",
+        "value": "数值越高表示集群健康状况越好",
+        "formulaDesc": "(运行中的 Pod / 总 Pod 数) × 100%",
+        "health": "Pod 健康状况"
+      },
+      "cpu": {
+        "usage": "CPU 使用率",
+        "formula": "CPU 使用率公式",
+        "calculation": "计算为集群中所有节点当前正在使用的已分配 CPU 资源百分比。",
+        "value": "数值越低表示资源可用性越好",
+        "formulaDesc": "(已使用 CPU 核心数 / 总 CPU 核心数) × 100%",
+        "health": "数值越低表示性能越好"
+      },
+      "memory": {
+        "usage": "内存使用率",
+        "formula": "内存使用率公式",
+        "calculation": "计算为集群中所有节点当前正在使用的已分配内存资源百分比。",
+        "value": "数值越低表示资源可用性越好",
+        "formulaDesc": "(已使用内存 / 总内存) × 100%"
+      },
+      "stats": {
+        "running": "运行且可用",
+        "totalClusters": "总集群数",
+        "activeClusters": "活跃集群",
+        "bindingPolicies": "绑定策略",
+        "currentContext": "当前上下文",
+        "none": "无"
+      },
+      "health": {
+        "excellent": "优秀",
+        "good": "良好",
+        "fair": "一般",
+        "needsAttention": "需要关注",
+        "critical": "严重"
+      },
+      "guide": {
+        "title": "仪表盘指南",
+        "clusterStats": "集群统计",
+        "clusterStatsDesc": "显示总集群数和活跃集群数。将鼠标悬停在指标上可查看其计算方式的详细信息。",
+        "healthMetrics": "健康指标",
+        "healthMetricsDesc": "显示 CPU、内存使用率和 Pod 健康状况。绿色指示器表示良好健康状况，黄色需要关注。",
+        "recentActivity": "最近活动",
+        "recentActivityDesc": "显示集群和策略的最近更改。点击集群查看详细信息。",
+        "proTip": "专业提示",
+        "proTipDesc": "将鼠标悬停在任何指标或图表上，可查看其计算方式和可采取操作的详细信息。"
+      }
+    },
+    "detach": {
+      "title": "分离集群",
+      "confirmation": "您确定要分离以下集群吗？",
+      "context": "上下文",
+      "warning": "警告：此操作将从管理中移除集群。它将不再可见或可从此界面控制。",
+      "detaching": "正在分离...",
+      "detach": "分离集群"
+    }
+  },
+  "webSocket": {
+    "errors": {
+      "notConnected": "WebSocket 未连接",
+      "closingError": "关闭 WebSocket 时出错：",
+      "expectedStringData": "JSON 解析需要字符串数据",
+      "processingFailed": "处理 WebSocket 消息失败",
+      "connectionError": "WebSocket 连接错误"
+    }
+  },
+  "wdsQueries": {
+    "errors": {
+      "fetchWorkloads": "获取工作负载失败",
+      "errorFetchingWorkloads": "获取工作负载时出错：",
+      "fetchWorkloadDetails": "获取工作负载详情失败",
+      "errorFetchingWorkloadDetails": "获取工作负载详情时出错：",
+      "statusFetchFailed": "状态获取失败：",
+      "createWorkloadFailed": "创建工作负载失败",
+      "errorCreatingWorkload": "创建工作负载时出错：",
+      "uploadFileFailed": "上传文件失败",
+      "errorUploadingFile": "上传文件时出错：",
+      "updateWorkloadFailed": "更新工作负载失败",
+      "errorUpdatingWorkload": "更新工作负载时出错：",
+      "scaleWorkloadFailed": "扩缩工作负载失败",
+      "errorScalingWorkload": "扩缩工作负载时出错：",
+      "deleteWorkloadFailed": "删除工作负载失败",
+      "errorDeletingWorkload": "删除工作负载时出错：",
+      "fetchWorkloadLogsFailed": "获取工作负载日志失败",
+      "errorFetchingWorkloadLogs": "获取工作负载日志时出错："
+    },
+    "success": {
+      "workloadCreated": "工作负载创建成功",
+      "fileUploaded": "文件上传成功",
+      "workloadUpdated": "工作负载更新成功",
+      "workloadScaled": "工作负载已扩缩至 {{replicas}} 个副本",
+      "workloadDeleted": "工作负载删除成功"
+    },
+    "defaults": {
+      "deploymentKind": "deployment",
+      "defaultNamespace": "default"
+    }
+  },
+  "clusterQueries": {
+    "status": {
+      "available": "可用",
+      "unavailable": "不可用"
+    },
+    "logging": {
+      "clusterOnboardRequestPayload": "[调试] 集群入驻请求载荷：",
+      "clusterOnboardResponse": "[调试] 集群入驻响应：",
+      "onboardSuccessful": "[调试] 集群入驻变更成功，使集群查询缓存失效",
+      "onboardError": "[调试] 集群入驻变更错误：",
+      "mutationStart": "[调试] ========== 变更开始 ==========",
+      "context": "[调试] 上下文：",
+      "cluster": "[调试] 集群：",
+      "originalLabels": "[调试] 原始标签：",
+      "deletedLabels": "[调试] 已删除标签：",
+      "processingBulkUpdate": "[调试] 正在处理 {{count}} 个集群的批量标签更新",
+      "addingDeletedLabels": "[调试] 将已删除的标签添加为空值：",
+      "finalLabels": "[调试] 发送到后端的最终标签：",
+      "apiPayload": "[调试] API 载荷：",
+      "apiResponse": "[调试] API 响应：",
+      "apiError": "[调试] API 错误：",
+      "labelsUpdated": "[调试] 标签更新成功，使集群查询缓存失效",
+      "errorUpdatingLabels": "[调试] 更新集群标签时出错：",
+      "detachingCluster": "[调试] 正在分离集群：",
+      "detachSuccessful": "[调试] 集群分离成功，使集群查询缓存失效",
+      "detachError": "[调试] 集群分离变更错误：",
+      "skippingDetailsFetch": "[调试] 跳过虚拟批量集群的详情获取"
+    },
+    "messages": {
+      "applyLabelsToMultipleClusters": "将对 {{count}} 个集群应用标签"
+    },
+    "defaults": {
+      "virtualBulkOperationId": "virtual-bulk-operation"
+    }
+  },
+  "bpQueries": {
+    "logging": {
+      "fetchingPolicyDetails": "正在获取绑定策略的完整详情：{{policyName}}",
+      "receivedResponses": "已从两个 API 端点接收到响应",
+      "foundPolicyDetails": "在主 BP 响应中找到策略详情：",
+      "receivedStatusData": "已接收状态数据：",
+      "yamlFromResponse": "直接从响应根部使用 YAML",
+      "yamlFromMetadata": "从 metadata.annotations.yaml 使用 YAML",
+      "yamlAvailable": "策略 {{policyName}} 的提取 YAML 内容可用（{{length}} 个字符）",
+      "noYamlFound": "未找到策略 {{policyName}} 的 YAML 内容",
+      "parsedYaml": "已解析的 YAML：",
+      "errorParsingYaml": "解析 YAML 时出错：",
+      "usingStatus": "使用来自状态 API 端点的状态\"{{status}}\"",
+      "finalPolicyObject": "最终策略对象：",
+      "extractedUniqueWorkloads": "共提取了 {{count}} 个唯一工作负载",
+      "rawBindingPolicies": "原始绑定策略："
+    },
+    "errors": {
+      "policyNotFound": "在主响应中未找到策略 {{policyName}}",
+      "errorParsingJson": "从原始 fieldsv1 解析 JSON 时出错：",
+      "resourcesNull": "命名空间 {{namespace}}、资源类型 {{resourceType}} 的资源为空",
+      "resourcesNullClusterScoped": "集群范围资源类型 {{resourceType}} 的资源为空"
+    }
+  },
+  "wecsTopology": {
+    "title": "远程集群树视图",
+    "createWorkload": "创建工作负载",
+    "viewModes": {
+      "tiles": "磁贴",
+      "list": "列表"
+    },
+    "note": "注意：此视图中已过滤掉默认、Kubernetes 系统和 OpenShift 命名空间。",
+    "emptyState": {
+      "title": "未找到工作负载",
+      "description": "创建您的第一个工作负载以开始使用"
+    },
+    "contextMenu": {
+      "details": "详情",
+      "edit": "编辑",
+      "logs": "日志",
+      "execPods": "执行 Pod"
+    },
+    "fullscreen": {
+      "toggle": "切换全屏视图"
+    },
+    "timeAgo": {
+      "today": "今天",
+      "days": "{{count}} 天",
+      "days_plural": "{{count}} 天"
+    },
+    "status": {
+      "active": "活跃",
+      "inactive": "非活跃"
+    },
+    "zoomControls": {
+      "groupByResource": "按资源/类型分组",
+      "expandAll": "展开所有父节点的子节点",
+      "collapseAll": "折叠所有父节点的子节点",
+      "zoomIn": "放大",
+      "zoomOut": "缩小"
+    },
+    "nodeLabel": {
+      "labels": "标签：",
+      "noLabels": "无标签"
+    }
+  },
+  "wecsDetailsPanel": {
+    "common": {
+      "update": "更新",
+      "sync": "同步",
+      "delete": "删除",
+      "close": "关闭",
+      "unknown": "未知",
+      "na": "不可用",
+      "today": "今天",
+      "daysAgo": "{{count}} 天前"
+    },
+    "buttons": {
+      "clearTerminal": "清除终端",
+      "minimize": "最小化",
+      "maximize": "最大化"
+    },
+    "tabs": {
+      "summary": "摘要",
+      "edit": "编辑",
+      "logs": "日志",
+      "execPods": "执行 PODS"
+    },
+    "terminal": {
+      "connecting": "正在连接到容器 {{containerName}} 中的 pod shell...",
+      "connected": "已连接到容器 {{containerName}} 中的 pod shell",
+      "connectionClosed": "连接已关闭",
+      "connectionNotActive": "连接未激活。无法发送命令。",
+      "errorConnecting": "连接到 pod 时出错。请重试。"
+    },
+    "format": {
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "table": {
+      "kind": "类型",
+      "name": "名称",
+      "namespace": "命名空间",
+      "createdAt": "创建时间",
+      "context": "上下文",
+      "labels": "标签"
+    },
+    "containers": {
+      "selectContainer": "选择容器",
+      "noContainersFound": "未找到容器"
+    },
+    "errors": {
+      "failedLoadClusterDetails": "加载集群详情失败。",
+      "failedLoadDetails": "加载 {{type}} 详情失败。",
+      "apiNotImplemented": "更新 pod \"{{resourceName}}\" 的 API 未实现",
+      "failedFetchContainers": "获取容器列表失败"
+    },
+    "cluster": {
+      "active": "活跃"
+    },
+    "noManifest": "无可用清单"
+  },
+  "treeView": {
+    "title": "管理工作负载",
+    "createWorkload": "创建工作负载",
+    "note": "注意：默认、Kubernetes 系统和 OpenShift 命名空间已从此视图中过滤。",
+    "filteringContext": "筛选：仅显示来自 {{context}} 上下文的资源。",
+    "unknown": "未知",
+    "viewModes": {
+      "tiles": "磁贴",
+      "list": "列表"
+    },
+    "timeAgo": {
+      "today": "今天",
+      "days": "{{count}} 天",
+      "days_plural": "{{count}} 天"
+    },
+    "emptyState": {
+      "title": "未找到工作负载",
+      "description": "创建您的第一个工作负载以开始使用"
+    },
+    "fullscreen": {
+      "toggle": "切换全屏视图"
+    },
+    "contextMenu": {
+      "details": "详情",
+      "delete": "删除",
+      "edit": "编辑",
+      "logs": "日志"
+    },
+    "deleteDialog": {
+      "title": "确认删除资源",
+      "message": "您确定要删除\"{{name}}\"吗？此操作无法撤销。",
+      "confirm": "是的，删除"
+    }
+  },
+  "quickConnect": {
+    "title": "一键集群设置",
+    "description": "简化的自动化集群入驻，无需命令。选择您的集群，让系统处理其余工作。",
+    "selectCluster": "选择 Kubernetes 集群",
+    "searchingClusters": "正在搜索可用集群...",
+    "errorLoadingClusters": "加载集群时出错",
+    "automatedOnboarding": "自动化集群入驻",
+    "new": "新功能",
+    "automatedDescription": "这是连接您的 Kubernetes 集群最简单的方式。选择一个集群并点击入驻按钮即可直接连接，无需任何手动命令。",
+    "retry": "重试",
+    "chooseCluster": "选择集群...",
+    "noClusters": "没有可用集群",
+    "discoveredClusters": {
+      "title": "发现的集群",
+      "description": "这些是在您的环境中发现的集群。选择一个以继续。"
+    },
+    "refreshClustersList": "刷新集群列表",
+    "howToConnect": "如何连接您的集群",
+    "steps": {
+      "step1": {
+        "title": "选择您的集群",
+        "description": "从上面的下拉列表中选择一个集群"
+      },
+      "step2": {
+        "title": "一键入驻",
+        "description": "点击\"入驻集群\"按钮开始自动化流程"
+      },
+      "step3": {
+        "title": "即时连接",
+        "description": "您的集群将自动入驻，无需手动命令"
+      }
+    },
+    "whyUseAutomated": "为什么使用自动化入驻？",
+    "approaches": {
+      "automated": {
+        "title": "自动化方式（新功能）",
+        "features": ["一键设置流程", "无需手动执行命令", "流线化体验", "减少出错机会"]
+      },
+      "manual": {
+        "title": "手动方式（传统）",
+        "features": ["手动复制并运行命令", "需要多个 CLI 步骤", "更复杂的流程", "需要命令行知识"]
+      }
+    },
+    "buttons": {
+      "onboarding": "正在入驻...",
+      "onboard": "入驻集群",
+      "back": "返回",
+      "close": "关闭",
+      "openDashboard": "打开集群仪表盘",
+      "goToDashboard": "前往仪表盘"
+    },
+    "success": {
+      "title": "集群入驻成功",
+      "clusterAdded": "集群添加成功",
+      "clusterAvailable": "您的集群现在可在平台中使用",
+      "message": "集群 {{clusterName}} 已成功入驻到平台。",
+      "detailMessage": "您的集群 {{clusterName}} 已成功入驻。以下是您接下来可以做的事情：",
+      "nextSteps": {
+        "viewManage": {
+          "title": "查看和管理",
+          "description": "通过仪表盘访问您的集群以查看资源和状态"
+        },
+        "deployApps": {
+          "title": "部署应用程序",
+          "description": "将容器化应用程序和服务部署到您的集群"
+        },
+        "configureSettings": {
+          "title": "配置设置",
+          "description": "自定义和配置您的集群设置和策略"
+        }
+      }
+    }
+  },
+  "bindingPolicy": {
+    "editPolicy": "编辑策略",
+    "saveAndCreatePolicy": "保存并创建策略",
+    "title": "管理绑定策略",
+    "description": "创建和管理工作负载分发的绑定策略",
+    "createBindingPolicy": "创建绑定策略",
+    "noBindingPolicies": "未找到绑定策略",
+    "noBindingPoliciesDescription": "没有可用的绑定策略",
+    "noBindingPoliciesWithFilter": "没有绑定策略匹配您的 {{status}} 筛选条件",
+    "notifications": {
+      "fetchError": "获取绑定策略失败",
+      "createSuccess": "绑定策略创建成功",
+      "createError": "创建绑定策略失败",
+      "deleteSuccess": "绑定策略\"{{name}}\"删除成功",
+      "deleteError": "删除绑定策略失败",
+      "deleteManySuccess": "{{count}} 个绑定{{count, plural, one {策略} other {策略}}}删除成功",
+      "deleteManyError": "删除绑定策略失败",
+      "deploySuccess": "部署完成成功",
+      "deployError": "部署失败",
+      "yamlGenerateError": "生成绑定策略 YAML 失败",
+      "quickConnectError": "创建绑定策略失败",
+      "labelsAssignedTitle": "标签已分配",
+      "policyBindingCreatedTitle": "策略绑定已创建",
+      "labelsAssignedChip": "标签帮助将策略定向到特定资源",
+      "policyBindingCreatedChip": "为策略传播创建的绑定"
+    },
+    "tabs": {
+      "selectItems": "选择项目",
+      "yaml": "YAML",
+      "uploadFile": "上传文件"
+    },
+    "upload": {
+      "createNamespaceAutomatically": "自动创建命名空间",
+      "chooseDifferentYaml": "选择不同的 YAML 文件",
+      "filePreview": "文件预览",
+      "chooseOrDrag": "选择或拖放 YAML 文件",
+      "or": "- 或 -",
+      "chooseYaml": "选择 YAML 文件",
+      "uploadAndDeploy": "上传并部署",
+      "dropHere": "在此放置 YAML 文件",
+      "chooseOrUpload": "选择或上传 YAML 文件",
+      "selectFile": "选择 YAML 文件",
+      "acceptedFormats": "接受的格式：.yaml, .yml",
+      "chooseDifferentFile": "选择不同的文件"
+    },
+    "previewGeneratedYaml": "预览生成的 YAML",
+    "deployBindingPolicies": "部署绑定策略",
+    "deployBindingPolicy": "部署绑定策略",
+    "creating": "正在创建...",
+    "loadingResources": "正在加载资源...",
+    "deploying": "正在部署...",
+    "table": {
+      "name": "绑定策略名称",
+      "clusters": "集群",
+      "workload": "工作负载",
+      "creationDate": "创建日期",
+      "status": "状态",
+      "actions": "操作",
+      "noClusters": "未定义目标集群",
+      "noWorkloads": "未定义工作负载"
+    },
+    "yamlGeneration": {
+      "resourceRequired": "必须指定至少一种资源类型",
+      "resourceRequiredYaml": "YAML 生成必须指定至少一种资源类型"
+    },
+    "quickConnect": {
+      "unknownWorkload": "未知",
+      "unknownLocationGroup": "未知"
+    },
+    "loading": "正在加载...",
+    "unknown": "未知",
+    "visualization": {
+      "title": "绑定策略网络",
+      "policies": "{{count}} 个策略",
+      "targetCluster": "目标集群",
+      "clusters": "{{count}} 个集群",
+      "workloads": "{{count}} 个工作负载",
+      "showWorkloads": "显示工作负载",
+      "highlightActive": "高亮活跃项",
+      "refresh": "刷新可视化",
+      "fitView": "适合视图",
+      "search": "搜索节点... (⌘+K)",
+      "legend": "图例",
+      "policyPreview": "策略预览",
+      "policyDistribution": "策略分布",
+      "previewMode": "预览模式",
+      "workloadSource": "工作负载源",
+      "matchingWorkloads": "{{count}} 个匹配的工作负载{{count, plural, one {} other {}}}",
+      "matchRateShort": "{{matchRate}}% 匹配",
+      "targetClusters": "目标集群 ({{count}})",
+      "moreClusters": "+{{count}} 个更多",
+      "policyInsights": "策略洞察",
+      "status": "状态",
+      "lastModified": "最后修改时间",
+      "notModified": "未修改",
+      "matchRate": "匹配率",
+      "matchRateLong": "可用集群的 {{matchRate}}%",
+      "legendItems": {
+        "activePolicy": "活跃策略",
+        "cluster": "集群",
+        "workload": "工作负载",
+        "activeConnection": "活跃连接",
+        "inactiveConnection": "非活跃连接"
+      },
+      "layout": {
+        "title": "布局",
+        "horizontal": "水平",
+        "vertical": "垂直",
+        "radial": "径向"
+      },
+      "empty": {
+        "title": "无可视化数据",
+        "description": "没有绑定策略、集群或工作负载可供可视化。创建一些资源以在此视图中查看它们。"
+      },
+      "error": {
+        "title": "可视化错误",
+        "description": "渲染可视化时发生错误。"
+      },
+      "loading": "正在加载可视化...",
+      "searchResources": "搜索资源",
+      "noNodesFound": "未找到匹配\"{{searchTerm}}\"的节点"
+    },
+    "policyName": "策略名称",
+    "namespace": "命名空间",
+    "propagationMode": "传播模式",
+    "updateStrategy": "更新策略",
+    "resources": "资源",
+    "advanced": "高级设置",
+    "basic": "基本设置",
+    "scheduling": "调度规则",
+    "yaml": "YAML",
+    "modes": {
+      "downsyncOnly": "仅下行同步",
+      "upsyncOnly": "仅上行同步",
+      "bidirectionalSync": "双向同步"
+    },
+    "strategies": {
+      "serverSideApply": "服务端应用",
+      "forceApply": "强制应用",
+      "rollingUpdate": "滚动更新",
+      "blueGreenDeployment": "蓝绿部署"
+    },
+    "deploymentType": {
+      "allClusters": "所有可用集群",
+      "selectedClusters": "选定集群"
+    },
+    "confirm": {
+      "title": "确认绑定策略部署",
+      "description": "您即将部署 {{count}} 个绑定策略。请在继续之前审查它们。",
+      "deploy": "部署策略",
+      "deploying": "正在部署...",
+      "viewYaml": "查看 YAML"
+    },
+    "emptyState": {
+      "noClusters": {
+        "title": "没有就绪的集群",
+        "description": "当前没有可用于绑定的集群。在创建绑定策略之前，您需要至少有一个处于\"就绪\"状态的集群。",
+        "button": "管理集群"
+      },
+      "noWorkloads": {
+        "title": "未找到工作负载",
+        "description": "没有可用的工作负载。请确保您有权访问工作负载。",
+        "button": "转到工作负载"
+      },
+      "noResources": {
+        "title": "未找到集群或工作负载",
+        "description": "您需要集群和工作负载才能创建绑定策略。",
+        "button": "查看资源"
+      },
+      "noPolicies": {
+        "title": "未找到绑定策略",
+        "description": "通过创建您的第一个绑定策略开始使用",
+        "button": "创建绑定策略"
+      }
+    },
+    "loadingCanvas": "正在加载画布数据...",
+    "dragDrop": {
+      "infoAlert": "此界面使用模拟响应来创建绑定策略。从列表中选择集群和工作负载将它们添加到画布，然后点击工作负载，再点击集群以创建绑定策略连接。",
+      "helpDialog": {
+        "title": "通过直接连接创建绑定策略",
+        "intro": "按照以下步骤创建绑定策略：",
+        "steps": {
+          "selectClusters": "1. 从左侧面板选择集群以包含在画布中",
+          "selectWorkloads": "2. 从右侧面板选择工作负载以包含在画布中",
+          "createConnection": "3. 先点击工作负载，然后点击集群以创建直接连接",
+          "fillDetails": "4. 在出现的对话框中填写策略详细信息",
+          "deploy": "5. 使用\"部署绑定策略\"按钮模拟部署"
+        },
+        "gotIt": "明白了",
+        "helpDialog": {
+          "title": "如何创建绑定策略",
+          "intro": "按照以下步骤创建绑定策略：",
+          "steps": {
+            "selectLabels": "1. 选择标签添加到画布",
+            "selectLabelsDesc": "从左侧面板点击集群，从右侧面板点击工作负载，将它们添加到绑定策略画布",
+            "deploy": "2. 部署您的策略",
+            "deployDesc": "点击\"部署绑定策略\"创建并部署基于选定标签的绑定策略，将工作负载连接到集群"
+          },
+          "tip": "提示：基于标签的方法允许您创建强大的绑定策略，自动应用于所有匹配选定标签的资源，无论是现在还是将来。",
+          "dontShowAgain": "不再显示",
+          "tooltip": "查看选择说明"
+        }
+      }
+    },
+    "messages": {
+      "noSelectedPolicies": "未选择要删除的策略",
+      "invalidPolicyNames": "错误：一些选定的策略名称无效",
+      "partialDeleteSuccess": "删除了 {{success}} 个策略，但删除 {{failures}} 个策略失败",
+      "deleteError": "删除绑定策略时出错：{{errorMessage}}",
+      "updateSuccess": "绑定策略\"{{name}}\"更新成功",
+      "updateError": "更新绑定策略\"{{name}}\"时出错",
+      "simulatedAssignment": "成功将 {{policy}} 分配给 {{targetType}} {{target}}",
+      "policyCreatedSuccess": "成功创建绑定策略：{{name}}"
+    },
+    "editDialog": {
+      "title": "编辑绑定策略",
+      "infoTitle": "信息",
+      "info": "编辑您的绑定策略配置。更改将在保存后应用。",
+      "name": "绑定策略名称",
+      "save": "保存更改",
+      "unsavedTitle": "未保存的更改",
+      "unsavedWarning": "警告",
+      "unsavedInfo": "您有未保存的更改。确定要在不保存的情况下关闭吗？",
+      "continueEditing": "继续编辑",
+      "discard": "丢弃更改"
+    },
+    "deleteDialog": {
+      "title": "删除绑定策略",
+      "confirm": "您确定要删除绑定策略\"{{name}}\"吗？此操作无法撤销。"
+    },
+    "header": {
+      "searchPlaceholder": "按名称、标签或状态搜索策略",
+      "clearSearch": "按 Esc 键清除搜索",
+      "deleteSelected": "删除选定项",
+      "create": "创建绑定策略",
+      "activeFilters": "活动筛选器：",
+      "search": "搜索",
+      "status": "状态",
+      "clearAll": "清除全部"
+    },
+    "statusFilter": {
+      "all": "所有状态",
+      "active": "活跃",
+      "pending": "待处理",
+      "inactive": "非活跃",
+      "label": "状态筛选器"
+    },
+    "availableItems": {
+      "title": "可用项目",
+      "subtitle": "通过点击选择策略、集群或工作负载并将其添加到画布。",
+      "policy-list": "策略",
+      "cluster-list": "集群",
+      "workload-list": "工作负载",
+      "clickToAdd": "点击项目将其添加到画布",
+      "none": "没有可用的 {{title}}"
+    },
+    "canvas": {
+      "policiesOnCanvas": "画布上的策略：",
+      "clusters": "{{count}} 个集群",
+      "workloads": "{{count}} 个工作负载",
+      "status": "状态：",
+      "namespace": "命名空间：",
+      "namespaces": "命名空间：",
+      "clustersOnCanvas": "画布上的集群：",
+      "workloadsOnCanvas": "画布上的工作负载：",
+      "selectClusters": "在此选择集群",
+      "matches": "匹配：{{count}} 个 {{resourceType}}"
+    },
+    "labels": {
+      "title": "标签：",
+      "key": "键",
+      "value": "值",
+      "add": "添加",
+      "count": "{{total}} 中的 {{count}} 个唯一标签"
+    },
+    "creatingConnection": "正在创建连接：",
+    "previewDialog": {
+      "title": "策略预览和洞察",
+      "visualizationTab": "可视化",
+      "detailsTab": "详情",
+      "matchingDetails": "匹配详情",
+      "matchedClusters": "匹配的集群 ({{count}})",
+      "clusterStatus": "{{name}} - {{status}}",
+      "labels": "标签：{{labels}}",
+      "matchedWorkloads": "匹配的工作负载 ({{count}})",
+      "workloadNamespace": "{{name}} ({{namespace}})"
+    },
+    "policyNameDialog": {
+      "title": "为您的绑定策略命名",
+      "policyName": "策略名称",
+      "generateNew": "生成新名称",
+      "placeholder": "输入绑定策略名称...",
+      "invalid": "名称必须是小写字母数字加连字符，最多 253 个字符",
+      "helper": "仅使用小写字母、数字和连字符",
+      "namingTipsTitle": "💡 命名提示：",
+      "namingTips": "使用描述性名称，如\"frontend-to-production\"或\"database-sync-policy\"以便更好地组织。",
+      "creating": "正在创建...",
+      "createPolicy": "创建策略"
+    },
+    "configureDialog": {
+      "title": "配置绑定策略",
+      "creatingFor": "正在为以下项创建绑定策略：",
+      "creatingForDesc": "这将创建一个将 {{sourceType}} 链接到 {{targetType}} 的绑定策略。",
+      "tabs": {
+        "basic": "基本",
+        "advanced": "高级",
+        "scheduling": "调度",
+        "yaml": "YAML"
+      },
+      "nameHelper": "绑定策略的名称",
+      "namespaceHelper": "绑定策略的命名空间",
+      "updateStrategyHelper": "选择如何将资源更改应用到集群。通过从面板中选择来添加集群和工作负载。",
+      "addCustomLabels": "添加自定义标签",
+      "labelsTooltip": "标签帮助识别和选择资源",
+      "tolerationsTitle": "容忍度（高级）",
+      "tolerationExpression": "容忍度表达式",
+      "tolerationRequired": "容忍度是必需的",
+      "schedulingRules": "调度规则",
+      "schedulingTooltip": "定义集群接收此工作负载必须满足的条件",
+      "resource": "资源",
+      "resource.cpu": "CPU 核心数",
+      "resource.memory": "内存",
+      "resource.storage": "存储",
+      "resource.pods": "可用 Pod 数",
+      "operator": "操作符",
+      "activeRules": "活动规则：",
+      "noSchedulingRules": "未添加调度规则。策略将应用于所有匹配的集群，不考虑其资源。",
+      "yamlPreview": "YAML 预览",
+      "yamlPreviewInfo": "这是将要应用的 YAML 预览。您可以在其他标签页中进行更改以更新此预览。"
+    }
+  },
+  "workloads": {
+    "label": {
+      "title": "工作负载标签 *",
+      "prefix": "kubestellar.io/workload:",
+      "helpTextError": "未找到标签",
+      "helpText": "工作负载标签是键值对。键是常量且默认为 'kubestellar.io/workload'，您只能更改值。"
+    },
+    "github": {
+      "repositoryUrlLabel": "仓库 URL *",
+      "pathLabel": "路径 *",
+      "branchLabel": "分支（默认：main）*",
+      "credentialsLabel": "凭据",
+      "credentialsTip": "为私有仓库选择或添加凭据",
+      "addCredentials": "添加凭据",
+      "webhooksLabel": "Webhook",
+      "webhooksTip": "为自动化部署选择或添加 webhook",
+      "addWebhook": "添加 Webhook",
+      "previousDeploymentsTitle": "先前部署列表",
+      "loadingPreviousDeployments": "正在加载先前部署...",
+      "noPreviousDeployments": "没有可用的先前部署。",
+      "confirmResourceDeletion": "确认资源删除",
+      "deleteConfirmation": "您确定要删除 \"{{name}}\" 吗？此操作无法撤销。",
+      "yesDelete": "是的，删除",
+      "apply": "应用",
+      "deploying": "正在部署...",
+      "createFromYourGitHub": "从您的 GitHub 创建",
+      "deployFromPopularRepositories": "从热门仓库部署",
+      "listOfPreviousDeployments": "先前部署列表",
+      "repositoryUrl": "仓库 URL *",
+      "repositoryUrlPlaceholder": "例如：https://github.com/username/repo",
+      "repositoryUrlTip": "使用有效的 GitHub 仓库 URL",
+      "path": "路径 *",
+      "pathPlaceholder": "例如：/path/to/yaml",
+      "pathTip": "指定仓库中 YAML 文件的路径",
+      "branch": "分支（默认：main）*",
+      "branchPlaceholder": "例如：master、dev-branch",
+      "branchTip": "指定要部署的分支",
+      "credentials": "凭据",
+      "credentialsPlaceholder": "例如：username-pat",
+      "title": "从您的 GitHub 仓库创建并部署！",
+      "tab": {
+        "importFromGitHub": "从 GitHub 导入",
+        "selectRepositorySource": "选择仓库源以导入您的应用程序",
+        "repositorySource": "仓库源",
+        "selectRepository": "选择仓库",
+        "repositoryDetails": "仓库详情",
+        "selectedRepository": "已选择的仓库："
+      },
+      "options": {
+        "yourGitHub": {
+          "title": "您的 GitHub 仓库",
+          "description": "从您自己的 GitHub 仓库导入"
+        },
+        "enterprise": {
+          "title": "企业仓库",
+          "description": "从 GitHub 企业仓库导入"
+        },
+        "public": {
+          "title": "公共仓库",
+          "description": "从任何公共 GitHub 仓库导入"
+        },
+        "popular": {
+          "title": "热门仓库",
+          "description": "从我们精选的示例列表中选择"
+        },
+        "placeholder": {
+          "yourGitHub": "您的 GitHub 仓库表单将显示在此处",
+          "enterprise": "企业仓库表单将显示在此处",
+          "public": "公共仓库表单将显示在此处"
+        }
+      }
+    },
+    "artifactHub": {
+      "searchPackages": "搜索包",
+      "directDeploy": "从 Artifact Hub 部署 Helm Chart",
+      "listRepositories": "列出仓库",
+      "form": {
+        "packageId": "包 ID *",
+        "packageIdTooltip": "格式：helm/repository-name/chart-name（例如：helm/bitnami/nginx）",
+        "packageIdPlaceholder": "helm/bitnami/nginx",
+        "packageIdTip": "指定 Helm chart 包 ID（例如：helm/bitnami/nginx）",
+        "version": "版本（默认：latest）",
+        "versionTooltip": "要部署的 chart 版本（例如：13.2.12）。如果未指定，将使用最新版本。",
+        "versionPlaceholder": "13.2.12（留空表示使用最新版本）",
+        "versionTip": "指定要部署的版本（留空表示使用最新版本）",
+        "releaseName": "发布名称 *",
+        "releaseNameTooltip": "用于标识您的 Helm 发布的名称",
+        "releaseNamePlaceholder": "my-nginx",
+        "releaseNameTip": "指定 Helm 发布的名称",
+        "namespace": "命名空间",
+        "namespaceTooltip": "要部署到的 Kubernetes 命名空间",
+        "namespacePlaceholder": "default",
+        "namespaceTip": "指定要部署到的命名空间（默认为 'default'）",
+        "customValues": "自定义值",
+        "customValuesTooltip": "格式：key=value,key2=value2（例如：service.type=LoadBalancer,service.port=80）",
+        "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
+        "customValuesTip": "Helm chart 的自定义配置值（key=value 格式）"
+      },
+      "validation": {
+        "selectPackage": "请先选择一个包",
+        "enterWorkloadLabel": "请输入工作负载标签",
+        "enterPackageId": "请输入包 ID。",
+        "enterReleaseName": "请输入发布名称。"
+      },
+      "buttons": {
+        "close": "关闭",
+        "apply": "应用"
+      },
+      "searchPackagesForm": {
+        "searchHint": "开始输入以在 Artifact Hub 上搜索 Helm 包",
+        "errorMessage": {
+          "enterSearchTerm": "请输入搜索词",
+          "noPackagesFound": "未找到 '{{query}}' 的包",
+          "searchFailed": "搜索失败：{{message}}"
+        },
+        "serviceConfig": {
+          "title": "服务配置",
+          "serviceType": "服务类型",
+          "servicePort": "服务端口"
+        },
+        "packageDetails": {
+          "stars": "星标",
+          "repository": "仓库：",
+          "verified": "已验证",
+          "namespace": "命名空间"
+        }
+      },
+      "repositoriesList": {
+        "tip": "仓库是 Helm chart 的来源，点击卡片查看更多详情",
+        "loading": "正在加载仓库...",
+        "noRepositories": "没有可用的仓库",
+        "official": "官方",
+        "helm": "Helm",
+        "other": "其他",
+        "organization": "组织：",
+        "user": "用户：",
+        "url": "URL："
+      }
+    },
+    "yaml": {
+      "createNamespaceAutomatically": "自动创建命名空间",
+      "editor": "YAML 编辑器",
+      "deploy": "部署"
+    },
+    "helm": {
+      "createOwn": "创建您自己的 Helm chart",
+      "popularCharts": "从热门 Helm chart 部署",
+      "form": {
+        "repositoryName": "仓库名称 *",
+        "repositoryNameTip": "指定 Helm 仓库的名称",
+        "repositoryNamePlaceholder": "例如：my-helm-repo",
+        "repositoryUrl": "仓库 URL *",
+        "repositoryUrlTip": "使用有效的 Helm 仓库 URL",
+        "repositoryUrlPlaceholder": "例如：https://charts.helm.sh/stable",
+        "chartName": "Chart 名称 *",
+        "chartNameTip": "指定要部署的 Helm chart 名称",
+        "chartNamePlaceholder": "例如：nginx",
+        "releaseName": "发布名称 *",
+        "releaseNameTip": "指定此 Helm 部署的发布名称",
+        "releaseNamePlaceholder": "例如：my-release",
+        "version": "版本（默认：latest）",
+        "versionTip": "指定要部署的 chart 版本",
+        "versionPlaceholder": "例如：1.2.3",
+        "namespace": "命名空间 *",
+        "namespaceTip": "指定 Helm chart 的命名空间",
+        "namespacePlaceholder": "例如：default、my-namespace",
+        "searchChartLabel": "搜索 Helm Chart"
+      },
+      "userCharts": {
+        "loading": "正在加载用户 chart...",
+        "noCharts": "没有可用的用户创建的 chart。",
+        "delete": "删除",
+        "confirmDeletion": "确认资源删除",
+        "deleteConfirmation": "您确定要删除 \"{{chartId}}\" 吗？此操作无法撤销。",
+        "deleteSuccess": "Chart {{chartId}} 删除成功！",
+        "deleteError": "Chart {{chartId}} 删除失败！"
+      },
+      "buttons": {
+        "cancel": "取消",
+        "deploying": "正在部署...",
+        "apply": "应用"
+      },
+      "messages": {
+        "selectChart": "请选择要部署的 Helm chart。",
+        "deploySuccess": "选择的 {{chartName}} Helm chart 部署成功！",
+        "deployFailureReuse": "部署失败：安装 chart 失败：无法重复使用仍在使用的名称！",
+        "deployFailure": "热门 Helm chart 部署失败！"
+      }
+    },
+    "list": {
+      "title": "工作负载",
+      "create": "创建工作负载",
+      "filter": "筛选工作负载",
+      "noWorkloads": "未找到工作负载",
+      "createFirst": "创建您的第一个工作负载以开始使用"
+    },
+    "tabs": {
+      "yaml": "YAML",
+      "helm": "Helm",
+      "github": "GitHub",
+      "artifactHub": "Artifact Hub"
+    },
+    "createOptions": {
+      "title": "创建工作负载",
+      "subtitle": "创建工作负载",
+      "yaml": {
+        "createNamespaceAutomatically": "自动创建命名空间",
+        "deploy": "部署",
+        "cancel": "取消"
+      },
+      "file": {
+        "title": "从文件",
+        "dragDrop": "拖放您的 YAML 或 JSON 文件到此处",
+        "browse": "浏览",
+        "selectFile": "选择 YAML 或 JSON 文件",
+        "fileSelected": "文件已选择",
+        "fileSize": "文件大小",
+        "deploy": "部署",
+        "cancel": "取消",
+        "noFileSelected": "未选择文件。",
+        "invalidFile": "请上传有效的 YAML 或 JSON 文件。"
+      },
+      "github": {
+        "title": "GitHub",
+        "workloadLabel": "工作负载标签",
+        "workloadLabelPlaceholder": "为标签 'kubestellar.io/workload' 输入值",
+        "repositoryUrl": "仓库 URL",
+        "repositoryUrlPlaceholder": "例如：https://github.com/username/repo",
+        "path": "路径",
+        "pathPlaceholder": "例如：/path/to/yaml",
+        "branch": "分支（默认：main）",
+        "branchPlaceholder": "例如：master、dev-branch",
+        "credentials": "凭据",
+        "webhook": "Webhook",
+        "addCredentials": "添加凭据",
+        "addWebhook": "添加 Webhook",
+        "deploy": "部署",
+        "cancel": "取消"
+      },
+      "helm": {
+        "title": "Helm",
+        "repoName": "仓库名称",
+        "repoNamePlaceholder": "例如：bitnami",
+        "repoUrl": "仓库 URL",
+        "repoUrlPlaceholder": "例如：https://charts.bitnami.com/bitnami",
+        "chartName": "Chart 名称",
+        "chartNamePlaceholder": "例如：nginx",
+        "releaseName": "发布名称",
+        "releaseNamePlaceholder": "例如：my-release",
+        "version": "版本（留空表示使用最新版本）",
+        "versionPlaceholder": "例如：1.0.0",
+        "namespace": "命名空间",
+        "namespacePlaceholder": "例如：default",
+        "workloadLabel": "工作负载标签",
+        "workloadLabelPlaceholder": "为标签 'kubestellar.io/workload' 输入值",
+        "deploy": "部署",
+        "cancel": "取消",
+        "userCharts": {
+          "title": "用户创建的 Chart 列表",
+          "deleteSuccess": "Chart {{chartId}} 删除成功！",
+          "deleteError": "Chart {{chartId}} 删除失败！",
+          "loading": "正在加载用户 chart...",
+          "noCharts": "没有可用的用户创建的 chart。",
+          "delete": "删除",
+          "confirmDeletion": "确认资源删除",
+          "deleteConfirmation": "您确定要删除 \"{{chartId}}\" 吗？此操作无法撤销。"
+        }
+      },
+      "artifactHub": {
+        "title": "Artifact Hub",
+        "searchPlaceholder": "搜索 Helm chart...",
+        "selectPackage": "请选择一个包。",
+        "enterReleaseName": "请输入发布名称。"
+      },
+      "credentials": {
+        "title": "添加凭据",
+        "username": "GitHub 用户名",
+        "usernamePlaceholder": "输入您的 GitHub 用户名",
+        "token": "个人访问令牌",
+        "tokenPlaceholder": "输入您的 GitHub 个人访问令牌",
+        "add": "添加",
+        "cancel": "取消",
+        "fillBoth": "请填写 GitHub 用户名和个人访问令牌。"
+      },
+      "webhook": {
+        "title": "添加 Webhook",
+        "url": "Webhook URL",
+        "urlPlaceholder": "输入 webhook URL",
+        "token": "个人访问令牌",
+        "tokenPlaceholder": "输入 webhook 的个人访问令牌",
+        "add": "添加",
+        "cancel": "取消",
+        "fillBoth": "请填写 Webhook URL 和个人访问令牌。"
+      },
+      "cancelConfirmation": {
+        "title": "丢弃更改？",
+        "message": "您有未保存的更改。您确定要取消吗？",
+        "confirm": "是的，丢弃",
+        "cancel": "不，继续编辑"
+      },
+      "notifications": {
+        "workloadDeploySuccess": "工作负载部署成功！",
+        "deploymentSuccess": "部署成功！",
+        "helmDeploySuccess": "Helm chart 部署成功！",
+        "artifactHubDeploySuccess": "Artifact Hub 部署成功！",
+        "credentialAddedSuccess": "凭据添加成功！",
+        "webhookAddedSuccess": "Webhook 添加成功！",
+        "deploymentConflict": "冲突错误：部署已在进行中！",
+        "workloadAlreadyExists": "在命名空间 {{namespace}} 中创建 {{kind}} {{name}} 失败，工作负载已存在或命名空间 {{namespace}} 未找到",
+        "unknownWorkloadExists": "创建未知 {{name}} 工作负载失败，已存在",
+        "helmDeployFailed": "部署失败：安装 chart 失败：无法重复使用仍在使用的名称！",
+        "gitRepoError": "克隆仓库失败，请填写正确的 URL 和路径！",
+        "enterWorkloadLabel": "请输入工作负载标签。",
+        "invalidWorkloadLabel": "您只能输入值，键是常量且默认为 'kubestellar.io/workload'。",
+        "enterGitRepo": "请输入 Git 仓库。",
+        "enterPath": "请输入路径。",
+        "enterRepoName": "请输入仓库名称。",
+        "enterRepoUrl": "请输入仓库 URL。",
+        "enterChartName": "请输入 chart 名称。",
+        "enterReleaseName": "请输入发布名称。",
+        "enterNamespace": "请输入命名空间。",
+        "enterYamlJson": "请输入 YAML 或 JSON 内容。",
+        "needMetadataName": "至少一个文档必须具有 'metadata.name'"
+      }
+    }
+  },
+  "visualization": {
+    "policyDistribution": "{{count}} 个连接",
+    "clusters": {
+      "edge": "边缘集群",
+      "aiInference": "AI 推理集群",
+      "aiTraining": "AI 训练集群",
+      "service": "服务集群",
+      "compute": "计算集群",
+      "descriptions": {
+        "edge": "用于低延迟处理的边缘计算资源",
+        "aiInference": "实时 AI 模型推理和预测服务",
+        "aiTraining": "用于 AI 模型训练的高性能计算",
+        "service": "核心微服务和 API 端点",
+        "compute": "通用计算资源"
+      }
+    },
+    "title": "可视化",
+    "controls": "视图控制",
+    "zoom": "缩放",
+    "searchResources": "搜索资源"
+  },
+  "namespaces": {
+    "default": "默认",
+    "create": "创建命名空间",
+    "select": "选择命名空间"
+  },
+  "errors": {
+    "policyNameRequired": "策略名称是必需的",
+    "policyNotFound": "未找到策略 {{name}}",
+    "parseError": "无法解析绑定策略响应",
+    "unexpectedFormat": "API 响应格式异常",
+    "error": "错误",
+    "required": "此字段是必需的",
+    "invalidFormat": "格式无效",
+    "connectionFailed": "连接失败",
+    "forbidden": "您没有权限访问此资源",
+    "serverError": "服务器错误",
+    "notFound": "未找到资源",
+    "timeout": "请求超时",
+    "unknown": "发生未知错误",
+    "contextNameRequired": "上下文名称是必需的",
+    "versionRequired": "KubeStellar 版本是必需的",
+    "operationTimeout": "操作超时。进程可能仍在后台运行。",
+    "failedToCreateContext": "创建上下文失败",
+    "creatingContext": "创建上下文时出错：",
+    "websocketConnectionFailed": "无法连接到服务器。请检查您的网络连接并重试。",
+    "websocketClosedUnexpectedly": "WebSocket 连接意外关闭",
+    "fetchingContexts": "获取上下文时出错："
+  },
+  "contexts": {
+    "filterByContext": "按上下文筛选",
+    "allContexts": "所有上下文",
+    "showingAllContexts": "显示来自所有上下文的资源",
+    "filteringByContext": "筛选以仅显示 {{context}} 上下文",
+    "createdSuccessfully": "上下文创建成功！",
+    "websocketClosed": "WebSocket 连接已关闭：",
+    "contextCreatedSuccess": "上下文\"{{contextName}}\"创建成功！",
+    "createNewContext": "创建新上下文",
+    "contextName": "上下文名称",
+    "kubestellarVersion": "KubeStellar 版本",
+    "creating": "正在创建...",
+    "createContext": "创建上下文"
+  },
+  "policyDragDropStore": {
+    "labelsAssigned": "标签已自动分配给 {{itemType}} {{itemId}}",
+    "policyAssigned": "成功将 {{policyName}} 分配给 {{targetType}} {{targetName}}",
+    "clusterAlreadyAssigned": "集群 {{targetName}} 已分配给策略 {{policyName}}",
+    "workloadAlreadyAssigned": "工作负载 {{targetName}} 已分配给策略 {{policyName}}"
+  },
+  "auth": {
+    "login": {
+      "success": "登录成功",
+      "error": "登录错误：",
+      "successWithUser": "用户 {{username}} 登录成功。正在重定向到 {{path}}",
+      "invalidCredentials": "无效凭据",
+      "authFailed": "身份验证失败。请检查您的凭据。",
+      "noToken": "未从服务器接收到令牌"
+    }
+  },
+  "kubestellarData": {
+    "logging": {
+      "clustersApiResponse": "集群 API 响应：",
+      "processedClusters": "已处理的集群：",
+      "errorFetchingClusters": "获取集群时出错：",
+      "processedWorkloads": "已处理的工作负载：",
+      "errorFetchingWorkloads": "获取工作负载时出错：",
+      "errorFetchingPolicies": "获取策略时出错：",
+      "assigningPolicy": "正在将策略 {{policyName}} 分配给 {{targetType}} {{targetName}}"
+    },
+    "errors": {
+      "failedFetchClusters": "获取集群失败",
+      "failedFetchWorkloads": "获取工作负载失败",
+      "failedFetchPolicies": "获取策略失败",
+      "errorAssigningPolicy": "分配策略时出错：",
+      "failedToAssign": "将 {{policyName}} 分配给 {{targetType}} {{targetName}} 失败"
+    },
+    "success": {
+      "successfullyAssigned": "成功将 {{policyName}} 分配给 {{targetType}} {{targetName}}"
+    },
+    "defaults": {
+      "unknown": "未知",
+      "ready": "就绪",
+      "deployment": "部署",
+      "defaultNamespace": "默认",
+      "active": "活跃",
+      "alwaysMatch": "始终匹配"
+    }
+  },
+  "onboardingLogs": {
+    "onboarding": "入驻",
+    "complete": "完成",
+    "connecting": "正在连接到日志流...",
+    "errors": {
+      "websocketFailed": "WebSocket 连接失败。请重试。",
+      "connectionFailed": "连接到日志流失败。请重试。"
+    },
+    "status": {
+      "processing": "处理中",
+      "verifying": "验证中",
+      "available": "可用",
+      "completed": "已完成",
+      "error": "错误"
+    }
+  },
+  "newAppDialog": {
+    "title": "创建新应用",
+    "githubUrl": "GitHub URL",
+    "path": "路径",
+    "deploy": "部署"
+  },
+  "navbar": {
+    "generateLog": "生成日志",
+    "toggleTheme": "切换主题",
+    "brandName": "KubestellarUI",
+    "its": "ITS",
+    "wds": "WDS",
+    "logFilename": "kubestellarui.log",
+    "generateLogError": "生成日志失败。请重试。"
+  },
+  "manualImportTab": {
+    "loadingClusters": "正在加载可用集群...",
+    "errorLoadingClusters": "加载集群时出错",
+    "title": "手动集群设置",
+    "recommended": "推荐",
+    "description": "这是连接您的 Kubernetes 集群最简单的方式。选择一个集群并点击入驻集群按钮，即可直接将其连接到您的平台，无需任何手动命令。",
+    "selectCluster": "选择要连接的集群",
+    "chooseCluster": "选择集群...",
+    "noClusters": "没有可用的集群",
+    "discoveredClusters": "这些是在您的环境中发现的集群。选择一个以继续。",
+    "refreshClustersList": "刷新集群列表",
+    "howToConnect": "如何连接您的集群",
+    "steps": {
+      "selectCluster": "从上面的下拉列表中选择一个集群",
+      "clickOnboard": "点击\"入驻集群\"按钮直接连接您的集群",
+      "autoOnboard": "您的集群将自动入驻，无需手动命令"
+    },
+    "connectionError": "连接错误",
+    "installationGuide": "安装指南：",
+    "installCommand": "要安装 clusteradm，请运行：",
+    "commandCopied": "安装命令已复制！",
+    "onboarding": "正在入驻...",
+    "onboardCluster": "入驻集群",
+    "clusterAddedSuccess": "集群已添加到平台",
+    "clusterOnboardedSuccess": "您的集群 {{clusterName}} 已成功入驻。您现在可以：",
+    "nextSteps": {
+      "viewManage": "在仪表盘中查看和管理集群",
+      "deployApps": "将应用程序和服务部署到集群",
+      "configureSettings": "配置和管理集群设置"
+    },
+    "viewDashboard": "在仪表盘中查看集群",
+    "goToDashboard": "前往仪表盘"
+  },
+  "logModal": {
+    "connectedToStream": "已连接到日志流...",
+    "connectionClosed": "日志完整。连接已关闭。",
+    "retryConnection": "连接已关闭。请重试。",
+    "logs": "日志",
+    "loadingLogs": "正在加载日志..."
+  },
+  "loadingFallback": {
+    "loadingContent": "正在加载内容..."
+  },
+  "listView": {
+    "connecting": "正在连接到服务器...",
+    "receivingWorkloads": "正在接收工作负载...",
+    "receivedWorkloadsSoFar": "目前已接收 {{count}} 个工作负载...",
+    "allWorkloadsReceived": "已接收所有 {{count}} 个工作负载",
+    "connectionLost": "连接丢失。显示已接收的 {{count}} 个工作负载。",
+    "connectionError": "与服务器的连接丢失或失败。正在尝试备用方法...",
+    "fetchingFallback": "正在获取资源（备用方法）...",
+    "invalidResponseFormat": "服务器响应格式无效",
+    "unknownError": "获取资源时发生未知错误。",
+    "errorLoading": "加载资源时出错",
+    "downloadLogs": "下载日志",
+    "namespace": "命名空间",
+    "created": "已创建",
+    "filteredByContext": "按上下文筛选：{{context}}",
+    "showingResourceCount": "显示 {{total}} 个总资源中的 {{showing}} 个",
+    "resourceStats": "检测到 {{raw}} 个原始资源，已处理 {{processed}} 个",
+    "pagination": {
+      "prev": "上一页",
+      "next": "下一页",
+      "showing": "显示第 {{from}} 到 {{to}} 项，共 {{total}} 项",
+      "filtered": "（按 {{context}} 上下文筛选）"
+    },
+    "troubleshooting": {
+      "title": "尝试以下故障排除步骤：",
+      "step1": "1. 检查后端服务器是否在 http://localhost:4000 运行",
+      "step2": "2. 验证服务器的 CORS 配置是否允许来自 http://localhost:5173 的请求",
+      "step3": "3. 如果服务器使用通配符 (*) CORS，则无法接受带有凭据的请求",
+      "step4": "4. 检查浏览器控制台的详细错误消息"
+    },
+    "noWorkloads": {
+      "title": "未找到工作负载",
+      "noResourcesForContext": "未找到 {{context}} 上下文的资源",
+      "resourcesFilteredOut": "资源可用但已被筛选掉",
+      "getStarted": "创建您的第一个工作负载以开始使用",
+      "resourcesAvailable": "共有 {{count}} 个资源可用，但没有匹配当前筛选器"
+    }
+  },
+  "kubeconfigImport": {
+    "title": "上传 Kubeconfig 文件",
+    "description": "通过上传 kubeconfig 文件导入您的集群",
+    "dragAndDrop": "将您的 kubeconfig 文件拖放到这里",
+    "or": "- 或 -",
+    "browseFiles": "浏览文件",
+    "importCluster": "导入集群"
+  },
+  "importClusters": {
+    "title": "导入集群",
+    "description": "将您的 Kubernetes 集群连接到平台",
+    "tabs": {
+      "quickConnect": "快速连接",
+      "kubeconfig": "Kubeconfig",
+      "apiUrl": "API/URL"
+    },
+    "abortDialog": {
+      "title": "中止入驻流程",
+      "warning": "您确定要中止入驻吗？所有进度将丢失。",
+      "continue": "继续入驻",
+      "confirm": "是的，中止"
+    },
+    "fileUpload": {
+      "selected": "已选择文件\"{{filename}}\"。上传功能待实现。"
+    },
+    "icons": {
+      "quickConnect": "快速连接",
+      "kubeconfig": "kubeconfig",
+      "apiUrl": "api url",
+      "ariaLabel": "导入"
+    }
+  },
+  "groupPanel": {
+    "close": "关闭面板",
+    "tableAriaLabel": "组项目表格",
+    "table": {
+      "name": "名称",
+      "groupKind": "组/类型",
+      "syncOrder": "同步顺序",
+      "namespace": "命名空间",
+      "createdAt": "创建时间"
+    },
+    "notAvailable": "不可用"
+  },
+  "downloadLogsModal": {
+    "title": "下载日志",
+    "fileSize": "文件大小",
+    "download": "下载"
+  },
+  "footer": {
+    "commit": "提交",
+    "viewCommit": "在 GitHub 上查看提交详情"
+  },
+  "downloadLogsButton": {
+    "title": "下载日志",
+    "placeholder": {
+      "header": "集群 {{cluster}} 上命名空间 {{namespace}} 中 Pod {{podName}} 的日志",
+      "generated": "生成时间：{{date}}",
+      "noContent": "日志内容不可直接获取。请使用流式日志功能。"
+    },
+    "toast": {
+      "success": "已下载 {{podName}} 的日志",
+      "error": "下载日志失败"
+    }
+  },
+  "detachmentLogsDialog": {
+    "title": "正在分离集群：{{clusterName}}",
+    "logs": "分离日志",
+    "connected": "已连接",
+    "disconnected": "已断开连接",
+    "connecting": "正在连接到分离服务...",
+    "completedSuccessfully": "集群分离已成功完成。",
+    "done": "完成"
+  },
+  "addWebhookDialog": {
+    "copiedToClipboard": "已复制到剪贴板！",
+    "setupWebhook": "设置 Webhook",
+    "localDevSmee": "使用 Smee.io 进行本地开发",
+    "installSmee": "安装 Smee 客户端 (npm install -g smee-client)。",
+    "goToSmee": "访问 Smee.io 并创建新通道。",
+    "copySmeeUrl": "复制生成的 Smee.io URL。",
+    "runSmeeClient": "运行 Smee 客户端将 webhook 转发到您的本地 Go 后端：",
+    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+    "configureWebhookSmee": "使用 Smee.io URL 在您的外部服务中配置 webhook。",
+    "startGoBackend": "启动您的 Go 后端并确保它在 /api/webhook 处监听。",
+    "testWebhook": "测试 webhook。",
+    "vmIp4000": "在虚拟机 (VM) 上使用 IP:4000 配置 Webhook",
+    "ensureGoBackend4000": "确保您的 Go 后端在端口 4000 上运行并处理 /api/webhook。",
+    "openPort4000": "在您的防火墙/安全组中开放端口 4000 (UFW、AWS、GCP 或 Azure)。",
+    "findPublicIp": "查找您的公网 IP (curl ifconfig.me) 并添加。",
+    "configureWebhookVm": "使用以下地址在您的外部服务中配置 webhook：",
+    "vmWebhookUrl": "http://your-public-ip:4000/api/webhook",
+    "vmWebhookUrlCopy": "http://<your-public-ip>:4000/api/webhook",
+    "testWebhookOtherMachine": "从另一台机器测试 webhook。",
+    "keepGoServerRunning": "保持您的 Go 服务器在后台运行 (nohup 或 systemd)。"
+  },
+  "cancelConfirmationDialog": {
+    "title": "取消工作负载创建",
+    "titlePolicy": "取消策略创建",
+    "warning": "警告",
+    "message": "您确定要取消吗？所有更改将丢失。",
+    "continueEditing": "继续编辑",
+    "yesCancel": "是的，取消"
+  },
+  "addCredentialsDialog": {
+    "title": "添加凭据",
+    "usernameLabel": "Github 用户名 *",
+    "usernamePlaceholder": "例如：onkar717",
+    "usernameTip": "输入您的 GitHub 用户名",
+    "tokenLabel": "个人访问令牌 (PAT) *",
+    "tokenPlaceholder": "例如：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tokenTip": "输入您的 GitHub 个人访问令牌"
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy 市场",
+    "description": "发现并安装插件以增强您的 KubeStellar 体验"
+  },
+  "validation": {
+    "missingRequiredFields": "缺少必填字段"
+  }
+}

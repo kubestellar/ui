@@ -5,7 +5,7 @@ presubmits:
     clone_uri: 'https://github.com/kubestellar/ui'
     spec:
       containers:
-        - image: node:16
+        - image: node:20
           command:
             - /bin/bash
             - -c
@@ -17,49 +17,54 @@ presubmits:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-build
     always_run: true
     decorate: true
     clone_uri: 'https://github.com/kubestellar/ui'
     spec:
       containers:
-        - image: node:16
+        - image: node:20
           command:
             - /bin/bash
             - -c
             - |
               cd frontend
+              rm -rf ~/.npm ~/.cache node_modules
               npm ci
               npm run build
           resources:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-test
     always_run: true
     decorate: true
     clone_uri: 'https://github.com/kubestellar/ui'
     spec:
       containers:
-        - image: node:16
+        - image: node:20
           command:
             - /bin/bash
             - -c
             - |
               cd frontend
+              rm -rf ~/.npm ~/.cache node_modules
               npm ci
               npm test
           resources:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-backend-verify
     always_run: true
     decorate: true
     clone_uri: 'https://github.com/kubestellar/ui'
     spec:
       containers:
-        - image: golang:1.18
+        - image: golang:1.24
           command:
             - /bin/bash
             - -c
@@ -71,17 +76,30 @@ presubmits:
             requests:
               memory: 1Gi
               cpu: 1
+              ephemeral-storage: 4Gi
   - name: pull-kubestellar-ui-backend-test
     always_run: true
     decorate: true
     clone_uri: 'https://github.com/kubestellar/ui'
     spec:
       containers:
-        - image: golang:1.18
+        - image: golang:1.24
           command:
             - /bin/bash
             - -c
             - |
+              apt-get update && apt-get install -y redis-server redis-tools
+              redis-server --daemonize yes --port 6379 --bind 127.0.0.1 --save "" --appendonly no
+              echo "Waiting for Redis to start..."
+              sleep 3
+
+              if redis-cli ping | grep -q PONG; then
+                echo "✓ Redis is running"
+              else
+                echo "✗ Redis failed to start"
+                exit 1
+              fi
+
               cd backend
               go mod download
               go test ./...
@@ -89,6 +107,7 @@ presubmits:
             requests:
               memory: 1Gi
               cpu: 1
+              ephemeral-storage: 4Gi
 
 postsubmits:
   - name: post-kubestellar-ui-build-main
@@ -110,9 +129,10 @@ postsubmits:
               buildah bud -t quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-latest .
               buildah push quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:frontend-latest
+              cd ..
 
               # Build and push backend
-              cd ../backend
+              cd backend
               buildah bud -t quay.io/kubestellar/ui:backend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:backend-latest .
               buildah push quay.io/kubestellar/ui:backend-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:backend-latest
@@ -120,6 +140,7 @@ postsubmits:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi
 
   - name: post-kubestellar-ui-build-dev
     branches:
@@ -140,9 +161,10 @@ postsubmits:
               buildah bud -t quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-dev-latest .
               buildah push quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:frontend-dev-latest
+              cd ..
 
               # Build and push backend
-              cd ../backend
+              cd backend
               buildah bud -t quay.io/kubestellar/ui:backend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:backend-dev-latest .
               buildah push quay.io/kubestellar/ui:backend-dev-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:backend-dev-latest
@@ -150,3 +172,4 @@ postsubmits:
             requests:
               memory: 2Gi
               cpu: 1
+              ephemeral-storage: 4Gi

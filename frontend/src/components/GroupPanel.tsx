@@ -1,0 +1,272 @@
+import React, { useEffect, useState, Suspense } from 'react';
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  IconButton,
+} from '@mui/material';
+import { TreeResourceItem } from './TreeViewComponent';
+import useTheme from '../stores/themeStore';
+import { useTranslation } from 'react-i18next';
+
+interface GroupPanelProps {
+  namespace: string;
+  groupType: string;
+  groupItems: TreeResourceItem[];
+  onClose: () => void;
+  onItemSelect: (item: TreeResourceItem) => void;
+  isOpen?: boolean; // Add isOpen prop
+}
+
+const GroupPanel: React.FC<GroupPanelProps> = ({
+  namespace,
+  groupType,
+  groupItems,
+  onClose,
+  isOpen = true,
+}) => {
+  const { t } = useTranslation();
+  const theme = useTheme(state => state.theme);
+  const [selectedItem, setSelectedItem] = useState<TreeResourceItem | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
+
+  // Effect for opening the panel
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedItem(null); // Reset selected item when panel opens
+
+      // Add a small delay before showing the panel to ensure transition works
+      setTimeout(() => {
+        setIsPanelVisible(true);
+      }, 50);
+    } else {
+      // Handle panel closing from parent
+      setIsPanelVisible(false);
+      setTimeout(() => {
+        setIsClosing(false);
+      }, 400);
+    }
+  }, [isOpen, groupType, groupItems]);
+
+  const handleItemClick = (item: TreeResourceItem) => {
+    setSelectedItem(item);
+  };
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setIsPanelVisible(false);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 400);
+  };
+
+  const DynamicDetailsPanel = React.lazy(() => import('./DynamicDetailsPanel'));
+  const SettingsIcon = React.lazy(() => import('@mui/icons-material/Settings'));
+  const FiX = React.lazy(() => import('react-icons/fi').then(mod => ({ default: mod.FiX })));
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        right: isPanelVisible ? 0 : '-80vw',
+        top: 0,
+        bottom: 0,
+        width: '80vw',
+        bgcolor: theme === 'dark' ? '#1F2937' : '#F8F9FA',
+        boxShadow: '-2px 0 10px rgba(0,0,0,0.2)',
+        transition: 'right 0.4s ease-in-out',
+        zIndex: 1002,
+        overflowY: 'auto',
+        borderTopLeftRadius: '8px',
+        borderBottomLeftRadius: '8px',
+      }}
+    >
+      {isClosing ? (
+        <Box sx={{ height: '100%', width: '100%' }} />
+      ) : (
+        <>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+            p={2}
+            sx={{ borderBottom: `1px solid ${theme === 'dark' ? '#374151' : '#E9ECEF'}` }}
+          >
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              sx={{ color: theme === 'dark' ? '#FFFFFF' : '#343A40', fontSize: '24px' }}
+            >
+              {groupType.toUpperCase()}'S
+            </Typography>
+            <IconButton
+              onClick={handleClose}
+              sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6C757D' }}
+              aria-label={t('groupPanel.close')}
+            >
+              <Suspense fallback={<span />}>
+                <FiX />
+              </Suspense>
+            </IconButton>
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Table
+              sx={{ minWidth: 650, borderCollapse: 'separate', borderSpacing: 0 }}
+              aria-label={t('groupPanel.tableAriaLabel')}
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      color: theme === 'dark' ? '#D1D5DB' : '#6C757D',
+                      fontWeight: 'bold',
+                      padding: '8px',
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    sx={{
+                      color: theme === 'dark' ? '#D1D5DB' : '#6C757D',
+                      fontWeight: 'bold',
+                      padding: '8px',
+                    }}
+                  >
+                    {t('groupPanel.table.name')}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      color: theme === 'dark' ? '#D1D5DB' : '#6C757D',
+                      fontWeight: 'bold',
+                      padding: '8px',
+                    }}
+                  >
+                    {t('groupPanel.table.groupKind')}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      color: theme === 'dark' ? '#D1D5DB' : '#6C757D',
+                      fontWeight: 'bold',
+                      padding: '8px',
+                    }}
+                  >
+                    {t('groupPanel.table.syncOrder')}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      color: theme === 'dark' ? '#D1D5DB' : '#6C757D',
+                      fontWeight: 'bold',
+                      padding: '8px',
+                    }}
+                  >
+                    {t('groupPanel.table.namespace')}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      color: theme === 'dark' ? '#D1D5DB' : '#6C757D',
+                      fontWeight: 'bold',
+                      padding: '8px',
+                    }}
+                  >
+                    {t('groupPanel.table.createdAt')}
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {groupItems.map((item, index) => (
+                  <TableRow
+                    key={index}
+                    onClick={() => handleItemClick(item)}
+                    sx={{
+                      '&:hover': {
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)', // Subtle hover shadow
+                      },
+                      cursor: 'pointer',
+                      // backgroundColor: "#FFFFFF", // White background for each card
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', // Very subtle shadow
+                      marginBottom: '10px', // Vertical gap between cards to match ArgoCD
+                      '& td': {
+                        borderBottom: 'none', // Remove default table borders
+                        padding: '20px 10px', // Match ArgoCD padding
+                      },
+                      '&:last-child': {
+                        marginBottom: 0, // No margin for the last item
+                      },
+                      ...(selectedItem === item && {
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', // Enhanced shadow when selected
+                        backgroundColor: theme === 'dark' ? '#2D3748' : '#E9ECEF', // Selection highlight
+                      }),
+                    }}
+                  >
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '0',
+                          marginBottom: '10px',
+                        }}
+                      >
+                        <Suspense fallback={<span />}>
+                          <SettingsIcon />
+                        </Suspense>
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      sx={{ color: theme === 'dark' ? '#D1D5DB' : '#343A40', verticalAlign: 'top' }}
+                    >
+                      {item.metadata.name}
+                    </TableCell>
+                    <TableCell
+                      sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6C757D', verticalAlign: 'top' }}
+                    >
+                      {item.kind}
+                    </TableCell>
+                    <TableCell
+                      sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6C757D', verticalAlign: 'top' }}
+                    >
+                      {'-'}
+                    </TableCell>
+                    <TableCell
+                      sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6C757D', verticalAlign: 'top' }}
+                    >
+                      {item.metadata.namespace || namespace}
+                    </TableCell>
+                    <TableCell
+                      sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6C757D', verticalAlign: 'top' }}
+                    >
+                      {item.metadata.creationTimestamp || t('groupPanel.notAvailable')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+          {selectedItem && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <DynamicDetailsPanel
+                namespace={namespace}
+                name={selectedItem.metadata.name}
+                type={groupType.toLowerCase()}
+                resourceData={selectedItem}
+                onClose={() => setSelectedItem(null)}
+                isOpen={true}
+                initialTab={0}
+              />
+            </Suspense>
+          )}
+        </>
+      )}
+    </Box>
+  );
+};
+
+// Placeholder function for Sync Order
+// const getSyncOrder = (item: ResourceItem) => "-"; // Default value; adjust based on your data
+
+export default GroupPanel;

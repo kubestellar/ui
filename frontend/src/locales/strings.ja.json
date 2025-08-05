@@ -1,0 +1,2274 @@
+{
+  "common": {
+    "changes": "変更",
+    "clusterLabel": "クラスターラベル",
+    "workloadLabel": "ワークロードラベル",
+    "workloads": "ワークロード",
+    "clearCanvas": "キャンバスをクリア",
+    "clearFilter": "フィルターをクリア",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "edit": "編集",
+    "delete": "削除",
+    "create": "作成",
+    "add": "追加",
+    "refresh": "更新",
+    "search": "検索",
+    "connect": "接続",
+    "import": "インポート",
+    "loading": "読み込み中...",
+    "success": "成功",
+    "error": "エラー",
+    "warning": "警告",
+    "actions": "操作",
+    "status": {
+      "status": "ステータス",
+      "active": "稼働中",
+      "inactive": "停止中",
+      "pending": "保留中",
+      "checking": "確認中",
+      "success": "成功",
+      "warning": "バージョンの不一致",
+      "error": "見つかりません",
+      "installed": "インストール済み"
+    },
+    "noResource": "{{resource}}が指定されていません",
+    "copy": "コピー",
+    "close": "閉じる",
+    "update": "更新",
+    "unknown": "不明",
+    "workload": "ワークロード",
+    "tryAgain": "再試行",
+    "confirm": "確認",
+    "continue": "続行",
+    "back": "戻る",
+    "submit": "送信",
+    "settings": "設定",
+    "help": "ヘルプ",
+    "details": "詳細",
+    "view": "表示",
+    "yes": "はい",
+    "no": "いいえ",
+    "all": "すべて",
+    "none": "なし",
+    "ok": "OK",
+    "finish": "完了",
+    "next": "次へ",
+    "retry": "再試行",
+    "previous": "前へ",
+    "page": "ページ",
+    "sync": "同期",
+    "clearAll": "すべてクリア",
+    "fitView": "表示にフィット",
+    "clearSearch": "検索をクリア",
+    "clearFilters": "フィルターをクリア",
+    "clear": "クリア",
+    "of": "/",
+    "items": "{{count}}件",
+    "items_plural": "{{count}}件",
+    "filteredFrom": "フィルター対象："
+  },
+  "admin": {
+    "users": {
+      "title": "ユーザー管理",
+      "subtitle": "システムユーザー",
+      "description": "システムユーザーと権限を管理する",
+      "searchPlaceholder": "名前、役割、または権限でユーザーを検索...",
+      "refresh": "ユーザー一覧を更新",
+      "addUser": "ユーザーを追加",
+      "noUsers": "ユーザーが見つかりません",
+      "noUsersDescription": "システムにはまだユーザーがいません。「ユーザーを追加」をクリックして最初のユーザーを作成してください。",
+      "noPermissions": "権限が割り当てられていません",
+      "filters": {
+        "title": "フィルター",
+        "reset": "フィルターをリセット",
+        "role": "役割",
+        "allRoles": "すべての役割",
+        "permission": "権限",
+        "anyPermission": "任意の権限",
+        "permissionLevel": "権限レベル",
+        "anyLevel": "任意のレベル",
+        "sortBy": "並び替え",
+        "created": "作成日",
+        "ascending": "昇順",
+        "descending": "降順",
+        "active": "有効なフィルター",
+        "roleFilter": "役割",
+        "permissionFilter": "権限",
+        "levelFilter": "レベル",
+        "searchFilter": "検索"
+      },
+      "actions": {
+        "addUser": "ユーザーを追加",
+        "editUser": "ユーザーを編集",
+        "add": "ユーザーを追加",
+        "update": "ユーザーを更新",
+        "delete": "ユーザーを削除",
+        "edit": "編集",
+        "deleteUser": "ユーザーを削除"
+      },
+      "table": {
+        "username": "ユーザー名",
+        "role": "役割",
+        "permissions": "権限",
+        "actions": "操作"
+      },
+      "roles": {
+        "admin": "管理者",
+        "user": "ユーザー"
+      },
+      "permissions": {
+        "users": "ユーザー",
+        "resources": "リソース",
+        "system": "システム",
+        "dashboard": "ダッシュボード",
+        "levels": {
+          "read": "読み取り",
+          "write": "書き込み",
+          "none": "なし"
+        }
+      },
+      "form": {
+        "username": "ユーザー名",
+        "usernamePlaceholder": "ユーザー名を入力",
+        "password": "パスワード",
+        "passwordPlaceholder": "パスワードを入力",
+        "passwordOptional": "パスワード（オプション）",
+        "passwordOptionalPlaceholder": "新しいパスワードを入力するか空白のままにする",
+        "confirmPassword": "パスワードの確認",
+        "confirmPasswordPlaceholder": "パスワードを確認",
+        "isAdmin": "管理者アクセス",
+        "permissions": "コンポーネント権限",
+        "cancel": "キャンセル",
+        "optional": "オプション"
+      },
+      "delete": {
+        "title": "ユーザーの削除",
+        "confirmTitle": "削除の確認",
+        "confirmMessage": "ユーザー「{{username}}」を削除してもよろしいですか？この操作は元に戻せません。",
+        "confirm": "ユーザーを削除"
+      },
+      "errors": {
+        "fetchFailed": "ユーザーの取得に失敗しました",
+        "missingFields": "すべての必須フィールドに入力してください",
+        "passwordMismatch": "パスワードが一致しません",
+        "addFailed": "ユーザーの追加に失敗しました",
+        "updateFailed": "ユーザーの更新に失敗しました",
+        "deleteFailed": "ユーザーの削除に失敗しました",
+        "invalidUsername": "ユーザー名には英字、数字、アンダースコア、ハイフンのみ使用できます"
+      },
+      "success": {
+        "userAdded": "ユーザーが正常に追加されました",
+        "userUpdated": "ユーザーが正常に更新されました",
+        "userDeleted": "ユーザーが正常に削除されました"
+      }
+    }
+  },
+  "installationPage": {
+    "successSection": {
+      "installed": "は正しくインストールされており、バージョン要件を満たしています。"
+    },
+    "errorSection": {
+      "title": "インストール手順",
+      "viewGuide": "インストールガイドを見る"
+    },
+    "statusBadge": {
+      "installed": "インストール済み",
+      "versionMismatch": "バージョンの不一致",
+      "missing": "未インストール",
+      "checking": "確認中"
+    },
+    "codeBlock": {
+      "bash": "bash"
+    },
+    "title": "インストール",
+    "verification": "検証",
+    "installCommand": "次のコマンドを実行してインストールしてください",
+    "verifyCommand": "次のコマンドでインストールを確認",
+    "welcome": "KubeStellarへようこそ",
+    "gettingStarted": "KubeStellarの使用を開始するには、開発環境をセットアップしてください。ガイド付きのインストール手順に従って、デモシステムをデプロイします。",
+    "tabs": {
+      "prerequisites": "前提条件",
+      "installation": "インストール"
+    },
+    "sidebarSteps": {
+      "title": "インストール手順",
+      "description": "以下の手順でKubeStellarをセットアップします",
+      "checkPrerequisites": "前提条件の確認",
+      "checkPrerequisitesDescription": "必要なツールがすべてインストールされていることを確認します",
+      "installKubestellar": "KubeStellarのインストール",
+      "installKubestellarDescription": "CLIコマンドを使ってKubeStellarをデプロイします",
+      "startUsingKubestellar": "KubeStellarの使用開始",
+      "startUsingKubestellarDescription": "ログインしてクラスター管理を開始します"
+    },
+    "documentationLink": "インストールガイド全文を表示",
+    "prerequisites": {
+      "prerequisites": "前提条件",
+      "title": "システムの前提条件",
+      "description": "次のツールがインストールされていることを確認してください",
+      "status": {
+        "success": "成功",
+        "warnings": "警告",
+        "missing": "未インストール",
+        "checking": "確認中"
+      },
+      "coreRequirements": "基本要件",
+      "demoEnvironmentRequirements": "デモ環境の要件",
+      "buttons": {
+        "refresh": "更新",
+        "nextInstallation": "次へ：インストール"
+      }
+    },
+    "installation": {
+      "title": "KubeStellar のインストール",
+      "description": "プラットフォームを選択してインストールスクリプトを実行します",
+      "installPrerequisitesFirst": {
+        "title": "先に前提条件をインストール",
+        "description": "インストールスクリプトを実行する前に、必要な前提条件がすべて揃っていることを確認してください。",
+        "button": "前提条件の確認"
+      },
+      "platform": "プラットフォーム",
+      "platforms": {
+        "kind": "kind",
+        "k3d": "k3d"
+      },
+      "installationScript": "インストールスクリプト",
+      "scriptInstructions": "以下のコマンドをターミナルで実行してKubeStellarをインストールします",
+      "installationProcess": {
+        "title": "インストール手順：",
+        "steps": [
+          "ローカルクラスターを作成して設定",
+          "KubeStellarのコンポーネントと依存関係をインストール",
+          "ネットワークとパーミッションを適切に構成",
+          "デモ環境を構成"
+        ]
+      },
+      "importantNotes": {
+        "title": "重要事項：",
+        "notes": [
+          "インストールには数分かかる場合があります",
+          "十分なシステムリソースがあることを確認してください",
+          "インストールが完了するまでターミナルウィンドウを開いたままにしてください",
+          "ターミナル出力にエラーがないか確認してください"
+        ]
+      },
+      "afterInstallation": {
+        "title": "インストール後：",
+        "steps": [
+          "クラスターのステータスを確認してインストールを検証",
+          "スタートガイドを確認",
+          "KubeStellar環境の管理を開始"
+        ]
+      },
+      "buttons": {
+        "backPrerequisites": "戻る：前提条件",
+        "startInstallation": "インストール開始",
+        "installing": "インストール中..."
+      }
+    },
+    "checkingStatus": {
+      "title": "KubeStellarのインストール状況を確認中...",
+      "description": "数秒で完了するはずです。システムにKubeStellarがインストールされているか確認しています。"
+    },
+    "checkError": {
+      "title": "ステータス確認に失敗しました",
+      "description": "KubeStellarがインストールされているか確認できませんでした。バックエンドサービスとの接続エラー、または一時的にサーバーが利用できない可能性があります。",
+      "retryButton": "再接続",
+      "persistenceNote": "問題が解決しない場合は、ネットワーク接続を確認するか、システム管理者に連絡してください。"
+    },
+    "footer": {
+      "copyright": "KubeStellar",
+      "documentation": "ドキュメント",
+      "github": "GitHub",
+      "description": "KubeStellarはオープンソースプロジェクトです。サポート、機能リクエスト、バグ報告については GitHubリポジトリをご覧ください。"
+    },
+    "skipPrerequisitesNotice": {
+      "title": "前提条件の確認をスキップしました",
+      "description": "この環境では前提条件の確認が無効化されています。インストールに直接進めます。",
+      "note": "注：インストールコマンドを実行する前に、すべての必要なツールを手動でインストールしてください。"
+    },
+    "toasts": {
+      "alreadyInstalled": "KubeStellarはすでにインストールされています。ログインにリダイレクト中...",
+      "notInstalled": "Kubeflexクラスターが見つかりません。KubeStellar環境のセットアップ手順に従ってください。",
+      "checkFailed": "KubeStellarのステータス確認に失敗しました",
+      "preparingInstructions": "インストール手順を準備中...",
+      "followInstructions": "以下のCLIインストール手順に従ってKubeStellarをインストールしてください",
+      "loadInstructionsFailed": "インストール手順の読み込みに失敗しました。ページを更新して再試行してください。",
+      "installationDetected": "KubeStellarのインストールが検出されました。ログインページにリダイレクト中..."
+    }
+  },
+  "header": {
+    "themeToggle": "テーマ切り替え",
+    "dashboard": "ダッシュボード",
+    "clusters": "クラスター",
+    "workloads": "ワークロード",
+    "policies": "ポリシー",
+    "settings": "設定",
+    "logout": "ログアウト",
+    "language": "言語",
+    "importCluster": "クラスターのインポート",
+    "menu": "メニュー",
+    "goToHome": "ホームページへ移動",
+    "logoAlt": "KubeStellarのロゴ",
+    "themeToggleTip": "Alt+Qでテーマを切り替え",
+    "switchTheme": "{{mode}}モードに切り替え"
+  },
+  "login": {
+    "controlPlane": "コントロールプレーン",
+    "layout": {
+      "logoAlt": "KubeStellar",
+      "tagline": "シームレスなマルチクラスター管理",
+      "taglineEmphasis": "未来に向けて設計されています。",
+      "fullscreen": "全画面表示の切り替え",
+      "welcomeBack": "お帰りなさい",
+      "accessDashboard": "ダッシュボードにアクセス",
+      "enterCredentials": "下記の認証情報を入力してください",
+      "needHelp": "お困りですか？",
+      "contactSupport": "サポートに連絡"
+    },
+    "loading": {
+      "logoAlt": "KubeStellar",
+      "initializing": "KubeStellar 環境を初期化中..."
+    },
+    "form": {
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "rememberMe": "ログイン情報を記憶する",
+      "signIn": "KubeStellar にサインイン",
+      "signingIn": "サインイン中...",
+      "showPassword": "パスワードを表示",
+      "hidePassword": "パスワードを非表示",
+      "errors": {
+        "usernameRequired": "ユーザー名は必須です",
+        "passwordRequired": "パスワードは必須です"
+      }
+    }
+  },
+  "clusters": {
+    "title": "クラスターの管理",
+    "subtitle": "Kubernetes クラスターの管理と監視",
+    "searchPlaceholder": "名前、ラベル、ステータス、またはコンテキストでクラスターを検索...",
+    "importCluster": "クラスターをインポート",
+    "activeFilters": "適用中のフィルター：",
+    "search": "検索",
+    "noClustersFound": "クラスターが見つかりません",
+    "noClustersMatchBoth": "検索語とフィルター条件の両方に一致するクラスターはありません",
+    "noClustersMatchSearch": "検索語に一致するクラスターはありません",
+    "noClustersMatchFilter": "フィルター条件に一致するクラスターはありません",
+    "noClustersAvailable": "まだクラスターが登録されていません。まずはクラスターをインポートしてください。",
+    "importYourFirst": "最初のクラスターをインポート",
+    "filteredByLabel": "ラベルで絞り込み",
+    "actions": {
+      "viewDetails": "詳細を表示",
+      "editLabels": "ラベルを編集",
+      "copyName": "名前をコピー",
+      "detachCluster": "クラスターの切断"
+    },
+    "status": {
+      "title": "ステータス",
+      "active": "稼働中",
+      "inactive": "停止中",
+      "pending": "保留中"
+    },
+    "table": {
+      "name": "名前",
+      "labels": "ラベル",
+      "creationTime": "作成日時",
+      "context": "コンテキスト",
+      "status": "ステータス",
+      "actions": "操作"
+    },
+    "quickConnect": {
+      "title": "クイック接続で接続",
+      "description": "クイック接続機能を使ってクラスターをインポートします",
+      "clusterName": "クラスター名",
+      "clusterNamePlaceholder": "クラスターの名前を入力",
+      "token": "トークン",
+      "tokenPlaceholder": "トークンを入力",
+      "hubApiServer": "Hub API サーバー",
+      "hubApiServerPlaceholder": "Hub API サーバーの URL を入力",
+      "steps": {
+        "step1": {
+          "title": "クラスターを選択",
+          "description": "上のドロップダウンからクラスターを選択"
+        },
+        "step2": {
+          "title": "ワンクリックで登録",
+          "description": "「クラスターを登録」ボタンをクリックして自動処理を開始"
+        },
+        "step3": {
+          "title": "即時接続",
+          "description": "コマンド操作なしでクラスターが自動登録されます"
+        }
+      }
+    },
+    "manualImport": {
+      "title": "手動クラスター設定",
+      "subtitle": "推奨",
+      "description": "以下の手順に従い、kubectl コマンドでクラスターを手動インポートします",
+      "generateCommand": "コマンドを生成",
+      "copyCommand": "コマンドをコピー",
+      "runInTerminal": "ターミナルで実行",
+      "commandGenerated": "コマンドの生成に成功しました",
+      "selectCluster": "クラスターを選択",
+      "generateImportCommand": "インポートコマンドを生成",
+      "importCommand": "インポートコマンド"
+    },
+    "apiUrl": {
+      "title": "API/URL 経由で接続",
+      "description": "API エンドポイントと認証情報を指定してクラスターをインポートします",
+      "endpoint": "API/URL エンドポイント",
+      "endpointPlaceholder": "https://kubernetes.example.com:6443",
+      "token": "認証トークン（任意）",
+      "tokenPlaceholder": "必要に応じて認証トークンを入力",
+      "connectImport": "接続してインポート"
+    },
+    "excluded": [
+      "kubestellar-report",
+      "kube-node-lease",
+      "kube-public",
+      "default",
+      "kube-system",
+      "open-cluster-management-hub",
+      "open-cluster-management",
+      "local-path-storage"
+    ],
+    "labels": {
+      "label": "ラベル",
+      "editvalue": "キーと値の両方が必要です",
+      "manage": "ラベルを管理",
+      "clearFilter": "フィルターをクリア",
+      "searchLabelsPlaceholder": "ラベルを検索...",
+      "bulkEditTitle": "{{count}} クラスターのラベルを編集",
+      "editTitle": "{{name}} のラベルを編集",
+      "bulkEditDescription": "{{count}} クラスターのラベルを編集しています。変更内容は選択されたすべてのクラスターに適用されます。",
+      "keyPlaceholder": "例: environment",
+      "valuePlaceholder": "例: production",
+      "protectedLabelsCannotBeModified": "🔒 保護されたラベルは変更できません。",
+      "exitSearch": "検索を終了",
+      "saveChanges": "変更を保存",
+      "saveChangesButton": "変更を保存",
+      "tooltipTitle": "クラスター：",
+      "noLabelsAvailable": "利用可能なクラスターにラベルが設定されていません。ポリシーに使用するにはラベル付きクラスターを追加してください。",
+      "noLabelsMatchSearch": "検索に一致するラベルがありません。",
+      "noLabelsFound": "利用可能なクラスターにラベルが見つかりません。",
+      "clickToAdd": "キャンバスに追加するにはラベルをクリック",
+      "edit": "ラベルを編集",
+      "add": "ラベルを追加",
+      "for": "対象：",
+      "bulkEdit": "一括編集モード",
+      "appendToExisting": "既存ラベルに追加",
+      "key": "ラベルキー",
+      "value": "ラベル値",
+      "noLabels": "ラベルはまだ追加されていません",
+      "noMatchingLabels": "一致するラベルが見つかりません",
+      "addYourFirst": "上の項目を使って最初のラベルを追加し、このクラスターを整理してください。",
+      "tip": "ヒント：Enter キーで項目を移動、またはラベルをダブルクリックして編集",
+      "tryDifferentSearch": "別の検索語を試すか、検索をクリアしてください",
+      "count": "{{count}} 件のラベル",
+      "description": "クラスターを整理・分類するためにラベルを追加・編集・削除します。",
+      "defaultProtected": "デフォルトラベル - 変更不可",
+      "bindingProtected": "バインディングポリシーで使用中 - 変更不可",
+      "manageLabels": "ラベルの管理",
+      "bulkLabels": "一括ラベル管理",
+      "editValue": "ラベルを編集",
+      "removeLabel": "ラベルを削除",
+      "cancelEdit": "編集をキャンセル",
+      "added": "新しいラベルを追加：{{key}}",
+      "updated": "ラベルを更新：{{key}}",
+      "removed": "ラベルを削除：{{key}}",
+      "updateSuccess": "ラベルの更新に成功しました",
+      "duplicate": "キー \"{{key}}\" のラベルはすでに存在します",
+      "protected": "保護されたラベルは変更できません：{{key}}",
+      "finishEditing": "編集を完了",
+      "noClustersToEdit": "編集可能なクラスターがありません",
+      "noClustersSelected": "クラスターが選択されていません",
+      "cannotDeleteUsed": "ラベルはバインディングポリシーで使用されているため削除できません。先にポリシーを削除してください。",
+      "bulkUpdateSuccess": "{{count}} クラスターのラベルを更新しました",
+      "bulkUpdatePartial": "{{success}} 件は成功、{{failures}} 件は失敗しました",
+      "bulkUpdateFail": "{{count}} クラスターのラベル更新に失敗しました"
+    },
+    "dialog": {
+      "selectMultipleClusters": "複数のクラスターを選択",
+      "selectClusterToEdit": "編集するクラスターを選択",
+      "selectedCount": "{{count}} 件選択済み",
+      "editClustersButton": "{{count}} 件のクラスターを編集"
+    },
+    "list": {
+      "more": "さらに表示",
+      "title": "クラスターの管理",
+      "subtitle": "Kubernetes クラスターの管理と監視",
+      "searchPlaceholder": "名前、ラベル、ステータス、またはコンテキストでクラスターを検索...",
+      "import": "クラスターをインポート",
+      "noResults": "クラスターが見つかりません",
+      "name": "名前",
+      "creationTime": "作成日時",
+      "context": "コンテキスト",
+      "description": "Kubernetes クラスターを管理・監視します",
+      "filter": "ステータスフィルター",
+      "activeFilters": "適用中のフィルター：",
+      "searchFilter": "検索：「{{query}}」",
+      "statusFilter": "ステータス：{{value}}",
+      "labelFilter": "ラベル：{{key}}={{value}}",
+      "clearAll": "すべてクリア",
+      "showingResults": "{{count}} 件の結果を表示中",
+      "clearSearch": "Esc を押すと検索をクリア",
+      "importCluster": "クラスターをインポート",
+      "importYourFirst": "最初のクラスターをインポート",
+      "searchLabelsPlaceholder": "ラベルを検索...",
+      "search": "検索",
+      "label": "ラベル",
+      "filteredByLabel": "ラベルでフィルター：",
+      "filterByLabel": "このラベルでフィルター",
+      "noClustersFound": "クラスターが見つかりません",
+      "noClustersMatchBoth": "検索語とフィルターの両方に一致するクラスターがありません",
+      "noClustersMatchSearch": "検索語に一致するクラスターがありません",
+      "noClustersMatchFilter": "フィルター条件に一致するクラスターがありません",
+      "noClustersAvailable": "まだクラスターが登録されていません。まずはクラスターをインポートしてください。",
+      "table": {
+        "name": "名前",
+        "labels": "ラベル",
+        "creationTime": "作成日時",
+        "context": "コンテキスト",
+        "status": "ステータス",
+        "actions": "操作"
+      },
+      "status": {
+        "active": "稼働中",
+        "inactive": "停止中",
+        "pending": "保留中"
+      },
+      "actions": {
+        "viewDetails": "詳細を表示",
+        "editLabels": "ラベルを編集",
+        "copyName": "名前をコピー",
+        "detachCluster": "クラスターを切断"
+      },
+      "labels": {
+        "edit": "ラベルを編集",
+        "add": "ラベルを追加",
+        "bulkEdit": "一括編集モード",
+        "appendToExisting": "既存のラベルに追加",
+        "key": "ラベルキー",
+        "value": "ラベル値",
+        "noLabels": "ラベルがまだ追加されていません",
+        "noMatchingLabels": "一致するラベルが見つかりません",
+        "addYourFirst": "このクラスターを整理するために、上のフィールドを使って最初のラベルを追加してください。",
+        "tip": "ヒント：Enterキーでフィールドを移動、またはラベルをダブルクリックして編集",
+        "tryDifferentSearch": "別の検索語を試すか、検索をクリアしてください",
+        "count": "{{count}} 件のラベル",
+        "description": "クラスターの整理・分類のためにラベルを追加、編集、または削除します。",
+        "defaultProtected": "デフォルトのラベル - 変更できません",
+        "bindingProtected": "バインディングポリシーで使用中 - 変更できません",
+        "manage": "ラベルを管理"
+      }
+    },
+    "details": {
+      "title": "クラスターの詳細",
+      "overview": "概要",
+      "labels": "ラベル",
+      "resources": "リソース",
+      "status": "ステータス",
+      "events": "イベント",
+      "logs": "ログ"
+    },
+    "clusterDetailDialog": {
+      "title": "クラスターの詳細",
+      "loading": "クラスター情報を読み込み中...",
+      "error": {
+        "title": "クラスターの詳細の読み込みに失敗しました",
+        "description": "このクラスターの情報を取得中にエラーが発生しました。"
+      },
+      "status": {
+        "available": "利用可能",
+        "unavailable": "利用不可"
+      },
+      "kubernetes": "Kubernetes {{version}}",
+      "createdOn": "{{date}} に作成",
+      "labels": "ラベル",
+      "labelCount": "{{count}} 個のラベル",
+      "noLabels": "このクラスターにはラベルが設定されていません",
+      "capacityResources": "キャパシティとリソース",
+      "cpuCores": "CPUコア数",
+      "memory": "メモリ",
+      "podCapacity": "Pod上限数",
+      "lastRefreshed": "最終更新",
+      "noClusterSelected": "クラスターが選択されていません"
+    },
+    "dashboard": {
+      "title": "ダッシュボード",
+      "lastUpdatedJustNow": "最終更新: たった今",
+      "status": "ステータス: 最適",
+      "other": "その他",
+      "distribution": "分布",
+      "state": "保留中または非アクティブ",
+      "otherClusters": "その他のクラスター",
+      "hoverFormula": "ホバーすると計算式の内訳を表示",
+      "healthScore": "健全性スコアの計算式",
+      "clusterHealth": "クラスター全体の健全性",
+      "clusterStatus": "クラスターステータス",
+      "welcome": "KubeStellar 管理ダッシュボードへようこそ",
+      "errorLoading": "クラスター情報の読み込みエラー",
+      "addCluster": "クラスターを追加",
+      "notAvailable": "該当なし",
+      "invalidDate": "無効な日付",
+      "managedClusters": "管理中のクラスター",
+      "total": "合計",
+      "viewAll": "すべて表示",
+      "cpuCapacity": "CPUキャパシティ",
+      "memoryCapacity": "メモリキャパシティ",
+      "podCapacity": "Podキャパシティ",
+      "podCapacityLabel": "Podキャパシティ",
+      "active": "アクティブ",
+      "inactive": "非アクティブ",
+      "noManagedClusters": "管理対象のクラスターが見つかりません",
+      "importCluster": "クラスターをインポート",
+      "showMoreClusters": "さらにクラスターを表示",
+      "clustersActive": "稼働中のクラスター",
+      "systemHealth": "システムの健全性",
+      "refresh": "更新",
+      "noRecentActivity": "最近のアクティビティがありません",
+      "recentActivity": "最近のアクティビティ",
+      "resourceUtilization": "リソース使用状況",
+      "clusterMetrics": "クラスターメトリクスに基づく",
+      "pods": {
+        "formula": "Podの健全性の計算式",
+        "calculation": "すべての名前空間における健全なPod数と総Pod数の比率に基づいて計算されます。",
+        "status": "Podステータス、Readiness Probe、Liveness Check を考慮",
+        "value": "数値が高いほどクラスターの健全性が高いことを示します",
+        "formulaDesc": "(稼働中のPod / 総Pod数) × 100%",
+        "health": "Podの健全性"
+      },
+      "cpu": {
+        "usage": "CPU使用率",
+        "formula": "CPU使用率の計算式",
+        "calculation": "クラスター内のすべてのノードで現在使用中のCPUリソースの割合として計算されます。",
+        "value": "数値が低いほどリソースの余裕があることを示します",
+        "formulaDesc": "(使用中のCPUコア数 / 総CPUコア数) × 100%",
+        "health": "数値が低いほどパフォーマンスが良好"
+      },
+      "memory": {
+        "usage": "メモリ使用率",
+        "formula": "メモリ使用率の計算式",
+        "calculation": "クラスター内のすべてのノードで現在使用中のメモリリソースの割合として計算されます。",
+        "value": "数値が低いほどリソースの余裕があることを示します",
+        "formulaDesc": "(使用中のメモリ / 総メモリ) × 100%"
+      },
+      "stats": {
+        "running": "稼働中および利用可能",
+        "totalClusters": "クラスター総数",
+        "activeClusters": "稼働中のクラスター数",
+        "bindingPolicies": "バインディングポリシー",
+        "currentContext": "現在のコンテキスト",
+        "none": "なし"
+      },
+      "health": {
+        "excellent": "非常に良い",
+        "good": "良好",
+        "fair": "普通",
+        "needsAttention": "注意が必要",
+        "critical": "重大"
+      },
+      "guide": {
+        "title": "ダッシュボードガイド",
+        "clusterStats": "クラスター統計",
+        "clusterStatsDesc": "クラスターの合計数と稼働中数を表示します。メトリクスにカーソルを合わせると、詳細な計算方法を確認できます。",
+        "healthMetrics": "健全性メトリクス",
+        "healthMetricsDesc": "CPU使用率、メモリ使用率、Pod健全性を表示します。緑は良好、黄は注意が必要です。",
+        "recentActivity": "最近のアクティビティ",
+        "recentActivityDesc": "クラスターやポリシーの最近の変更を表示します。クラスターをクリックすると詳細情報が確認できます。",
+        "proTip": "プロのヒント",
+        "proTipDesc": "メトリクスやチャートにカーソルを合わせると、計算方法や次に取るべきアクションの詳細が表示されます。"
+      }
+    },
+    "detach": {
+      "title": "クラスターの切断",
+      "confirmation": "次のクラスターを切断してもよろしいですか？",
+      "context": "コンテキスト",
+      "warning": "警告: この操作によりクラスターは管理対象から除外され、このインターフェースからは表示・操作できなくなります。",
+      "detaching": "切断中...",
+      "detach": "クラスターーを切断"
+    }
+  },
+  "webSocket": {
+    "errors": {
+      "notConnected": "WebSocketが接続されていません",
+      "closingError": "WebSocketの切断時にエラーが発生しました：",
+      "expectedStringData": "JSON解析には文字列データが必要です",
+      "processingFailed": "WebSocketメッセージの処理に失敗しました",
+      "connectionError": "WebSocketエラー"
+    }
+  },
+  "wdsQueries": {
+    "errors": {
+      "fetchWorkloads": "ワークロードの取得に失敗しました",
+      "errorFetchingWorkloads": "ワークロード取得時のエラー：",
+      "fetchWorkloadDetails": "ワークロードの詳細取得に失敗しました",
+      "errorFetchingWorkloadDetails": "ワークロード詳細取得時のエラー：",
+      "statusFetchFailed": "ステータスの取得に失敗しました：",
+      "createWorkloadFailed": "ワークロードの作成に失敗しました",
+      "errorCreatingWorkload": "ワークロード作成時のエラー：",
+      "uploadFileFailed": "ファイルのアップロードに失敗しました",
+      "errorUploadingFile": "ファイルアップロード時のエラー：",
+      "updateWorkloadFailed": "ワークロードの更新に失敗しました",
+      "errorUpdatingWorkload": "ワークロード更新時のエラー：",
+      "scaleWorkloadFailed": "ワークロードのスケールに失敗しました",
+      "errorScalingWorkload": "ワークロードスケール時のエラー：",
+      "deleteWorkloadFailed": "ワークロードの削除に失敗しました",
+      "errorDeletingWorkload": "ワークロード削除時のエラー：",
+      "fetchWorkloadLogsFailed": "ワークロードのログ取得に失敗しました",
+      "errorFetchingWorkloadLogs": "ワークロードログ取得時のエラー："
+    },
+    "success": {
+      "workloadCreated": "ワークロードが正常に作成されました",
+      "fileUploaded": "ファイルが正常にアップロードされました",
+      "workloadUpdated": "ワークロードが正常に更新されました",
+      "workloadScaled": "ワークロードを{{replicas}}レプリカにスケールしました",
+      "workloadDeleted": "ワークロードが正常に削除されました"
+    },
+    "defaults": {
+      "deploymentKind": "deployment",
+      "defaultNamespace": "default"
+    }
+  },
+  "clusterQueries": {
+    "status": {
+      "available": "利用可能",
+      "unavailable": "利用不可"
+    },
+    "logging": {
+      "clusterOnboardRequestPayload": "[DEBUG] クラスターオンボードリクエストのペイロード：",
+      "clusterOnboardResponse": "[DEBUG] クラスターオンボードの応答：",
+      "onboardSuccessful": "[DEBUG] クラスターのオンボードが成功しました。クエリキャッシュを無効化します",
+      "onboardError": "[DEBUG] クラスターオンボードの変更処理のエラー：",
+      "mutationStart": "[DEBUG] ========== 変更処理開始 ==========",
+      "context": "[DEBUG] コンテキスト：",
+      "cluster": "[DEBUG] クラスター：",
+      "originalLabels": "[DEBUG] 元のラベル：",
+      "deletedLabels": "[DEBUG] 削除されたラベル：",
+      "processingBulkUpdate": "[DEBUG] {{count}}個のクラスターに対してラベルの一括更新を処理中",
+      "addingDeletedLabels": "[DEBUG] 削除されたラベルを空の値として追加中：",
+      "finalLabels": "[DEBUG] バックエンドに送信される最終ラベル：",
+      "apiPayload": "[DEBUG] API ペイロード：",
+      "apiResponse": "[DEBUG] API 応答：",
+      "apiError": "[DEBUG] API エラー：",
+      "labelsUpdated": "[DEBUG] ラベルが正常に更新されました。クエリキャッシュを無効化します",
+      "errorUpdatingLabels": "[DEBUG] クラスターラベルの更新エラー：",
+      "detachingCluster": "[DEBUG] クラスターをデタッチ中：",
+      "detachSuccessful": "[DEBUG] クラスターのデタッチが成功しました。クエリキャッシュを無効化します",
+      "detachError": "[DEBUG] クラスターのデタッチミューテーションエラー：",
+      "skippingDetailsFetch": "[DEBUG] 仮想一括クラスターの詳細取得をスキップ"
+    },
+    "messages": {
+      "applyLabelsToMultipleClusters": "{{count}}個のクラスターにラベルを適用します"
+    },
+    "defaults": {
+      "virtualBulkOperationId": "virtual-bulk-operation"
+    }
+  },
+  "bpQueries": {
+    "logging": {
+      "fetchingPolicyDetails": "バインディングポリシー「{{policyName}}」の詳細を取得中",
+      "receivedResponses": "両方のAPIエンドポイントから応答を受信しました",
+      "foundPolicyDetails": "メインのBP応答内にポリシーの詳細が見つかりました：",
+      "receivedStatusData": "ステータスデータを受信しました：",
+      "yamlFromResponse": "レスポンスのルートから直接YAMLを使用",
+      "yamlFromMetadata": "metadata.annotations.yamlからYAMLを使用",
+      "yamlAvailable": "ポリシー「{{policyName}}」のYAMLコンテンツを抽出済み（{{length}}文字）",
+      "noYamlFound": "ポリシー「{{policyName}}」に対応するYAMLコンテンツが見つかりませんでした",
+      "parsedYaml": "解析されたYAML：",
+      "errorParsingYaml": "YAMLの解析に失敗しました：",
+      "usingStatus": "ステータスAPIエンドポイントから取得したステータス「{{status}}」を使用",
+      "finalPolicyObject": "最終的なポリシーオブジェクト：",
+      "extractedUniqueWorkloads": "それぞれ異なるワークロードを合計 {{count}} 件抽出しました",
+      "rawBindingPolicies": "生のバインディングポリシー："
+    },
+    "errors": {
+      "policyNotFound": "メインレスポンスにポリシー「{{policyName}}」が見つかりませんでした",
+      "errorParsingJson": "raw fieldsv1 からのJSON解析エラー：",
+      "resourcesNull": "名前空間「{{namespace}}」のリソース種別「{{resourceType}}」に対して resources が null です",
+      "resourcesNullClusterScoped": "クラスター範囲のリソース種別「{{resourceType}}」に対して resources が null です"
+    }
+  },
+  "wecsTopology": {
+    "title": "リモートクラスターのツリービュー",
+    "createWorkload": "ワークロードの作成",
+    "viewModes": {
+      "tiles": "タイル表示",
+      "list": "リスト表示"
+    },
+    "note": "注：このビューでは、default、Kubernetesシステム、およびOpenShiftのネームスペースは除外されています。",
+    "emptyState": {
+      "title": "ワークロードが見つかりません",
+      "description": "最初のワークロードを作成して開始しましょう"
+    },
+    "contextMenu": {
+      "details": "詳細",
+      "edit": "編集",
+      "logs": "ログ",
+      "execPods": "Podを実行"
+    },
+    "fullscreen": {
+      "toggle": "全画面表示の切り替え"
+    },
+    "timeAgo": {
+      "today": "今日",
+      "days": "{{count}}日前",
+      "days_plural": "{{count}}日前"
+    },
+    "status": {
+      "active": "アクティブ",
+      "inactive": "非アクティブ"
+    },
+    "zoomControls": {
+      "groupByResource": "リソース／種類ごとにグループ化",
+      "expandAll": "すべての親ノードの子ノードを展開",
+      "collapseAll": "すべての親ノードの子ノードを折りたたむ",
+      "zoomIn": "ズームイン",
+      "zoomOut": "ズームアウト"
+    },
+    "nodeLabel": {
+      "labels": "ラベル：",
+      "noLabels": "ラベルなし"
+    }
+  },
+  "wecsDetailsPanel": {
+    "common": {
+      "update": "更新",
+      "sync": "同期",
+      "delete": "削除",
+      "close": "閉じる",
+      "unknown": "不明",
+      "na": "該当なし",
+      "today": "今日",
+      "daysAgo": "{{count}}日前"
+    },
+    "buttons": {
+      "clearTerminal": "ターミナルをクリア",
+      "minimize": "最小化",
+      "maximize": "最大化"
+    },
+    "tabs": {
+      "summary": "概要",
+      "edit": "編集",
+      "logs": "ログ",
+      "execPods": "Pod実行"
+    },
+    "terminal": {
+      "connecting": "コンテナ「{{containerName}}」のPodシェルに接続中...",
+      "connected": "コンテナ「{{containerName}}」のPodシェルに接続されました",
+      "connectionClosed": "接続が終了しました",
+      "connectionNotActive": "接続がアクティブではありません。コマンドを送信できません。",
+      "errorConnecting": "Pod への接続に失敗しました。もう一度お試しください。"
+    },
+    "format": {
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "table": {
+      "kind": "種別",
+      "name": "名前",
+      "namespace": "ネームスペース",
+      "createdAt": "作成日時",
+      "context": "コンテキスト",
+      "labels": "ラベル"
+    },
+    "containers": {
+      "selectContainer": "コンテナを選択",
+      "noContainersFound": "コンテナが見つかりません"
+    },
+    "errors": {
+      "failedLoadClusterDetails": "クラスターの詳細の読み込みに失敗しました。",
+      "failedLoadDetails": "{{type}} の詳細の読み込みに失敗しました。",
+      "apiNotImplemented": "Pod「{{resourceName}}」の更新用 API は未実装です",
+      "failedFetchContainers": "コンテナ一覧の取得に失敗しました"
+    },
+    "cluster": {
+      "active": "アクティブ"
+    },
+    "noManifest": "マニフェストは利用できません"
+  },
+  "treeView": {
+    "title": "ワークロードの管理",
+    "createWorkload": "ワークロードを作成",
+    "note": "注：このビューでは、default、Kubernetesシステム、およびOpenShiftのネームスペースは除外されています。",
+    "filteringContext": "フィルター中：{{context}} コンテキストのリソースのみを表示しています。",
+    "unknown": "不明",
+    "viewModes": {
+      "tiles": "タイル",
+      "list": "リスト"
+    },
+    "timeAgo": {
+      "today": "今日",
+      "days": "{{count}}日前",
+      "days_plural": "{{count}}日前"
+    },
+    "emptyState": {
+      "title": "ワークロードが見つかりません",
+      "description": "最初のワークロードを作成して始めましょう"
+    },
+    "fullscreen": {
+      "toggle": "全画面表示の切り替え"
+    },
+    "contextMenu": {
+      "details": "詳細",
+      "delete": "削除",
+      "edit": "編集",
+      "logs": "ログ"
+    },
+    "deleteDialog": {
+      "title": "リソース削除の確認",
+      "message": "「{{name}}」を削除してもよろしいですか？この操作は元に戻せません。",
+      "confirm": "はい、削除します"
+    }
+  },
+  "quickConnect": {
+    "title": "ワンクリックでクラスターをセットアップ",
+    "description": "コマンド不要のシンプルで自動化されたクラスターオンボーディング。クラスターを選択するだけで、あとはシステムが処理します。",
+    "selectCluster": "Kubernetesクラスターを選択",
+    "searchingClusters": "利用可能なクラスターを検索中...",
+    "errorLoadingClusters": "クラスターの読み込みエラー",
+    "automatedOnboarding": "自動クラスターオンボーディング",
+    "new": "新規",
+    "automatedDescription": "こちらはKubernetesクラスターを接続する最も簡単な方法です。クラスターを選択して「オンボード」ボタンをクリックするだけで、コマンドを手動で実行することなく直接接続されます。",
+    "retry": "再試行",
+    "chooseCluster": "クラスターを選択...",
+    "noClusters": "利用可能なクラスターがありません",
+    "discoveredClusters": {
+      "title": "検出されたクラスター",
+      "description": "これは環境内で検出されたクラスターです。続行するには1つ選択してください。"
+    },
+    "refreshClustersList": "クラスターの一覧を更新",
+    "howToConnect": "クラスター接続の方法",
+    "steps": {
+      "step1": {
+        "title": "クラスターを選択",
+        "description": "上のドロップダウンからクラスターを選択します"
+      },
+      "step2": {
+        "title": "ワンクリックオンボーディング",
+        "description": "「クラスターをオンボード」ボタンをクリックして自動処理を開始します"
+      },
+      "step3": {
+        "title": "即時接続",
+        "description": "クラスターは手動コマンドなしで自動的にオンボードされます"
+      }
+    },
+    "whyUseAutomated": "なぜ自動オンボーディングを使うのか？",
+    "approaches": {
+      "automated": {
+        "title": "自動アプローチ（新しい）",
+        "features": [
+          "ワンクリックでセットアップ完了",
+          "手動コマンドの実行不要",
+          "体験がスムーズ",
+          "ミスの可能性が減少"
+        ]
+      },
+      "manual": {
+        "title": "手動アプローチ（従来）",
+        "features": [
+          "コマンドをコピーして手動で実行",
+          "複数の CLI ステップが必要",
+          "より複雑なプロセス",
+          "コマンドラインの知識が必要"
+        ]
+      }
+    },
+    "buttons": {
+      "onboarding": "オンボーディング中...",
+      "onboard": "クラスターをオンボード",
+      "back": "戻る",
+      "close": "閉じる",
+      "openDashboard": "クラスター ダッシュボードを開く",
+      "goToDashboard": "ダッシュボードに移動"
+    },
+    "success": {
+      "title": "クラスターのオンボード成功",
+      "clusterAdded": "クラスターが正常に追加されました",
+      "clusterAvailable": "クラスターはプラットフォーム上で利用可能になりました",
+      "message": "クラスター {{clusterName}} は正常にオンボードされました。",
+      "detailMessage": "クラスター {{clusterName}} は正常にオンボードされました。次にできることはこちらです：",
+      "nextSteps": {
+        "viewManage": {
+          "title": "表示・管理",
+          "description": "ダッシュボードでクラスターのリソースや状態を確認・管理します"
+        },
+        "deployApps": {
+          "title": "アプリケーションのデプロイ",
+          "description": "コンテナ化されたアプリやサービスをクラスターにデプロイします"
+        },
+        "configureSettings": {
+          "title": "設定の構成",
+          "description": "クラスターの設定やポリシーをカスタマイズ・構成します"
+        }
+      }
+    }
+  },
+  "bindingPolicy": {
+    "editPolicy": "ポリシーを編集",
+    "saveAndCreatePolicy": "保存してポリシーを作成",
+    "title": "バインディングポリシーの管理",
+    "description": "ワークロードの分配に関するバインディングポリシーを作成・管理します",
+    "createBindingPolicy": "バインディングポリシーを作成",
+    "noBindingPolicies": "バインディングポリシーが見つかりません",
+    "noBindingPoliciesDescription": "利用可能なバインディングポリシーがありません",
+    "noBindingPoliciesWithFilter": "{{status}} フィルター条件に一致するバインディングポリシーはありません",
+    "notifications": {
+      "fetchError": "バインディングポリシーの取得に失敗しました",
+      "createSuccess": "バインディングポリシーが正常に作成されました",
+      "createError": "バインディングポリシーの作成に失敗しました",
+      "deleteSuccess": "バインディングポリシー「{{name}}」が正常に削除されました",
+      "deleteError": "バインディングポリシーの削除に失敗しました",
+      "deleteManySuccess": "{{count}} 件のバインディング{{count, plural, one {ポリシー} other {ポリシー}}}が正常に削除されました",
+      "deleteManyError": "バインディングポリシーの一括削除に失敗しました",
+      "deploySuccess": "デプロイが正常に完了しました",
+      "deployError": "デプロイに失敗しました",
+      "yamlGenerateError": "バインディングポリシーのYAML生成に失敗しました",
+      "quickConnectError": "バインディングポリシーの作成に失敗しました",
+      "labelsAssignedTitle": "ラベルが割り当てられました",
+      "policyBindingCreatedTitle": "ポリシーバインディングが作成されました",
+      "labelsAssignedChip": "ラベルは特定のリソースにポリシーを適用するために使用されます",
+      "policyBindingCreatedChip": "バインディングが作成され、ポリシーが伝播されます"
+    },
+    "tabs": {
+      "selectItems": "項目を選択",
+      "yaml": "YAML",
+      "uploadFile": "ファイルをアップロード"
+    },
+    "upload": {
+      "createNamespaceAutomatically": "Namespaceを自動で作成",
+      "chooseDifferentYaml": "別のYAMLファイルを選択",
+      "filePreview": "ファイルプレビュー",
+      "chooseOrDrag": "YAMLファイルを選択またはドラッグ＆ドロップ",
+      "or": "または",
+      "chooseYaml": "YAMLファイルを選択",
+      "uploadAndDeploy": "アップロードしてデプロイ",
+      "dropHere": "ここにYAMLファイルをドロップ",
+      "chooseOrUpload": "YAMLファイルを選択またはアップロード",
+      "selectFile": "YAMLファイルを選択",
+      "acceptedFormats": "対応フォーマット：.yaml, .yml",
+      "chooseDifferentFile": "別のファイルを選択"
+    },
+    "previewGeneratedYaml": "生成されたYAMLをプレビュー",
+    "deployBindingPolicies": "バインディングポリシーをデプロイ",
+    "deployBindingPolicy": "バインディングポリシーをデプロイ",
+    "creating": "作成中...",
+    "loadingResources": "リソースを読み込み中...",
+    "deploying": "デプロイ中...",
+    "table": {
+      "name": "バインディングポリシー名",
+      "clusters": "クラスター",
+      "workload": "ワークロード",
+      "creationDate": "作成日",
+      "status": "ステータス",
+      "actions": "操作",
+      "noClusters": "対象のクラスターが定義されていません",
+      "noWorkloads": "ワークロードが定義されていません"
+    },
+    "yamlGeneration": {
+      "resourceRequired": "少なくとも1つのリソースタイプを指定する必要があります",
+      "resourceRequiredYaml": "YAMLを生成するには、少なくとも1つのリソースタイプを指定する必要があります"
+    },
+    "quickConnect": {
+      "unknownWorkload": "不明",
+      "unknownLocationGroup": "不明"
+    },
+    "loading": "読み込み中...",
+    "unknown": "不明",
+    "visualization": {
+      "title": "バインディングポリシーネットワーク",
+      "policies": "{{count}} 件のポリシー",
+      "targetCluster": "ターゲットクラスター",
+      "clusters": "{{count}} クラスター",
+      "workloads": "{{count}} ワークロード",
+      "showWorkloads": "ワークロードを表示",
+      "highlightActive": "アクティブを強調表示",
+      "refresh": "ビジュアライゼーションを更新",
+      "fitView": "ビューに合わせる",
+      "search": "ノードを検索...（⌘+K）",
+      "legend": "凡例",
+      "policyPreview": "ポリシープレビュー",
+      "policyDistribution": "ポリシーの分布",
+      "previewMode": "プレビューモード",
+      "workloadSource": "ワークロードのソース",
+      "matchingWorkloads": "{{count}} 件の一致するワークロード",
+      "matchRateShort": "{{matchRate}}% 一致",
+      "targetClusters": "ターゲットクラスター（{{count}}）",
+      "moreClusters": "+{{count}} 件を追加表示",
+      "policyInsights": "ポリシーのインサイト",
+      "status": "ステータス",
+      "lastModified": "最終更新日時",
+      "notModified": "未変更",
+      "matchRate": "一致率",
+      "matchRateLong": "利用可能なクラスターの {{matchRate}}% に一致",
+      "legendItems": {
+        "activePolicy": "アクティブなポリシー",
+        "cluster": "クラスター",
+        "workload": "ワークロード",
+        "activeConnection": "アクティブな接続",
+        "inactiveConnection": "非アクティブな接続"
+      },
+      "layout": {
+        "title": "レイアウト",
+        "horizontal": "横方向",
+        "vertical": "縦方向",
+        "radial": "放射状"
+      },
+      "empty": {
+        "title": "ビジュアライゼーションデータなし",
+        "description": "表示できるバインディングポリシー、クラスター、ワークロードがありません。リソースを作成すると、ここに表示されます。"
+      },
+      "error": {
+        "title": "ビジュアライゼーションエラー",
+        "description": "ビジュアライゼーションの描画中にエラーが発生しました。"
+      },
+      "loading": "ビジュアライゼーションを読み込み中...",
+      "searchResources": "リソースを検索",
+      "noNodesFound": "「{{searchTerm}}」に一致するノードが見つかりませんでした"
+    },
+    "policyName": "ポリシー名",
+    "namespace": "Namespace",
+    "propagationMode": "伝播モード",
+    "updateStrategy": "更新戦略",
+    "resources": "リソース",
+    "advanced": "詳細設定",
+    "basic": "基本設定",
+    "scheduling": "スケジューリングルール",
+    "yaml": "YAML",
+    "modes": {
+      "downsyncOnly": "下り同期のみ",
+      "upsyncOnly": "上り同期のみ",
+      "bidirectionalSync": "双方向同期"
+    },
+    "strategies": {
+      "serverSideApply": "サーバーサイド適用",
+      "forceApply": "強制適用",
+      "rollingUpdate": "ローリングアップデート",
+      "blueGreenDeployment": "ブルーグリーンデプロイ"
+    },
+    "deploymentType": {
+      "allClusters": "利用可能なすべてのクラスター",
+      "selectedClusters": "選択されたクラスター"
+    },
+    "confirm": {
+      "title": "バインディングポリシーのデプロイ確認",
+      "description": "{{count}}件のバインディングポリシーをデプロイしようとしています。続行する前に内容を確認してください。",
+      "deploy": "ポリシーをデプロイ",
+      "deploying": "デプロイ中...",
+      "viewYaml": "YAML を表示"
+    },
+    "emptyState": {
+      "noClusters": {
+        "title": "準備完了のクラスターがありません",
+        "description": "現在バインディング可能なクラスターはありません。バインディングポリシーを作成するには、少なくとも1つのクラスターが「準備完了」状態である必要があります。",
+        "button": "クラスターを管理"
+      },
+      "noWorkloads": {
+        "title": "ワークロードが見つかりません",
+        "description": "利用可能なワークロードがありません。ワークロードへのアクセス権があることを確認してください。",
+        "button": "ワークロードへ移動"
+      },
+      "noResources": {
+        "title": "クラスターまたはワークロードが見つかりません",
+        "description": "バインディングポリシーを作成するには、クラスターとワークロードの両方が必要です。",
+        "button": "リソースを表示"
+      },
+      "noPolicies": {
+        "title": "バインディングポリシーが見つかりません",
+        "description": "まずは最初のバインディングポリシーを作成して始めましょう",
+        "button": "バインディングポリシーを作成"
+      }
+    },
+    "loadingCanvas": "キャンバスデータを読み込んでいます...",
+    "selection": {
+      "infoAlert": "このインターフェースでは、バインディングポリシーを作成するためにシミュレーションされた応答を使用しています。左側のリストからクラスターを、右側のリストからワークロードを選択してキャンバスに追加し、ワークロードをクリックした後にクラスターをクリックすると、バインディングポリシーの接続が作成されます。",
+      "helpDialog": {
+        "title": "直接接続でバインディングポリシーを作成",
+        "intro": "以下の手順でバインディングポリシーを作成します：",
+        "steps": {
+          "selectClusters": "1. 左パネルからクラスターを選択してキャンバスに追加",
+          "selectWorkloads": "2. 右パネルからワークロードを選択してキャンバスに追加",
+          "createConnection": "3. ワークロードをクリックし、次にクラスターをクリックして直接接続を作成",
+          "fillDetails": "4. 表示されたダイアログでポリシーの詳細を入力",
+          "deploy": "5. 「バインディングポリシーをデプロイ」ボタンでデプロイをシミュレーション"
+        },
+        "gotIt": "了解",
+        "helpDialog": {
+          "title": "バインディングポリシーの作成方法",
+          "intro": "以下の手順でバインディングポリシーを作成します：",
+          "steps": {
+            "selectLabels": "1. キャンバスに追加するラベルを選択",
+            "selectLabelsDesc": "左パネルのクラスターおよび右パネルのワークロードをクリックして、バインディングポリシーキャンバスに追加します",
+            "deploy": "2. ポリシーをデプロイ",
+            "deployDesc": "「バインディングポリシーをデプロイ」をクリックして、選択したラベルに基づくクラスターとワークロードのバインディングポリシーを作成・デプロイします"
+          },
+          "tip": "ヒント：ラベルベースのアプローチを使うと、選択したラベルに一致するすべてのリソースに現在および将来自動的に適用される強力なバインディングポリシーを作成できます。",
+          "dontShowAgain": "次回から表示しない",
+          "tooltip": "選択手順を見る"
+        }
+      }
+    },
+    "messages": {
+      "noSelectedPolicies": "削除対象のポリシーが選択されていません",
+      "invalidPolicyNames": "エラー：選択されたポリシー名の一部が無効です",
+      "partialDeleteSuccess": "{{success}} 件のポリシーを削除しましたが、{{failures}} 件のポリシーの削除に失敗しました",
+      "deleteError": "バインディングポリシーの削除中にエラーが発生しました：{{errorMessage}}",
+      "updateSuccess": "バインディングポリシー「{{name}}」を正常に更新しました",
+      "updateError": "バインディングポリシー「{{name}}」の更新中にエラーが発生しました",
+      "simulatedAssignment": "{{policy}} を {{targetType}} {{target}} に正常に割り当てました（シミュレーション）",
+      "policyCreatedSuccess": "バインディングポリシー「{{name}}」を正常に作成しました"
+    },
+    "editDialog": {
+      "title": "バインディングポリシーの編集",
+      "infoTitle": "情報",
+      "info": "バインディングポリシーの構成を編集します。変更は保存後に適用されます。",
+      "name": "バインディングポリシー名",
+      "save": "変更を保存",
+      "unsavedTitle": "未保存の変更",
+      "unsavedWarning": "警告",
+      "unsavedInfo": "未保存の変更があります。保存せずに閉じてもよろしいですか？",
+      "continueEditing": "編集を続ける",
+      "discard": "変更を破棄"
+    },
+    "deleteDialog": {
+      "title": "バインディングポリシーの削除",
+      "confirm": "バインディングポリシー「{{name}}」を削除してもよろしいですか？この操作は元に戻せません。"
+    },
+    "header": {
+      "searchPlaceholder": "名前、ラベル、またはステータスでポリシーを検索",
+      "clearSearch": "Esc キーで検索をクリア",
+      "deleteSelected": "選択したものを削除",
+      "create": "バインディングポリシーの作成",
+      "activeFilters": "有効なフィルター：",
+      "search": "検索",
+      "status": "ステータス",
+      "clearAll": "すべてクリア"
+    },
+    "statusFilter": {
+      "all": "すべてのステータス",
+      "active": "アクティブ",
+      "pending": "保留中",
+      "inactive": "非アクティブ",
+      "label": "ステータスフィルター"
+    },
+    "availableItems": {
+      "title": "利用可能な項目",
+      "subtitle": "ポリシー、クラスター、またはワークロードをクリックしてキャンバスに追加します。",
+      "policy-list": "ポリシー",
+      "cluster-list": "クラスター",
+      "workload-list": "ワークロード",
+      "clickToAdd": "項目をクリックしてキャンバスに追加",
+      "none": "{{title}}は存在しません"
+    },
+    "canvas": {
+      "policiesOnCanvas": "キャンバス上のポリシー：",
+      "clusters": "{{count}}個のクラスター",
+      "workloads": "{{count}}個のワークロード",
+      "status": "ステータス：",
+      "namespace": "ネームスペース：",
+      "namespaces": "ネームスペース一覧：",
+      "clustersOnCanvas": "キャンバス上のクラスター：",
+      "workloadsOnCanvas": "キャンバス上のワークロード：",
+      "selectClusters": "ここでクラスターを選択",
+      "matches": "一致：{{count}}件の{{resourceType}}"
+    },
+    "labels": {
+      "title": "ラベル：",
+      "key": "キー",
+      "value": "値",
+      "add": "追加",
+      "count": "{{total}}に対して{{count}}件の一意なラベル"
+    },
+    "creatingConnection": "接続を作成中：",
+    "previewDialog": {
+      "title": "ポリシーのプレビューとインサイト",
+      "visualizationTab": "可視化",
+      "detailsTab": "詳細",
+      "matchingDetails": "一致の詳細",
+      "matchedClusters": "一致したクラスター（{{count}}件）",
+      "clusterStatus": "{{name}} - {{status}}",
+      "labels": "ラベル：{{labels}}",
+      "matchedWorkloads": "一致したワークロード（{{count}}件）",
+      "workloadNamespace": "{{name}}（{{namespace}}）"
+    },
+    "policyNameDialog": {
+      "title": "バインディングポリシーに名前を付ける",
+      "policyName": "ポリシー名",
+      "generateNew": "新しい名前を生成",
+      "placeholder": "バインディングポリシー名を入力...",
+      "invalid": "名前は小文字の英数字とハイフンのみ、最大253文字である必要があります",
+      "helper": "小文字の英字、数字、ハイフン（-）のみ使用可能",
+      "namingTipsTitle": "💡 名前付けのヒント：",
+      "namingTips": "「frontend-to-production」や「database-sync-policy」のような説明的な名前を使うと整理しやすくなります。",
+      "creating": "作成中...",
+      "createPolicy": "ポリシーを作成"
+    },
+    "configureDialog": {
+      "title": "バインディングポリシーの設定",
+      "creatingFor": "バインディングポリシーの作成対象：",
+      "creatingForDesc": "{{sourceType}}を{{targetType}}にリンクするバインディングポリシーを作成します。",
+      "tabs": {
+        "basic": "基本",
+        "advanced": "詳細設定",
+        "scheduling": "スケジューリング",
+        "yaml": "YAML"
+      },
+      "nameHelper": "バインディングポリシーの名前",
+      "namespaceHelper": "バインディングポリシーのネームスペース",
+      "updateStrategyHelper": "リソースの変更をクラスターにどのように適用するかを選択します。パネルからクラスターとワークロードを選択して追加してください。",
+      "addCustomLabels": "カスタムラベルを追加",
+      "labelsTooltip": "ラベルはリソースの識別や選択に役立ちます",
+      "tolerationsTitle": "トレラレーション（詳細設定）",
+      "tolerationExpression": "トレラレーション式",
+      "tolerationRequired": "トレラレーションが必要です",
+      "schedulingRules": "スケジューリングルール",
+      "schedulingTooltip": "このワークロードを受け取るためにクラスターが満たすべき条件を定義します",
+      "resource": "リソース",
+      "resource.cpu": "CPUコア数",
+      "resource.memory": "メモリ",
+      "resource.storage": "ストレージ",
+      "resource.pods": "利用可能なPod数",
+      "operator": "演算子",
+      "activeRules": "有効なルール：",
+      "noSchedulingRules": "スケジューリングルールは追加されていません。リソースに関係なく、すべての一致するクラスターにポリシーが適用されます。",
+      "yamlPreview": "YAMLプレビュー",
+      "yamlPreviewInfo": "これは適用されるYAMLのプレビューです。他のタブで変更を加えるとこのプレビューが更新されます。"
+    }
+  },
+  "workloads": {
+    "label": {
+      "title": "ワークロードラベル *",
+      "prefix": "kubestellar.io/workload:",
+      "helpTextError": "ラベルが見つかりません",
+      "helpText": "ワークロードラベルは key:value 形式のペアです。キーは固定で「kubestellar.io/workload」となっており、値のみ変更可能です。"
+    },
+    "github": {
+      "repositoryUrlLabel": "リポジトリ URL *",
+      "pathLabel": "パス *",
+      "branchLabel": "ブランチ（デフォルト: main）*",
+      "credentialsLabel": "認証情報",
+      "credentialsTip": "プライベートリポジトリ用の認証情報を選択または追加してください",
+      "addCredentials": "認証情報を追加",
+      "webhooksLabel": "Webhook",
+      "webhooksTip": "自動デプロイ用のWebhookを選択または追加してください",
+      "addWebhook": "Webhookを追加",
+      "previousDeploymentsTitle": "過去のデプロイ一覧",
+      "loadingPreviousDeployments": "過去のデプロイを読み込み中...",
+      "noPreviousDeployments": "過去のデプロイはありません。",
+      "confirmResourceDeletion": "リソースの削除確認",
+      "deleteConfirmation": "「{{name}}」を削除してもよろしいですか？この操作は取り消せません。",
+      "yesDelete": "はい、削除します",
+      "apply": "適用",
+      "deploying": "デプロイ中...",
+      "createFromYourGitHub": "自分のGitHubから作成",
+      "deployFromPopularRepositories": "人気のリポジトリからデプロイ",
+      "listOfPreviousDeployments": "過去のデプロイ一覧",
+      "repositoryUrl": "リポジトリ URL *",
+      "repositoryUrlPlaceholder": "例: https://github.com/username/repo",
+      "repositoryUrlTip": "有効な GitHub リポジトリの URL を入力してください",
+      "path": "パス *",
+      "pathPlaceholder": "例: /path/to/yaml",
+      "pathTip": "リポジトリ内の YAML ファイルへのパスを指定してください",
+      "branch": "ブランチ（デフォルト: main）*",
+      "branchPlaceholder": "例: master, dev-branch",
+      "branchTip": "デプロイ元とするブランチを指定してください",
+      "credentials": "認証情報",
+      "credentialsPlaceholder": "例: username-pat",
+      "title": "GitHub リポジトリから作成してデプロイ！",
+      "tab": {
+        "importFromGitHub": "GitHub からインポート",
+        "selectRepositorySource": "アプリケーションをインポートするリポジトリソースを選択してください",
+        "repositorySource": "リポジトリソース",
+        "selectRepository": "リポジトリを選択",
+        "repositoryDetails": "リポジトリの詳細",
+        "selectedRepository": "選択されたリポジトリ："
+      },
+      "options": {
+        "yourGitHub": {
+          "title": "あなたの GitHub リポジトリ",
+          "description": "自分の GitHub リポジトリからインポート"
+        },
+        "enterprise": {
+          "title": "エンタープライズリポジトリ",
+          "description": "GitHub Enterprise のリポジトリからインポート"
+        },
+        "public": {
+          "title": "パブリックリポジトリ",
+          "description": "任意の公開 GitHub リポジトリからインポート"
+        },
+        "popular": {
+          "title": "人気のリポジトリ",
+          "description": "おすすめのサンプルリポジトリから選択"
+        },
+        "placeholder": {
+          "yourGitHub": "あなたの GitHub リポジトリ用フォームがここに表示されます",
+          "enterprise": "エンタープライズリポジトリ用フォームがここに表示されます",
+          "public": "パブリックリポジトリ用フォームがここに表示されます"
+        }
+      }
+    },
+    "artifactHub": {
+      "searchPackages": "パッケージを検索",
+      "directDeploy": "Artifact Hub から Helm チャートをデプロイ",
+      "listRepositories": "リポジトリ一覧",
+      "form": {
+        "packageId": "パッケージ ID *",
+        "packageIdTooltip": "形式: helm/リポジトリ名/チャート名（例: helm/bitnami/nginx）",
+        "packageIdPlaceholder": "helm/bitnami/nginx",
+        "packageIdTip": "Helm チャートのパッケージ ID を指定（例: helm/bitnami/nginx）",
+        "version": "バージョン（デフォルト: 最新）",
+        "versionTooltip": "デプロイするチャートのバージョン（例: 13.2.12）。未指定の場合は最新が使用されます。",
+        "versionPlaceholder": "13.2.12（空欄で最新）",
+        "versionTip": "デプロイするバージョンを指定（空欄で最新）",
+        "releaseName": "リリース名 *",
+        "releaseNameTooltip": "Helm リリースを識別するための名前",
+        "releaseNamePlaceholder": "my-nginx",
+        "releaseNameTip": "Helm リリース名を指定してください",
+        "namespace": "ネームスペース",
+        "namespaceTooltip": "デプロイ先の Kubernetes ネームスペース",
+        "namespacePlaceholder": "default",
+        "namespaceTip": "デプロイ先のネームスペースを指定（デフォルトは 'default'）",
+        "customValues": "カスタム値",
+        "customValuesTooltip": "形式: key=value,key2=value2（例: service.type=LoadBalancer,service.port=80）",
+        "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
+        "customValuesTip": "Helm チャートに渡すカスタム設定（key=value形式）"
+      },
+      "validation": {
+        "selectPackage": "まずパッケージを選択してください",
+        "enterWorkloadLabel": "ワークロードラベルを入力してください",
+        "enterPackageId": "パッケージ ID を入力してください。",
+        "enterReleaseName": "リリース名を入力してください。"
+      },
+      "buttons": {
+        "close": "閉じる",
+        "apply": "適用"
+      },
+      "searchPackagesForm": {
+        "searchHint": "Artifact Hub で Helm パッケージを検索するには入力を開始してください",
+        "errorMessage": {
+          "enterSearchTerm": "検索語を入力してください",
+          "noPackagesFound": "'{{query}}' に一致するパッケージが見つかりませんでした",
+          "searchFailed": "検索に失敗しました: {{message}}"
+        },
+        "serviceConfig": {
+          "title": "サービス設定",
+          "serviceType": "サービス種別",
+          "servicePort": "サービスポート"
+        },
+        "packageDetails": {
+          "stars": "スター数",
+          "repository": "リポジトリ：",
+          "verified": "検証済み",
+          "namespace": "Namespace（ネームスペース）"
+        }
+      },
+      "repositoriesList": {
+        "tip": "リポジトリは Helm チャートのソースです。カードをクリックすると詳細を表示します",
+        "loading": "リポジトリを読み込み中...",
+        "noRepositories": "利用可能なリポジトリがありません",
+        "official": "公式",
+        "helm": "Helm",
+        "other": "その他",
+        "organization": "組織：",
+        "user": "ユーザー：",
+        "url": "URL："
+      }
+    },
+    "yaml": {
+      "createNamespaceAutomatically": "Namespace を自動作成する",
+      "editor": "YAML エディター",
+      "deploy": "デプロイ"
+    },
+    "helm": {
+      "createOwn": "独自の Helm チャートを作成",
+      "popularCharts": "人気の Helm チャートからデプロイ",
+      "prevCharts": "ユーザー作成チャート一覧",
+      "form": {
+        "repositoryName": "リポジトリ名 *",
+        "repositoryNameTip": "Helm リポジトリの名前を指定してください",
+        "repositoryNamePlaceholder": "例: my-helm-repo",
+        "repositoryUrl": "リポジトリ URL *",
+        "repositoryUrlTip": "有効な Helm リポジトリの URL を使用してください",
+        "repositoryUrlPlaceholder": "例: https://charts.helm.sh/stable",
+        "chartName": "チャート名 *",
+        "chartNameTip": "デプロイする Helm チャートの名前を指定してください",
+        "chartNamePlaceholder": "例: nginx",
+        "releaseName": "リリース名 *",
+        "releaseNameTip": "この Helm デプロイメントのリリース名を指定してください",
+        "releaseNamePlaceholder": "例: my-release",
+        "version": "バージョン（デフォルト: latest）",
+        "versionTip": "デプロイするチャートのバージョンを指定してください",
+        "versionPlaceholder": "例: 1.2.3",
+        "namespace": "Namespace *",
+        "namespaceTip": "Helm チャートのデプロイ先の namespace を指定してください",
+        "namespacePlaceholder": "例: default, my-namespace",
+        "searchChartLabel": "Helm チャートを検索"
+      },
+      "userCharts": {
+        "loading": "ユーザー作成チャートを読み込み中...",
+        "noCharts": "ユーザー作成チャートはありません。",
+        "delete": "削除",
+        "confirmDeletion": "リソースの削除確認",
+        "deleteConfirmation": "「{{chartId}}」を削除してもよろしいですか？この操作は元に戻せません。",
+        "deleteSuccess": "チャート {{chartId}} を正常に削除しました！",
+        "deleteError": "チャート {{chartId}} を削除できませんでした！"
+      },
+      "buttons": {
+        "cancel": "キャンセル",
+        "deploying": "デプロイ中...",
+        "apply": "適用"
+      },
+      "messages": {
+        "selectChart": "デプロイする Helm チャートを選択してください。",
+        "deploySuccess": "{{chartName}} チャートを正常にデプロイしました！",
+        "deployFailureReuse": "デプロイに失敗しました: すでに使用中の名前を再利用することはできません！",
+        "deployFailure": "人気の Helm チャートのデプロイに失敗しました！"
+      }
+    },
+    "list": {
+      "title": "ワークロード",
+      "create": "ワークロードを作成",
+      "filter": "ワークロードをフィルター",
+      "noWorkloads": "ワークロードが見つかりません",
+      "createFirst": "最初のワークロードを作成して始めましょう"
+    },
+    "tabs": {
+      "yaml": "YAML",
+      "helm": "Helm",
+      "github": "GitHub",
+      "artifactHub": "Artifact Hub"
+    },
+    "createOptions": {
+      "title": "ワークロードを作成",
+      "subtitle": "ワークロードの作成",
+      "yaml": {
+        "createNamespaceAutomatically": "Namespace を自動作成",
+        "deploy": "デプロイ",
+        "cancel": "キャンセル"
+      },
+      "file": {
+        "title": "ファイルから作成",
+        "dragDrop": "ここに YAML または JSON ファイルをドラッグ＆ドロップ",
+        "browse": "参照",
+        "selectFile": "YAML または JSON ファイルを選択",
+        "fileSelected": "選択されたファイル",
+        "fileSize": "ファイルサイズ",
+        "deploy": "デプロイ",
+        "cancel": "キャンセル",
+        "noFileSelected": "ファイルが選択されていません。",
+        "invalidFile": "有効な YAML または JSON ファイルをアップロードしてください。"
+      },
+      "github": {
+        "title": "GitHub",
+        "workloadLabel": "ワークロードラベル",
+        "workloadLabelPlaceholder": "ラベル 'kubestellar.io/workload' の値を入力",
+        "repositoryUrl": "リポジトリ URL",
+        "repositoryUrlPlaceholder": "例: https://github.com/username/repo",
+        "path": "パス",
+        "pathPlaceholder": "例: /path/to/yaml",
+        "branch": "ブランチ（デフォルト: main）",
+        "branchPlaceholder": "例: master, dev-branch",
+        "credentials": "認証情報",
+        "webhook": "Webhook",
+        "addCredentials": "認証情報を追加",
+        "addWebhook": "Webhook を追加",
+        "deploy": "デプロイ",
+        "cancel": "キャンセル"
+      },
+      "helm": {
+        "title": "Helm",
+        "repoName": "リポジトリ名",
+        "repoNamePlaceholder": "例: bitnami",
+        "repoUrl": "リポジトリ URL",
+        "repoUrlPlaceholder": "例: https://charts.bitnami.com/bitnami",
+        "chartName": "チャート名",
+        "chartNamePlaceholder": "例: nginx",
+        "releaseName": "リリース名",
+        "releaseNamePlaceholder": "例: my-release",
+        "version": "バージョン（未入力の場合は最新）",
+        "versionPlaceholder": "例: 1.0.0",
+        "namespace": "Namespace",
+        "namespacePlaceholder": "例: default",
+        "workloadLabel": "ワークロードラベル",
+        "workloadLabelPlaceholder": "ラベル 'kubestellar.io/workload' の値を入力",
+        "deploy": "デプロイ",
+        "cancel": "キャンセル",
+        "userCharts": {
+          "title": "ユーザー作成チャート一覧",
+          "deleteSuccess": "チャート {{chartId}} を削除しました！",
+          "deleteError": "チャート {{chartId}} は削除されませんでした！",
+          "loading": "ユーザーチャートを読み込み中...",
+          "noCharts": "ユーザー作成チャートがありません。",
+          "delete": "削除",
+          "confirmDeletion": "リソースの削除確認",
+          "deleteConfirmation": "\"{{chartId}}\" を削除してもよろしいですか？この操作は取り消せません。"
+        }
+      },
+      "artifactHub": {
+        "title": "Artifact Hub",
+        "searchPlaceholder": "Helm チャートを検索...",
+        "selectPackage": "パッケージを選択してください。",
+        "enterReleaseName": "リリース名を入力してください。"
+      },
+      "credentials": {
+        "title": "認証情報の追加",
+        "username": "GitHub ユーザー名",
+        "usernamePlaceholder": "GitHub のユーザー名を入力",
+        "token": "パーソナルアクセストークン",
+        "tokenPlaceholder": "GitHub のパーソナルアクセストークンを入力",
+        "add": "追加",
+        "cancel": "キャンセル",
+        "fillBoth": "GitHub ユーザー名とパーソナルアクセストークンの両方を入力してください。"
+      },
+      "webhook": {
+        "title": "Webhook の追加",
+        "url": "Webhook URL",
+        "urlPlaceholder": "Webhook の URL を入力",
+        "token": "パーソナルアクセストークン",
+        "tokenPlaceholder": "Webhook 用のパーソナルアクセストークンを入力",
+        "add": "追加",
+        "cancel": "キャンセル",
+        "fillBoth": "Webhook URL とパーソナルアクセストークンの両方を入力してください。"
+      },
+      "cancelConfirmation": {
+        "title": "変更を破棄しますか？",
+        "message": "未保存の変更があります。本当にキャンセルしますか？",
+        "confirm": "はい、破棄する",
+        "cancel": "いいえ、編集を続ける"
+      },
+      "notifications": {
+        "workloadDeploySuccess": "ワークロードのデプロイに成功しました！",
+        "deploymentSuccess": "デプロイに成功しました！",
+        "helmDeploySuccess": "Helm チャートのデプロイに成功しました！",
+        "artifactHubDeploySuccess": "Artifact Hub からのデプロイに成功しました！",
+        "credentialAddedSuccess": "認証情報の追加に成功しました！",
+        "webhookAddedSuccess": "Webhook の追加に成功しました！",
+        "deploymentConflict": "競合エラー：すでにデプロイが進行中です！",
+        "workloadAlreadyExists": "{{namespace}} 名前空間に {{kind}} {{name}} を作成できませんでした。すでに存在するか、{{namespace}} 名前空間が見つかりません。",
+        "unknownWorkloadExists": "Unknown {{name}} ワークロードの作成に失敗しました。すでに存在しています。",
+        "helmDeployFailed": "デプロイに失敗しました：チャートのインストールに失敗しました。同じ名前は再利用できません！",
+        "gitRepoError": "リポジトリのクローンに失敗しました。URLとパスを正しく入力してください！",
+        "enterWorkloadLabel": "ワークロードラベルを入力してください。",
+        "invalidWorkloadLabel": "値のみを入力できます。キーは固定で 'kubestellar.io/workload' です。",
+        "enterGitRepo": "Git リポジトリを入力してください。",
+        "enterPath": "パスを入力してください。",
+        "enterRepoName": "リポジトリ名を入力してください。",
+        "enterRepoUrl": "リポジトリの URL を入力してください。",
+        "enterChartName": "チャート名を入力してください。",
+        "enterReleaseName": "リリース名を入力してください。",
+        "enterNamespace": "名前空間を入力してください。",
+        "enterYamlJson": "YAML または JSON の内容を入力してください。",
+        "needMetadataName": "少なくとも 1 つのドキュメントに 'metadata.name' が必要です。"
+      }
+    },
+    "workloads": {
+      "title": "ワークロード",
+      "description": "クラスター間のワークロードを管理する"
+    },
+    "resourceExplorer": {
+      "title": "リソースエクスプローラー",
+      "description": "Kubernetesリソースを検索およびフィルタリングする"
+    },
+    "bindingPolicies": {
+      "title": "バインディングポリシー",
+      "description": "ワークロードの分配に関するバインディングポリシーを作成・管理します"
+    }
+  },
+  "visualization": {
+    "policyDistribution": "{{count}} 件の接続",
+    "clusters": {
+      "edge": "エッジクラスタ",
+      "aiInference": "AI 推論クラスタ",
+      "aiTraining": "AI 学習クラスタ",
+      "service": "サービスクラスタ",
+      "compute": "コンピュートクラスタ",
+      "descriptions": {
+        "edge": "低遅延処理向けのエッジコンピューティングリソース",
+        "aiInference": "リアルタイムのAIモデル推論・予測サービス",
+        "aiTraining": "AIモデル学習向けの高性能コンピューティング",
+        "service": "マイクロサービスおよびAPIエンドポイントの中核",
+        "compute": "汎用的なコンピューティングリソース"
+      }
+    },
+    "title": "可視化",
+    "controls": "表示コントロール",
+    "zoom": "ズーム",
+    "searchResources": "リソースを検索"
+  },
+  "namespaces": {
+    "default": "default",
+    "create": "ネームスペースを作成",
+    "select": "ネームスペースを選択"
+  },
+  "errors": {
+    "policyNameRequired": "ポリシー名は必須です",
+    "policyNotFound": "ポリシー「{{name}}」が見つかりません",
+    "parseError": "バインディングポリシーのレスポンスを解析できませんでした",
+    "unexpectedFormat": "予期しないAPIレスポンス形式です",
+    "error": "エラー",
+    "required": "このフィールドは必須です",
+    "invalidFormat": "無効な形式です",
+    "connectionFailed": "接続に失敗しました",
+    "forbidden": "このリソースにアクセスする権限がありません",
+    "serverError": "サーバーエラーが発生しました",
+    "notFound": "リソースが見つかりません",
+    "timeout": "リクエストがタイムアウトしました",
+    "unknown": "不明なエラーが発生しました",
+    "contextNameRequired": "コンテキスト名は必須です",
+    "versionRequired": "KubeStellarのバージョンは必須です",
+    "operationTimeout": "操作がタイムアウトしました。バックグラウンドで処理が継続している可能性があります。",
+    "failedToCreateContext": "コンテキストの作成に失敗しました",
+    "creatingContext": "コンテキスト作成エラー：",
+    "websocketConnectionFailed": "サーバーに接続できません。ネットワーク接続を確認して再試行してください。",
+    "websocketClosedUnexpectedly": "WebSocket接続が予期せず切断されました",
+    "fetchingContexts": "コンテキストの取得中にエラーが発生しました："
+  },
+  "contexts": {
+    "filterByContext": "コンテキストでフィルター",
+    "allContexts": "すべてのコンテキスト",
+    "showingAllContexts": "すべてのコンテキストのリソースを表示中",
+    "filteringByContext": "{{context}} コンテキストのみを表示中",
+    "createdSuccessfully": "コンテキストの作成に成功しました！",
+    "websocketClosed": "WebSocket接続が切断されました：",
+    "contextCreatedSuccess": "コンテキスト「{{contextName}}」が正常に作成されました！",
+    "createNewContext": "新しいコンテキストを作成",
+    "contextName": "コンテキスト名",
+    "kubestellarVersion": "KubeStellarのバージョン",
+    "creating": "作成中...",
+    "createContext": "コンテキストを作成"
+  },
+  "policySelectionStore": {
+    "labelsAssigned": "{{itemType}}「{{itemId}}」にラベルを自動で割り当てました",
+    "policyAssigned": "ポリシー「{{policyName}}」を{{targetType}}「{{targetName}}」に正常に割り当てました",
+    "clusterAlreadyAssigned": "クラスタ「{{targetName}}」はすでにポリシー「{{policyName}}」に割り当てられています",
+    "workloadAlreadyAssigned": "ワークロード「{{targetName}}」はすでにポリシー「{{policyName}}」に割り当てられています"
+  },
+  "auth": {
+    "login": {
+      "success": "ログインに成功しました",
+      "error": "ログインエラー：",
+      "successWithUser": "ユーザー「{{username}}」でのログインに成功しました。{{path}} にリダイレクト中です",
+      "invalidCredentials": "認証情報が無効です",
+      "authFailed": "認証に失敗しました。認証情報を確認してください。",
+      "noToken": "サーバーからトークンを受信できませんでした"
+    }
+  },
+  "kubestellarData": {
+    "logging": {
+      "clustersApiResponse": "クラスタ API レスポンス：",
+      "processedClusters": "処理済みクラスタ：",
+      "errorFetchingClusters": "クラスタの取得エラー：",
+      "processedWorkloads": "処理済みワークロード：",
+      "errorFetchingWorkloads": "ワークロードの取得エラー：",
+      "errorFetchingPolicies": "ポリシーの取得エラー：",
+      "assigningPolicy": "ポリシー「{{policyName}}」を {{targetType}}「{{targetName}}」に割り当て中"
+    },
+    "errors": {
+      "failedFetchClusters": "クラスタの取得に失敗しました",
+      "failedFetchWorkloads": "ワークロードの取得に失敗しました",
+      "failedFetchPolicies": "ポリシーの取得に失敗しました",
+      "errorAssigningPolicy": "ポリシー割り当てエラー：",
+      "failedToAssign": "ポリシー「{{policyName}}」を {{targetType}}「{{targetName}}」に割り当てできませんでした"
+    },
+    "success": {
+      "successfullyAssigned": "ポリシー「{{policyName}}」を {{targetType}}「{{targetName}}」に正常に割り当てました"
+    },
+    "defaults": {
+      "unknown": "不明",
+      "ready": "準備完了",
+      "deployment": "デプロイメント",
+      "defaultNamespace": "default",
+      "active": "アクティブ",
+      "alwaysMatch": "常に一致"
+    }
+  },
+  "profileSection": {
+    "logoutMessage": "正常にログアウトしました。",
+    "account": "アカウント",
+    "admin": "管理者",
+    "helpSupport": "ヘルプとサポート",
+    "raiseIssue": "問題を報告する",
+    "signOut": "ログアウト",
+    "changePassword": "パスワードの変更",
+    "changePasswordSubtitle": "現在のパスワードを入力し、新しいパスワードを選択してください。",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "confirmNewPassword": "新しいパスワードの確認",
+    "passwordChangedSuccess": "パスワードが正常に変更されました。",
+    "passwordChangedError": "パスワードの変更に失敗しました。",
+    "passwordsDoNotMatch": "新しいパスワードが一致しません。",
+    "passwordRequired": "パスワードは必須です。",
+    "errorCurrentPasswordIncorrect": "現在のパスワードが正しくありません",
+    "cancel": "キャンセル",
+    "changePasswordButton": "パスワードを変更",
+    "passwordsMatch": "パスワードが一致しました！"
+  },
+  "onboardingLogs": {
+    "onboarding": "オンボーディング",
+    "complete": "完了",
+    "connecting": "ログストリームに接続中...",
+    "errors": {
+      "websocketFailed": "WebSocket 接続に失敗しました。もう一度お試しください。",
+      "connectionFailed": "ログストリームへの接続に失敗しました。もう一度お試しください。"
+    },
+    "status": {
+      "processing": "処理中",
+      "verifying": "検証中",
+      "available": "利用可能",
+      "completed": "完了",
+      "error": "エラー"
+    }
+  },
+  "newAppDialog": {
+    "title": "新しいアプリを作成",
+    "githubUrl": "GitHub URL",
+    "path": "パス",
+    "deploy": "デプロイ"
+  },
+  "navbar": {
+    "generateLog": "ログを生成",
+    "toggleTheme": "テーマを切り替え",
+    "brandName": "KubestellarUI",
+    "its": "ITS",
+    "wds": "WDS",
+    "logFilename": "kubestellarui.log",
+    "generateLogError": "ログの生成に失敗しました。もう一度お試しください。"
+  },
+  "manualImportTab": {
+    "loadingClusters": "利用可能なクラスタを読み込み中...",
+    "errorLoadingClusters": "クラスタの読み込みエラー",
+    "title": "クラスタの手動セットアップ",
+    "recommended": "推奨",
+    "description": "これは Kubernetes クラスタを接続する最も簡単な方法です。クラスタを選択して「クラスタをオンボード」ボタンをクリックすると、手動コマンドなしでプラットフォームに直接接続されます。",
+    "selectCluster": "接続するクラスタを選択",
+    "chooseCluster": "クラスタを選択...",
+    "noClusters": "利用可能なクラスタがありません",
+    "discoveredClusters": "環境で検出されたクラスタです。続行するには選択してください。",
+    "refreshClustersList": "クラスタ一覧を更新",
+    "howToConnect": "クラスタを接続する方法",
+    "steps": {
+      "selectCluster": "上のドロップダウンからクラスタを選択",
+      "clickOnboard": "「クラスタをオンボード」ボタンをクリックして直接接続",
+      "autoOnboard": "クラスタは手動コマンドなしで自動的にオンボードされます"
+    },
+    "connectionError": "接続エラー",
+    "installationGuide": "インストールガイド：",
+    "installCommand": "clusteradm をインストールするには、以下を実行：",
+    "commandCopied": "インストールコマンドをコピーしました！",
+    "onboarding": "オンボーディング中...",
+    "onboardCluster": "クラスタをオンボード",
+    "clusterAddedSuccess": "クラスタがプラットフォームに追加されました",
+    "clusterOnboardedSuccess": "クラスタ「{{clusterName}}」が正常にオンボードされました。次の操作が可能です：",
+    "nextSteps": {
+      "viewManage": "ダッシュボードでクラスタを表示・管理",
+      "deployApps": "クラスタにアプリやサービスをデプロイ",
+      "configureSettings": "クラスタの設定を構成・管理"
+    },
+    "viewDashboard": "ダッシュボードでクラスタを表示",
+    "goToDashboard": "ダッシュボードに移動"
+  },
+  "logModal": {
+    "connectedToStream": "ログストリームに接続しました...",
+    "connectionClosed": "ログ取得完了。接続が終了しました。",
+    "retryConnection": "接続が終了しました。再接続してください。",
+    "logs": "ログ",
+    "loadingLogs": "ログを読み込み中..."
+  },
+  "loadingFallback": {
+    "loadingContent": "コンテンツを読み込み中..."
+  },
+  "listView": {
+    "connecting": "サーバーに接続中...",
+    "receivingWorkloads": "ワークロードを受信中...",
+    "receivedWorkloadsSoFar": "これまでに {{count}} 件のワークロードを受信しました...",
+    "allWorkloadsReceived": "全 {{count}} 件のワークロードを受信済み",
+    "connectionLost": "接続が切断されました。{{count}} 件の受信済みワークロードを表示中。",
+    "connectionError": "サーバーへの接続に失敗、または切断されました。フォールバック方式で再試行中...",
+    "fetchingFallback": "リソースを取得中（フォールバック方式）...",
+    "invalidResponseFormat": "サーバーからの応答形式が無効です",
+    "unknownError": "リソースの取得中に不明なエラーが発生しました。",
+    "errorLoading": "リソースの読み込みエラー",
+    "downloadLogs": "ログをダウンロード",
+    "namespace": "Namespace",
+    "created": "作成日",
+    "filteredByContext": "コンテキストでフィルタ: {{context}}",
+    "showingResourceCount": "{{total}} 件中 {{showing}} 件を表示中",
+    "resourceStats": "{{raw}} 件の未処理リソース、{{processed}} 件の処理済みリソースを検出",
+    "pagination": {
+      "prev": "前へ",
+      "next": "次へ",
+      "showing": "{{total}} 件中 {{from}} 件目から {{to}} 件目を表示中",
+      "filtered": "（{{context}} コンテキストでフィルタ中）"
+    },
+    "troubleshooting": {
+      "title": "次のトラブルシューティング手順をお試しください：",
+      "step1": "1. バックエンドサーバーが http://localhost:4000 で実行中か確認",
+      "step2": "2. サーバーの CORS 設定が http://localhost:5173 からのリクエストを許可しているか確認",
+      "step3": "3. サーバーがワイルドカード（*）CORS を使用している場合、認証付きリクエストは受け付けません",
+      "step4": "4. 詳細なエラーメッセージはブラウザのコンソールを確認"
+    },
+    "noWorkloads": {
+      "title": "ワークロードが見つかりません",
+      "noResourcesForContext": "{{context}} コンテキストに該当するリソースが見つかりませんでした",
+      "resourcesFilteredOut": "リソースは存在しますが、現在のフィルター条件では表示されません",
+      "getStarted": "最初のワークロードを作成して開始しましょう",
+      "resourcesAvailable": "合計 {{count}} 件のリソースがありますが、現在のフィルター条件には一致しません"
+    }
+  },
+  "kubeconfigImport": {
+    "title": "Kubeconfig ファイルのアップロード",
+    "description": "kubeconfig ファイルをアップロードしてクラスタをインポートします",
+    "dragAndDrop": "ここに kubeconfig ファイルをドラッグ＆ドロップ",
+    "or": "または",
+    "browseFiles": "ファイルを選択",
+    "importCluster": "クラスタをインポート"
+  },
+  "importClusters": {
+    "title": "クラスタのインポート",
+    "description": "Kubernetes クラスタをプラットフォームに接続します",
+    "tabs": {
+      "quickConnect": "クイック接続",
+      "kubeconfig": "Kubeconfig",
+      "apiUrl": "API/URL"
+    },
+    "abortDialog": {
+      "title": "オンボーディングの中止",
+      "warning": "オンボーディングを中止してもよろしいですか？すべての進捗が失われます。",
+      "continue": "オンボーディングを続ける",
+      "confirm": "はい、中止します"
+    },
+    "fileUpload": {
+      "selected": "ファイル「{{filename}}」が選択されました。アップロード機能は今後実装されます。"
+    },
+    "icons": {
+      "quickConnect": "クイック接続",
+      "kubeconfig": "kubeconfig",
+      "apiUrl": "API URL",
+      "ariaLabel": "インポート"
+    }
+  },
+  "groupPanel": {
+    "close": "パネルを閉じる",
+    "tableAriaLabel": "グループ項目テーブル",
+    "table": {
+      "name": "名前",
+      "groupKind": "グループ / 種別",
+      "syncOrder": "同期順序",
+      "namespace": "Namespace",
+      "createdAt": "作成日"
+    },
+    "notAvailable": "該当なし"
+  },
+  "downloadLogsModal": {
+    "title": "ログのダウンロード",
+    "fileSize": "ファイルサイズ",
+    "download": "ダウンロード"
+  },
+  "footer": {
+    "commit": "コミット",
+    "viewCommit": "GitHub でコミットの詳細を見る"
+  },
+  "downloadLogsButton": {
+    "title": "ログをダウンロード",
+    "placeholder": {
+      "header": "クラスタ {{cluster}} のネームスペース {{namespace}} 内のポッド {{podName}} のログ",
+      "generated": "生成日時: {{date}}",
+      "noContent": "ログの内容は直接利用できません。ストリーミングログ機能を使用してください。"
+    },
+    "toast": {
+      "success": "{{podName}} のログをダウンロードしました",
+      "error": "ログのダウンロードに失敗しました"
+    }
+  },
+  "detachmentLogsDialog": {
+    "title": "クラスタの切断中: {{clusterName}}",
+    "logs": "切断ログ",
+    "connected": "接続済み",
+    "disconnected": "切断済み",
+    "connecting": "切断サービスに接続中...",
+    "completedSuccessfully": "クラスタの切断が正常に完了しました。",
+    "done": "完了"
+  },
+  "addWebhookDialog": {
+    "copiedToClipboard": "クリップボードにコピーしました！",
+    "setupWebhook": "Webhook のセットアップ",
+    "localDevSmee": "Smee.io を使用したローカル開発",
+    "installSmee": "Smee クライアントをインストール（npm install -g smee-client）",
+    "goToSmee": "Smee.io にアクセスして新しいチャンネルを作成",
+    "copySmeeUrl": "生成された Smee.io URL をコピー",
+    "runSmeeClient": "Smee クライアントを実行して webhook をローカルの Go バックエンドに転送：",
+    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+    "configureWebhookSmee": "外部サービスの webhook に Smee.io の URL を設定",
+    "startGoBackend": "Go バックエンドを起動し、/api/webhook で待ち受けさせる",
+    "testWebhook": "webhook をテスト",
+    "vmIp4000": "ポート 4000 を使った仮想マシンでの Webhook",
+    "ensureGoBackend4000": "Go バックエンドがポート 4000 で /api/webhook を処理していることを確認",
+    "openPort4000": "ファイアウォールやセキュリティグループ（UFW、AWS、GCP、Azure）でポート 4000 を開放",
+    "findPublicIp": "curl ifconfig.me でパブリック IP を取得し、次のように設定",
+    "configureWebhookVm": "外部サービスに以下の URL を webhook として設定：",
+    "vmWebhookUrl": "http://your-public-ip:4000/api/webhook",
+    "vmWebhookUrlCopy": "http://<your-public-ip>:4000/api/webhook",
+    "testWebhookOtherMachine": "別のマシンから webhook をテスト",
+    "keepGoServerRunning": "Go サーバーはバックグラウンドで継続実行（nohup や systemd を使用）"
+  },
+  "cancelConfirmationDialog": {
+    "title": "ワークロード作成をキャンセル",
+    "titlePolicy": "ポリシー作成をキャンセル",
+    "warning": "警告",
+    "message": "キャンセルしてもよろしいですか？すべての変更は失われます。",
+    "continueEditing": "編集を続ける",
+    "yesCancel": "はい、キャンセルします"
+  },
+  "addCredentialsDialog": {
+    "title": "認証情報の追加",
+    "usernameLabel": "GitHub ユーザー名 *",
+    "usernamePlaceholder": "例: onkar717",
+    "usernameTip": "GitHub のユーザー名を入力してください",
+    "tokenLabel": "パーソナルアクセストークン (PAT) *",
+    "tokenPlaceholder": "例: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tokenTip": "GitHub のパーソナルアクセストークンを入力してください"
+  },
+  "commandPalette": {
+    "ariaLabel": "コマンドパレットを開く",
+    "title": "コマンドパレット（Ctrl+K）",
+    "badge": "K",
+    "searchPlaceholder": "コマンドを検索...",
+    "noCommandsFound": "コマンドが見つかりません。別の検索語を試してください。",
+    "footer": {
+      "navigate": "移動",
+      "select": "選択",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "ナビゲーション",
+      "visualizations": "可視化",
+      "help": "ヘルプ",
+      "account": "アカウント",
+      "admin": "管理"
+    },
+    "commands": {
+      "home": {
+        "title": "ホーム",
+        "description": "ダッシュボードに移動"
+      },
+      "plugin": {
+        "title": "プラグインマネージャー",
+        "description": "KubeStellarプラグインの管理と監視"
+      },
+      "clusters": {
+        "title": "リモートクラスタ",
+        "description": "Kubernetes クラスタを管理"
+      },
+      "workloads": {
+        "title": "ワークロード",
+        "description": "クラスタ間のワークロードを管理"
+      },
+      "resourceExplorer": {
+        "title": "リソースエクスプローラー",
+        "description": "Kubernetesリソースを検索およびフィルタリングする"
+      },
+      "bindingPolicies": {
+        "title": "バインディングポリシー",
+        "description": "ワークロードの分配に関するバインディングポリシーを作成・管理します"
+      },
+      "userManagement": {
+        "title": "ユーザー管理",
+        "description": "システムユーザーと権限を管理"
+      },
+      "wdsTreeview": {
+        "title": "WDS ツリービュー",
+        "description": "ワークロード分布を可視化"
+      },
+      "wecsTreeview": {
+        "title": "WECS ツリービュー",
+        "description": "デプロイされたワークロードの構造を可視化"
+      },
+      "documentation": {
+        "title": "ドキュメントを開く",
+        "description": "KubeStellar のドキュメントを表示"
+      },
+      "logout": {
+        "title": "ログアウト",
+        "description": "アカウントからサインアウト",
+        "infoMessage": "正常にログアウトしました。"
+      },
+      "galaxyMarketplace": {
+        "title": "ギャラクシーマーケットプレイス",
+        "description": "ギャラクシーマーケットプレイスからプラグインを見つけてインストールしましょう"
+      },
+      "managedClusters": {
+        "title": "管理クラスター",
+        "description": "Kubernetesクラスターを管理"
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "メイン",
+      "management": "管理",
+      "plugins": "プラグイン",
+      "admin": "管理"
+    },
+    "items": {
+      "home": "ホーム",
+      "remoteClusters": "リモートクラスタ",
+      "stagedWorkloads": "ステージ済みワークロード",
+      "bindingPolicies": "バインディングポリシー",
+      "deployedWorkloads": "デプロイ済みワークロード",
+      "pluginManager": "プラグインマネージャー",
+      "userManagement": "ユーザー管理",
+      "galaxyMarketplace": "ギャラクシーマーケットプレイス",
+      "managedClusters": "管理クラスター"
+    }
+  },
+  "plugins": {
+    "title": "プラグインマネージャー",
+    "description": "KubeStellar のプラグインを管理および監視します",
+    "install": {
+      "title": "新しいプラグインをインストール",
+      "methods": {
+        "local": "ローカルパス",
+        "github": "GitHub"
+      },
+      "localPlaceholder": "ローカルプラグインディレクトリのパスを入力してください",
+      "githubPlaceholder": "https://github.com/user/plugin-repo",
+      "browse": "参照",
+      "installLocal": "ローカルパスからインストール",
+      "installGithub": "GitHub からインストール",
+      "localHelp": "システム上のローカルディレクトリからプラグインをインストールします。「参照」をクリックしてフォルダーを選択するか、パスを直接入力してください。",
+      "githubHelp": "GitHubからのインストールはまだ実装されていません。現在はローカルパスのインストールを使用してください。",
+      "placeholder": "プラグインの URL、GitHub リポジトリ、またはローカルパス",
+      "button": "インストール",
+      "installing": "インストール中...",
+      "success": "プラグインが正常にインストールされました",
+      "error": "プラグインのインストールに失敗しました"
+    },
+    "list": {
+      "title": "インストール済みプラグイン",
+      "noPlugins": "インストール済みのプラグインはありません",
+      "noPluginsDescription": "最初のプラグインをインストールして始めましょう",
+      "searchPlaceholder": "名前、作成者、またはステータスでプラグインを検索...",
+      "total": "合計",
+      "active": "アクティブ",
+      "inactive": "非アクティブ"
+    },
+    "card": {
+      "version": "v{{version}}",
+      "author": "{{author}} による",
+      "status": {
+        "active": "アクティブ",
+        "inactive": "非アクティブ",
+        "loading": "読み込み中",
+        "error": "エラー"
+      },
+      "actions": {
+        "enable": "有効化",
+        "disable": "無効化",
+        "details": "詳細",
+        "uninstall": "アンインストール",
+        "reload": "再読み込み",
+        "settings": "設定"
+      }
+    },
+    "details": {
+      "title": "プラグインの詳細",
+      "information": "情報",
+      "configuration": "設定",
+      "routes": "API ルート",
+      "widgets": "ウィジェット",
+      "assets": "アセット",
+      "noRoutes": "API ルートは定義されていません",
+      "noWidgets": "利用可能なウィジェットはありません",
+      "noAssets": "アセットは読み込まれていません"
+    },
+    "notifications": {
+      "enableSuccess": "プラグイン {{name}} が正常に有効化されました",
+      "enableError": "プラグイン {{name}} の有効化に失敗しました",
+      "disableSuccess": "プラグイン {{name}} が正常に無効化されました",
+      "disableError": "プラグイン {{name}} の無効化に失敗しました",
+      "uninstallSuccess": "プラグイン {{name}} が正常にアンインストールされました",
+      "uninstallError": "プラグイン {{name}} のアンインストールに失敗しました",
+      "reloadSuccess": "プラグイン {{name}} が正常に再読み込みされました",
+      "reloadError": "プラグイン {{name}} の再読み込みに失敗しました",
+      "fetchError": "プラグインデータの読み込みに失敗しました"
+    },
+    "confirmations": {
+      "uninstall": {
+        "title": "プラグインのアンインストール確認",
+        "message": "「{{name}}」をアンインストールしてもよろしいですか？この操作は取り消せず、すべてのプラグインデータが削除されます。",
+        "confirm": "はい、アンインストールします"
+      },
+      "disable": {
+        "title": "プラグインの無効化確認",
+        "message": "「{{name}}」を無効化すると、すべての機能が停止します。後で再度有効化できます。",
+        "confirm": "はい、無効化します"
+      }
+    },
+    "marketplace": {
+      "title": "KubeStellar Galaxy マーケットプレイス",
+      "description": "KubeStellarの体験を向上させるプラグインを見つけてインストール",
+      "browse": "利用可能なプラグインを参照",
+      "featured": "おすすめプラグイン",
+      "categories": "カテゴリ",
+      "search": "マーケットプレイスを検索..."
+    },
+    "development": {
+      "title": "プラグイン開発",
+      "createNew": "新しいプラグインを作成",
+      "template": "テンプレートを使用",
+      "documentation": "ドキュメントを表示",
+      "examples": "サンプル"
+    },
+    "feedback": {
+      "title": "フィードバックを共有する",
+      "rate": "このプラグインを評価してください",
+      "comment": {
+        "title": "あなたのコメント",
+        "placeholder": "ご利用の感想をお聞かせください"
+      },
+      "suggestion": {
+        "title": "改善の提案",
+        "placeholder": "改善の提案があればご記入ください"
+      }
+    }
+  },
+  "notFoundPage": {
+    "logoAlt": "KubeStellarロゴ",
+    "mainTitle": "404 - ページが見つかりません",
+    "description": "お探しのページは削除されたか、名前が変更されたか、一時的に利用できない可能性があります。",
+    "returnHomeButton": "ホームに戻る",
+    "tryAgainButton": "再試行",
+    "quotes": [
+      {
+        "text": "コードの広大な宇宙では、時に星々の間で迷子になることがあります。",
+        "author": "匿名の開発者"
+      },
+      {
+        "text": "あまり通られていない道は、理由があって見つからないことが多いのです。",
+        "author": "ウェブ探検家"
+      },
+      {
+        "text": "さまよう者がすべて迷子というわけではありませんが、このページは確かに迷子です。",
+        "author": "J.R.R. トークン"
+      },
+      {
+        "text": "成功は最終的ではなく、404は致命的ではありません：大切なのはナビゲートする勇気です。",
+        "author": "ウィンストン・コードヒル"
+      },
+      {
+        "text": "未来を予測する最良の方法は、適切なルーティングを実装することです。",
+        "author": "アラン・ターニング"
+      }
+    ]
+  },
+  "validation": {
+    "missingRequiredFields": "必須フィールドがありません"
+  }
+}

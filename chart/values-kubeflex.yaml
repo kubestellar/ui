@@ -1,0 +1,79 @@
+# Values for kind-kubeflex cluster deployment
+frontend:
+  image: ghcr.io/kubestellar/ui/frontend:v1.0.1
+  port: 80
+  imagePullPolicy: IfNotPresent
+  nodePort: 30138
+
+backend:
+  image: kubestellar-ui-backend:latest
+  port: 4000
+  imagePullPolicy: IfNotPresent
+
+postgresql:
+  enabled: true
+  image: postgres:15-alpine
+  port: 5432
+  database: authdb
+  username: authuser
+  password: authpass123
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: standard
+
+redis:
+  image:  ghcr.io/kubestellar/ui/redis:latest
+  port: 6379
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  persistence:
+    enabled: false
+    size: 1Gi
+    storageClass: standard
+
+backendConfig:
+  jwtSecret: "kubeflex-jwt-secret-change-in-production"
+  ginMode: "release"
+  serviceName: "kubestellar-ui"
+  serviceVersion: "1.0.0"
+  environment: "kubeflex"
+  enableHealthEndpoints: true
+  enableMetrics: true
+  healthCheckTimeout: "10s"
+  memoryThreshold: 85.0
+  diskThreshold: 90.0
+  corsAllowedOrigin: "*"
+
+frontendConfig:
+  viteBaseUrl: "http://localhost:8082"
+  viteSkipPrerequisitesCheck: true
+  viteAppVersion: "0.1.0"
+  nginxHost: "localhost"
+  backendUrl: "http://backend:4000"
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: kubestellar-ui-kubeflex.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+

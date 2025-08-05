@@ -1,0 +1,235 @@
+name: Deploy Kubestellar UI Preview
+
+on:
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request Number (for preview env name)'
+        required: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    env:
+      FRONTEND_IMAGE_NAME: ks-ui
+      BACKEND_IMAGE_NAME: ks-ui-backend
+      REGISTRY: ghcr.io/${{ github.repository_owner }}
+      DOMAIN_SUFFIX: preview.kubestellar.io
+      
+    steps:
+      - name: Set PR context
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          PR_NUMBER="${{ inputs.pr_number }}"
+          else
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          fi
+
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "NAMESPACE=ks-ui-pr-$PR_NUMBER" >> $GITHUB_ENV
+          echo "IMAGE_TAG=pr-$PR_NUMBER" >> $GITHUB_ENV
+          echo "PREVIEW_HOST=ks-ui-pr-$PR_NUMBER.${{ env.DOMAIN_SUFFIX }}" >> $GITHUB_ENV
+
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install OCI CLI
+        run: |
+          curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh | bash -s -- --accept-all-defaults
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Set up KUBECONFIG from secret
+        run: |
+          echo "${{ secrets.OCI_KUBECONFIG }}" | base64 --decode > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Create namespace for preview
+        run: |
+          kubectl create namespace $NAMESPACE || echo "Namespace already exists"
+
+      - name: Create image pull secret in namespace
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=clubanderson \
+            --docker-password=${{ secrets.GHCR_PAT }} \
+            --docker-email=dev@kubestellar.io \
+            -n $NAMESPACE || echo "✅ Secret already exists"
+
+      - name: Install Buildah
+        run: |
+          sudo apt-get update && sudo apt-get install -y buildah
+
+      - name: Login to GHCR
+        run: echo ${{ secrets.GHCR_PAT }} | buildah login --username clubanderson --password-stdin ghcr.io
+
+      - name: Build and push frontend and backend images
+        run: |
+          echo "🔧 Building frontend..."
+          buildah bud \
+            --build-arg VITE_BASE_URL=http://backend:4000 \
+            -t $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG .
+
+          echo "📦 Pushing frontend..."
+          buildah push $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
+
+          echo "🔧 Building backend..."
+          buildah bud -t $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./backend
+
+          echo "📦 Pushing backend..."
+          buildah push $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+                  
+      - name: Deploy Kubestellar UI
+        run: |
+          cat <<EOF | kubectl apply -n $NAMESPACE -f -
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: redis
+          spec:
+            ports:
+              - port: 6379
+            selector:
+              app: redis
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: redis
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: redis
+            template:
+              metadata:
+                labels:
+                  app: redis
+              spec:
+                containers:
+                  - name: redis
+                    image: ghcr.io/kubestellar/ui/redis:latest
+                    ports:
+                      - containerPort: 6379
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: backend
+          spec:
+            ports:
+              - port: 4000
+            selector:
+              app: backend
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: backend
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: backend
+            template:
+              metadata:
+                labels:
+                  app: backend
+              spec:
+                imagePullSecrets:
+                  - name: ghcr-secret
+                containers:
+                  - name: backend
+                    image: $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+                    ports:
+                      - containerPort: 4000
+                    env:
+                      - name: REDIS_HOST
+                        value: redis
+                      - name: REDIS_PORT
+                        value: "6379"
+                      - name: CORS_ALLOWED_ORIGIN
+                        value: http://ks-ui
+          ---              
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: ks-ui
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: ks-ui
+            template:
+              metadata:
+                labels:
+                  app: ks-ui
+              spec:
+                imagePullSecrets:
+                  - name: ghcr-secret
+                containers:
+                  - name: ks-ui
+                    image: $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
+                    ports:
+                      - containerPort: 4173
+                    env:
+                      - name: VITE_BASE_URL
+                        value: http://backend:4000
+                      - name: VITE_SKIP_PREREQUISITES_CHECK
+                        value: "true"
+                      - name: NGINX_HOST
+                        value: ks-ui
+                      - name: BACKEND_URL
+                        value: http://backend:4000
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ks-ui
+          spec:
+            selector:
+              app: ks-ui
+            ports:
+              - port: 80
+                targetPort: 4173
+          ---
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: ks-ui
+            annotations:
+              nginx.ingress.kubernetes.io/rewrite-target: /
+          spec:
+            rules:
+              - host: $PREVIEW_HOST
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: ks-ui
+                          port:
+                            number: 80
+          EOF
+
+      - name: Comment on PR with preview link
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🚀 **Kubestellar UI Preview Deployed**
+
+            🌍 [View Live Preview](https://${{ env.PREVIEW_HOST }})
+
+            _Namespace_: `${{ env.NAMESPACE }}`
+
+            _Image_: `${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}`
+

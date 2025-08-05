@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -200,11 +201,15 @@ func GetAvailableClusters() ([]ContextInfo, error) {
 // GetAvailableClustersHandler handles the GET /api/cluster/available endpoint.
 // It returns a filtered list of available clusters (contexts) from the kubeconfig.
 func GetAvailableClustersHandler(c *gin.Context) {
+	startTime := time.Now()
 	available, err := GetAvailableClusters()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/clusters/available", "500").Inc()
 		return
 	}
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/clusters/available", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/clusters/available").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, available)
 }
 
@@ -323,13 +328,16 @@ func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 
 func ImportClusterHandler(c *gin.Context) {
 	file, err := c.FormFile("kubeconfig")
+	startTime := time.Now()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "kubeconfig file is required"})
 		return
 	}
 
 	src, err := file.Open()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open uploaded file"})
 		return
 	}
@@ -337,6 +345,7 @@ func ImportClusterHandler(c *gin.Context) {
 
 	data, err := io.ReadAll(src)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file contents"})
 		return
 	}
@@ -344,6 +353,7 @@ func ImportClusterHandler(c *gin.Context) {
 	// 2. Load kubeconfig
 	cfg, err := clientcmd.Load(data)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid kubeconfig format"})
 		return
 	}
@@ -353,10 +363,12 @@ func ImportClusterHandler(c *gin.Context) {
 	tmpPath := filepath.Join(os.TempDir(), fmt.Sprintf("import-%d.kubeconfig", time.Now().UnixNano()))
 	outData, err := clientcmd.Write(*cfg)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to serialize kubeconfig"})
 		return
 	}
 	if err := os.WriteFile(tmpPath, outData, 0600); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write temp kubeconfig"})
 		return
 	}
@@ -381,10 +393,12 @@ func ImportClusterHandler(c *gin.Context) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("helm install failed: %s", string(output))})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/clusters/import", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("POST", "/clusters/import").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "Cluster import initiated",
 		"release":     releaseName,
@@ -403,7 +417,9 @@ func adjustClusterServerEndpoints(config *clientcmdapi.Config) {
 
 func GetClusterDetailsHandler(c *gin.Context) {
 	clusterName := c.Param("name")
+	startTime := time.Now()
 	if strings.TrimSpace(clusterName) == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/cluster/details/:name", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "cluster name is required"})
 		return
 	}
@@ -412,6 +428,7 @@ func GetClusterDetailsHandler(c *gin.Context) {
 	kubeconfig := kubeconfigPath()
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/cluster/details/:name", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load kubeconfig: " + err.Error()})
 		return
 	}
@@ -443,6 +460,7 @@ func GetClusterDetailsHandler(c *gin.Context) {
 
 	// Return 404 if no details are found in both kubeconfig and ITS.
 	if len(contexts) == 0 && len(itsManagedClusters) == 0 {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/cluster/details/:name", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
 		return
 	}
@@ -452,5 +470,7 @@ func GetClusterDetailsHandler(c *gin.Context) {
 		Contexts:           contexts,
 		ITSManagedClusters: itsManagedClusters,
 	}
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/cluster/details/:name").Observe(time.Since(startTime).Seconds())
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/cluster/details/:name", "200").Inc()
 	c.JSON(http.StatusOK, response)
 }

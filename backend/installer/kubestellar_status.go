@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	// "github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/telemetry"
 )
 
 // KubeStellarStatus holds the check results
@@ -31,6 +34,7 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 	contextsCmd := exec.Command("kubectl", "config", "get-contexts", "-o=name")
 	contextsOutput, err := contextsCmd.CombinedOutput()
 	if err != nil {
+		telemetry.InstrumentKubectlCommand(contextsCmd, "get-contexts", "name")
 		status.Message = fmt.Sprintf("Error getting contexts: %v", err)
 		return status
 	}

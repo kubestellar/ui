@@ -1,0 +1,22 @@
+# This chart was originally developed by @MAVRICK-1
+# Source: https://github.com/MAVRICK-1/kubestellar-ui
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: backend
+    component: api
+  annotations:
+    # Internal service only - no external access
+    service.alpha.kubernetes.io/internal-only: "true"
+spec:
+  type: ClusterIP  # Explicitly set to ClusterIP for internal access only
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: {{ .Values.backend.port }}
+      name: http

@@ -1,0 +1,58 @@
+# This chart was originally developed by @MAVRICK-1
+# Source: https://github.com/MAVRICK-1/kubestellar-ui
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+      containers:
+        - name: frontend
+          image: {{ .Values.frontend.image }}
+          imagePullPolicy: {{ .Values.frontend.imagePullPolicy | default "Always" }}
+          ports:
+            - containerPort: {{ .Values.frontend.port }}
+          env:
+            - name: VITE_BASE_URL
+              value: "{{ .Values.frontendConfig.viteBaseUrl }}"
+            - name: VITE_SKIP_PREREQUISITES_CHECK
+              value: "{{ .Values.frontendConfig.viteSkipPrerequisitesCheck }}"
+            - name: VITE_APP_VERSION
+              value: "{{ .Values.frontendConfig.viteAppVersion }}"
+            - name: NGINX_HOST
+              value: "{{ .Values.frontendConfig.nginxHost }}"
+            - name: BACKEND_URL
+              value: "{{ .Values.frontendConfig.backendUrl }}"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+              readOnly: true

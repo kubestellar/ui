@@ -16,9 +16,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/models"
-	"github.com/kubestellar/ui/wds/bp"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/models"
+	"github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/wds/bp"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -47,8 +48,9 @@ type LabelUpdateResult struct {
 // OnboardClusterHandler handles HTTP requests to onboard a new cluster
 func OnboardClusterHandler(c *gin.Context) {
 	// Check if this is a file upload, JSON payload, or just a cluster name
-	contentType := c.GetHeader("Content-Type")
+	startTime := time.Now()
 
+	contentType := c.GetHeader("Content-Type")
 	var kubeconfigData []byte
 	var clusterName string
 	var useLocalKubeconfig bool = false
@@ -57,20 +59,29 @@ func OnboardClusterHandler(c *gin.Context) {
 	if strings.Contains(contentType, "multipart/form-data") {
 		file, fileErr := c.FormFile("kubeconfig")
 		clusterName = c.PostForm("name")
-
+		defer func() {
+			duration := time.Since(startTime).Seconds()
+			if err := recover(); err != nil {
+				telemetry.ClusterOnboardingDuration.WithLabelValues(clusterName, "failed").Observe(duration)
+				panic(err)
+			}
+		}()
 		// If cluster name is provided but no file, try to use local kubeconfig
 		if clusterName != "" && (fileErr != nil || file == nil) {
 			useLocalKubeconfig = true
 		} else if fileErr != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to retrieve kubeconfig file"})
 			return
 		} else if clusterName == "" {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name is required"})
 			return
 		} else {
 			// Use uploaded file
 			f, err := file.Open()
 			if err != nil {
+				telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "500").Inc()
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open kubeconfig file"})
 				return
 			}
@@ -78,6 +89,7 @@ func OnboardClusterHandler(c *gin.Context) {
 
 			kubeconfigData, err = io.ReadAll(f)
 			if err != nil {
+				telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "500").Inc()
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read kubeconfig file"})
 				return
 			}
@@ -90,12 +102,14 @@ func OnboardClusterHandler(c *gin.Context) {
 		}
 
 		if err := c.BindJSON(&req); err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 			return
 		}
 
 		clusterName = req.ClusterName
 		if clusterName == "" {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ClusterName is required"})
 			return
 		}
@@ -110,6 +124,7 @@ func OnboardClusterHandler(c *gin.Context) {
 		// Handle URL parameters
 		clusterName = c.Query("name")
 		if clusterName == "" {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name parameter is required"})
 			return
 		}
@@ -121,6 +136,7 @@ func OnboardClusterHandler(c *gin.Context) {
 		var err error
 		kubeconfigData, err = getClusterConfigFromLocal(clusterName)
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to find cluster '%s' in local kubeconfig: %v", clusterName, err)})
 			return
 		}
@@ -130,6 +146,7 @@ func OnboardClusterHandler(c *gin.Context) {
 	mutex.Lock()
 	if status, exists := clusterStatuses[clusterName]; exists {
 		mutex.Unlock()
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("Cluster '%s' is already onboarded (status: %s)", clusterName, status),
 			"status":  status,
@@ -148,6 +165,7 @@ func OnboardClusterHandler(c *gin.Context) {
 		err := OnboardCluster(kubeconfigData, clusterName)
 		mutex.Lock()
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "500").Inc()
 			log.Printf("Cluster '%s' onboarding failed: %v", clusterName, err)
 			clusterStatuses[clusterName] = "Failed"
 		} else {
@@ -156,7 +174,8 @@ func OnboardClusterHandler(c *gin.Context) {
 		}
 		mutex.Unlock()
 	}()
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/clusters/onboard", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("POST", "/clusters/onboard").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
 		"message":           fmt.Sprintf("Cluster '%s' is being onboarded", clusterName),
 		"status":            "Pending",
@@ -173,6 +192,7 @@ func getClusterConfigFromLocal(clusterName string) ([]byte, error) {
 	// Load the kubeconfig file
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
+
 		return nil, fmt.Errorf("failed to load kubeconfig: %v", err)
 	}
 
@@ -287,6 +307,7 @@ func approveClusterCSRs(clientset *kubernetes.Clientset, clusterName string) err
 		output, err := approveCmd.CombinedOutput()
 		if err != nil {
 			LogOnboardingEvent(clusterName, "Error", fmt.Sprintf("Failed to approve CSRs using kubectl: %v, %s", err, string(output)))
+			telemetry.InstrumentKubectlCommand(approveCmd, "approve-csr", "its1")
 
 			// Method 2: Fall back to SDK approach if kubectl fails
 			LogOnboardingEvent(clusterName, "Fallback", "Falling back to SDK approach for CSR approval")
@@ -445,7 +466,7 @@ func acceptManagedCluster(clientset *kubernetes.Clientset, clusterName string) e
 func GetClusterStatusHandler(c *gin.Context) {
 	mutex.Lock()
 	defer mutex.Unlock()
-
+	startTime := time.Now()
 	var statuses []models.ClusterStatus
 	for cluster, status := range clusterStatuses {
 		statuses = append(statuses, models.ClusterStatus{
@@ -453,7 +474,8 @@ func GetClusterStatusHandler(c *gin.Context) {
 			Status:      status,
 		})
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/clusters/status", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/clusters/status").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, statuses)
 }
 
@@ -464,20 +486,23 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 		ClusterNames []string          `json:"clusterNames"`
 		Labels       map[string]string `json:"labels"`
 	}
-
+	startTime := time.Now()
 	if err := c.BindJSON(&req); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
 	// Validate required fields
 	if req.ContextName == "" || req.ClusterName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
 		return
 	}
 
 	clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Kubernetes client"})
 		return
 	}
@@ -487,13 +512,16 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 		// Handle partial success
 		if strings.Contains(err.Error(), "PARTIAL_SUCCESS:") {
 			message := strings.Replace(err.Error(), "PARTIAL_SUCCESS: ", "", 1)
+			telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "207").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "PARTIAL_SUCCESS: " + message})
 			return
 		}
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update cluster labels: %v", err)})
 		return
 	}
-
+	telemetry.HTTPRequestDuration.WithLabelValues("PATCH", "/api/managedclusters/labels").Observe(time.Since(startTime).Seconds())
+	telemetry.TotalHTTPRequests.WithLabelValues("PATCH", "/api/managedclusters/labels", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Cluster labels updated successfully",
 	})
@@ -714,9 +742,9 @@ func OnboardCluster(kubeconfigData []byte, clusterName string) error {
 	LogOnboardingEvent(clusterName, "Processing", "Waiting for acceptance to propagate")
 	time.Sleep(5 * time.Second)
 
-	// 9. Label the managed cluster
+	// 9. Label the managed cluster - USE ONBOARDING-SPECIFIC FUNCTION
 	LogOnboardingEvent(clusterName, "Labeling", "Applying labels to the managed cluster")
-	if err := UpdateManagedClusterLabels(hubClientset, hubConfig, clusterName, map[string]string{
+	if err := UpdateManagedClusterLabelsForOnboarding(hubClientset, hubConfig, clusterName, map[string]string{
 		"location-group": "edge",
 		"name":           clusterName,
 	}); err != nil {
@@ -899,130 +927,6 @@ func joinClusterToHub(kubeconfigPath, clusterName, joinToken string) error {
 
 	log.Printf("Join command output: %s", string(output))
 	return nil
-}
-
-// UpdateManagedClusterLabels - Optimized version
-func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
-	// Get binding policy protected labels once
-	protectedLabels, err := getProtectedLabels()
-	if err != nil {
-		log.Printf("[WARNING] Could not fetch protected labels: %v", err)
-		protectedLabels = make(map[string]bool)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("failed to create dynamic client: %v", err)
-	}
-
-	gvr := schema.GroupVersionResource{
-		Group:    "cluster.open-cluster-management.io",
-		Version:  "v1",
-		Resource: "managedclusters",
-	}
-
-	// Get current cluster
-	currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
-	}
-
-	// Get current labels
-	currentLabels := make(map[string]string)
-	if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
-		currentLabels = labels
-	}
-
-	// Process label changes - FIX: Use two variables to capture both return values
-	finalLabels, protectedOps := processLabelChanges(currentLabels, newLabels, protectedLabels)
-
-	// Apply changes - FIX: Use finalLabels directly
-	err = applyLabelChanges(dynamicClient, gvr, clusterName, finalLabels)
-	if err != nil {
-		return fmt.Errorf("failed to apply label changes: %v", err)
-	}
-
-	// Return error if there were protected operations - FIX: Use protectedOps
-	if len(protectedOps) > 0 {
-		return fmt.Errorf("PARTIAL_SUCCESS: Cannot modify protected labels: %s", strings.Join(protectedOps, ", "))
-	}
-
-	return nil
-}
-
-// processLabelChanges handles the logic of determining what can be changed
-func processLabelChanges(currentLabels, newLabels map[string]string, protectedLabels map[string]bool) (map[string]string, []string) {
-	log.Printf("[DEBUG] === processLabelChanges START ===")
-	log.Printf("[DEBUG] Current labels: %+v", currentLabels)
-	log.Printf("[DEBUG] New labels: %+v", newLabels)
-	log.Printf("[DEBUG] Protected labels from BP: %+v", protectedLabels)
-
-	finalLabels := make(map[string]string)
-	protectedOps := []string{}
-
-	// Start with current labels
-	for k, v := range currentLabels {
-		finalLabels[k] = v
-	}
-
-	// Process each new label operation
-	for key, value := range newLabels {
-		currentValue, exists := currentLabels[key]
-		isProtected := isLabelProtected(key, protectedLabels)
-
-		log.Printf("[DEBUG] Processing label %s: value='%s', exists=%v, protected=%v", key, value, exists, isProtected)
-
-		if value == "" {
-			// Deletion request
-			if !exists {
-				log.Printf("[DEBUG] Label %s doesn't exist, skipping deletion", key)
-				continue // Nothing to delete
-			}
-
-			if isProtected {
-				log.Printf("[DEBUG] BLOCKING deletion of protected label: %s", key)
-				protectedOps = append(protectedOps, key)
-				// Keep the original value
-				finalLabels[key] = currentValue
-			} else {
-				log.Printf("[DEBUG] ALLOWING deletion of label: %s", key)
-				delete(finalLabels, key)
-			}
-		} else {
-			// Addition or modification
-			if !exists {
-				// New label
-				if isProtected {
-					log.Printf("[DEBUG] BLOCKING addition of protected label: %s", key)
-					protectedOps = append(protectedOps, key)
-					// Don't add protected labels
-				} else {
-					log.Printf("[DEBUG] ALLOWING addition of label: %s = %s", key, value)
-					finalLabels[key] = value
-				}
-			} else if currentValue != value {
-				// Modification
-				if isProtected {
-					log.Printf("[DEBUG] BLOCKING modification of protected label: %s (keeping %s)", key, currentValue)
-					protectedOps = append(protectedOps, key)
-					// Keep original value
-					finalLabels[key] = currentValue
-				} else {
-					log.Printf("[DEBUG] ALLOWING modification of label: %s = %s (was %s)", key, value, currentValue)
-					finalLabels[key] = value
-				}
-			} else {
-				log.Printf("[DEBUG] Label %s unchanged: %s", key, value)
-			}
-			// If value is same as current, no change needed
-		}
-	}
-
-	log.Printf("[DEBUG] Final labels: %+v", finalLabels)
-	log.Printf("[DEBUG] Protected operations: %+v", protectedOps)
-	log.Printf("[DEBUG] === processLabelChanges END ===")
-
-	return finalLabels, protectedOps
 }
 
 // isLabelProtected checks if a label is protected (with debug logging)
@@ -1292,6 +1196,229 @@ func getLabelsUsedInBindingPolicies() (map[string]bool, error) {
 	}
 
 	return usedLabels, nil
+}
+
+// UpdateManagedClusterLabels - Fixed version for onboarding
+func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
+	// Get binding policy protected labels once
+	protectedLabels, err := getProtectedLabels()
+	if err != nil {
+		log.Printf("[WARNING] Could not fetch protected labels: %v", err)
+		protectedLabels = make(map[string]bool)
+	}
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create dynamic client: %v", err)
+	}
+
+	gvr := schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1",
+		Resource: "managedclusters",
+	}
+
+	// Get current cluster
+	currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
+	}
+
+	// Get current labels
+	currentLabels := make(map[string]string)
+	if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
+		currentLabels = labels
+	}
+
+	// Process label changes - Fixed version that allows onboarding labels
+	finalLabels, protectedOps := processLabelChangesForOnboarding(currentLabels, newLabels, protectedLabels)
+
+	// Apply changes
+	err = applyLabelChanges(dynamicClient, gvr, clusterName, finalLabels)
+	if err != nil {
+		return fmt.Errorf("failed to apply label changes: %v", err)
+	}
+
+	// Return error if there were protected operations
+	if len(protectedOps) > 0 {
+		return fmt.Errorf("PARTIAL_SUCCESS: Cannot modify protected labels: %s", strings.Join(protectedOps, ", "))
+	}
+
+	return nil
+}
+
+// processLabelChangesForOnboarding - Fixed version that allows essential onboarding labels
+func processLabelChangesForOnboarding(currentLabels, newLabels map[string]string, protectedLabels map[string]bool) (map[string]string, []string) {
+	log.Printf("[DEBUG] === processLabelChangesForOnboarding START ===")
+	log.Printf("[DEBUG] Current labels: %+v", currentLabels)
+	log.Printf("[DEBUG] New labels: %+v", newLabels)
+	log.Printf("[DEBUG] Protected labels from BP: %+v", protectedLabels)
+
+	finalLabels := make(map[string]string)
+	protectedOps := []string{}
+
+	// Start with current labels
+	for k, v := range currentLabels {
+		finalLabels[k] = v
+	}
+
+	// Define essential onboarding labels that should always be allowed
+	essentialOnboardingLabels := map[string]bool{
+		"name":           true,
+		"location-group": true,
+		"environment":    true,
+		"cluster-type":   true,
+	}
+
+	// Process each new label operation
+	for key, value := range newLabels {
+		currentValue, exists := currentLabels[key]
+		isProtected := isLabelProtectedForOnboarding(key, protectedLabels, essentialOnboardingLabels)
+
+		log.Printf("[DEBUG] Processing label %s: value='%s', exists=%v, protected=%v", key, value, exists, isProtected)
+
+		if value == "" {
+			// Deletion request
+			if !exists {
+				log.Printf("[DEBUG] Label %s doesn't exist, skipping deletion", key)
+				continue // Nothing to delete
+			}
+
+			if isProtected {
+				log.Printf("[DEBUG] BLOCKING deletion of protected label: %s", key)
+				protectedOps = append(protectedOps, key)
+				// Keep the original value
+				finalLabels[key] = currentValue
+			} else {
+				log.Printf("[DEBUG] ALLOWING deletion of label: %s", key)
+				delete(finalLabels, key)
+			}
+		} else {
+			// Addition or modification
+			if !exists {
+				// New label
+				if isProtected {
+					log.Printf("[DEBUG] BLOCKING addition of protected label: %s", key)
+					protectedOps = append(protectedOps, key)
+					// Don't add protected labels
+				} else {
+					log.Printf("[DEBUG] ALLOWING addition of label: %s = %s", key, value)
+					finalLabels[key] = value
+				}
+			} else if currentValue != value {
+				// Modification
+				if isProtected {
+					log.Printf("[DEBUG] BLOCKING modification of protected label: %s (keeping %s)", key, currentValue)
+					protectedOps = append(protectedOps, key)
+					// Keep original value
+					finalLabels[key] = currentValue
+				} else {
+					log.Printf("[DEBUG] ALLOWING modification of label: %s = %s (was %s)", key, value, currentValue)
+					finalLabels[key] = value
+				}
+			} else {
+				log.Printf("[DEBUG] Label %s unchanged: %s", key, value)
+			}
+			// If value is same as current, no change needed
+		}
+	}
+
+	log.Printf("[DEBUG] Final labels: %+v", finalLabels)
+	log.Printf("[DEBUG] Protected operations: %+v", protectedOps)
+	log.Printf("[DEBUG] === processLabelChangesForOnboarding END ===")
+
+	return finalLabels, protectedOps
+}
+
+// isLabelProtectedForOnboarding - Fixed version that allows essential onboarding labels
+func isLabelProtectedForOnboarding(key string, protectedLabels map[string]bool, essentialOnboardingLabels map[string]bool) bool {
+	log.Printf("[DEBUG] Checking protection for label: %s", key)
+
+	// Allow essential onboarding labels regardless of other protection rules
+	if essentialOnboardingLabels[key] {
+		log.Printf("[DEBUG] Label %s is an essential onboarding label, allowing", key)
+		return false
+	}
+
+	// Check binding policy protection
+	if protectedLabels[key] {
+		log.Printf("[DEBUG] Label %s is protected by binding policy", key)
+		return true
+	}
+
+	// Check system label prefixes
+	systemPrefixes := []string{
+		"cluster.open-cluster-management.io/",
+		"feature.open-cluster-management.io/",
+		"kubernetes.io/",
+		"k8s.io/",
+		"node.openshift.io/",
+		"beta.kubernetes.io/",
+		"topology.kubernetes.io/",
+		"node-role.kubernetes.io/",
+	}
+
+	for _, prefix := range systemPrefixes {
+		if strings.HasPrefix(key, prefix) {
+			log.Printf("[DEBUG] Label %s is protected by system prefix: %s", key, prefix)
+			return true
+		}
+	}
+
+	log.Printf("[DEBUG] Label %s is NOT protected", key)
+	return false
+}
+
+// Alternative approach: Create a separate function for onboarding that bypasses protection
+func UpdateManagedClusterLabelsForOnboarding(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
+	log.Printf("[DEBUG] Updating labels for onboarding cluster %s with labels: %+v", clusterName, newLabels)
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create dynamic client: %v", err)
+	}
+
+	gvr := schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1",
+		Resource: "managedclusters",
+	}
+
+	// Get current cluster
+	currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
+	}
+
+	// Get current labels
+	currentLabels := make(map[string]string)
+	if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
+		currentLabels = labels
+	}
+
+	// For onboarding, we want to add the new labels without protection checks
+	// but preserve existing system labels
+	finalLabels := make(map[string]string)
+
+	// Start with current labels
+	for k, v := range currentLabels {
+		finalLabels[k] = v
+	}
+
+	// Add/update with new labels (onboarding labels are always allowed)
+	for k, v := range newLabels {
+		finalLabels[k] = v
+		log.Printf("[DEBUG] Setting onboarding label: %s = %s", k, v)
+	}
+
+	// Apply changes
+	err = applyLabelChanges(dynamicClient, gvr, clusterName, finalLabels)
+	if err != nil {
+		return fmt.Errorf("failed to apply label changes during onboarding: %v", err)
+	}
+
+	log.Printf("[DEBUG] Successfully updated labels for onboarding cluster %s", clusterName)
+	return nil
 }
 
 // kubeconfigPath returns the path to the kubeconfig file

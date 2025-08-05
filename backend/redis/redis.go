@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
-
-	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/backend/log"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"os"
+	"time"
 )
 
 var ctx = context.Background()
@@ -18,7 +18,13 @@ const filePathKey = "filepath"
 
 // SetNamespaceCache sets a namespace data cache in Redis
 func SetNamespaceCache(key string, value string, expiration time.Duration) error {
+	log.LogInfo("Setting namespace cache",
+		zap.String("key", key),
+		zap.Duration("expiration", expiration))
 	if err := rdb.Set(ctx, key, value, expiration).Err(); err != nil {
+		log.LogError("Failed to set namespace cache",
+			zap.String("key", key),
+			zap.Error(err))
 		return fmt.Errorf("failed to set cache: %v", err)
 	}
 	return nil
@@ -26,10 +32,15 @@ func SetNamespaceCache(key string, value string, expiration time.Duration) error
 
 // GetNamespaceCache retrieves cached namespace data from Redis
 func GetNamespaceCache(key string) (string, error) {
+	log.LogInfo("Getting namespace cache", zap.String("key", key))
 	val, err := rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
+		log.LogInfo("Namespace cache miss", zap.String("key", key))
 		return "", nil // Cache miss
 	} else if err != nil {
+		log.LogError("Failed to get namespace cache",
+			zap.String("key", key),
+			zap.Error(err))
 		return "", fmt.Errorf("failed to get cache: %v", err)
 	}
 	return val, nil
@@ -141,9 +152,24 @@ func GetallBpCmd() ([]string, error) {
 
 // intializes redis client
 func init() {
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "localhost"
+	}
+	redisPort := os.Getenv("REDIS_PORT")
+	if redisPort == "" {
+		redisPort = "6379"
+	}
+	addr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr:         addr,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		MaxRetries:   3,
 	})
+
 	log.LogInfo("initialized redis client")
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.LogWarn("pls check if redis is runnnig", zap.String("err", err.Error()))
@@ -155,14 +181,23 @@ func init() {
 // value: Any Go struct or map that can be marshalled to JSON
 // expiration: Time until the key expires (0 for no expiration)
 func SetJSONValue(key string, value interface{}, expiration time.Duration) error {
-	// Marshal the value to JSON
+	log.LogInfo("Setting JSON value",
+		zap.String("key", key),
+		zap.Duration("expiration", expiration))
+
 	jsonData, err := json.Marshal(value)
 	if err != nil {
+		log.LogError("Failed to marshal JSON value",
+			zap.String("key", key),
+			zap.Error(err))
 		return fmt.Errorf("failed to marshal JSON: %v", err)
 	}
 
 	// Store the JSON string in Redis
 	if err := rdb.Set(ctx, key, string(jsonData), expiration).Err(); err != nil {
+		log.LogError("Failed to set JSON value in Redis",
+			zap.String("key", key),
+			zap.Error(err))
 		return fmt.Errorf("failed to set JSON value: %v", err)
 	}
 
@@ -174,17 +209,23 @@ func SetJSONValue(key string, value interface{}, expiration time.Duration) error
 // dest: Pointer to a struct or map where the unmarshaled JSON will be stored
 // Returns true if the key was found, false if it was a cache miss
 func GetJSONValue(key string, dest interface{}) (bool, error) {
-	// Get the JSON string from Redis
+	log.LogInfo("Getting JSON value", zap.String("key", key))
+
 	val, err := rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
-		// Key doesn't exist (cache miss)
+		log.LogInfo("JSON value cache miss", zap.String("key", key))
 		return false, nil
 	} else if err != nil {
+		log.LogError("Failed to get JSON value from Redis",
+			zap.String("key", key),
+			zap.Error(err))
 		return false, fmt.Errorf("failed to get JSON value: %v", err)
 	}
 
-	// Unmarshal the JSON into the destination
 	if err := json.Unmarshal([]byte(val), dest); err != nil {
+		log.LogError("Failed to unmarshal JSON value",
+			zap.String("key", key),
+			zap.Error(err))
 		return true, fmt.Errorf("failed to unmarshal JSON: %v", err)
 	}
 
@@ -292,36 +333,23 @@ const (
 
 // StoreBindingPolicy stores a binding policy in Redis with proper type handling
 func StoreBindingPolicy(policy *BindingPolicyCache) error {
-	if policy == nil {
-		return fmt.Errorf("cannot store nil binding policy")
-	}
+	log.LogInfo("Storing binding policy",
+		zap.String("name", policy.Name),
+		zap.String("namespace", policy.Namespace))
 
-	// Check if Redis is available
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.LogWarn("redis not available, skipping cache store", zap.Error(err))
-		return nil // Don't fail the operation if Redis is down
-	}
-
-	// Log YAML content before storing
-	if policy.RawYAML != "" {
-		log.LogDebug("Storing binding policy with YAML content",
-			zap.String("policyName", policy.Name),
-			zap.Int("yamlLength", len(policy.RawYAML)))
-	} else {
-		log.LogWarn("Storing binding policy without YAML content",
-			zap.String("policyName", policy.Name))
-	}
-
-	// Marshal the policy to JSON
 	jsonData, err := json.Marshal(policy)
 	if err != nil {
+		log.LogError("Failed to marshal binding policy",
+			zap.String("name", policy.Name),
+			zap.Error(err))
 		return fmt.Errorf("failed to marshal binding policy: %v", err)
 	}
 
-	// Store in Redis hash with the policy name as the field
-	err = rdb.HSet(ctx, BindingPolicyHashKey, policy.Name, string(jsonData)).Err()
-	if err != nil {
-		return fmt.Errorf("failed to store binding policy in Redis: %v", err)
+	if err := rdb.HSet(ctx, "binding_policies", policy.Name, string(jsonData)).Err(); err != nil {
+		log.LogError("Failed to store binding policy in Redis",
+			zap.String("name", policy.Name),
+			zap.Error(err))
+		return fmt.Errorf("failed to store binding policy: %v", err)
 	}
 
 	// Set expiration for the hash
@@ -343,13 +371,20 @@ func GetBindingPolicy(name string) (*BindingPolicyCache, error) {
 
 	val, err := rdb.HGet(ctx, BindingPolicyHashKey, name).Result()
 	if err == redis.Nil {
-		return nil, nil // Policy not found
+		log.LogInfo("Binding policy not found", zap.String("name", name))
+		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to get binding policy from Redis: %v", err)
+		log.LogError("Failed to get binding policy from Redis",
+			zap.String("name", name),
+			zap.Error(err))
+		return nil, fmt.Errorf("failed to get binding policy: %v", err)
 	}
 
 	var policy BindingPolicyCache
 	if err := json.Unmarshal([]byte(val), &policy); err != nil {
+		log.LogError("Failed to unmarshal binding policy",
+			zap.String("name", name),
+			zap.Error(err))
 		return nil, fmt.Errorf("failed to unmarshal binding policy: %v", err)
 	}
 
@@ -414,10 +449,15 @@ func DeleteBindingPolicy(name string) error {
 		return nil // Don't fail the operation if Redis is down
 	}
 
-	err := rdb.HDel(ctx, BindingPolicyHashKey, name).Err()
-	if err != nil {
-		return fmt.Errorf("failed to delete binding policy from Redis: %v", err)
+	log.LogInfo("Deleting binding policy", zap.String("name", name))
+
+	if err := rdb.HDel(ctx, BindingPolicyHashKey, name).Err(); err != nil {
+		log.LogError("Failed to delete binding policy",
+			zap.String("name", name),
+			zap.Error(err))
+		return fmt.Errorf("failed to delete binding policy: %v", err)
 	}
+
 	return nil
 }
 

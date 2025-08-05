@@ -1,0 +1,36 @@
+name: Spellcheck
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+      - "release-*"
+    paths:
+      - ".github/workflows/spellcheck.yml"
+      - ".github/spellcheck/.spellcheck.yml"
+      - ".github/spellcheck/.wordlist.txt"
+      - "**/*.md"
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "**/*.md"
+      - ".github/spellcheck/**"
+      - ".github/workflows/spellcheck.yml"
+
+jobs:
+  spellcheck:
+    name: Run Spellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Markdown Spellcheck
+        uses: rojopolis/spellcheck-github-actions@v0
+        with:
+          config_path: .github/spellcheck/.spellcheck.yml
+          task_name: Markdown
+

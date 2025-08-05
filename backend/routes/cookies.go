@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/wds"
+	"github.com/kubestellar/ui/backend/wds"
 )
 
 func setupWdsCookiesRoute(router *gin.Engine) {
