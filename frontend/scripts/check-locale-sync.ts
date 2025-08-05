@@ -40,43 +40,43 @@ class LocaleSyncChecker {
     this.masterLocale = 'en';
     this.issueLabel = 'locale-sync';
     this.issueTitlePrefix = '[Locale Sync]';
-    
+
     // Token priority: GH_REPO_TOKEN > GITHUB_TOKEN
     const ghRepoToken = process.env.GH_REPO_TOKEN;
     const githubToken = process.env.GITHUB_TOKEN;
     const token = ghRepoToken || githubToken;
-    
+
     this.prNumber = process.env.PR_NUMBER || process.env.GITHUB_PR_NUMBER || this.detectPRNumber();
     const repository = process.env.GITHUB_REPOSITORY;
 
     // Debug token availability (without exposing tokens)
     if (ghRepoToken) {
-      console.log('✅ Using GH_REPO_TOKEN for GitHub API access');
+      console.log('[OK] Using GH_REPO_TOKEN for GitHub API access');
       this.canPostComments = true;
     } else if (githubToken) {
-      console.log('⚠️  Using GITHUB_TOKEN (limited permissions) for GitHub API access');
+      console.log('[WARN] Using GITHUB_TOKEN (limited permissions) for GitHub API access');
       // GITHUB_TOKEN can only comment on PRs from the same repository
       this.canPostComments = true;
     } else {
-      console.log('❌ No GitHub token available');
+      console.log('[ERROR] No GitHub token available');
       this.canPostComments = false;
     }
 
     // Debug PR number detection
-    console.log(`🔍 PR Number detection: ${this.prNumber || 'Not found'}`);
-    console.log(`🔍 GITHUB_REF: ${process.env.GITHUB_REF || 'Not set'}`);
-    console.log(`🔍 Can post comments: ${this.canPostComments}`);
+    console.log(`[DEBUG] PR Number detection: ${this.prNumber || 'Not found'}`);
+    console.log(`[DEBUG] GITHUB_REF: ${process.env.GITHUB_REF || 'Not set'}`);
+    console.log(`[DEBUG] Can post comments: ${this.canPostComments}`);
 
     if (repository && token) {
       [this.owner, this.repo] = repository.split('/');
-      this.octokit = new Octokit({ 
+      this.octokit = new Octokit({
         auth: token,
-        userAgent: 'kubestellar-ui-locale-sync'
+        userAgent: 'kubestellar-ui-locale-sync',
       });
-      console.log(`✅ GitHub API initialized for ${this.owner}/${this.repo}`);
+      console.log(`[OK] GitHub API initialized for ${this.owner}/${this.repo}`);
     } else {
       console.log(
-        '⚠️  GITHUB_REPOSITORY or token not set; running in local-only mode (no PR comments or issues will be created).'
+        '[WARN] GITHUB_REPOSITORY or token not set; running in local-only mode (no PR comments or issues will be created).'
       );
     }
   }
@@ -184,7 +184,7 @@ class LocaleSyncChecker {
     body += `This issue tracks missing or extra translation keys in \`${locale}\` compared to the master English locale.\n\n`;
 
     if (missing.length > 0) {
-      body += `### 📝 Missing Keys (${missing.length})\n`;
+      body += `### Missing Keys (${missing.length})\n`;
       body += `The following keys exist in \`strings.en.json\` but are missing in \`${locale}\`:\n\n`;
       missing.forEach(key => {
         body += `- \`${key}\`\n`;
@@ -193,7 +193,7 @@ class LocaleSyncChecker {
     }
 
     if (extra.length > 0) {
-      body += `### 🔍 Extra Keys (${extra.length})\n`;
+      body += `### Extra Keys (${extra.length})\n`;
       body += `The following keys exist in \`${locale}\` but not in \`strings.en.json\`:\n\n`;
       extra.forEach(key => {
         body += `- \`${key}\`\n`;
@@ -201,11 +201,11 @@ class LocaleSyncChecker {
       body += '\n';
     }
 
-    body += `### 🔧 How to Fix\n`;
+    body += `### How to Fix\n`;
     body += `1. For missing keys: Add the appropriate translations to \`frontend/src/locales/strings.${locale}.json\`\n`;
     body += `2. For extra keys: Remove them from \`frontend/src/locales/strings.${locale}.json\` or add them to \`strings.en.json\` if needed\n`;
     body += `3. This issue will be automatically updated when the locale file is modified\n\n`;
-    body += `### 📊 Status\n`;
+    body += `### Status\n`;
     body += `- **Total Missing**: ${missing.length}\n`;
     body += `- **Total Extra**: ${extra.length}\n`;
     body += `- **Last Updated**: ${new Date().toISOString()}\n`;
@@ -282,7 +282,10 @@ class LocaleSyncChecker {
       )
       .join('\n');
 
-    const totalMissing = Object.values(results).reduce((sum, issues) => sum + issues.missing.length, 0);
+    const totalMissing = Object.values(results).reduce(
+      (sum, issues) => sum + issues.missing.length,
+      0
+    );
     const totalExtra = Object.values(results).reduce((sum, issues) => sum + issues.extra.length, 0);
 
     return `## 🌐 Locale Sync Check Results
@@ -291,16 +294,18 @@ The following locale files have synchronization issues with the master English l
 
 ${summary}
 
-**📊 Summary:**
+    **Summary:**
 - **Total Missing Keys**: ${totalMissing}
 - **Total Extra Keys**: ${totalExtra}
 
-**🔧 Action Required:** Please ensure all locale files have the same keys as \`strings.en.json\`.
+    **Action Required:** Please ensure all locale files have the same keys as \`strings.en.json\`.
 - Missing keys should be added with appropriate translations
 - Extra keys should be removed or added to \`strings.en.json\` if needed
 
-**📝 Files to check:**
-${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}.json\``).join('\n')}
+    **Files to check:**
+${Object.keys(results)
+  .map(locale => `- \`frontend/src/locales/strings.${locale}.json\``)
+  .join('\n')}
 
 ---
 *This comment was automatically generated by the locale sync check.*`;
@@ -308,7 +313,7 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
 
   private async postPRComment(results: LocaleResults): Promise<boolean> {
     if (!this.octokit || !this.owner || !this.repo || !this.prNumber) {
-      console.log('⚠️  Skipping PR comment - missing GitHub context');
+      console.log('[WARN] Skipping PR comment - missing GitHub context');
       console.log(`   - octokit: ${!!this.octokit}`);
       console.log(`   - owner: ${this.owner}`);
       console.log(`   - repo: ${this.repo}`);
@@ -317,13 +322,13 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
     }
 
     if (!this.canPostComments) {
-      console.log('⚠️  Skipping PR comment - insufficient permissions');
+      console.log('[WARN] Skipping PR comment - insufficient permissions');
       return false;
     }
 
     try {
       const comment = this.generatePRComment(results);
-      console.log(`📝 Attempting to post PR comment to PR #${this.prNumber}...`);
+      console.log(`[INFO] Attempting to post PR comment to PR #${this.prNumber}...`);
 
       // First, check if we can access the PR
       try {
@@ -336,10 +341,10 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
         if (error && typeof error === 'object' && 'status' in error) {
           const status = (error as { status: number }).status;
           if (status === 404) {
-            console.error(`❌ PR #${this.prNumber} not found or not accessible`);
+            console.error(`[ERROR] PR #${this.prNumber} not found or not accessible`);
             return false;
           } else if (status === 403) {
-            console.error('❌ Insufficient permissions to access PR');
+            console.error('[ERROR] Insufficient permissions to access PR');
             return false;
           }
         }
@@ -353,40 +358,40 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
         issue_number: parseInt(this.prNumber),
         body: comment,
       });
-      
-      console.log('✅ PR comment posted successfully');
+
+      console.log('[OK] PR comment posted successfully');
       return true;
     } catch (error: unknown) {
-      console.error('❌ Failed to post PR comment:', error);
-      
+      console.error('[ERROR] Failed to post PR comment:', error);
+
       // Provide specific guidance based on error type
       if (error && typeof error === 'object' && 'status' in error) {
         const status = (error as { status: number }).status;
         if (status === 403) {
-          console.error('🔒 Permission denied. This is likely due to:');
+          console.error('[ERROR] Permission denied. This is likely due to:');
           console.error('   1. Token lacks sufficient permissions');
           console.error('   2. PR is from a fork and token cannot comment on fork PRs');
           console.error('   3. Repository settings prevent commenting');
         } else if (status === 404) {
-          console.error('🔍 PR not found. Check if PR number is correct:', this.prNumber);
+          console.error('[ERROR] PR not found. Check if PR number is correct:', this.prNumber);
         } else if (status === 401) {
-          console.error('🔑 Authentication failed. Check token validity');
+          console.error('[ERROR] Authentication failed. Check token validity');
         } else if (status === 422) {
-          console.error('📝 Comment body validation failed');
+          console.error('[ERROR] Comment body validation failed');
         }
       }
-      
+
       // Log the full error for debugging (without exposing sensitive data)
       if (error && typeof error === 'object' && 'message' in error) {
         console.error('Error message:', (error as { message: string }).message);
       }
-      
+
       return false;
     }
   }
 
   async run(): Promise<{ hasIssues: boolean; commentPosted: boolean }> {
-    console.log('🔍 Checking locale synchronization...');
+    console.log('[INFO] Checking locale synchronization...');
     const masterData = this.loadLocaleFile(this.masterLocale);
     const masterKeys = this.flattenObject(masterData);
     console.log(`📋 Master locale (${this.masterLocale}) has ${masterKeys.length} keys`);
@@ -413,15 +418,15 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
           // Create or update GitHub issue
           const issueNumber = await this.createOrUpdateIssue(locale, issues.missing, issues.extra);
           if (issueNumber) {
-            console.log(`    📝 Issue #${issueNumber} created/updated for ${locale}`);
+            console.log(`    [INFO] Issue #${issueNumber} created/updated for ${locale}`);
           }
         } else {
-          console.log(`  ✅ ${locale}: All keys in sync`);
+          console.log(`  [OK] ${locale}: All keys in sync`);
           // Close issue if it exists and locale is now in sync
           await this.closeIssueIfFixed(locale);
         }
       } catch (error) {
-        console.error(`❌ Error processing ${locale}:`, error);
+        console.error(`[ERROR] Error processing ${locale}:`, error);
         hasIssues = true;
       }
     }
@@ -429,8 +434,8 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
     let commentPosted = false;
 
     if (hasIssues) {
-      console.log('\n❌ Locale synchronization issues found!');
-      console.log('\n📊 Summary:');
+      console.log('\n[ERROR] Locale synchronization issues found!');
+      console.log('\n[INFO] Summary:');
       Object.entries(results).forEach(([locale, issues]) => {
         if (issues.missing.length > 0 || issues.extra.length > 0) {
           console.log(
@@ -442,12 +447,12 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
       // Try to post PR comment, but don't fail the entire check if it fails
       try {
         commentPosted = await this.postPRComment(results);
-      } catch (error) {
-        console.error('⚠️  PR commenting failed, but continuing with check...');
+      } catch {
+        console.error('[WARN] PR commenting failed, but continuing with check...');
         commentPosted = false;
       }
     } else {
-      console.log('\n✅ All locale files are synchronized!');
+      console.log('\n[OK] All locale files are synchronized!');
     }
 
     return { hasIssues, commentPosted };
@@ -457,13 +462,13 @@ ${Object.keys(results).map(locale => `- \`frontend/src/locales/strings.${locale}
 async function main() {
   const checker = new LocaleSyncChecker();
   const result = await checker.run();
-  
+
   // Set output variables for GitHub Actions
   if (process.env.GITHUB_OUTPUT) {
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `has-issues=${result.hasIssues}\n`);
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `comment-posted=${result.commentPosted}\n`);
   }
-  
+
   if (result.hasIssues) {
     process.exit(1); // Fail the check
   }
@@ -473,4 +478,3 @@ main().catch(error => {
   console.error('Script failed:', error);
   process.exit(1);
 });
-
