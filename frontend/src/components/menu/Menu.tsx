@@ -13,9 +13,10 @@ interface MenuProps {
 
 export interface MenuListItem {
   isLink: boolean;
-  url: string;
+  url?: string;
   icon: IconType;
   label: string;
+  onClick?: () => void;
 }
 
 export interface MenuItemData {
@@ -33,12 +34,10 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
   const themeStyles = getThemeStyles(isDark);
   const menu = useMenuData();
 
-  // Reset animation state when route changes
   useEffect(() => {
     setIsAnimating(false);
   }, [location.pathname]);
 
-  // Animation variants
   const containerVariants = {
     expanded: {
       width: '100%',
@@ -51,7 +50,7 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
       },
     },
     collapsed: {
-      width: collapsed ? '100%' : '100%',
+      width: '100%',
       alignItems: 'center',
       transition: {
         type: 'spring',
@@ -63,35 +62,43 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
     },
   };
 
+  const bgStyles = {
+    background: isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.85)',
+    backdropFilter: 'blur(12px)',
+    borderColor: isDark ? 'rgba(71, 85, 105, 0.2)' : 'rgba(226, 232, 240, 0.7)',
+    boxShadow: isDark
+      ? '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
+      : '0 8px 32px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02) inset',
+    overflowY: 'auto' as const,
+    scrollbarWidth: 'none',
+   
+   
+    maxHeight: 'calc(100vh - 160px)',
+  };
+
   return (
     <motion.div
-      className="flex w-full flex-col overflow-hidden rounded-xl border backdrop-blur-sm"
-      style={{
-        background: isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(12px)',
-        borderColor: isDark ? 'rgba(71, 85, 105, 0.2)' : 'rgba(226, 232, 240, 0.7)',
-        boxShadow: isDark
-          ? '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
-          : '0 8px 32px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02) inset',
-        overflowY: 'auto',
-        scrollbarWidth: 'thin',
-        scrollbarColor: `${themeStyles.colors.brand.primary} transparent`,
-        maxHeight: 'calc(100vh - 220px)',
-      }}
+      className="flex w-full flex-col rounded-xl border backdrop-blur-sm"
+      style={bgStyles }
       variants={containerVariants}
       initial={false}
       animate={collapsed ? 'collapsed' : 'expanded'}
       onAnimationStart={() => setIsAnimating(true)}
       onAnimationComplete={() => setIsAnimating(false)}
+      role="menu"
     >
-      {/* Top accent line */}
+      {/* Accent Line */}
       <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
 
-      {/* Menu content */}
+      {/* Menu Items */}
       <div className="relative z-10 space-y-4 p-3">
         {menu.map((item: MenuItemData, index: number) => (
-          <div key={index} className="relative">
-            {/* Section divider */}
+          <div
+            key={index}
+            className="relative"
+            aria-label={collapsed ? item.catalog : undefined}
+          >
+            {/* Divider between sections */}
             {index > 0 && (
               <div className="relative my-2">
                 <div
