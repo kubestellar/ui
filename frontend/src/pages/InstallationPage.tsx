@@ -710,6 +710,126 @@ const InstallationPage = () => {
   const lastToastLangRef = useRef<string | null>(null);
   const toastIdRef = useRef<string | null>(null);
 
+  const refreshPrerequisites = async () => {
+    // Reset all prerequisites to checking status
+    setPrerequisites(prev =>
+      prev.map(prereq => ({
+        ...prereq,
+        status: PrereqStatus.Checking,
+        version: undefined,
+        details: undefined,
+      }))
+    );
+
+    // Show loading toast
+    const loadingToast = toast.loading(t('installationPage.toasts.recheckingPrerequisites'));
+
+    try {
+      const { data } = await api.get('/api/prerequisites');
+
+      // Update prerequisites with real data (same logic as in useEffect)
+      const updatedPrereqs = prerequisites.map(prereq => {
+        // Try to find the tool by name or alias
+        let tool = data.prerequisites?.find(
+          (t: PrereqToolData) => t.name.toLowerCase() === prereq.name.toLowerCase()
+        );
+
+        // If not found and aliases exist, try to find by alias
+        if (!tool && prereq.aliasNames) {
+          for (const alias of prereq.aliasNames) {
+            tool = data.prerequisites?.find(
+              (t: PrereqToolData) => t.name.toLowerCase() === alias.toLowerCase()
+            );
+            if (tool) break;
+          }
+        }
+
+        // Special case for OCM CLI (clusteradm)
+        if (prereq.name === 'clusteradm' && !tool) {
+          // Try alternative name formats
+          tool = data.prerequisites?.find(
+            (t: PrereqToolData) =>
+              t.name.toLowerCase().includes('ocm') ||
+              t.name.toLowerCase().includes('cluster') ||
+              t.name.toLowerCase() === 'open cluster management'
+          );
+        }
+
+        if (!tool) {
+          return {
+            ...prereq,
+            status: PrereqStatus.Error,
+            details: 'Tool not found',
+          };
+        }
+
+        // Set version if available
+        if (tool.version) {
+          prereq.version = tool.version;
+        }
+
+        // Check version requirements
+        if (!tool.installed) {
+          return {
+            ...prereq,
+            status: PrereqStatus.Error,
+            details: 'Not installed',
+          };
+        } else if (prereq.minVersion && tool.version) {
+          const versionMet = compareVersions(tool.version, prereq.minVersion) >= 0;
+          const maxVersionMet = prereq.maxVersion
+            ? compareVersions(tool.version, prereq.maxVersion) <= 0
+            : true;
+
+          if (!versionMet) {
+            return {
+              ...prereq,
+              status: PrereqStatus.Warning,
+              details: `Version too old. Required: ${prereq.minVersion} or higher.`,
+            };
+          } else if (!maxVersionMet) {
+            return {
+              ...prereq,
+              status: PrereqStatus.Warning,
+              details: `Version too new. Required: up to ${prereq.maxVersion}.`,
+            };
+          } else {
+            return {
+              ...prereq,
+              status: PrereqStatus.Success,
+            };
+          }
+        } else {
+          return {
+            ...prereq,
+            status: PrereqStatus.Success,
+          };
+        }
+      });
+
+      setPrerequisites(updatedPrereqs);
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success(t('installationPage.toasts.prerequisitesRechecked'));
+    } catch (error) {
+      console.error('Error rechecking prerequisites:', error);
+
+      // Set all prerequisites to unknown on error
+      setPrerequisites(prev =>
+        prev.map(prereq => ({
+          ...prereq,
+          status: PrereqStatus.Unknown,
+          details: 'Failed to check',
+        }))
+      );
+
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToast);
+      toast.error(t('installationPage.toasts.recheckFailed'));
+    }
+  };
+
   // Initial status check
   useEffect(() => {
     const checkStatus = async () => {
@@ -1547,15 +1667,25 @@ const InstallationPage = () => {
                     {/* Navigation buttons */}
                     <div className="mt-8 flex justify-between">
                       <button
-                        onClick={() => window.location.reload()}
+                        onClick={refreshPrerequisites}
+                        disabled={getPrereqStatusCounts().checking > 0}
                         className={`flex items-center rounded-lg px-4 py-2 transition-colors ${
-                          isDark
-                            ? 'bg-slate-800 text-white hover:bg-slate-700'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          getPrereqStatusCounts().checking > 0
+                            ? isDark
+                              ? 'cursor-not-allowed bg-slate-800/50 text-slate-500'
+                              : 'cursor-not-allowed bg-gray-300/50 text-gray-400'
+                            : isDark
+                              ? 'bg-slate-800 text-white hover:bg-slate-700'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
-                        <RefreshCw size={16} className="mr-2" />
-                        {t('installationPage.prerequisites.buttons.refresh')}
+                        <RefreshCw
+                          size={16}
+                          className={`mr-2 ${getPrereqStatusCounts().checking > 0 ? 'animate-spin' : ''}`}
+                        />
+                        {getPrereqStatusCounts().checking > 0
+                          ? t('installationPage.prerequisites.buttons.checking')
+                          : t('installationPage.prerequisites.buttons.refresh')}
                       </button>
 
                       <button

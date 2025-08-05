@@ -222,7 +222,9 @@
       "demoEnvironmentRequirements": "Demo Environment Requirements",
       "buttons": {
         "refresh": "Refresh",
-        "nextInstallation": "Next: Installation"
+        "nextInstallation": "Next: Installation",
+        "checking": "Checking...",
+        "refresh": "Refresh"
       }
     },
     "installation": {
@@ -300,7 +302,10 @@
       "preparingInstructions": "Preparing installation instructions...",
       "followInstructions": "Follow the CLI installation instructions below to install KubeStellar",
       "loadInstructionsFailed": "Failed to load installation instructions. Please refresh the page and try again.",
-      "installationDetected": "KubeStellar installation detected! Redirecting to login page..."
+      "installationDetected": "KubeStellar installation detected! Redirecting to login page...",
+      "recheckingPrerequisites": "Rechecking prerequisites...",
+      "prerequisitesRechecked": "Prerequisites rechecked successfully",
+      "recheckFailed": "Failed to recheck prerequisites"
     }
   },
   "header": {
