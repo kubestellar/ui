@@ -129,6 +129,7 @@ KubestellarUI uses environment variables to track the app version and the curren
 
 | Variable               | Purpose                                 | Example                 |
 | ---------------------- | --------------------------------------- | ----------------------- |
+| `VITE_PROMETHEUS_URL`  | Defines the Prometheus URL              | `http://localhost:9090` |
 | `VITE_BASE_URL`        | Defines the base URL for API calls      | `http://localhost:4000` |
 | `VITE_APP_VERSION`     | Defines the current application version | `0.1.0`                 |
 | `VITE_GIT_COMMIT_HASH` | Captures the current Git commit hash    | (Set during build)      |
