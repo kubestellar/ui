@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeader) (string, *os.File, error) {
+func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.FileHeader) (string, *os.File, error) {
 	// steps (it's pretty similar to the handler for installing plugins):
 	// 1. Extract tar.gz file temporarily and read .yml file to get plugin details
 	// 2. Check if plugin exists in DB by plugin name, description, version, and author ID
@@ -111,7 +111,7 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 	}
 
 	// add to marketplace_plugins table
-	marketplaceID, err := pluginpkg.AddMarketplacePluginToDB(
+	err = pluginpkg.AddMarketplacePluginToDB(
 		pluginDetailsID,
 		false,      // featured
 		false,      // verified
@@ -133,21 +133,23 @@ func HandleFile(c *gin.Context, file multipart.File, header *multipart.FileHeade
 	}
 
 	// add to manager
-	marketplacePlugin := &models.MarketplacePlugin{
-		ID:              marketplaceID,
+	marketplacePlugin := &marketplace.MarketplacePlugin{
 		PluginDetailsID: pluginDetailsID,
-		Featured:        false,
-		Verified:        false,
-		PriceType:       "free",
-		Price:           0,
-		Currency:        "USD",
+		PluginName:      manifest.Metadata.Name,
+		Author:          manifest.Metadata.Author,
+		Description:     manifest.Metadata.Description,
+		Version:         manifest.Metadata.Version,
 		RatingAverage:   0,
 		RatingCount:     0,
 		Downloads:       0,
-		ActiveInstalls:  0,
-		PublishedAt:     time.Now(),
+		License:         "unknown",                         // manifest.Metadata.License,
+		Tags:            []string{"monitoring", "cluster"}, // manifest.Metadata.Tags,
+		MinVersion:      "0.0.1",                           // manifest.Metadata.MinVersion,
+		MaxVersion:      "0.28.0",                          //manifest.Metadata.MaxVersion,
+		Dependencies:    []models.Dependencies{},           //manifest.Metadata.Dependencies,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
+		Feedback:        []models.PluginFeedback{},
 	}
 	manager := marketplace.GetGlobalMarketplaceManager()
 	if manager == nil {
@@ -222,7 +224,7 @@ func UploadPluginHandler(c *gin.Context) {
 		return
 	}
 
-	newTarPath, newFile, err := HandleFile(c, file, header)
+	newTarPath, newFile, err := HandlePluginFile(c, file, header)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to handle file"})
 		log.LogError("error handling file", zap.String("error", err.Error()))
@@ -373,78 +375,14 @@ func DeleteMarketplacePluginHandler(c *gin.Context) {
 	})
 }
 
-type MarketplacePlugin struct {
-	PluginDetailsID int                     `json:"plugin_id"`
-	PluginName      string                  `json:"plugin_name"`
-	Author          string                  `json:"author"`
-	Description     string                  `json:"description"`
-	Version         string                  `json:"version"`
-	RatingAverage   float32                 `json:"rating_average"`
-	Downloads       int                     `json:"downloads"`
-	License         string                  `json:"license"`
-	Tags            []string                `json:"tags"`
-	MinVersion      string                  `json:"min_version"`
-	MaxVersion      string                  `json:"max_version"`
-	Dependencies    models.DependenciesList `json:"dependencies"`
-	UpdatedAt       time.Time               `json:"updated_at"`
-	CreatedAt       time.Time               `json:"created_at"`
-	Feedback        []models.PluginFeedback `json:"feedback"`
-}
-
-func getMarketplacePluginDetails(plugin *models.MarketplacePlugin) (*MarketplacePlugin, error) {
-	pluginDetails, err := pluginpkg.GetPluginDetailsByID(plugin.PluginDetailsID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get plugin details: %w", err)
-	}
-	// get author name
-	author, err := models.GetUserByID(pluginDetails.AuthorID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get author: %w", err)
-	}
-
-	// get feedback
-	feedback, err := pluginpkg.GetPluginFeedback(plugin.ID) // use the marketplace plugin ID
-	if err != nil {
-		return nil, fmt.Errorf("failed to get feedback: %w", err)
-	}
-
-	return &MarketplacePlugin{
-		PluginDetailsID: plugin.PluginDetailsID,
-		PluginName:      pluginDetails.Name,
-		Author:          author.Username,
-		Description:     pluginDetails.Description,
-		Version:         pluginDetails.Version,
-		RatingAverage:   plugin.RatingAverage,
-		Downloads:       plugin.Downloads,
-		License:         pluginDetails.License,
-		Tags:            pluginDetails.Tags,
-		MinVersion:      pluginDetails.MinKubeStellarVersion,
-		MaxVersion:      pluginDetails.MaxKubeStellarVersion,
-		Dependencies:    pluginDetails.Dependencies,
-		UpdatedAt:       plugin.UpdatedAt,
-		CreatedAt:       plugin.CreatedAt,
-		Feedback:        feedback,
-	}, nil
-}
-
 func GetAllMarketplacePluginsHandler(c *gin.Context) {
-	var marketplacePlugins []MarketplacePlugin
 	marketplaceManager := marketplace.GetGlobalMarketplaceManager()
 	if marketplaceManager == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
 		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
 		return
 	}
-	for _, plugin := range marketplaceManager.GetAllPlugins() {
-		// get the plugin details from the database by plugin_details ID
-		pluginAllInfo, err := getMarketplacePluginDetails(plugin)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin details"})
-			log.LogError("error getting plugin details", zap.Int("plugin_id", plugin.ID), zap.String("error", err.Error()))
-			return
-		}
-		marketplacePlugins = append(marketplacePlugins, *pluginAllInfo)
-	}
+	marketplacePlugins := marketplaceManager.GetAllPlugins()
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":             "Marketplace plugins retrieved successfully",
@@ -484,16 +422,9 @@ func GetSingleMarketplacePluginHandler(c *gin.Context) {
 		return
 	}
 
-	pluginDetails, err := getMarketplacePluginDetails(plugin)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin details from marketplace"})
-		log.LogError("error getting plugin details from marketplace", zap.Int("plugin_id", plugin.ID), zap.String("error", err.Error()))
-		return
-	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"message":            "Marketplace plugin retrieved successfully",
-		"marketplace_plugin": pluginDetails,
+		"marketplace_plugin": plugin,
 	})
 }
 
@@ -541,6 +472,28 @@ func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
 		return
 	}
 
+	// check if the feedback.PluginID matches with the plugin_id parameter
+	pluginIDStr := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID"})
+		log.LogError(
+			"error converting plugin ID from string to int",
+			zap.String("plugin_id", pluginIDStr),
+			zap.String("error", err.Error()),
+		)
+		return
+	}
+	if feedback.PluginID != pluginID {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Plugin ID in feedback does not match with the plugin ID in the URL"})
+		log.LogError(
+			"plugin ID in feedback does not match with the plugin ID in the URL",
+			zap.Int("feedback_plugin_id", feedback.PluginID),
+			zap.Int("url_plugin_id", pluginID),
+		)
+		return
+	}
+
 	// find the corresponding marketplace_plugin_ID
 	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(feedback.PluginID)
 	if err != nil {
@@ -558,6 +511,14 @@ func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
 		log.LogError("error adding feedback to database", zap.String("error", err.Error()))
 		return
 	}
+	// add to the marketplace manager
+	manager := marketplace.GetGlobalMarketplaceManager()
+	if manager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return
+	}
+	err = manager.AddFeedback(&feedback, feedback.PluginID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Feedback submitted successfully",

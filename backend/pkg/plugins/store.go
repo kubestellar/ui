@@ -393,7 +393,7 @@ func AddMarketplacePluginToDB(
 	downloads int,
 	activeInstalls int,
 	publishedAt time.Time,
-) (int, error) {
+) error {
 	query := `
 		INSERT INTO marketplace_plugins (
 			plugin_details_id,
@@ -409,12 +409,9 @@ func AddMarketplacePluginToDB(
 			published_at
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		RETURNING id
 	`
 
-	var marketplacePluginID int
-
-	err := database.DB.QueryRow(
+	row, err := database.DB.Exec(
 		query,
 		pluginDetailsID,
 		featured,
@@ -427,13 +424,20 @@ func AddMarketplacePluginToDB(
 		downloads,
 		activeInstalls,
 		publishedAt,
-	).Scan(&marketplacePluginID)
+	)
 
 	if err != nil {
-		return -1, fmt.Errorf("failed to add marketplace plugin: %w", err)
+		return fmt.Errorf("failed to add marketplace plugin: %w", err)
+	}
+	rowsAffected, err := row.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows were affected, plugin might already exist")
 	}
 
-	return marketplacePluginID, nil
+	return nil
 }
 
 func GetMarketplacePluginByID(pluginID int) (*models.MarketplacePlugin, error) {
