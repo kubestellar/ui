@@ -26,3 +26,4 @@ helm-ui-test*
 
 # Backend vendor directory
 backend/vendor/
+backend/sum.go
