@@ -223,8 +223,7 @@
       "buttons": {
         "refresh": "Refresh",
         "nextInstallation": "Next: Installation",
-        "checking": "Checking...",
-        "refresh": "Refresh"
+        "checking": "Checking..."
       }
     },
     "installation": {
