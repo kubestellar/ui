@@ -19,6 +19,7 @@ const useTheme = create<ThemeStateType>(set => {
         localStorage.setItem('theme', nextTheme);
 
         document.documentElement.setAttribute('data-theme', nextTheme);
+        window.dispatchEvent(new CustomEvent('theme-toggle', { detail: { theme: nextTheme } }));
 
         return { theme: nextTheme };
       });

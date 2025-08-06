@@ -14,8 +14,9 @@ interface MenuProps {
 export interface MenuListItem {
   isLink: boolean;
   url: string;
-  icon: IconType;
+  icon: IconType | string;
   label: string;
+  isPlugin?: boolean;
 }
 
 export interface MenuItemData {

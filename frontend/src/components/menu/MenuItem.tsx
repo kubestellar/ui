@@ -10,8 +10,9 @@ interface MenuItemProps {
   listItems: Array<{
     isLink: boolean;
     url?: string;
-    icon: IconType;
+    icon: IconType | string;
     label: string;
+    isPlugin?: boolean;
     onClick?: () => void;
   }>;
   centered?: boolean;
@@ -178,28 +179,54 @@ const MenuItem: React.FC<MenuItemProps> = ({
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                         className={`relative ${isAnimating ? 'transition-none' : 'transition-transform duration-200'}`}
                       >
-                        <listItem.icon
-                          className="shrink-0 text-xl"
-                          style={{
-                            color: isActive
-                              ? isDark
-                                ? '#60a5fa'
-                                : '#3b82f6'
-                              : hoveredItem === index
+                        {listItem?.isPlugin ? (
+                          <img
+                            src={listItem.icon as string}
+                            alt={listItem.label}
+                            className="h-6 w-6 shrink-0"
+                            style={{
+                              color: isActive
                                 ? isDark
-                                  ? '#93c5fd'
-                                  : '#2563eb'
-                                : isDark
-                                  ? '#cbd5e1'
-                                  : '#64748b',
-                            filter: isActive
-                              ? isDark
-                                ? 'drop-shadow(0 0 6px rgba(96, 165, 250, 0.5))'
-                                : 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.3))'
-                              : 'none',
-                          }}
-                          aria-hidden="true"
-                        />
+                                  ? '#60a5fa'
+                                  : '#3b82f6'
+                                : hoveredItem === index
+                                  ? isDark
+                                    ? '#93c5fd'
+                                    : '#2563eb'
+                                  : isDark
+                                    ? '#cbd5e1'
+                                    : '#64748b',
+                              filter: isActive
+                                ? isDark
+                                  ? 'drop-shadow(0 0 6px rgba(96, 165, 250, 0.5))'
+                                  : 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.3))'
+                                : 'none',
+                            }}
+                          />
+                        ) : (
+                          <listItem.icon
+                            className="shrink-0 text-xl"
+                            style={{
+                              color: isActive
+                                ? isDark
+                                  ? '#60a5fa'
+                                  : '#3b82f6'
+                                : hoveredItem === index
+                                  ? isDark
+                                    ? '#93c5fd'
+                                    : '#2563eb'
+                                  : isDark
+                                    ? '#cbd5e1'
+                                    : '#64748b',
+                              filter: isActive
+                                ? isDark
+                                  ? 'drop-shadow(0 0 6px rgba(96, 165, 250, 0.5))'
+                                  : 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.3))'
+                                : 'none',
+                            }}
+                            aria-hidden="true"
+                          />
+                        )}
 
                         {/* Enhanced ripple effect */}
                         {isActive && (
