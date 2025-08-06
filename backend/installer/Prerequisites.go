@@ -259,7 +259,7 @@ func checkPrerequisite(name, command string, args []string, versionArgs []string
 
 	// Get version information
 	cmd := exec.Command(command, versionArgs...)
-	rawBytes, _ := cmd.CombinedOutput()
+	rawBytes, err := cmd.CombinedOutput()
 	rawOutput := string(rawBytes)
 	if err != nil && len(rawOutput) == 0 {
 		// Command failed and no output, so not installed
