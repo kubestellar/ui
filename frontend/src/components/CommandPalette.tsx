@@ -447,13 +447,13 @@ const CommandPalette: React.FC = () => {
         type: 'spring',
         stiffness: 400,
         damping: 8,
-      },
+      } as const,
     },
     tap: {
       rotate: 0,
       scale: 0.9,
     },
-  };
+  } as const;
 
   useEffect(() => {
     if (isOpen) {
@@ -563,7 +563,7 @@ const CommandPalette: React.FC = () => {
                 stiffness: 500,
                 damping: 30,
                 mass: 0.8,
-              }}
+              } as const}
             >
               <div
                 className="flex max-h-[calc(100vh-120px)] flex-col rounded-lg border"

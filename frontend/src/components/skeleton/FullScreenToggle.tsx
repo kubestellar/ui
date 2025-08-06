@@ -58,13 +58,13 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
         type: 'spring',
         stiffness: 400,
         damping: 8,
-      },
+      } as const,
     },
     tap: {
       rotate: 0,
       scale: 0.9,
     },
-  };
+  } as const;
 
   const handleFullScreenChange = useCallback(() => {
     const doc = document as FullscreenDocument;
@@ -204,7 +204,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
                   initial={{ opacity: 0, rotate: -30 }}
                   animate={{ opacity: 1, rotate: 0 }}
                   exit={{ opacity: 0, rotate: 30 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.2 } as const }
                 >
                   <RxExitFullScreen
                     size={iconSize}
@@ -222,7 +222,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
                   initial={{ opacity: 0, rotate: 30 }}
                   animate={{ opacity: 1, rotate: 0 }}
                   exit={{ opacity: 0, rotate: -30 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.2 } as const }
                 >
                   <RxEnterFullScreen
                     size={iconSize}

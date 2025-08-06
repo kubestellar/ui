@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import useTheme from '../../stores/themeStore';
-import getThemeStyles from '../../lib/theme-utils';
 import { IconType } from 'react-icons';
 
 interface MenuProps {
@@ -31,7 +30,6 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const themeStyles = getThemeStyles(isDark);
   const menu = useMenuData();
 
   useEffect(() => {
@@ -47,7 +45,7 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
         damping: 30,
         staggerChildren: 0.05,
         delayChildren: 0.05,
-      },
+      } as const,
     },
     collapsed: {
       width: '100%',
@@ -58,7 +56,7 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
         damping: 30,
         staggerChildren: 0.05,
         staggerDirection: -1,
-      },
+      } as const,
     },
   };
 
@@ -70,9 +68,6 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
       ? '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
       : '0 8px 32px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02) inset',
     overflowY: 'auto' as const,
-    scrollbarWidth: 'none',
-   
-   
     maxHeight: 'calc(100vh - 160px)',
   };
 

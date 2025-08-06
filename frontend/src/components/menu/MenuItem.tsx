@@ -41,12 +41,12 @@ const MenuItem: React.FC<MenuItemProps> = ({
     expanded: {
       opacity: 1,
       width: '100%',
-      transition: { type: 'spring' as const, stiffness: 300, damping: 20, delay },
+      transition: { type: 'spring', stiffness: 300, damping: 20, delay } as const,
     },
     collapsed: {
       opacity: 1,
       width: collapsed ? 'fit-content' : '100%',
-      transition: { type: 'spring' as const, stiffness: 300, damping: 20, delay },
+      transition: { type: 'spring', stiffness: 300, damping: 20, delay } as const,
     },
   };
 
@@ -55,7 +55,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
       opacity: 1,
       x: 0,
       display: 'block',
-      transition: { duration: 0.2, delay: delay + 0.1 },
+      transition: { duration: 0.2, delay: delay + 0.1 } as const,
     },
     collapsed: {
       opacity: 0,
@@ -63,12 +63,12 @@ const MenuItem: React.FC<MenuItemProps> = ({
       transitionEnd: {
         display: 'none',
       },
-      transition: { duration: 0.2 },
+      transition: { duration: 0.2 } as const,
     },
   };
 
   // Handle mouse enter with proper tooltip positioning
-  const handleMouseEnter = (index: number, event: React.MouseEvent<HTMLElement>) => {
+  const handleMouseEnter = (index: number, event: React.MouseEvent<HTMLElement> | React.FocusEvent<HTMLElement>) => {
     setHoveredItem(index);
     if (collapsed) {
       const rect = event.currentTarget.getBoundingClientRect();
@@ -188,7 +188,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
                           }}
                           whileHover={{ scale: collapsed ? 1.2 : 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          transition={{ type: 'spring' as const, stiffness: 500, damping: 30 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 } as const}
                           className={`relative ${isAnimating ? 'transition-none' : 'transition-transform duration-200'}`}
                         >
                           <listItem.icon
@@ -308,7 +308,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
                     }}
                     whileHover={{ scale: collapsed ? 1.2 : 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    transition={{ type: 'spring' as const, stiffness: 500, damping: 30 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 } as const}
                   >
                     <listItem.icon
                       className="shrink-0 text-xl"

@@ -87,7 +87,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
       rotate: 0,
       scale: 1,
     },
-  };
+  } as const;
 
   // Icon animation variants
   const iconVariants = {
@@ -102,13 +102,13 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
         type: 'spring',
         stiffness: 400,
         damping: 8,
-      },
+      } as const,
     },
     tap: {
       rotate: 0,
       scale: 0.9,
     },
-  };
+  } as const;
 
   return (
     <motion.header

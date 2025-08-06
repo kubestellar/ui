@@ -49,13 +49,13 @@ const LanguageSwitcher = () => {
         type: 'spring',
         stiffness: 400,
         damping: 8,
-      },
+      } as const,
     },
     tap: {
       rotate: 0,
       scale: 0.9,
     },
-  };
+  } as const;
 
   // 🧠 Attach keydown listener only when dropdown is open
   useEffect(() => {
@@ -216,7 +216,7 @@ const LanguageSwitcher = () => {
                 stiffness: 500,
                 damping: 30,
                 mass: 0.8,
-              }}
+              } as const}
               className={
                 isLoginPage
                   ? 'absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
