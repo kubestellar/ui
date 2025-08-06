@@ -194,7 +194,7 @@ func (hc *HealthChecker) checkComponent(ctx context.Context, component string, r
 func (hc *HealthChecker) LivenessHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		hc.logger.Debug("Liveness probe requested", zap.String("client_ip", c.ClientIP()))
-		
+
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "alive",
 			"timestamp": time.Now().UTC().Format(time.RFC3339),
@@ -207,7 +207,7 @@ func (hc *HealthChecker) LivenessHandler() gin.HandlerFunc {
 func (hc *HealthChecker) ReadinessHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		hc.logger.Debug("Readiness probe requested", zap.String("client_ip", c.ClientIP()))
-		
+
 		ctx, cancel := context.WithTimeout(c.Request.Context(), hc.config.DatabaseTimeout)
 		defer cancel()
 
@@ -442,7 +442,7 @@ func (hc *HealthChecker) isDatabaseReady(ctx context.Context) bool {
 		hc.logger.Error("Database readiness check failed", zap.Error(err))
 		return false
 	}
-	
+
 	return result == 1
 }
 
