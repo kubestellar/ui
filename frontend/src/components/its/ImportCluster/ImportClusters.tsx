@@ -311,7 +311,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
     try {
       const response = await api.get('/api/clusters/available');
-      // Debug log to inspect the data structure
+            // Debug log to inspect the data structure
       debugLogData(response.data, 'Available Clusters Response');
 
       // Handle different possible data structures
@@ -994,7 +994,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   setManualCommand={setManualCommand}
                   setManualLoading={setManualLoading}
                   setShowLogs={setShowLogs}
-                  showLogs
+                  showLogs={onboardingStatus === 'processing'}
                   onboardingStatus={onboardingStatus}
                   setOnboardingStatus={setOnboardingStatus}
                   onboardingError={onboardingError}
