@@ -261,6 +261,16 @@ func checkPrerequisite(name, command string, args []string, versionArgs []string
 	cmd := exec.Command(command, versionArgs...)
 	rawBytes, _ := cmd.CombinedOutput()
 	rawOutput := string(rawBytes)
+	if err != nil && len(rawOutput) == 0 {
+		// Command failed and no output, so not installed
+		return PrerequisiteStatus{
+			Name:         name,
+			Installed:    false,
+			Version:      "Unknown",
+			Required:     required,
+			InstallGuide: installGuide,
+		}
+	}
 
 	// Try to pull a version out of what it printed
 	version := extractor(rawOutput)
