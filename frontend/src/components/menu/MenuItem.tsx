@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { IconType } from 'react-icons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import useTheme from '../../stores/themeStore';
 
 interface MenuItemProps {
@@ -34,7 +34,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
 
   // Animation variants
-  const itemVariants = {
+  const itemVariants: Variants = {
     expanded: {
       opacity: 1,
       width: '100%',
@@ -46,7 +46,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
     },
   };
 
-  const textVariants = {
+  const textVariants: Variants = {
     expanded: {
       opacity: 1,
       x: 0,
