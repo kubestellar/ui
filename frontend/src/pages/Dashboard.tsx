@@ -888,7 +888,6 @@ const K8sInfo = () => {
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -1028,20 +1027,6 @@ const K8sInfo = () => {
       setIsInitialLoad(false);
     }
   }, [k8sData, clusterData, workloadsData, processedClusters, bindingPoliciesData, clusterMetrics]);
-
-  // Handle refresh
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetchK8s();
-      toast.success('Data refreshed successfully!');
-    } catch (err) {
-      toast.error('Failed to refresh data');
-      console.error('Refresh error:', err);
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 700);
-    }
-  };
 
   // Format date for better display
   const formatDate = (dateString: string): string => {
