@@ -22,6 +22,7 @@ const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Das
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
 const MetricsDashboardLazy = lazy(() => import('../components/MetricsDashboard'));
 const ResourceFilterPageLazy = lazy(() => import('../pages/ResourceFilterPage'));
+const GrafanaDashboardPageLazy = lazy(() => import('../pages/GrafanaDashboardPage'));
 
 export const routesConfig: RouteObject[] = [
   {
@@ -168,6 +169,16 @@ export const routesConfig: RouteObject[] = [
           <ProtectedRoute>
             <Suspense fallback={<LoadingFallback message="Loading resources..." size="medium" />}>
               <ResourceFilterPageLazy />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'grafana',
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback message="Loading Grafana..." size="medium" />}>
+              <GrafanaDashboardPageLazy />
             </Suspense>
           </ProtectedRoute>
         ),
