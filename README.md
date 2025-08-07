@@ -62,7 +62,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
-- **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
+- **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.28.0/direct/get-started/)
 
 > [!NOTE]
 > If you're running on macOS, you may need to manually add a host entry to resolve `its1.localtest.me` to `localhost` using:
