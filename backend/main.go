@@ -19,6 +19,7 @@ import (
 	config "github.com/kubestellar/ui/backend/postgresql"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"github.com/kubestellar/ui/backend/routes"
+	_ "github.com/kubestellar/ui/backend/routes"
 	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
 )

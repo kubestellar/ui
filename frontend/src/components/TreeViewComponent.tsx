@@ -39,6 +39,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   } | null>(null);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [filteredContext, setFilteredContext] = useState<string>('all');
   const [allResources] = useState<ListResourceItem[]>([]);
   const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
@@ -154,6 +155,10 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     setIsExpanded(false);
   }, []);
 
+  const handleToggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
+
   const handleResourceFiltersChange = useCallback((filters: ResourceFilter) => {
     // Only update if filters actually changed to prevent unnecessary re-renders
     setResourceFilters(prevFilters => {
@@ -182,7 +187,16 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   return (
     <Box
       ref={containerRef}
-      sx={{ display: 'flex', height: '85vh', width: '100%', position: 'relative' }}
+      sx={{
+        display: 'flex',
+        height: isFullscreen ? '100vh' : '85vh',
+        width: '100%',
+        position: isFullscreen ? 'fixed' : 'relative',
+        top: isFullscreen ? 0 : 'auto',
+        left: isFullscreen ? 0 : 'auto',
+        zIndex: isFullscreen ? 9999 : 'auto',
+        backgroundColor: isFullscreen ? (theme === 'dark' ? '#0f172a' : '#ffffff') : 'transparent',
+      }}
     >
       <Box
         sx={{
@@ -238,6 +252,8 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             containerRef={containerRef}
             resourceFilters={resourceFilters}
             onResourceFiltersChange={handleResourceFiltersChange}
+            onToggleFullscreen={handleToggleFullscreen}
+            isFullscreen={isFullscreen}
           />
 
           <TreeViewContextMenu

@@ -420,10 +420,16 @@ const CommandPalette: React.FC = () => {
 
   // Scroll to ensure selected item is visible
   useEffect(() => {
-    if (commandListRef.current && filteredCommands.length > 0) {
-      const selectedElement = commandListRef.current.children[selectedIndex] as HTMLElement;
+    if (commandListRef.current && filteredCommands.length > 0 && selectedIndex >= 0) {
+      // Find all command buttons within the command list
+      const commandButtons = commandListRef.current.querySelectorAll('[data-command-index]');
+      const selectedElement = commandButtons[selectedIndex] as HTMLElement;
+
       if (selectedElement) {
-        selectedElement.scrollIntoView({ block: 'nearest' });
+        selectedElement.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth',
+        });
       }
     }
   }, [selectedIndex, filteredCommands.length]);
@@ -839,6 +845,7 @@ const CommandListItem: React.FC<CommandListItemProps> = ({
         onClick={() => executeCommand(command)}
         onMouseEnter={() => setSelectedIndex(index)}
         whileHover={{ x: 2 }}
+        data-command-index={index}
       >
         <div
           className="flex h-8 min-w-8 items-center justify-center rounded-md"

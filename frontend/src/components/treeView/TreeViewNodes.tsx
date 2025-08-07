@@ -367,29 +367,45 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: hasHighlightedLabel
+          background: hasHighlightedLabel
             ? theme === 'dark'
-              ? 'rgba(68, 152, 255, 0.15)'
-              : 'rgba(68, 152, 255, 0.08)'
+              ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.1))'
+              : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.08))'
             : theme === 'dark'
-              ? '#333'
-              : '#fff',
-          color: theme === 'dark' ? '#fff' : '#000',
+              ? 'linear-gradient(135deg, #1e293b, #334155)'
+              : 'linear-gradient(135deg, #ffffff, #f8fafc)',
+          color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+          borderRadius: '12px',
+          border: hasHighlightedLabel
+            ? `2px solid ${theme === 'dark' ? '#3b82f6' : '#3b82f6'}`
+            : `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
+          backdropFilter: 'blur(10px)',
           ...(hasHighlightedLabel
             ? {
-                boxShadow: `0 0 0 2px ${theme === 'dark' ? '#41dc8e' : '#41dc8e'}`,
+                boxShadow:
+                  theme === 'dark'
+                    ? '0 4px 20px rgba(59, 130, 246, 0.4), 0 0 0 2px rgba(59, 130, 246, 0.6)'
+                    : '0 4px 20px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.5)',
                 zIndex: 1000,
                 opacity: 1,
-                transition: 'all 0.2s ease-in-out',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: 'translateY(-2px) scale(1.02)',
               }
             : highlightedLabels
               ? {
                   boxShadow: 'none',
                   zIndex: 0,
-                  opacity: 0.5,
-                  transition: 'all 0.2s ease-in-out',
+                  opacity: 0.6,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  filter: 'blur(0.5px)',
                 }
-              : {}),
+              : {
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 4px 20px rgba(0, 0, 0, 0.3)'
+                      : '0 4px 20px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }),
         };
       }
 
@@ -406,10 +422,27 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           target: id,
           type: edgeType,
           animated: true,
-          style: { stroke: theme === 'dark' ? '#777' : '#a3a3a3', strokeDasharray: '2,2' },
+          style: {
+            stroke: theme === 'dark' ? 'url(#edge-gradient-dark)' : 'url(#edge-gradient-light)',
+            strokeWidth: 2,
+            opacity: 0.8,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            filter:
+              theme === 'dark'
+                ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+            strokeLinecap: 'round' as const,
+            strokeLinejoin: 'round' as const,
+          },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: theme === 'dark' ? '#777' : '#a3a3a3',
+            width: 12,
+            height: 12,
+            color: theme === 'dark' ? '#64748b' : '#94a3b8',
+          },
+          data: {
+            status: 'default' as 'default' | 'active' | 'success' | 'warning' | 'error',
+            animated: true,
           },
         };
         newEdges.push(edge);
@@ -448,20 +481,31 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: hasHighlightedLabel
+          background: hasHighlightedLabel
             ? theme === 'dark'
-              ? 'rgba(47, 134, 255, 0.2)'
-              : 'rgba(47, 134, 255, 0.12)'
+              ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.1))'
+              : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.08))'
             : theme === 'dark'
-              ? '#333'
-              : '#fff',
-          color: theme === 'dark' ? '#fff' : '#000',
+              ? 'linear-gradient(135deg, #1e293b, #334155)'
+              : 'linear-gradient(135deg, #ffffff, #f8fafc)',
+          color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+          borderRadius: '12px',
+          border: hasHighlightedLabel
+            ? `2px solid ${theme === 'dark' ? '#3b82f6' : '#3b82f6'}`
+            : `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
+          backdropFilter: 'blur(10px)',
           boxShadow: hasHighlightedLabel
-            ? `0 0 0 2px ${theme === 'dark' ? '#41dc8e' : '#41dc8e'}`
-            : 'none',
+            ? theme === 'dark'
+              ? '0 4px 20px rgba(59, 130, 246, 0.4), 0 0 0 2px rgba(59, 130, 246, 0.6)'
+              : '0 4px 20px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.5)'
+            : theme === 'dark'
+              ? '0 4px 20px rgba(0, 0, 0, 0.3)'
+              : '0 4px 20px rgba(0, 0, 0, 0.1)',
           zIndex: hasHighlightedLabel ? 1000 : 0,
-          opacity: !highlightedLabels ? 1 : hasHighlightedLabel ? 1 : 0.5,
-          transition: 'all 0.2s ease-in-out',
+          opacity: !highlightedLabels ? 1 : hasHighlightedLabel ? 1 : 0.6,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: hasHighlightedLabel ? 'translateY(-2px) scale(1.02)' : 'none',
+          filter: !highlightedLabels ? 'none' : hasHighlightedLabel ? 'none' : 'blur(0.5px)',
         };
 
         return {

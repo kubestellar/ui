@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { Box, Typography, Menu, MenuItem, Button, IconButton } from '@mui/material';
 import { ReactFlowProvider, Position, MarkerType } from 'reactflow';
 import * as dagre from 'dagre';
@@ -38,9 +38,8 @@ import { Plus } from 'lucide-react';
 import CreateOptions from '../components/CreateOptions';
 import { NodeLabel } from './wds_topology/NodeLabel';
 import { ZoomControls } from './wds_topology/ZoomControls';
-import WecsTreeviewSkeleton from './skeleton/WecsTreeviewSkeleton';
+import UnifiedSkeleton from './skeleton/UnifiedSkeleton';
 import ListViewSkeleton from './skeleton/ListViewSkeleton';
-import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
@@ -49,7 +48,7 @@ import useZoomStore from '../stores/zoomStore';
 import WecsDetailsPanel from './wecs_details/WecsDetailsPanel';
 import { FlowCanvas } from './wds_topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
-import FullScreenToggle from './skeleton/FullScreenToggle';
+
 import { api } from '../lib/api';
 import useEdgeTypeStore from '../stores/edgeTypeStore';
 
@@ -265,8 +264,8 @@ const getLayoutedElements = (
   const scaleFactor = Math.max(0.5, Math.min(2.0, currentZoom));
   const NODE_WIDTH = 146 * scaleFactor;
   const NODE_HEIGHT = 30 * scaleFactor;
-  const NODE_SEP = 22 * scaleFactor;
-  const RANK_SEP = 60 * scaleFactor;
+  const NODE_SEP = 40 * scaleFactor;
+  const RANK_SEP = 100 * scaleFactor;
   const CHILD_SPACING = NODE_HEIGHT + 30 * scaleFactor;
 
   // Step 1: Initial Dagre layout
@@ -539,6 +538,7 @@ const WecsTreeview = () => {
   const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
@@ -557,7 +557,7 @@ const WecsTreeview = () => {
   }, []);
 
   // Add effect to update node styles when theme or zoom changes
-  useEffect(() => {
+  const updateNodeStyles = useCallback(() => {
     if (nodes.length > 0) {
       setNodes(currentNodes => {
         return currentNodes.map(node => {
@@ -578,34 +578,20 @@ const WecsTreeview = () => {
 
       // Update edge styles for the current theme
       setEdges(currentEdges => {
-        return currentEdges.map(edge => {
-          // Make a type-safe copy of the marker end
-          const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
-            type: edge.markerEnd?.type || MarkerType.ArrowClosed,
-            color: theme === 'dark' ? '#ccc' : '#a3a3a3',
-          };
-
-          // If the original marker has width and height, preserve them
-          if (edge.markerEnd?.width) {
-            markerEnd.width = edge.markerEnd.width;
-          }
-
-          if (edge.markerEnd?.height) {
-            markerEnd.height = edge.markerEnd.height;
-          }
-
-          return {
-            ...edge,
-            style: {
-              stroke: theme === 'dark' ? '#ccc' : '#a3a3a3',
-              strokeDasharray: '2,2',
-            },
-            markerEnd,
-          };
-        });
+        return currentEdges.map(edge => ({
+          ...edge,
+          style: {
+            ...edge.style,
+            stroke: theme === 'dark' ? '#94a3b8' : '#64748b',
+          },
+        }));
       });
     }
-  }, [theme, nodes.length, currentZoom, getScaledNodeStyle]);
+  }, [nodes.length, currentZoom, theme, getScaledNodeStyle]);
+
+  useEffect(() => {
+    updateNodeStyles();
+  }, [updateNodeStyles]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -624,29 +610,65 @@ const WecsTreeview = () => {
     stateRef.current = { isCollapsed, isExpanded };
   }, [isCollapsed, isExpanded]);
 
-  const getTimeAgo = useCallback(
-    (timestamp: string | undefined): string => {
-      if (!timestamp) return 'Unknown';
+  const getTimeAgo = useCallback((timestamp: string | undefined): string => {
+    if (!timestamp) return '';
+
+    try {
       const now = new Date();
       const then = new Date(timestamp);
+
+      // Check if the date is valid
+      if (isNaN(then.getTime())) return '';
+
       const diffMs = now.getTime() - then.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      return diffDays === 0
-        ? t('wecsTopology.timeAgo.today')
-        : t('wecsTopology.timeAgo.days', { count: diffDays });
-    },
-    [t]
-  );
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+      const diffWeeks = Math.floor(diffDays / 7);
+      const diffMonths = Math.floor(diffDays / 30);
+      const diffYears = Math.floor(diffDays / 365);
+
+      // Return more granular time representations
+      if (diffSeconds < 60) {
+        return diffSeconds <= 5 ? 'now' : `${diffSeconds}s`;
+      } else if (diffMinutes < 60) {
+        return `${diffMinutes}m`;
+      } else if (diffHours < 24) {
+        return `${diffHours}h`;
+      } else if (diffDays < 7) {
+        return `${diffDays}d`;
+      } else if (diffWeeks < 4) {
+        return `${diffWeeks}w`;
+      } else if (diffMonths < 12) {
+        return `${diffMonths}mo`;
+      } else {
+        return `${diffYears}y`;
+      }
+    } catch (error) {
+      console.error('Error parsing timestamp:', timestamp, error);
+      return '';
+    }
+  }, []);
 
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
+    console.log('handleMenuOpen called:', { event, nodeId }); // Debug log
     event.preventDefault();
     event.stopPropagation();
+
+    // Ensure the event coordinates are relative to the viewport
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX || rect.left + rect.width / 2;
+    const y = event.clientY || rect.top + rect.height / 2;
+
+    console.log('Menu position:', { x, y, clientX: event.clientX, clientY: event.clientY }); // Debug log
+
     let nodeType: string | null = null;
     if (nodeId.includes(':')) {
       const nodeIdParts = nodeId.split(':');
       nodeType = nodeIdParts[0];
     }
-    setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType });
+    setContextMenu({ nodeId, x, y, nodeType });
   }, []);
 
   const getClusterCreationTimestamp = async (name: string) => {
@@ -838,11 +860,9 @@ const WecsTreeview = () => {
   const transformDataToTree = useCallback(
     async (data: WecsCluster[]) => {
       if (!data || !Array.isArray(data) || data.length === 0) {
-        ReactDOM.unstable_batchedUpdates(() => {
-          setNodes([]);
-          setEdges([]);
-          setIsTransforming(false);
-        });
+        setNodes([]);
+        setEdges([]);
+        setIsTransforming(false);
         return;
       }
       const clusterTimestampMap = await fetchAllClusterTimestamps(data);
@@ -1189,7 +1209,7 @@ const WecsTreeview = () => {
                           `${resourceId}:volume`,
                           `volume-${rawResource.metadata.name}`,
                           'volume',
-                          status,
+                          status || 'Unknown',
                           undefined,
                           namespace.namespace,
                           rawResource,
@@ -1250,25 +1270,27 @@ const WecsTreeview = () => {
         prevNodes,
         currentZoom
       );
-      ReactDOM.unstable_batchedUpdates(() => {
-        if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
-        if (!isEqual(edges, layoutedEdges)) setEdges(layoutedEdges);
-        setIsTransforming(false);
-      });
+      if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
+      if (!isEqual(edges, layoutedEdges)) setEdges(layoutedEdges);
       prevNodes.current = layoutedNodes;
       setIsTransforming(false);
     },
     [createNode, nodes, edges, fetchAllClusterTimestamps, currentZoom, edgeType]
   );
 
-  useEffect(() => {
-    if (wecsData !== null && !isEqual(wecsData, prevWecsData.current)) {
-      setIsTransforming(true);
+  // Memoize the data processing to avoid unnecessary re-renders
+  const memoizedWecsData = useMemo(() => wecsData, [wecsData]);
 
+  // Memoize node and edge rendering to prevent unnecessary re-renders
+  const memoizedNodes = useMemo(() => nodes, [nodes]);
+  const memoizedEdges = useMemo(() => edges, [edges]);
+
+  useEffect(() => {
+    if (memoizedWecsData !== null && !isEqual(memoizedWecsData, prevWecsData.current)) {
       const processData = async () => {
         try {
-          await transformDataToTree(wecsData as WecsCluster[]);
-          prevWecsData.current = wecsData as WecsCluster[];
+          await transformDataToTree(memoizedWecsData as WecsCluster[]);
+          prevWecsData.current = memoizedWecsData as WecsCluster[];
         } catch (error) {
           console.error('Error transforming data:', error);
           setIsTransforming(false);
@@ -1277,7 +1299,7 @@ const WecsTreeview = () => {
 
       processData();
     }
-  }, [transformDataToTree, wecsData]); // Added wecsData to dependency array
+  }, [transformDataToTree, memoizedWecsData]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1424,10 +1446,14 @@ const WecsTreeview = () => {
       const newExpanded = false;
       stateRef.current.isExpanded = newExpanded;
       setIsTransforming(true);
-      transformDataToTree(wecsData as WecsCluster[]);
+      transformDataToTree(memoizedWecsData as WecsCluster[]);
       return newExpanded;
     });
-  }, [wecsData, transformDataToTree]);
+  }, [memoizedWecsData, transformDataToTree]);
+
+  const handleToggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
 
   const isLoading =
     !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
@@ -1435,7 +1461,16 @@ const WecsTreeview = () => {
   return (
     <Box
       ref={containerRef}
-      sx={{ display: 'flex', height: '85vh', width: '100%', position: 'relative' }}
+      sx={{
+        display: 'flex',
+        height: isFullscreen ? '100vh' : '85vh',
+        width: '100%',
+        position: isFullscreen ? 'fixed' : 'relative',
+        top: isFullscreen ? 0 : 'auto',
+        left: isFullscreen ? 0 : 'auto',
+        zIndex: isFullscreen ? 9999 : 'auto',
+        backgroundColor: isFullscreen ? (theme === 'dark' ? '#0f172a' : '#ffffff') : 'transparent',
+      }}
     >
       <Box
         sx={{
@@ -1574,7 +1609,7 @@ const WecsTreeview = () => {
             viewMode === 'list' ? (
               <ListViewSkeleton itemCount={8} />
             ) : (
-              <WecsTreeviewSkeleton />
+              <UnifiedSkeleton />
             )
           ) : viewMode === 'list' ? (
             <ListViewComponent />
@@ -1582,8 +1617,8 @@ const WecsTreeview = () => {
             <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
               <ReactFlowProvider>
                 <FlowCanvas
-                  nodes={nodes}
-                  edges={edges}
+                  nodes={memoizedNodes}
+                  edges={memoizedEdges}
                   renderStartTime={renderStartTime}
                   theme={theme}
                 />
@@ -1593,11 +1628,9 @@ const WecsTreeview = () => {
                   isCollapsed={isCollapsed}
                   onExpandAll={handleExpandAll}
                   onCollapseAll={handleCollapseAll}
-                />
-                <FullScreenToggle
-                  containerRef={containerRef}
-                  position="top-right"
-                  tooltipPosition="left"
+                  onToggleFullscreen={handleToggleFullscreen}
+                  isFullscreen={isFullscreen}
+                  translationPrefix="wecsTopology"
                 />
               </ReactFlowProvider>
             </Box>
@@ -1657,7 +1690,11 @@ const WecsTreeview = () => {
                   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
                   borderRadius: 1,
                   minWidth: 180,
+                  zIndex: isFullscreen ? 10000 : 1300, // Higher z-index for fullscreen
                 },
+              }}
+              sx={{
+                zIndex: isFullscreen ? 10000 : 1300, // Ensure menu appears above fullscreen container
               }}
             >
               <MenuItem
