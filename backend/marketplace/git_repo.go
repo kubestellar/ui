@@ -26,7 +26,11 @@ func (g *GitStorage) UploadFile(ctx context.Context, key string, data io.Reader)
 	}
 
 	// create a parent directory if needed
-	filePath := filepath.Join(g.Local, key)
+	// if the key is "plugin-monitor.tar.gz", we need to create a directory "plugin-monitor" in the local path
+
+	baseName := strings.TrimSuffix(key, ".tar.gz")   // e.g. "plugin-monitor"
+	localDirPath := filepath.Join(g.Local, baseName) // e.g. "../../../plugin-storage/plugin-monitor"
+	filePath := filepath.Join(localDirPath, key)     // e.g. "../../../plugin-storage/plugin-monitor/plugin-monitor.tar.gz"
 	if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
 		return err
 	}
@@ -44,9 +48,9 @@ func (g *GitStorage) UploadFile(ctx context.Context, key string, data io.Reader)
 
 	// git command
 	cmds := [][]string{
-		{"git", "-C", g.Local, "add", key},
-		{"git", "-C", g.Local, "commit", "--allow-empty", "-m", fmt.Sprintf("Add %s", key)},
-		{"git", "-C", g.Local, "push", "origin", g.Branch},
+		{"git", "-C", localDirPath, "add", key},
+		{"git", "-C", localDirPath, "commit", "--allow-empty", "-m", fmt.Sprintf("Add %s", key)},
+		{"git", "-C", localDirPath, "push", "origin", g.Branch},
 	}
 
 	for _, cmdArgs := range cmds {
@@ -66,7 +70,9 @@ func (g *GitStorage) GetFileURL(ctx context.Context, key string) (string, error)
 		return "", fmt.Errorf("invalid key path: %s", key)
 	}
 	cleanBase := strings.TrimSuffix(g.PublicBase, "/")
-	return fmt.Sprintf("%s/%s", cleanBase, key), nil // e.g. "https://raw.githubusercontent.com/user/repo/main/plugin-monitor.tar.gz"
+	baseName := strings.TrimSuffix(key, filepath.Ext(key)) // e.g. "plugin-monitor"
+
+	return fmt.Sprintf("%s/%s/%s", cleanBase, baseName, key), nil // e.g. "https://raw.githubusercontent.com/user/repo/main/plugin-monitor.tar.gz"
 }
 
 func (g *GitStorage) DeleteFile(ctx context.Context, key string) error {
@@ -74,14 +80,16 @@ func (g *GitStorage) DeleteFile(ctx context.Context, key string) error {
 		return fmt.Errorf("invalid key path: %s", key)
 	}
 
-	filePath := filepath.Join(g.Local, key)
+	baseName := strings.TrimSuffix(key, ".tar.gz")
+	localDirPath := filepath.Join(g.Local, baseName) // e.g. "../../../plugin-storage/plugin-monitor"
+	filePath := filepath.Join(localDirPath, key)
 
 	if err := os.Remove(filePath); err != nil {
 		return fmt.Errorf("failed to delete local file: %v", err)
 	}
 
 	cmds := [][]string{
-		{"git", "-C", g.Local, "rm", key},
+		{"git", "-C", g.Local, "add", "-u"},
 		{"git", "-C", g.Local, "commit", "--allow-empty", "-m", fmt.Sprintf("Remove %s", key)},
 		{"git", "-C", g.Local, "push", "origin", g.Branch},
 	}
@@ -95,5 +103,6 @@ func (g *GitStorage) DeleteFile(ctx context.Context, key string) error {
 			return fmt.Errorf("failed to run git command: %v", err)
 		}
 	}
+
 	return nil
 }

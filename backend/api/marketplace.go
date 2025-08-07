@@ -237,9 +237,11 @@ func UploadPluginHandler(c *gin.Context) {
 		newFile.Close()
 	}()
 
-	// get plugin key - e.g. monitor-plugin
+	// get plugin key - e.g. cluster-monitor-marketplace-24.tar.gz
 	// get the key from the newTarPath by remove the prefix of os.TempDir()
 	key := filepath.Base(newTarPath)
+
+	log.LogInfo("PLUGIN KEY", zap.String("key", key))
 
 	// check the global manager
 	manager := marketplace.GetGlobalMarketplaceManager()
