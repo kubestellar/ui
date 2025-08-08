@@ -11,10 +11,12 @@ import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
+import { usePlugins } from '../../plugins/PluginLoader';
 
 export const useMenuData = (): MenuItemData[] => {
   const { t } = useTranslation();
   const { isAdmin } = useAdminCheck();
+  const { pluginMenuItems } = usePlugins();
 
   const menuItems: MenuItemData[] = [
     {
@@ -90,6 +92,7 @@ export const useMenuData = (): MenuItemData[] => {
           icon: HiOutlinePuzzlePiece,
           label: t('menu.items.pluginManager'),
         },
+        ...pluginMenuItems,
       ],
     },
   ];

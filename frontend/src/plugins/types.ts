@@ -1,25 +1,83 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// This is the response from the API
+export interface PluginManifestWithID {
+  id: number;
+  manifest: PluginManifest;
+}
+
 export interface PluginManifest {
   id: number;
+  apiVersion: string;
+  kind: string;
+  metadata: Metadata;
+  spec: PluginSpec;
+}
+
+export interface Metadata {
   name: string;
   version: string;
-  description: string;
   author: string;
+  description: string;
+}
+
+export interface PluginSpec {
+  wasm: WasmConfig;
+  build: BuildConfig;
   backend: BackendConfig;
   frontend: FrontendConfig;
-  config: Record<string, any>;
+  permissions: string[];
+}
+
+export interface WasmConfig {
+  file: string;
+  entrypoint: string;
+  memory_limit: string;
+}
+
+export interface BuildConfig {
+  go_version: string;
+  tinygo_version: string;
 }
 
 export interface BackendConfig {
   enabled: boolean;
-  routes: PluginRoute[];
+  routes: BackendRoute[];
+}
+
+export interface BackendRoute {
+  path: string;
+  methods: string[];
+  handler: string;
 }
 
 export interface FrontendConfig {
   enabled: boolean;
-  navigation: PluginNavigationItem[];
-  widgets: PluginWidgetConfig[];
-  assets: PluginAssetConfig[];
+  navigation: FrontendNavigation[];
+  widgets: FrontendWidget[];
+  routes: FrontendRoute[];
+}
+
+export interface FrontendNavigation {
+  label: string;
+  icon: string;
+  path: string;
+  position: string;
+  order: number;
+}
+
+export interface FrontendWidget {
+  name: string;
+  title: string;
+  size: string;
+  dashboard: string;
+  component: string;
+}
+
+export interface FrontendRoute {
+  path: string;
+  component: string;
+  exact: boolean;
 }
 
 export interface PluginRoute {
@@ -47,7 +105,6 @@ export interface PluginAssetConfig {
 
 export interface PluginInstance {
   manifest: PluginManifest;
-  widgets: Map<string, React.ComponentType<any>>;
   isLoaded: boolean;
   loadedAt: Date;
 }

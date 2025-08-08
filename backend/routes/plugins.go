@@ -24,6 +24,9 @@ func setupPluginRoutes(router *gin.Engine) {
 		plugins.POST("/:id/disable", api.DisablePluginHandler)
 		plugins.GET("/:id/status", api.GetPluginStatusHandler)
 
+		// Plugin Frontend Assets
+		plugins.GET("/:id/frontend/*filepath", api.ServePluginFrontendAssets)
+
 		// System Operations
 		plugins.GET("/system/metrics", api.GetPluginSystemMetricsHandler)
 		plugins.GET("/system/configuration", api.GetPluginSystemConfigHandler)

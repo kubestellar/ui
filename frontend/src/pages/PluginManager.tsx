@@ -77,9 +77,10 @@ export const PluginManager: React.FC = () => {
   }, [pluginAPI]);
 
   useEffect(() => {
+    console.log('loadedPlugins: ', loadedPlugins);
     loadPluginData();
     loadAvailablePlugins();
-  }, [loadPluginData, loadAvailablePlugins]);
+  }, []);
 
   const handleEnablePlugin = async (pluginID: number) => {
     try {
@@ -124,8 +125,9 @@ export const PluginManager: React.FC = () => {
       setGithubUrl('');
       setSelectedFile(null);
 
-      // Reload plugin data
+      // Load plugins
       await loadPluginData();
+      await loadAvailablePlugins();
 
       // Show success message
       if (result.success) {
