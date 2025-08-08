@@ -45,7 +45,7 @@ export const useMenuData = (): MenuItemData[] => {
           isLink: true,
           url: '/grafana',
           icon: HiOutlineCube,
-          label: "Grafan Dashboard",
+          label: 'Grafan Dashboard',
         },
         {
           isLink: true,
