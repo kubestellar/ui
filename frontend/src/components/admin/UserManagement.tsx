@@ -39,6 +39,19 @@ const useOutsideClick = (ref: React.RefObject<HTMLDivElement>, callback: () => v
   }, [ref, callback]);
 };
 
+// Define a specific type for theme styles to avoid using 'any'
+interface ThemeStyles {
+  colors: {
+    brand: {
+      primary: string;
+    };
+    text: {
+      primary: string;
+      secondary: string;
+    };
+  };
+}
+
 // Custom Select Component
 interface SelectOption {
   value: string;
@@ -51,7 +64,7 @@ interface CustomSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   isDark: boolean;
-  themeStyles: any;
+  themeStyles: ThemeStyles;
   disabled?: boolean;
 }
 
@@ -81,10 +94,12 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full rounded-lg px-3 py-2 text-left transition-all duration-200 focus:outline-none flex items-center justify-between"
+        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-all duration-200 focus:outline-none"
         style={{
           background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-          color: selectedOption ? themeStyles.colors.text.primary : themeStyles.colors.text.secondary,
+          color: selectedOption
+            ? themeStyles.colors.text.primary
+            : themeStyles.colors.text.secondary,
           border: `1px solid ${isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'}`,
           opacity: disabled ? 0.5 : 1,
           cursor: disabled ? 'not-allowed' : 'pointer',
@@ -147,7 +162,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     </div>
   );
 };
-
 
 const UserManagement = () => {
   const { t } = useTranslation();
@@ -783,19 +797,19 @@ const UserManagement = () => {
                       {t('admin.users.filters.sortBy')}
                     </label>
                     <div className="flex">
-                       <div className="flex-grow">
+                      <div className="flex-grow">
                         <CustomSelect
-                            isDark={isDark}
-                            themeStyles={themeStyles}
-                            value={filters.sortBy}
-                            onChange={value => handleFilterChange('sortBy', value || null)}
-                            options={[
-                                { value: 'username', label: t('admin.users.table.username') },
-                                { value: 'role', label: t('admin.users.table.role') },
-                                { value: 'created', label: t('admin.users.filters.created') },
-                            ]}
+                          isDark={isDark}
+                          themeStyles={themeStyles}
+                          value={filters.sortBy}
+                          onChange={value => handleFilterChange('sortBy', value || null)}
+                          options={[
+                            { value: 'username', label: t('admin.users.table.username') },
+                            { value: 'role', label: t('admin.users.table.role') },
+                            { value: 'created', label: t('admin.users.filters.created') },
+                          ]}
                         />
-                       </div>
+                      </div>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
