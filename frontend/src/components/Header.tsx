@@ -7,7 +7,7 @@ import HeaderSkeleton from './skeleton/HeaderSkeleton';
 import { useAuth } from '../hooks/useAuth';
 import FullScreenToggle from './skeleton/FullScreenToggle';
 import ProfileSection from './ProfileSection';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import getThemeStyles from '../lib/theme-utils';
 import CommandPalette from './CommandPalette';
 import { useTranslation } from 'react-i18next';
@@ -78,7 +78,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
     boxShadow: themeStyles.colors.shadow.sm,
   });
 
-  const menuButtonVariants = {
+  const menuButtonVariants: Variants = {
     open: {
       rotate: 90,
       scale: 1.1,
@@ -90,7 +90,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
   };
 
   // Icon animation variants
-  const iconVariants = {
+  const iconVariants: Variants = {
     rest: {
       rotate: 0,
       scale: 1,

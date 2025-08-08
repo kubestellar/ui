@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RxEnterFullScreen, RxExitFullScreen } from 'react-icons/rx';
 import useTheme from '../../stores/themeStore';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import getThemeStyles from '../../lib/theme-utils';
 
 // Define interfaces for browser-specific fullscreen APIs
@@ -46,7 +46,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
   const themeStyles = getThemeStyles(isDark);
 
   // Icon animation variants
-  const iconVariants = {
+  const iconVariants: Variants = {
     rest: {
       rotate: 0,
       scale: 1,
