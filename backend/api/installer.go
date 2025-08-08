@@ -37,7 +37,7 @@ type WindowsInstructions struct {
 func CheckPrerequisitesHandler(c *gin.Context) {
 	log.Printf("INFO: Checking prerequisites - request from %s", c.ClientIP())
 	response := installer.CheckAllPrerequisites()
-	log.Printf("INFO: Prerequisites check completed - success: %v", response.Success)
+	log.Printf("INFO: Prerequisites check completed - all installed: %v", response.AllInstalled)
 	c.JSON(http.StatusOK, response)
 }
 
