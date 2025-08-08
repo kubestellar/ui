@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useTheme from '../../stores/themeStore';
 import getThemeStyles from '../../lib/theme-utils';
@@ -12,6 +12,7 @@ import {
   FiX,
   FiArrowUp,
   FiArrowDown,
+  FiChevronDown,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -22,6 +23,131 @@ import UserFormModal from './UserFormModal';
 import DeleteUserModal from './DeleteUserModal';
 import UserList from './UserList';
 import UserService from './UserService';
+
+// Helper hook for detecting outside clicks
+const useOutsideClick = (ref: React.RefObject<HTMLDivElement>, callback: () => void) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        callback();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [ref, callback]);
+};
+
+// Custom Select Component
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  options: SelectOption[];
+  value: string | null;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  isDark: boolean;
+  themeStyles: any;
+  disabled?: boolean;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({
+  options,
+  value,
+  onChange,
+  placeholder = 'Select an option',
+  isDark,
+  themeStyles,
+  disabled = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find(option => option.value === value);
+  const selectRef = useRef<HTMLDivElement>(null);
+
+  useOutsideClick(selectRef, () => setIsOpen(false));
+
+  const handleSelect = (optionValue: string) => {
+    onChange(optionValue);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative w-full" ref={selectRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full rounded-lg px-3 py-2 text-left transition-all duration-200 focus:outline-none flex items-center justify-between"
+        style={{
+          background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
+          color: selectedOption ? themeStyles.colors.text.primary : themeStyles.colors.text.secondary,
+          border: `1px solid ${isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'}`,
+          opacity: disabled ? 0.5 : 1,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+        }}
+      >
+        <span>{selectedOption ? selectedOption.label : placeholder}</span>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
+          <FiChevronDown className="h-5 w-5" style={{ color: themeStyles.colors.text.secondary }} />
+        </motion.div>
+      </button>
+      <AnimatePresence>
+        {isOpen && !disabled && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute z-10 mt-1 w-full rounded-lg shadow-lg"
+            style={{
+              background: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              border: `1px solid ${isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'}`,
+              backdropFilter: 'blur(5px)',
+            }}
+          >
+            <ul className="max-h-60 overflow-auto rounded-lg p-1">
+              {options.map(option => (
+                <li
+                  key={option.value}
+                  onClick={() => handleSelect(option.value)}
+                  className="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors duration-150"
+                  style={{
+                    color: themeStyles.colors.text.primary,
+                    background:
+                      option.value === value
+                        ? isDark
+                          ? 'rgba(59, 130, 246, 0.2)'
+                          : 'rgba(59, 130, 246, 0.1)'
+                        : 'transparent',
+                  }}
+                  onMouseEnter={e => {
+                    if (option.value !== value) {
+                      e.currentTarget.style.backgroundColor = isDark
+                        ? 'rgba(75, 85, 99, 0.3)'
+                        : 'rgba(243, 244, 246, 0.8)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (option.value !== value) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 
 const UserManagement = () => {
   const { t } = useTranslation();
@@ -550,7 +676,7 @@ const UserManagement = () => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="overflow-hidden"
+              className="relative z-20"
             >
               <div
                 className="mb-4 rounded-lg p-4"
@@ -592,34 +718,17 @@ const UserManagement = () => {
                     >
                       {t('admin.users.filters.role')}
                     </label>
-                    <select
-                      className="w-full rounded-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                      style={{
-                        background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                        color: themeStyles.colors.text.primary,
-                        border: `1px solid ${
-                          isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                        }`,
-                      }}
-                      onFocus={e => {
-                        e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                        e.target.style.boxShadow = isDark
-                          ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                          : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                      }}
-                      onBlur={e => {
-                        e.target.style.borderColor = isDark
-                          ? 'rgba(75, 85, 99, 0.2)'
-                          : 'rgba(226, 232, 240, 0.8)';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                      value={filters.role || 'all'}
-                      onChange={e => handleFilterChange('role', e.target.value)}
-                    >
-                      <option value="all">{t('admin.users.filters.allRoles')}</option>
-                      <option value="admin">{t('admin.users.roles.admin')}</option>
-                      <option value="user">{t('admin.users.roles.user')}</option>
-                    </select>
+                    <CustomSelect
+                      isDark={isDark}
+                      themeStyles={themeStyles}
+                      value={filters.role}
+                      onChange={value => handleFilterChange('role', value)}
+                      options={[
+                        { value: 'all', label: t('admin.users.filters.allRoles') },
+                        { value: 'admin', label: t('admin.users.roles.admin') },
+                        { value: 'user', label: t('admin.users.roles.user') },
+                      ]}
+                    />
                   </div>
 
                   {/* Permission Filter */}
@@ -630,37 +739,17 @@ const UserManagement = () => {
                     >
                       {t('admin.users.filters.permission')}
                     </label>
-                    <select
-                      className="w-full rounded-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                      style={{
-                        background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                        color: themeStyles.colors.text.primary,
-                        border: `1px solid ${
-                          isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                        }`,
-                      }}
-                      onFocus={e => {
-                        e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                        e.target.style.boxShadow = isDark
-                          ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                          : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                      }}
-                      onBlur={e => {
-                        e.target.style.borderColor = isDark
-                          ? 'rgba(75, 85, 99, 0.2)'
-                          : 'rgba(226, 232, 240, 0.8)';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                      value={filters.permission || ''}
-                      onChange={e => handleFilterChange('permission', e.target.value || null)}
-                    >
-                      <option value="">{t('admin.users.filters.anyPermission')}</option>
-                      {permissionComponents.map(component => (
-                        <option key={component.id} value={component.id}>
-                          {component.name}
-                        </option>
-                      ))}
-                    </select>
+                    <CustomSelect
+                      isDark={isDark}
+                      themeStyles={themeStyles}
+                      value={filters.permission}
+                      onChange={value => handleFilterChange('permission', value || null)}
+                      placeholder={t('admin.users.filters.anyPermission')}
+                      options={[
+                        { value: '', label: t('admin.users.filters.anyPermission') },
+                        ...permissionComponents.map(c => ({ value: c.id, label: c.name })),
+                      ]}
+                    />
                   </div>
 
                   {/* Permission Level Filter - Only enabled if permission is selected */}
@@ -671,41 +760,18 @@ const UserManagement = () => {
                     >
                       {t('admin.users.filters.permissionLevel')}
                     </label>
-                    <select
-                      className="w-full rounded-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                      style={{
-                        background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                        color: themeStyles.colors.text.primary,
-                        border: `1px solid ${
-                          isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                        }`,
-                        opacity: filters.permission ? 1 : 0.5,
-                      }}
-                      onFocus={e => {
-                        if (filters.permission) {
-                          e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                          e.target.style.boxShadow = isDark
-                            ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                            : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                        }
-                      }}
-                      onBlur={e => {
-                        e.target.style.borderColor = isDark
-                          ? 'rgba(75, 85, 99, 0.2)'
-                          : 'rgba(226, 232, 240, 0.8)';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                      value={filters.permissionLevel || ''}
-                      onChange={e => handleFilterChange('permissionLevel', e.target.value || null)}
+                    <CustomSelect
+                      isDark={isDark}
+                      themeStyles={themeStyles}
+                      value={filters.permissionLevel}
+                      onChange={value => handleFilterChange('permissionLevel', value || null)}
+                      placeholder={t('admin.users.filters.anyLevel')}
+                      options={[
+                        { value: '', label: t('admin.users.filters.anyLevel') },
+                        ...permissionLevels.map(l => ({ value: l.id, label: l.name })),
+                      ]}
                       disabled={!filters.permission}
-                    >
-                      <option value="">{t('admin.users.filters.anyLevel')}</option>
-                      {permissionLevels.map(level => (
-                        <option key={level.id} value={level.id}>
-                          {level.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   {/* Sort By Filter */}
@@ -717,39 +783,23 @@ const UserManagement = () => {
                       {t('admin.users.filters.sortBy')}
                     </label>
                     <div className="flex">
-                      <select
-                        className="w-full rounded-l-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                        style={{
-                          background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                          color: themeStyles.colors.text.primary,
-                          border: `1px solid ${
-                            isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                          }`,
-                          borderRight: 'none',
-                        }}
-                        onFocus={e => {
-                          e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                          e.target.style.boxShadow = isDark
-                            ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                            : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                        }}
-                        onBlur={e => {
-                          e.target.style.borderColor = isDark
-                            ? 'rgba(75, 85, 99, 0.2)'
-                            : 'rgba(226, 232, 240, 0.8)';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                        value={filters.sortBy || 'username'}
-                        onChange={e => handleFilterChange('sortBy', e.target.value || null)}
-                      >
-                        <option value="username">{t('admin.users.table.username')}</option>
-                        <option value="role">{t('admin.users.table.role')}</option>
-                        <option value="created">{t('admin.users.filters.created')}</option>
-                      </select>
+                       <div className="flex-grow">
+                        <CustomSelect
+                            isDark={isDark}
+                            themeStyles={themeStyles}
+                            value={filters.sortBy}
+                            onChange={value => handleFilterChange('sortBy', value || null)}
+                            options={[
+                                { value: 'username', label: t('admin.users.table.username') },
+                                { value: 'role', label: t('admin.users.table.role') },
+                                { value: 'created', label: t('admin.users.filters.created') },
+                            ]}
+                        />
+                       </div>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="ml-2 flex items-center justify-center rounded-r-lg px-3 transition-all duration-200"
+                        className="ml-2 flex items-center justify-center rounded-lg px-3 transition-all duration-200"
                         style={{
                           background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(243, 244, 246, 0.8)',
                           color: themeStyles.colors.text.secondary,
