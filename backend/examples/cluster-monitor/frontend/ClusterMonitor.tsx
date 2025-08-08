@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface ClusterData {
   clusters: Array<{
@@ -25,14 +25,14 @@ const ClusterMonitor: React.FC = () => {
   const fetchClusterData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/plugins/cluster-monitor/data');
+      const response = await fetch("/api/plugins/cluster-monitor/data");
       if (!response.ok) {
-        throw new Error('Failed to fetch cluster data');
+        throw new Error("Failed to fetch cluster data");
       }
       const data = await response.json();
       setClusterData(data.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ const ClusterMonitor: React.FC = () => {
   return (
     <div className="cluster-monitor">
       <h2>Cluster Monitor</h2>
-      
+
       <div className="summary">
         <div className="summary-item">
           <h3>Total Clusters</h3>
@@ -86,4 +86,4 @@ const ClusterMonitor: React.FC = () => {
   );
 };
 
-export default ClusterMonitor; 
+export default ClusterMonitor;

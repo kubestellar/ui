@@ -485,41 +485,52 @@ make lint
 ## Important Note
 
 ### 1. Localize All Frontend Strings
+
 If you're adding any **new string** in the frontend UI:
+
 - Localize the string using our existing localization setup.
 - Add the string to the appropriate language file (`locales/strings.en.json`).
+
 #### How to Localize a String:
+
 1. Open `strings.en.json` located under `/locales/` (or appropriate path).
 2. Add your new string as a key-value pair. Example:
+
 ```json
 {
-"greeting": "Hello, welcome!"
+  "greeting": "Hello, welcome!"
 }
 ```
+
 3. In your component, use the localization[+] hook.[/+][-] hook or method (depending on your i18n setup). Example using `react-i18next`:[/-]
+
 ```tsx
 const { t } = useTranslation();
-<p>{t("greeting")}</p>
+<p>{t("greeting")}</p>;
 ```
+
 ---
+
 ### 2. Be Cautious With AI-Generated Code
+
 > AI tools (like GitHub Copilot or ChatGPT) are helpful but **not always context-aware**.
-**Please DO NOT blindly copy-paste AI-generated code.**
-Before committing:
+> **Please DO NOT blindly copy-paste AI-generated code.**
+> Before committing:
+
 - Double-check if the code aligns with our project’s architecture.
 - Test thoroughly to ensure it doesn’t break existing functionality.
 - Refactor and adapt it as per the codebase standards.
 
 ---
 
-##  Contribution Commands Guide
-
+## Contribution Commands Guide
 
 This guide helps contributors manage issue assignments and request helpful labels via GitHub comments. These commands are supported through GitHub Actions or bots configured in the repository.
 
-###  Issue Assignment
+### Issue Assignment
 
 - **To assign yourself to an issue**, comment:
+
   ```
   /assign
   ```
@@ -529,11 +540,12 @@ This guide helps contributors manage issue assignments and request helpful label
   /unassign
   ```
 
-###  Label Requests via Comments
+### Label Requests via Comments
 
 You can also request labels to be automatically added to issues using the following commands:
 
 - **To request the `help wanted` label**, comment:
+
   ```
   /help-wanted
   ```
