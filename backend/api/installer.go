@@ -45,7 +45,7 @@ func CheckPrerequisitesHandler(c *gin.Context) {
 // InstallHandler handles the KubeStellar installation request
 func InstallHandler(c *gin.Context) {
 	log.LogInfo("Installation request received", zap.String("client_ip", c.ClientIP()))
-	
+
 	var req InstallationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.LogError("Failed to bind JSON request", zap.Error(err))
@@ -73,7 +73,7 @@ func InstallHandler(c *gin.Context) {
 	// Generate an installation ID and start the installation
 	installID := utils.GenerateInstallID()
 	log.LogInfo("Starting installation", zap.String("install_id", installID), zap.String("platform", req.Platform))
-	
+
 	installer.InitializeLogStorage(installID)
 
 	// Start installation in background
@@ -82,10 +82,10 @@ func InstallHandler(c *gin.Context) {
 		installer.InstallKubeStellar(installID, req.Platform)
 		log.LogInfo("Background installation process completed", zap.String("install_id", installID))
 	}()
-	
+
 	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/install", "200").Inc()
 	log.LogInfo("Installation request processed successfully", zap.String("install_id", installID))
-	
+
 	// Return response with install ID
 	c.JSON(http.StatusOK, InstallationResponse{
 		Success:   true,
@@ -105,7 +105,7 @@ func GetLogsHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Installation ID not found"})
 		return
 	}
-	
+
 	log.LogInfo("Successfully retrieved logs", zap.String("install_id", installID))
 	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/install/logs/"+installID, "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
@@ -145,10 +145,10 @@ func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
 		Environment: map[string]string{
 			"PATH": "$HOME/ocm:$HOME/.kubeflex/bin:$PATH",
 		},
-		}
+	}
 	telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/install/windows", "200").Inc()
 	log.LogInfo("Windows installation instructions provided successfully")
-	
+
 	// Send response
 	c.JSON(http.StatusOK, InstallationResponse{
 		Success: true,
@@ -159,7 +159,7 @@ func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
 // getWindowsKubeflexInstructions provides kubeflex installation instructions for Windows
 func getWindowsKubeflexInstructions() *WindowsInstructions {
 	log.LogInfo("Generating Windows Kubeflex installation instructions")
-	
+
 	return &WindowsInstructions{
 		Steps: []string{
 			"1. Install WSL2 (Windows Subsystem for Linux)",
