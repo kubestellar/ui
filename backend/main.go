@@ -487,22 +487,21 @@ func InitializeMarketplace(storageProvider string) error {
 	switch storageProvider {
 	case "git":
 		remoteURL := config.GetEnv("GIT_REMOTE_URL", "")
-		localPath := config.GetEnv("GIT_LOCAL_PATH", "")
 		branch := config.GetEnv("GIT_BRANCH", "")
 		baseURL := config.GetEnv("GIT_BASE_URL", "")
+		token := config.GetEnv("GIT_TOKEN", "")
 
 		logger.Info("git storage config",
 			zap.String("remote_url", remoteURL),
-			zap.String("local_path", localPath),
 			zap.String("branch", branch),
 			zap.String("base_url", baseURL))
 
 		storeCfg = marketplace.StorageConfig{
 			Type:         marketplace.StorageGit,
 			GitRemoteURL: remoteURL,
-			GitLocalPath: localPath,
 			GitBranch:    branch,
 			GitBaseURL:   baseURL,
+			GitToken:     token,
 		}
 	case "r2":
 		bucket := config.GetEnv("R2_BUCKET_NAME", "")

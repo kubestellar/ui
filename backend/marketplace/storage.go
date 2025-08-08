@@ -42,9 +42,9 @@ type StorageConfig struct {
 
 	// Git option
 	GitRemoteURL string // e.g. https://github.com/user/repo.git
-	GitLocalPath string // e.g. ../../../plugin-storage - local path where the git storage repo is cloned
 	GitBranch    string // e.g. main
 	GitBaseURL   string // raw.githubusercontent.com/...
+	GitToken     string // GitHub token for private repos
 
 	// R2 option
 	Bucket    string // r2 bucket name
@@ -76,15 +76,15 @@ func (r staticResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointP
 func NewStorageProvider(cfg StorageConfig) (StorageProvider, error) {
 	switch cfg.Type {
 	case StorageGit:
-		if cfg.GitRemoteURL == "" || cfg.GitLocalPath == "" || cfg.GitBranch == "" || cfg.GitBaseURL == "" {
+		if cfg.GitRemoteURL == "" || cfg.GitBranch == "" || cfg.GitBaseURL == "" || cfg.GitToken == "" {
 			return nil, fmt.Errorf("incomplete git configuration")
 		}
 
 		return &GitStorage{
 			Remote:     cfg.GitRemoteURL,
-			Local:      cfg.GitLocalPath,
 			Branch:     cfg.GitBranch,
 			PublicBase: cfg.GitBaseURL,
+			Token:      cfg.GitToken,
 		}, nil
 
 	case StorageR2:
