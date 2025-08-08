@@ -214,8 +214,6 @@ func InstallPluginHandler(c *gin.Context) {
 		})
 		return
 	}
-	log.LogInfo("user ID", zap.Any("id", userIDInt))
-	fmt.Println(reflect.TypeOf(userIDInt))
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -339,6 +337,7 @@ func InstallPluginHandler(c *gin.Context) {
 	// plugin not existed - add to database and retrieve the ID
 
 	var pluginID int
+	var pluginDetailsID int
 
 	// upload plugin details to plugin_details table for the 1st time
 	// check if plugin details already exist
@@ -349,7 +348,7 @@ func InstallPluginHandler(c *gin.Context) {
 		})
 	}
 	if !exist {
-		pluginDetailsID, err := pkg.AddPluginToDB(
+		pluginDetailsID, err = pkg.AddPluginToDB(
 			manifest.Metadata.Name,
 			manifest.Metadata.Version,
 			manifest.Metadata.Description,
@@ -360,7 +359,7 @@ func InstallPluginHandler(c *gin.Context) {
 			[]string{"monitoring", "cluster"},
 			"0.0.1",  // will change this after we have a versioning system
 			"0.28.0", // will change this after we have a versioning system
-			[]byte(`{"dependencies": "not mentioned"}`),
+			[]byte(`[{"dependencies": "not mentioned"}]`),
 			"unknown",
 			int(file.Size),
 		)
@@ -408,7 +407,7 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// combine the plugin name and the ID to make it readable and unique for plugin's Folder
-	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginID) // e.g. myplugin-123
+	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginID) // e.g. myplugin-123 // TODO: use pluginDetailsID instead of pluginID
 
 	// Create plugin directory in plugins folder
 	pluginDir := filepath.Join("./plugins", pluginKey)
