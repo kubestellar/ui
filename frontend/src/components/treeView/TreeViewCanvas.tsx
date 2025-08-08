@@ -116,9 +116,10 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
             <Box
               sx={{
                 position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -134,29 +135,28 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                     theme === 'dark'
                       ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))'
                       : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95))',
-                  padding: 5,
-                  borderRadius: '16px',
+                  padding: 6,
+                  borderRadius: '20px',
                   boxShadow:
                     theme === 'dark'
-                      ? '0 16px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                      : '0 16px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                      ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                      : '0 20px 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                   border:
                     theme === 'dark'
                       ? '1px solid rgba(148, 163, 184, 0.2)'
                       : '1px solid rgba(148, 163, 184, 0.3)',
-                  backdropFilter: 'blur(16px)',
-                  maxWidth: '480px',
-                  minWidth: '400px',
+                  backdropFilter: 'blur(20px)',
+                  maxWidth: '400px',
                   textAlign: 'center',
                   animation: 'bounceIn 0.8s ease-out',
                   position: 'relative',
                 }}
               >
-                {/* Compact empty state illustration */}
+                {/* Adorable empty state illustration */}
                 <Box
                   sx={{
-                    width: '80px',
-                    height: '80px',
+                    width: '120px',
+                    height: '120px',
                     borderRadius: '50%',
                     background:
                       theme === 'dark'
@@ -165,17 +165,17 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: 1.5,
+                    marginBottom: 2,
                     position: 'relative',
-                    boxShadow: '0 6px 24px rgba(59, 130, 246, 0.3)',
+                    boxShadow: '0 8px 32px rgba(59, 130, 246, 0.3)',
                     animation: 'float 3s ease-in-out infinite',
                     '&::before': {
                       content: '""',
                       position: 'absolute',
-                      top: '-3px',
-                      left: '-3px',
-                      right: '-3px',
-                      bottom: '-3px',
+                      top: '-4px',
+                      left: '-4px',
+                      right: '-4px',
+                      bottom: '-4px',
                       borderRadius: '50%',
                       background:
                         theme === 'dark'
@@ -186,7 +186,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                   }}
                 >
                   <Plus
-                    size={36}
+                    size={50}
                     color="white"
                     style={{
                       filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
@@ -194,14 +194,14 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                     }}
                   />
 
-                  {/* Smaller floating sparkles */}
+                  {/* Floating sparkles */}
                   <Box
                     sx={{
                       position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      width: '6px',
-                      height: '6px',
+                      top: '10px',
+                      right: '10px',
+                      width: '8px',
+                      height: '8px',
                       borderRadius: '50%',
                       background: '#fbbf24',
                       animation: 'sparkle 2s ease-in-out infinite',
@@ -210,13 +210,25 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                   <Box
                     sx={{
                       position: 'absolute',
-                      bottom: '15px',
-                      left: '12px',
-                      width: '4px',
-                      height: '4px',
+                      bottom: '20px',
+                      left: '15px',
+                      width: '6px',
+                      height: '6px',
                       borderRadius: '50%',
                       background: '#34d399',
                       animation: 'sparkle 2s ease-in-out infinite 0.5s',
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '30px',
+                      left: '5px',
+                      width: '4px',
+                      height: '4px',
+                      borderRadius: '50%',
+                      background: '#f472b6',
+                      animation: 'sparkle 2s ease-in-out infinite 1s',
                     }}
                   />
                 </Box>
@@ -231,21 +243,21 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
                     fontWeight: 700,
-                    fontSize: '20px',
-                    letterSpacing: '0.3px',
-                    marginBottom: 0.5,
+                    fontSize: '28px',
+                    letterSpacing: '0.5px',
+                    marginBottom: 1,
                   }}
                 >
                   ✨ {t('treeView.emptyState.title')} ✨
                 </Typography>
 
                 <Typography
-                  variant="body2"
+                  variant="body1"
                   sx={{
                     color: theme === 'dark' ? '#94a3b8' : '#64748b',
-                    fontSize: '14px',
-                    lineHeight: 1.5,
-                    marginBottom: 2,
+                    fontSize: '16px',
+                    lineHeight: 1.6,
+                    marginBottom: 3,
                     fontWeight: '500',
                   }}
                 >
@@ -254,23 +266,23 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
 
                 <Button
                   variant="contained"
-                  startIcon={<Plus size={18} />}
+                  startIcon={<Plus size={20} />}
                   onClick={onCreateWorkload}
                   sx={{
                     background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
                     color: '#ffffff',
                     fontWeight: '600',
-                    fontSize: '14px',
-                    padding: '10px 20px',
-                    borderRadius: '10px',
+                    fontSize: '16px',
+                    padding: '12px 24px',
+                    borderRadius: '12px',
                     border: 'none',
-                    boxShadow: '0 6px 20px rgba(59, 130, 246, 0.3)',
+                    boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     textTransform: 'none',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
                       transform: 'translateY(-2px) scale(1.02)',
-                      boxShadow: '0 8px 28px rgba(59, 130, 246, 0.4)',
+                      boxShadow: '0 12px 32px rgba(59, 130, 246, 0.4)',
                     },
                     '&:active': {
                       transform: 'translateY(0) scale(0.98)',
@@ -280,14 +292,14 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                   {t('treeView.createWorkload')}
                 </Button>
 
-                {/* Smaller decorative elements */}
+                {/* Decorative elements */}
                 <Box
                   sx={{
                     position: 'absolute',
-                    top: '-8px',
-                    right: '-8px',
-                    width: '16px',
-                    height: '16px',
+                    top: '-10px',
+                    right: '-10px',
+                    width: '20px',
+                    height: '20px',
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
                     animation: 'bounce 2s ease-in-out infinite',
@@ -296,10 +308,10 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
                 <Box
                   sx={{
                     position: 'absolute',
-                    bottom: '-6px',
-                    left: '-6px',
-                    width: '12px',
-                    height: '12px',
+                    bottom: '-8px',
+                    left: '-8px',
+                    width: '16px',
+                    height: '16px',
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, #10b981, #34d399)',
                     animation: 'bounce 2s ease-in-out infinite 1s',
@@ -309,12 +321,12 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
             </Box>
           </ReactFlowProvider>
 
-          {/* Enhanced animations for compact empty state - GPU optimized */}
+          {/* Enhanced animations for adorable empty state - GPU optimized */}
           <style>{`
             @keyframes float {
               0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-              33% { transform: translate3d(0, -8px, 0) rotate(1deg); }
-              66% { transform: translate3d(0, -4px, 0) rotate(-1deg); }
+              33% { transform: translate3d(0, -10px, 0) rotate(1deg); }
+              66% { transform: translate3d(0, -5px, 0) rotate(-1deg); }
             }
             @keyframes sparkle {
               0%, 100% { opacity: 0; transform: scale3d(0, 0, 1) rotate(0deg); }
@@ -322,16 +334,16 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
             }
             @keyframes bounce {
               0%, 100% { transform: translate3d(0, 0, 0); }
-              50% { transform: translate3d(0, -8px, 0); }
+              50% { transform: translate3d(0, -10px, 0); }
             }
             @keyframes pulse {
               0%, 100% { transform: scale3d(1, 1, 1); }
               50% { transform: scale3d(1.1, 1.1, 1); }
             }
             @keyframes bounceIn {
-              0% { transform: scale3d(0.3, 0.3, 1) translate3d(0, 15px, 0); opacity: 0; }
-              50% { transform: scale3d(1.05, 1.05, 1) translate3d(0, -8px, 0); }
-              70% { transform: scale3d(0.9, 0.9, 1) translate3d(0, 4px, 0); }
+              0% { transform: scale3d(0.3, 0.3, 1) translate3d(0, 20px, 0); opacity: 0; }
+              50% { transform: scale3d(1.05, 1.05, 1) translate3d(0, -10px, 0); }
+              70% { transform: scale3d(0.9, 0.9, 1) translate3d(0, 5px, 0); }
               100% { transform: scale3d(1, 1, 1) translate3d(0, 0, 0); opacity: 1; }
             }
           `}</style>
