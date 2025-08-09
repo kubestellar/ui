@@ -290,7 +290,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 						kind := parts[1]
 						name := parts[2]
 						namespace := parts[3]
-						
+
 						workloadDesc := fmt.Sprintf("Specific: %s/%s: %s (ns:%s)", apiVersion, kind, name, namespace)
 						if !contains(workloads, workloadDesc) {
 							workloads = append(workloads, workloadDesc)

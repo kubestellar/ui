@@ -388,7 +388,7 @@ const BP = () => {
       clustersLoading,
       bindingPoliciesLength: bindingPoliciesData?.length || 0,
       clustersLength: clustersData?.clusters?.length || 0,
-      workloadsLength: workloadsData?.length || 0
+      workloadsLength: workloadsData?.length || 0,
     });
 
     // Update bindingPolicies state when bindingPoliciesData changes
@@ -898,10 +898,7 @@ const BP = () => {
               ) : bindingPolicies.length === 0 ? (
                 <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
               ) : workloads.length === 0 ? (
-                <EmptyState
-                  onCreateClick={() => navigate('/workloads/manage')}
-                  type="workloads"
-                />
+                <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
               ) : (
                 <BPVisualizationWrapper
                   policies={bindingPolicies}
