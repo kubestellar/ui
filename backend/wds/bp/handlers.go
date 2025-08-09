@@ -281,7 +281,23 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 
 			// Try to extract from annotations if there's any workload info
 			if annotations := bpList.Items[i].Annotations; annotations != nil {
-				if specificWorkload, ok := annotations["specific-workload-name"]; ok && specificWorkload != "" {
+				// First try to extract from specificWorkloads annotation
+				if specificWorkloadsStr, ok := annotations["specificWorkloads"]; ok && specificWorkloadsStr != "" {
+					// Parse the specificWorkloads annotation which contains: apiVersion,kind,name,namespace
+					parts := strings.Split(specificWorkloadsStr, ",")
+					if len(parts) >= 4 {
+						apiVersion := parts[0]
+						kind := parts[1]
+						name := parts[2]
+						namespace := parts[3]
+						
+						workloadDesc := fmt.Sprintf("Specific: %s/%s: %s (ns:%s)", apiVersion, kind, name, namespace)
+						if !contains(workloads, workloadDesc) {
+							workloads = append(workloads, workloadDesc)
+							log.LogDebug("GetAllBp - Added specific workload from specificWorkloads annotation", zap.String("workloadDesc", workloadDesc))
+						}
+					}
+				} else if specificWorkload, ok := annotations["specific-workload-name"]; ok && specificWorkload != "" {
 					// Try to determine API group and kind from annotations
 					apiVersion := annotations["workload-api-version"]
 					if apiVersion == "" {
@@ -331,6 +347,8 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 		if len(workloads) == 0 {
 			workloads = append(workloads, "No workload specified")
 			log.LogDebug("GetAllBp - No workloads found, adding default")
+		} else {
+			log.LogDebug("GetAllBp - Found workloads", zap.String("policyName", policyName), zap.Any("workloads", workloads))
 		}
 
 		// Ensure we have cluster count consistent with the array

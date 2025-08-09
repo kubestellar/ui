@@ -380,6 +380,17 @@ const BP = () => {
     // Set overall loading state based on all queries
     setLoading(bindingPoliciesLoading || workloadsLoading || clustersLoading);
 
+    // Debug logging to understand the current state
+    console.log('BP Debug - Current state:', {
+      loading: bindingPoliciesLoading || workloadsLoading || clustersLoading,
+      bindingPoliciesLoading,
+      workloadsLoading,
+      clustersLoading,
+      bindingPoliciesLength: bindingPoliciesData?.length || 0,
+      clustersLength: clustersData?.clusters?.length || 0,
+      workloadsLength: workloadsData?.length || 0
+    });
+
     // Update bindingPolicies state when bindingPoliciesData changes
     if (bindingPoliciesData) {
       // Debug log to see the data structure
@@ -838,9 +849,8 @@ const BP = () => {
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
             ) : bindingPolicies.length === 0 ? (
               <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
-            ) : workloads.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
             ) : (
+              // If we have binding policies, show the table regardless of workloads
               <>
                 <BPTable
                   policies={paginatedPolicies}
