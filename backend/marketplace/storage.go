@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -153,6 +154,17 @@ func ExtractTarGz(file io.Reader, dest string) error {
 		case tar.TypeDir:
 			os.MkdirAll(targetPath, os.FileMode(header.Mode))
 		case tar.TypeReg:
+			// ensure the parent dir exist
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+				log.LogError("error creating parent directory", zap.String("error", err.Error()))
+				return err
+			}
+
+			// skip macOS metadata files
+			if strings.HasPrefix(filepath.Base(header.Name), "._") {
+				continue
+			}
+
 			f, err := os.Create(targetPath)
 			if err != nil {
 				log.LogError("error creating file from tar", zap.String("error", err.Error()))
