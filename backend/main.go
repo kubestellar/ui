@@ -234,6 +234,12 @@ func ZapMiddleware() gin.HandlerFunc {
 		responseSize := c.Writer.Size()
 		headers := c.Request.Header
 
+		// Truncate the request body length
+		maxBodyLen := 500
+		if len(requestBody) > maxBodyLen {
+			requestBody = requestBody[:maxBodyLen] + "...[truncated]"
+		}
+
 		// Log in structured JSON format
 		logger.Info("HTTP Request",
 			zap.String("method", c.Request.Method),
