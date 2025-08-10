@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { api } from '../../../lib/api';
 import {
   CustomNode,
   CustomEdge,
@@ -78,7 +78,7 @@ export const useTreeViewActions = ({
         const url = `/api/wds/${plural}/${nodeName}`;
         const params = namespace ? { namespace } : {};
 
-        await axios.delete(url, { params });
+        await api.delete(url, { params });
 
         // Remove the node and its descendants from the graph
         const nodesToDelete = [nodeId, ...getDescendantEdges(nodeId, edges).map(e => e.target)];

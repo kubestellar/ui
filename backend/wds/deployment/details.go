@@ -7,7 +7,9 @@ GetDeploymentByName, GetWDSWorkloads
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/kubestellar/ui/backend/k8s"
@@ -112,26 +114,140 @@ func GetWDSWorkloads(c *gin.Context) {
 
 	// Add deployments to workloads
 	for _, deployment := range deployments.Items {
-		workloads = append(workloads, WorkloadInfo{
+		workload := WorkloadInfo{
 			Name:         deployment.Name,
 			Kind:         "Deployment",
 			Namespace:    deployment.Namespace,
 			CreationTime: deployment.CreationTimestamp.Time,
 			Labels:       deployment.Labels,
-		})
+		}
+		workloads = append(workloads, workload)
 	}
 
 	// Add services to workloads
 	for _, service := range services.Items {
-		workloads = append(workloads, WorkloadInfo{
+		workload := WorkloadInfo{
 			Name:         service.Name,
 			Kind:         "Service",
 			Namespace:    service.Namespace,
 			CreationTime: service.CreationTimestamp.Time,
 			Labels:       service.Labels,
-		})
+		}
+		workloads = append(workloads, workload)
 	}
-	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/wds/workloads").Observe(time.Since(startTime).Seconds())
+
 	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/wds/workloads", "200").Inc()
-	c.JSON(http.StatusOK, workloads)
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/wds/workloads").Observe(time.Since(startTime).Seconds())
+	c.JSON(http.StatusOK, gin.H{
+		"workloads": workloads,
+	})
+}
+
+// DeleteWDSDeployment handles deletion of WDS deployments
+func DeleteWDSDeployment(c *gin.Context) {
+	name := c.Param("name")
+	namespace := c.Query("namespace")
+	startTime := time.Now()
+	
+	if namespace == "" {
+		namespace = "default" // Use "default" namespace if not provided
+	}
+
+	clientset, err := wds.GetClientSetKubeConfig()
+	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/deployments/"+name, "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
+	}
+
+	// Delete the deployment
+	err = clientset.AppsV1().Deployments(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/deployments/"+name, "404").Inc()
+		c.JSON(http.StatusNotFound, gin.H{"error": "Deployment not found", "details": err.Error()})
+		return
+	}
+
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/api/wds/deployments/"+name, "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("DELETE", "/api/wds/deployments/"+name).Observe(time.Since(startTime).Seconds())
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Deployment %s deleted successfully", name),
+		"name":    name,
+		"namespace": namespace,
+	})
+}
+
+// DeleteWDSResource handles generic deletion of WDS resources
+func DeleteWDSResource(c *gin.Context) {
+	var requestData struct {
+		Namespace string `json:"namespace"`
+		Name      string `json:"name"`
+		Kind      string `json:"kind,omitempty"`
+	}
+	
+	startTime := time.Now()
+	
+	if err := c.ShouldBindJSON(&requestData); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/delete", "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
+		return
+	}
+	
+	if requestData.Namespace == "" {
+		requestData.Namespace = "default"
+	}
+	
+	if requestData.Name == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/delete", "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Name is required"})
+		return
+	}
+
+	clientset, err := wds.GetClientSetKubeConfig()
+	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/delete", "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
+	}
+
+	// Default to deployment if kind is not specified
+	resourceKind := requestData.Kind
+	if resourceKind == "" {
+		resourceKind = "deployment"
+	}
+
+	var err2 error
+	switch strings.ToLower(resourceKind) {
+	case "deployment":
+		err2 = clientset.AppsV1().Deployments(requestData.Namespace).Delete(context.TODO(), requestData.Name, metav1.DeleteOptions{})
+	case "service":
+		err2 = clientset.CoreV1().Services(requestData.Namespace).Delete(context.TODO(), requestData.Name, metav1.DeleteOptions{})
+	case "pod":
+		err2 = clientset.CoreV1().Pods(requestData.Namespace).Delete(context.TODO(), requestData.Name, metav1.DeleteOptions{})
+	default:
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/delete", "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Unsupported resource kind: %s", resourceKind)})
+		return
+	}
+
+	if err2 != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/delete", "404").Inc()
+		c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found", "details": err2.Error()})
+		return
+	}
+
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/api/wds/delete", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("DELETE", "/api/wds/delete").Observe(time.Since(startTime).Seconds())
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("%s %s deleted successfully", resourceKind, requestData.Name),
+		"name":    requestData.Name,
+		"namespace": requestData.Namespace,
+		"kind":    resourceKind,
+	})
 }

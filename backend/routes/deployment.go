@@ -17,6 +17,8 @@ func setupDeploymentRoutes(router *gin.Engine) {
 	router.GET("/api/wds/workloads", deployment.GetWDSWorkloads)
 	router.GET("/api/wds/:name", deployment.GetDeploymentByName)
 	router.GET("/api/wds/status", deployment.GetDeploymentStatus)
+	router.DELETE("/api/wds/deployments/:name", deployment.DeleteWDSDeployment)
+	router.DELETE("/api/wds/delete", deployment.DeleteWDSResource)
 
 	// websocket
 	router.GET("/ws", func(ctx *gin.Context) {
@@ -68,5 +70,4 @@ func setupDeploymentRoutes(router *gin.Engine) {
 			"current-context": currentContext, // current context can be anything
 		})
 	})
-
 }

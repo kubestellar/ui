@@ -9,7 +9,7 @@ import {
 } from '../components/login/tokenUtils';
 
 export const api = axios.create({
-  baseURL: process.env.VITE_BASE_URL,
+  baseURL: import.meta.env.VITE_BASE_URL,
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ api.interceptors.response.use(
 
 // Helper function to get WebSocket URL with proper protocol and base URL
 export const getWebSocketUrl = (path: string): string => {
-  const baseUrl = process.env.VITE_BASE_URL || '';
+  const baseUrl = import.meta.env.VITE_BASE_URL || '';
 
   const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
 

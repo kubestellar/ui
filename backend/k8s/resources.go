@@ -463,6 +463,30 @@ func DeleteResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
+	// Special handling for WDS deployment routes
+	if resourceKind == "wds" && namespace == "deployments" {
+		// This is a WDS deployment delete request
+		// The actual namespace should come from query parameter
+		actualNamespace := c.Query("namespace")
+		if actualNamespace == "" {
+			actualNamespace = "default"
+		}
+
+		// Delete the deployment directly
+		err = clientset.AppsV1().Deployments(actualNamespace).Delete(c, name, v1.DeleteOptions{})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Deployment %s deleted successfully", name),
+			"name":    name,
+			"namespace": actualNamespace,
+		})
+		return
+	}
+
 	discoveryClient := clientset.Discovery()
 	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
