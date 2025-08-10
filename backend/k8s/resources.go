@@ -480,8 +480,8 @@ func DeleteResource(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Deployment %s deleted successfully", name),
-			"name":    name,
+			"message":   fmt.Sprintf("Deployment %s deleted successfully", name),
+			"name":      name,
 			"namespace": actualNamespace,
 		})
 		return

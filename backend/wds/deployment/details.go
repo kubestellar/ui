@@ -148,7 +148,7 @@ func DeleteWDSDeployment(c *gin.Context) {
 	name := c.Param("name")
 	namespace := c.Query("namespace")
 	startTime := time.Now()
-	
+
 	if namespace == "" {
 		namespace = "default" // Use "default" namespace if not provided
 	}
@@ -174,8 +174,8 @@ func DeleteWDSDeployment(c *gin.Context) {
 	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/api/wds/deployments/"+name, "200").Inc()
 	telemetry.HTTPRequestDuration.WithLabelValues("DELETE", "/api/wds/deployments/"+name).Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Deployment %s deleted successfully", name),
-		"name":    name,
+		"message":   fmt.Sprintf("Deployment %s deleted successfully", name),
+		"name":      name,
 		"namespace": namespace,
 	})
 }
@@ -187,19 +187,19 @@ func DeleteWDSResource(c *gin.Context) {
 		Name      string `json:"name"`
 		Kind      string `json:"kind,omitempty"`
 	}
-	
+
 	startTime := time.Now()
-	
+
 	if err := c.ShouldBindJSON(&requestData); err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/delete", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data", "details": err.Error()})
 		return
 	}
-	
+
 	if requestData.Namespace == "" {
 		requestData.Namespace = "default"
 	}
-	
+
 	if requestData.Name == "" {
 		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/wds/delete", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Name is required"})
@@ -245,9 +245,9 @@ func DeleteWDSResource(c *gin.Context) {
 	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/api/wds/delete", "200").Inc()
 	telemetry.HTTPRequestDuration.WithLabelValues("DELETE", "/api/wds/delete").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("%s %s deleted successfully", resourceKind, requestData.Name),
-		"name":    requestData.Name,
+		"message":   fmt.Sprintf("%s %s deleted successfully", resourceKind, requestData.Name),
+		"name":      requestData.Name,
 		"namespace": requestData.Namespace,
-		"kind":    resourceKind,
+		"kind":      resourceKind,
 	})
 }
