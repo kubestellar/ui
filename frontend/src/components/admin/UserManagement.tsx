@@ -42,8 +42,12 @@ const CustomDropdown = ({
   style?: React.CSSProperties;
 }) => {
   const [open, setOpen] = useState(false);
+  const [focusIdx, setFocusIdx] = useState<number>(-1);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  // Close on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -52,11 +56,63 @@ const CustomDropdown = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
+  // Focus first item when opening
+  useEffect(() => {
+    if (open && menuRefs.current[0]) {
+      setFocusIdx(0);
+      setTimeout(() => menuRefs.current[0]?.focus(), 0);
+    } else if (!open) {
+      setFocusIdx(-1);
+      buttonRef.current?.focus();
+    }
+  }, [open]);
+
+  // Keyboard navigation on trigger
+  const handleButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setOpen(true);
+    }
+  };
+
+  // Keyboard navigation on menu
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusIdx(i => {
+        const next = i + 1 < options.length ? i + 1 : 0;
+        menuRefs.current[next]?.focus();
+        return next;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusIdx(i => {
+        const prev = i - 1 >= 0 ? i - 1 : options.length - 1;
+        menuRefs.current[prev]?.focus();
+        return prev;
+      });
+    } else if (e.key === 'Tab') {
+      setOpen(false);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+      buttonRef.current?.focus();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (focusIdx >= 0) {
+        setOpen(false);
+        onChange(options[focusIdx].value);
+      }
+    }
+  };
+
   const selected = options.find(opt => opt.value === value);
 
   return (
     <div ref={ref} className="relative" style={style}>
       <button
+        ref={buttonRef}
         type="button"
         className={`flex w-full items-center rounded-lg border px-3 py-2 text-left transition-all duration-200 focus:outline-none ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         style={{
@@ -66,7 +122,11 @@ const CustomDropdown = ({
           boxShadow: open ? (isDark ? '0 4px 24px #0008' : '0 4px 24px #0002') : undefined,
           ...style,
         }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="dropdown-menu"
         onClick={() => !disabled && setOpen(v => !v)}
+        onKeyDown={handleButtonKeyDown}
         disabled={disabled}
       >
         {selected?.color && (
@@ -77,48 +137,59 @@ const CustomDropdown = ({
         </span>
         <FiChevronDown className="ml-auto opacity-60" size={16} />
       </button>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.15 }}
-          className="absolute z-20 mt-2 w-full rounded-xl border shadow-xl"
-          style={{
-            background: isDark ? '#1e293b' : '#fff',
-            border: isDark ? '1px solid #334155' : '1px solid #e5e7eb',
-          }}
-        >
-          <div className="py-1">
-            {options.map(opt => (
-              <button
-                key={opt.value}
-                className={`flex w-full items-center px-4 py-2 text-left transition-colors hover:bg-blue-500/10 ${value === opt.value ? 'font-bold' : ''}`}
-                style={{
-                  color: isDark
-                    ? value === opt.value
-                      ? '#60a5fa'
-                      : '#fff'
-                    : value === opt.value
-                      ? '#2563eb'
-                      : '#222',
-                  background: value === opt.value ? (isDark ? '#334155' : '#e0e7ff') : undefined,
-                }}
-                onClick={() => {
-                  setOpen(false);
-                  onChange(opt.value);
-                }}
-                type="button"
-              >
-                {opt.color && (
-                  <span className="mr-2 h-2 w-2 rounded-full" style={{ background: opt.color }} />
-                )}
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            id="dropdown-menu"
+            role="listbox"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-20 mt-2 w-full rounded-xl border shadow-xl"
+            style={{
+              background: isDark ? '#1e293b' : '#fff',
+              border: isDark ? '1px solid #334155' : '1px solid #e5e7eb',
+            }}
+            tabIndex={-1}
+            onKeyDown={handleMenuKeyDown}
+          >
+            <div className="py-1">
+              {options.map((opt, idx) => (
+                <button
+                  key={opt.value}
+                  ref={el => (menuRefs.current[idx] = el)}
+                  role="option"
+                  aria-selected={value === opt.value}
+                  tabIndex={focusIdx === idx ? 0 : -1}
+                  className={`flex w-full items-center px-4 py-2 text-left transition-colors hover:bg-blue-500/10 ${value === opt.value ? 'font-bold' : ''}`}
+                  style={{
+                    color: isDark
+                      ? value === opt.value
+                        ? '#60a5fa'
+                        : '#fff'
+                      : value === opt.value
+                        ? '#2563eb'
+                        : '#222',
+                    background: value === opt.value ? (isDark ? '#334155' : '#e0e7ff') : undefined,
+                  }}
+                  onClick={() => {
+                    setOpen(false);
+                    onChange(opt.value);
+                  }}
+                  onFocus={() => setFocusIdx(idx)}
+                  type="button"
+                >
+                  {opt.color && (
+                    <span className="mr-2 h-2 w-2 rounded-full" style={{ background: opt.color }} />
+                  )}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
