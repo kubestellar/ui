@@ -162,13 +162,17 @@ func ExtractTarGz(file io.Reader, dest string) error {
 
 		case tar.TypeReg:
 			// ensure the parent directory exists
+
 			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
 				log.LogError("error creating parent directory", zap.String("error", err.Error()))
 				return err
 			}
 
+
+			// skip macOS metadata files
 			if strings.HasPrefix(filepath.Base(header.Name), "._") {
-				continue // skip macOS metadata files
+				continue
+
 			}
 
 			f, err := os.Create(targetPath)

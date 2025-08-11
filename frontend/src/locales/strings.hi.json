@@ -221,8 +221,9 @@
       "coreRequirements": "मुख्य आवश्यकताएं",
       "demoEnvironmentRequirements": "डेमो वातावरण आवश्यकताएं",
       "buttons": {
-        "refresh": "रिफ्रेश करें",
-        "nextInstallation": "आगे: इंस्टॉलेशन"
+        "refresh": "रीफ्रेश करें",
+        "nextInstallation": "आगे: इंस्टॉलेशन",
+        "checking": "जांच रहे हैं..."
       }
     },
     "installation": {
@@ -299,8 +300,11 @@
       "checkFailed": "KubeStellar स्थिति जांचने में विफल",
       "preparingInstructions": "इंस्टॉलेशन निर्देश तैयार कर रहे हैं...",
       "followInstructions": "KubeStellar इंस्टॉल करने के लिए नीचे दिए गए CLI इंस्टॉलेशन निर्देशों का पालन करें",
-      "loadInstructionsFailed": "इंस्टॉलेशन निर्देश लोड करने में विफल। कृपया पेज रिफ्रेश करें और पुनः प्रयास करें।",
-      "installationDetected": "KubeStellar इंस्टॉलेशन का पता चला! लॉगिन पेज पर रीडायरेक्ट कर रहे हैं..."
+      "loadInstructionsFailed": "इंस्टॉलेशन निर्देश लोड करने में विफल। कृपया पेज रीफ्रेश करें और पुनः प्रयास करें।",
+      "installationDetected": "KubeStellar इंस्टॉलेशन का पता चला! लॉगिन पेज पर रीडायरेक्ट कर रहे हैं...",
+      "recheckingPrerequisites": "पूर्वापेक्षाएं पुनः जांच रहे हैं...",
+      "prerequisitesRechecked": "पूर्वापेक्षाएं सफलतापूर्वक पुनः जांची गईं",
+      "recheckFailed": "पूर्वापेक्षाएं पुनः जांचने में विफल"
     }
   },
   "header": {
@@ -317,7 +321,12 @@
     "goToHome": "होम पेज पर जाएं",
     "logoAlt": "KubeStellar लोगो",
     "themeToggleTip": "थीम टॉगल करने के लिए Alt+Q",
-    "switchTheme": "{{mode}} मोड में स्विच करें"
+    "switchTheme": "{{mode}} मोड में स्विच करें",
+    "switchLanguage": "भाषा बदलें",
+    "selectLanguage": "भाषा चुनें",
+    "enterFullscreen": "पूर्ण स्क्रीन मोड में जाएं",
+    "exitFullscreen": "पूर्ण स्क्रीन मोड से बाहर निकलें",
+    "fullscreen": "पूर्ण स्क्रीन मोड टॉगल करें"
   },
   "login": {
     "controlPlane": "कंट्रोल प्लेन",
@@ -492,7 +501,9 @@
       "cannotDeleteUsed": "लेबल्स Binding Policy में उपयोग हो रहे हैं और हटाए नहीं जा सकते। कृपया पहले policy हटाएं।",
       "bulkUpdateSuccess": "सभी {{count}} क्लस्टर्स के लिए लेबल्स अपडेट किए गए",
       "bulkUpdatePartial": "{{success}} क्लस्टर्स के लिए लेबल्स अपडेट किए गए, {{failures}} क्लस्टर्स के लिए विफल",
-      "bulkUpdateFail": "सभी {{count}} क्लस्टर्स के लिए लेबल्स अपडेट करने में विफल"
+      "bulkUpdateFail": "सभी {{count}} क्लस्टर्स के लिए लेबल्स अपडेट करने में विफल",
+      "bulkTooltipDisabled": "बल्क लेबलिंग सक्षम करने के लिए कम से कम 2 क्लस्टर्स चुनें",
+      "bulkTooltipEnabled": "चयनित क्लस्टर्स के लिए लेबल्स प्रबंधित करें"
     },
     "dialog": {
       "selectMultipleClusters": "कई क्लस्टर्स चुनें",
@@ -598,7 +609,7 @@
       "cpuCores": "CPU Cores",
       "memory": "मेमोरी",
       "podCapacity": "Pod क्षमता",
-      "lastRefreshed": "अंतिम बार रिफ्रेश किया गया",
+      "lastRefreshed": "अंतिम बार रीफ्रेश किया गया",
       "noClusterSelected": "कोई क्लस्टर चयनित नहीं"
     },
     "dashboard": {
@@ -632,7 +643,7 @@
       "showMoreClusters": "और क्लस्टर्स दिखाएं",
       "clustersActive": "क्लस्टर्स सक्रिय",
       "systemHealth": "सिस्टम हेल्थ",
-      "refresh": "रिफ्रेश करें",
+      "refresh": "रीफ्रेश करें",
       "noRecentActivity": "कोई हालिया गतिविधि नहीं मिली",
       "recentActivity": "हालिया गतिविधि",
       "resourceUtilization": "संसाधन उपयोग",
@@ -831,7 +842,13 @@
       "expandAll": "सभी parent nodes के सभी child nodes को विस्तृत करें",
       "collapseAll": "सभी parent nodes के सभी child nodes को संकुचित करें",
       "zoomIn": "ज़ूम इन",
-      "zoomOut": "ज़ूम आउट"
+      "zoomOut": "ज़ूम आउट",
+      "resetZoom": "ज़ूम रीसेट करें",
+      "edgeStyle": "एज शैली",
+      "curvy": "घुमावदार",
+      "square": "वर्गाकार",
+      "fullscreen": "पूर्ण स्क्रीन में जाएं",
+      "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
     },
     "nodeLabel": {
       "labels": "लेबल्स:",
@@ -893,12 +910,25 @@
       "failedLoadDetails": "{{type}} विवरण लोड करने में विफल।",
       "apiNotImplemented": "Pod \"{{resourceName}}\" को अपडेट करने के लिए API लागू नहीं किया गया",
       "failedFetchContainers": "कंटेनर सूची प्राप्त करने में विफल",
-      "failedFetchLogsContainers": "लॉग्स के लिए कंटेनर सूची प्राप्त करने में विफल"
+      "failedFetchLogsContainers": "लॉग्स के लिए कंटेनर सूची प्राप्त करने में विफल",
+      "failedConnectExec": "exec सत्र से कनेक्ट करने में विफल",
+      "failedInitExec": "exec सत्र प्रारंभ करने में विफल",
+      "failedUpdate": "मैनिफेस्ट अपडेट करने में विफल",
+      "resourceNotFound": "संसाधन नहीं मिला",
+      "permissionDenied": "अनुमति अस्वीकृत",
+      "invalidManifest": "अमान्य मैनिफेस्ट प्रारूप",
+      "namespaceRequired": "नेमस्पेस आवश्यक है"
     },
     "cluster": {
       "active": "सक्रिय"
     },
-    "noManifest": "कोई manifest उपलब्ध नहीं"
+    "noManifest": "कोई manifest उपलब्ध नहीं",
+    "success": {
+      "manifestUpdated": "मैनिफेस्ट सफलतापूर्वक अपडेट किया गया"
+    },
+    "exec": {
+      "connected": "कनेक्टेड"
+    }
   },
   "treeView": {
     "title": "वर्कलोड्स प्रबंधित करें",
@@ -932,6 +962,19 @@
       "title": "संसाधन हटाने की पुष्टि करें",
       "message": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
       "confirm": "हाँ, हटाएं"
+    },
+    "zoomControls": {
+      "groupByResource": "Resource/Kind द्वारा समूहीकृत करें",
+      "expandAll": "सभी parent nodes के सभी child nodes को विस्तृत करें",
+      "collapseAll": "सभी parent nodes के सभी child nodes को संकुचित करें",
+      "zoomIn": "ज़ूम इन",
+      "zoomOut": "ज़ूम आउट",
+      "resetZoom": "ज़ूम रीसेट करें",
+      "edgeStyle": "एज शैली",
+      "curvy": "घुमावदार",
+      "square": "वर्गाकार",
+      "fullscreen": "पूर्ण स्क्रीन में जाएं",
+      "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
     }
   },
   "quickConnect": {
@@ -1096,7 +1139,7 @@
       "workloads": "{{count}} वर्कलोड्स",
       "showWorkloads": "वर्कलोड्स दिखाएं",
       "highlightActive": "सक्रिय को हाइलाइट करें",
-      "refresh": "विज़ुअलाइज़ेशन रिफ्रेश करें",
+      "refresh": "विज़ुअलाइज़ेशन रीफ्रेश करें",
       "fitView": "व्यू फिट करें",
       "search": "नोड्स खोजें... (⌘+K)",
       "legend": "लेजेंड",
@@ -1914,7 +1957,8 @@
       "noResourcesForContext": "{{context}} context के लिए कोई संसाधन नहीं मिले",
       "resourcesFilteredOut": "संसाधन उपलब्ध हैं लेकिन फ़िल्टर आउट हैं",
       "getStarted": "अपना पहला वर्कलोड बनाकर शुरुआत करें",
-      "resourcesAvailable": "{{count}} कुल संसाधन उपलब्ध हैं, लेकिन कोई वर्तमान फ़िल्टर से मेल नहीं खाता"
+      "resourcesAvailable": "{{count}} कुल संसाधन उपलब्ध हैं, लेकिन कोई वर्तमान फ़िल्टर से मेल नहीं खाता",
+      "noMatchingFilters": "वर्तमान फ़िल्टर्स से कोई संसाधन मेल नहीं खाते"
     }
   },
   "kubeconfigImport": {
@@ -2100,6 +2144,10 @@
       "managedClusters": {
         "title": "प्रबंधित क्लस्टर",
         "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
+      },
+      "metricsDashboard": {
+        "title": "मेट्रिक्स डैशबोर्ड",
+        "description": "सिस्टम प्रदर्शन और मेट्रिक्स मॉनिटर करें"
       }
     },
     "sections": {
@@ -2119,15 +2167,16 @@
     },
     "items": {
       "home": "होम",
-      "remoteClusters": "Remरिमोट क्लस्टर्स",
+      "remoteClusters": "रिमोट क्लस्टर्स",
       "stagedWorkloads": "स्टेज्ड वर्कलोड्स",
       "bindingPolicies": "बाइंडिंग नीतियाँ",
       "deployedWorkloads": "परिनियोजित वर्कलोड्स",
-      "pluginManager": "उपयोगकर्ता प्रबंधन",
-      "userManagement": "User Management",
+      "pluginManager": "प्लगइन मैनेजर",
+      "userManagement": "उपयोगकर्ता प्रबंधन",
       "metricsDashboard": "मेट्रिक्स डैशबोर्ड",
       "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस",
-      "managedClusters": "प्रबंधित क्लस्टर"
+      "managedClusters": "प्रबंधित क्लस्टर",
+      "resourceExplorer": "रिसोर्स एक्सप्लोरर"
     }
   },
   "plugins": {
@@ -2278,5 +2327,29 @@
   },
   "validation": {
     "missingRequiredFields": "आवश्यक फ़ील्ड्स गायब हैं"
+  },
+  "resources": {
+    "search": "संसाधन खोजें...",
+    "kind": "प्रकार",
+    "namespace": "नेमस्पेस",
+    "status": "स्थिति",
+    "labels": "लेबल्स",
+    "filterByKind": "संसाधन प्रकार के अनुसार फ़िल्टर करें",
+    "filterByNamespace": "नेमस्पेस के अनुसार फ़िल्टर करें",
+    "filterByStatus": "स्थिति के अनुसार फ़िल्टर करें",
+    "filterByLabel": "लेबल के अनुसार फ़िल्टर करें",
+    "clearFilters": "फ़िल्टर्स साफ़ करें",
+    "noLabelsFound": "कोई लेबल नहीं मिला",
+    "noMatchingFilters": "वर्तमान फ़िल्टर्स से कोई संसाधन मेल नहीं खाते",
+    "title": "रिसोर्स एक्सप्लोरर",
+    "selectKind": "काइंड / ऑब्जेक्ट चुनें",
+    "selectNamespace": "नेमस्पेस चुनें",
+    "applyFilters": "फ़िल्टर्स लागू करें",
+    "results": "परिणाम",
+    "created": "निर्मित",
+    "noResourcesFound": "मानदंडों से मेल खाते संसाधन नहीं मिले",
+    "selectResourceAndNamespace": "शुरू करने के लिए संसाधन प्रकार और नेमस्पेस चुनें",
+    "refresh": "रीफ्रेश करें",
+    "toggleFilters": "फ़िल्टर्स टॉगल करें"
   }
 }
