@@ -150,9 +150,13 @@ func ExtractTarGz(file io.Reader, dest string) error {
 
 			if _, err := io.Copy(f, tarReader); err != nil {
 				log.LogError("error copying file from tar", zap.String("error", err.Error()))
+				f.Close()
 				return err
 			}
-			f.Close()
+			if err := f.Close(); err != nil {
+				log.LogError("error closing file", zap.String("error", err.Error()))
+				return err
+			}
 
 		default:
 			// skip symlinks and other types for safety
