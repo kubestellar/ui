@@ -755,6 +755,15 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		installedPlugin.InstalledPath,
 		installedPlugin.LoadTime,
 	)
+	if err != nil {
+		log.LogError(
+			"error adding installed plugin to DB",
+			zap.Int("plugin_details_id", installedPlugin.PluginDetailsID),
+			zap.String("error", err.Error()),
+		)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add installed plugin to database"})
+		return
+	}
 	log.LogInfo("installed plugin ID", zap.Int("installed_plugin_id", installedPluginID))
 
 	pluginManager := GetGlobalPluginManager()
