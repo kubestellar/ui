@@ -735,7 +735,7 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 
 	installedPlugin := &models.InstalledPlugin{
 		PluginDetailsID:     pluginID,
-		MarketplacePluginID: &marketplacePluginID, // TODO: should we use the pointer?
+		MarketplacePluginID: &marketplacePluginID,
 		UserID:              userID,
 		InstalledMethod:     "marketplace",
 		Enabled:             true,

@@ -254,7 +254,16 @@ func (g *GitStorage) DownloadFile(ctx context.Context, key string, storagePath s
 		return fmt.Errorf("failed to get absolute path: %v", err)
 	}
 
-	if !strings.HasPrefix(absDest, absStorage+string(os.PathSeparator)) {
+	// Clean paths to normalize separators and remove trailing slashes
+	absDest = filepath.Clean(absDest)
+	absStorage = filepath.Clean(absStorage)
+
+	// Use filepath.Rel for safe containment check
+	relPath, err := filepath.Rel(absStorage, absDest)
+	if err != nil {
+		return fmt.Errorf("failed to get relative path: %v", err)
+	}
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
 		return fmt.Errorf("destination path %s is outside of storage path %s", absDest, absStorage)
 	}
 
