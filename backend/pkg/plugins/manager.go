@@ -35,8 +35,9 @@ type PluginManager struct {
 	ctx     context.Context // Context shared across plugin execution
 	mu      sync.RWMutex    // Mutex to manage concurrent plugin map access
 	// Route tracking for unregistration
-	registeredRoutes map[int][]string // Map of plugin ID to route paths for tracking
-	routeMutex       sync.RWMutex     // Mutex for route tracking
+	registeredRoutes   map[int][]string // Map of plugin ID to route paths for tracking
+	isRegisteredBefore map[int]bool     // Track if plugin routes are registered before
+	routeMutex         sync.RWMutex     // Mutex for route tracking
 }
 
 // Plugin represents a single loaded WASM plugin and its runtime details.
@@ -156,11 +157,12 @@ func NewPluginManager(router *gin.Engine) *PluginManager {
 	}
 
 	pm := &PluginManager{
-		runtime:          runtime,
-		plugins:          make(map[int]*Plugin),
-		router:           router,
-		ctx:              ctx,
-		registeredRoutes: make(map[int][]string),
+		runtime:            runtime,
+		plugins:            make(map[int]*Plugin),
+		router:             router,
+		ctx:                ctx,
+		registeredRoutes:   make(map[int][]string),
+		isRegisteredBefore: make(map[int]bool),
 	}
 
 	// Register host functions for WASM runtime bridge
@@ -254,6 +256,16 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 
 // registerPluginRoutes maps each declared route from plugin manifest to Gin route group.
 func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
+	// check if the routes of this plugin have registered or not
+	pm.routeMutex.RLock()
+	_, exists := pm.registeredRoutes[plugin.ID]
+	pm.routeMutex.RUnlock()
+
+	if exists {
+		log.LogInfo("Plugin routes already registered", zap.Int("pluginID", plugin.ID))
+		return
+	}
+
 	group := pm.router.Group("/api/plugins/" + strconv.Itoa(plugin.ID))
 
 	// middleware to check if plugin is disabled
@@ -269,18 +281,20 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 			handler := pm.createPluginHandler(plugin, route.Handler)
 			routePath := route.Path
 
-			for _, method := range route.Methods {
-				switch method {
-				case "GET":
-					group.GET(routePath, handler)
-				case "POST":
-					group.POST(routePath, handler)
-				case "PUT":
-					group.PUT(routePath, handler)
-				case "DELETE":
-					group.DELETE(routePath, handler)
-				case "PATCH":
-					group.PATCH(routePath, handler)
+			if !pm.isRegisteredBefore[plugin.ID] {
+				for _, method := range route.Methods {
+					switch method {
+					case "GET":
+						group.GET(routePath, handler)
+					case "POST":
+						group.POST(routePath, handler)
+					case "PUT":
+						group.PUT(routePath, handler)
+					case "DELETE":
+						group.DELETE(routePath, handler)
+					case "PATCH":
+						group.PATCH(routePath, handler)
+					}
 				}
 			}
 
@@ -296,6 +310,8 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 			pm.routeMutex.Unlock()
 		}
 	}
+	// mark as registered
+	pm.isRegisteredBefore[plugin.ID] = true
 }
 
 // createPluginHandler returns a Gin handler that executes the WASM plugin function.
