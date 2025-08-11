@@ -67,16 +67,16 @@ const CustomDropdown = ({
     }
   }, [open]);
 
-  // Keyboard navigation on trigger
+  // KeyBoard navigation on trigger
   const handleButtonKeyDown = (e: React.KeyboardEvent) => {
     if (disabled) return;
-    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+    if (e.key == 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setOpen(true);
     }
   };
 
-  // Keyboard navigation on menu
+  //  KeyBoard navigation in menu items
   const handleMenuKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
