@@ -52,3 +52,7 @@ func (r *R2Storage) DeleteFile(ctx context.Context, key string) error {
 	}
 	return nil
 }
+
+func (r *R2Storage) DownloadFile(ctx context.Context, key string, storagePath string) error {
+	return nil
+}

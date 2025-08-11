@@ -21,3 +21,7 @@ func (l *LocalStorage) GetFileURL(ctx context.Context, key string) (string, erro
 func (l *LocalStorage) DeleteFile(ctx context.Context, key string) error {
 	return nil
 }
+
+func (l *LocalStorage) DownloadFile(ctx context.Context, key string, storagePath string) error {
+	return nil
+}

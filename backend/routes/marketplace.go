@@ -11,8 +11,11 @@ func setupMarketplaceRoutes(router *gin.Engine) {
 	marketplace.Use(middleware.AuthenticateMiddleware())
 	{
 		// Plugin management
-		// upload plugin to cloud storage
+		// upload plugin to storage
 		marketplace.POST("/plugins/upload", api.UploadPluginHandler)
+
+		// download plugin from git storage
+		marketplace.GET("/plugins/download/:id", api.InstallMarketplacePluginHandler)
 
 		// delete a marketplace plugin
 		marketplace.DELETE("/plugins/:id", api.DeleteMarketplacePluginHandler)

@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -27,6 +28,7 @@ type StorageProvider interface {
 	UploadFile(ctx context.Context, key string, data io.Reader) error
 	GetFileURL(ctx context.Context, key string) (string, error)
 	DeleteFile(ctx context.Context, key string) error
+	DownloadFile(ctx context.Context, key string, storagePath string) error
 }
 
 type StorageType string
@@ -137,9 +139,9 @@ func ExtractTarGz(file io.Reader, dest string) error {
 	defer uncompressedFile.Close()
 
 	tarReader := tar.NewReader(uncompressedFile)
+
 	for {
 		header, err := tarReader.Next()
-
 		if err == io.EOF {
 			break
 		}
@@ -148,24 +150,45 @@ func ExtractTarGz(file io.Reader, dest string) error {
 			return err
 		}
 
+		// clean and validate path
 		targetPath := filepath.Join(dest, header.Name)
+
 		switch header.Typeflag {
 		case tar.TypeDir:
-			os.MkdirAll(targetPath, os.FileMode(header.Mode))
+			if err := os.MkdirAll(targetPath, os.FileMode(header.Mode)); err != nil {
+				log.LogError("error creating directory", zap.String("error", err.Error()))
+				return err
+			}
+
 		case tar.TypeReg:
+			// ensure the parent directory exists
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+				log.LogError("error creating parent directory", zap.String("error", err.Error()))
+				return err
+			}
+
+			if strings.HasPrefix(filepath.Base(header.Name), "._") {
+				continue // skip macOS metadata files
+			}
+
 			f, err := os.Create(targetPath)
 			if err != nil {
 				log.LogError("error creating file from tar", zap.String("error", err.Error()))
 				return err
 			}
+			defer f.Close()
+
 			if _, err := io.Copy(f, tarReader); err != nil {
-				f.Close()
 				log.LogError("error copying file from tar", zap.String("error", err.Error()))
 				return err
 			}
-			f.Close()
+
+		default:
+			// skip symlinks and other types for safety
+			continue
 		}
 	}
+
 	return nil
 }
 
