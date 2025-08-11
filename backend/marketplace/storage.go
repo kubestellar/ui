@@ -11,9 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kubestellar/ui/backend/log"
 	"go.uber.org/zap"
@@ -88,43 +85,6 @@ func NewStorageProvider(cfg StorageConfig) (StorageProvider, error) {
 			PublicBase: cfg.GitBaseURL,
 			Token:      cfg.GitToken,
 		}, nil
-
-	case StorageR2:
-		if cfg.Endpoint == "" || cfg.AccessKey == "" || cfg.SecretKey == "" {
-			return nil, fmt.Errorf("incomplete R2 configuration")
-		}
-
-		awsCfg, err := config.LoadDefaultConfig(
-			context.TODO(),
-			config.WithCredentialsProvider(
-				credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, ""),
-			),
-			config.WithRegion("auto"),
-		)
-
-		if err != nil {
-			log.LogError("error loading AWS configuration", zap.String("error", err.Error()))
-			return nil, err
-		}
-
-		client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
-			o.BaseEndpoint = aws.String(cfg.Endpoint)
-			o.EndpointResolverV2 = staticResolver{
-				endpointURL: cfg.Endpoint,
-			}
-		})
-
-		return &R2Storage{
-			Client:     client,
-			Bucket:     cfg.Bucket,
-			PublicBase: cfg.Endpoint,
-		}, nil
-
-	case StorageLocal:
-		return &LocalStorage{
-			BasePath: cfg.LocalBase,
-			BaseURL:  cfg.BaseURL,
-		}, nil
 	default:
 		return nil, nil
 	}
@@ -140,6 +100,11 @@ func ExtractTarGz(file io.Reader, dest string) error {
 
 	tarReader := tar.NewReader(uncompressedFile)
 
+	absDest, err := filepath.Abs(dest)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute destination path: %w", err)
+	}
+
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -151,7 +116,11 @@ func ExtractTarGz(file io.Reader, dest string) error {
 		}
 
 		// clean and validate path
-		targetPath := filepath.Join(dest, header.Name)
+		cleanedName := filepath.Clean(header.Name)
+		targetPath := filepath.Join(dest, cleanedName)
+		if !strings.HasPrefix(targetPath, absDest+string(os.PathSeparator)) {
+			return fmt.Errorf("invalid tar entry: %s", header.Name)
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:
@@ -162,12 +131,10 @@ func ExtractTarGz(file io.Reader, dest string) error {
 
 		case tar.TypeReg:
 			// ensure the parent directory exists
-
 			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
 				log.LogError("error creating parent directory", zap.String("error", err.Error()))
 				return err
 			}
-
 
 			// skip macOS metadata files
 			if strings.HasPrefix(filepath.Base(header.Name), "._") {
@@ -180,12 +147,12 @@ func ExtractTarGz(file io.Reader, dest string) error {
 				log.LogError("error creating file from tar", zap.String("error", err.Error()))
 				return err
 			}
-			defer f.Close()
 
 			if _, err := io.Copy(f, tarReader); err != nil {
 				log.LogError("error copying file from tar", zap.String("error", err.Error()))
 				return err
 			}
+			f.Close()
 
 		default:
 			// skip symlinks and other types for safety

@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS installed_plugins (
     enabled BOOLEAN NOT NULL DEFAULT FALSE,
     status VARCHAR(255) NOT NULL DEFAULT 'inactive' CHECK (status IN ('active', 'inactive', 'loading', 'error', 'installed')),
     installed_path VARCHAR(255) NOT NULL,
-    loadtime INTEGER NOT NULL DEFAULT 0,  -- tracks the time taken to load the plugin in seconds
+    loadtime INTEGER NOT NULL DEFAULT 0,  -- tracks the time taken to load the plugin in milliseconds
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(plugin_details_id, user_id)

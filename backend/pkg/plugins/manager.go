@@ -296,9 +296,6 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 						group.PATCH(routePath, handler)
 					}
 				}
-
-				// mark as registered
-				pm.isRegisteredBefore[plugin.ID] = true
 			}
 
 			// Track the registered route
@@ -313,6 +310,8 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 			pm.routeMutex.Unlock()
 		}
 	}
+	// mark as registered
+	pm.isRegisteredBefore[plugin.ID] = true
 }
 
 // createPluginHandler returns a Gin handler that executes the WASM plugin function.

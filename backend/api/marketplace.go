@@ -660,22 +660,8 @@ func SearchMarketplacePluginsHandler(c *gin.Context) {
 	})
 }
 
-/*
-	plugin_details_id - get
-	marketplace_plugin_id - get
-	user_id - get - plugin_details -> author_id
-	intalled_method - marketplace
-	enabled - true
-	status - active
-	installed_path - plugins/pluginName-pluginID/
-	loadtime - time.Now() - start of Install handler
-	create_at - get
-	update_at - get
-*/
-
 // pull the tar.gz from git repo, extract it to plugins/ folder
 // save info to database
-
 func InstallMarketplacePluginHandler(c *gin.Context) {
 	// mark starting time for the LoadTime of the plugin
 	startTime := time.Now()
@@ -755,7 +741,7 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		Enabled:             true,
 		Status:              "active",
 		InstalledPath:       installedPath,
-		LoadTime:            int(time.Since(startTime).Seconds()),
+		LoadTime:            int(time.Since(startTime).Milliseconds()),
 	}
 
 	// add to DB
