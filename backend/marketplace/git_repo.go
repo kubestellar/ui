@@ -186,3 +186,96 @@ func (g *GitStorage) DeleteFile(ctx context.Context, key string) error {
 
 	return nil
 }
+
+func (g *GitStorage) DownloadFile(ctx context.Context, key string, storagePath string) error {
+	if strings.Contains(key, "..") || strings.Contains(key, "/") || strings.Contains(key, "\\") {
+		return fmt.Errorf("invalid key: %s", key)
+	}
+	if strings.HasPrefix(key, "/") || strings.HasPrefix(key, "\\") {
+		return fmt.Errorf("invalid key: %s", key)
+	}
+
+	// create a new temporary folder to fetch the plugins from github repo
+	tmpDir, err := os.MkdirTemp("", "plugin-repo-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp dir: %v", err)
+	}
+
+	defer os.RemoveAll(tmpDir)
+
+	// clone git repo
+	_, err = git.PlainClone(tmpDir, false, &git.CloneOptions{
+		URL:           g.Remote,
+		ReferenceName: plumbing.NewBranchReferenceName(g.Branch),
+		SingleBranch:  true,
+		Depth:         1,
+		Auth: &http.BasicAuth{
+			Username: "x-access-token",
+			Password: g.Token,
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("error cloning github repo: %v", err)
+	}
+
+	// find the plugin file
+	baseName := strings.TrimSuffix(key, ".tar.gz")
+	filePath := filepath.Join(tmpDir, baseName, key) // plugin-repo-123/monitor-plugin-1/monitor-plugin-1.tar.gz
+
+	// use the key to create a new folder under the plugins/
+	// extract the tar.gz file there
+
+	// get only folder with the name of the key from repo
+
+	// check if the tar file exist
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("file %s does not exist", filePath)
+	}
+
+	tarFile, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("error opening tar file: %v", err)
+	}
+	defer tarFile.Close()
+
+	// ensure the destination exists
+	if err := os.MkdirAll(storagePath, 0755); err != nil {
+		return fmt.Errorf("failed to create storage path: %v", err)
+	}
+	destPath := filepath.Join(storagePath, baseName)
+
+	absDest, err := filepath.Abs(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %v", err)
+	}
+	absStorage, err := filepath.Abs(storagePath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %v", err)
+	}
+
+	// Clean paths to normalize separators and remove trailing slashes
+	absDest = filepath.Clean(absDest)
+	absStorage = filepath.Clean(absStorage)
+
+	// Use filepath.Rel for safe containment check
+	relPath, err := filepath.Rel(absStorage, absDest)
+	if err != nil {
+		return fmt.Errorf("failed to get relative path: %v", err)
+	}
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
+		return fmt.Errorf("destination path %s is outside of storage path %s", absDest, absStorage)
+	}
+
+	// create destination folder
+	if err := os.MkdirAll(absDest, 0755); err != nil {
+		return fmt.Errorf("failed to create destination path: %v", err)
+	}
+
+	// Extract to the destination
+	if err := ExtractTarGz(tarFile, absDest); err != nil {
+		return fmt.Errorf("error extracting tar file: %v", err)
+	}
+
+	return nil
+}

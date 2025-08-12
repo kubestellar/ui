@@ -77,7 +77,7 @@ type InstalledPlugin struct {
 	Enabled             bool      `json:"enabled"`
 	Status              string    `json:"status"`
 	InstalledPath       string    `json:"installed_path" binding:"required"`
-	LoadTime            int       `json:"loadtime"` // tracks the time taken to load the plugin in seconds
+	LoadTime            int       `json:"loadtime"` // tracks the time taken to load the plugin in milliseconds
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }
