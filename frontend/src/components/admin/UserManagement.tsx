@@ -48,6 +48,8 @@ const CustomDropdown = ({
   const menuRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Close on outside click
+  const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -127,6 +129,8 @@ const CustomDropdown = ({
         aria-controls="dropdown-menu"
         onClick={() => !disabled && setOpen(v => !v)}
         onKeyDown={handleButtonKeyDown}
+
+        onClick={() => !disabled && setOpen(v => !v)}
         disabled={disabled}
       >
         {selected?.color && (
@@ -190,6 +194,48 @@ const CustomDropdown = ({
           </motion.div>
         )}
       </AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.15 }}
+          className="absolute z-20 mt-2 w-full rounded-xl border shadow-xl"
+          style={{
+            background: isDark ? '#1e293b' : '#fff',
+            border: isDark ? '1px solid #334155' : '1px solid #e5e7eb',
+          }}
+        >
+          <div className="py-1">
+            {options.map(opt => (
+              <button
+                key={opt.value}
+                className={`flex w-full items-center px-4 py-2 text-left transition-colors hover:bg-blue-500/10 ${value === opt.value ? 'font-bold' : ''}`}
+                style={{
+                  color: isDark
+                    ? value === opt.value
+                      ? '#60a5fa'
+                      : '#fff'
+                    : value === opt.value
+                      ? '#2563eb'
+                      : '#222',
+                  background: value === opt.value ? (isDark ? '#334155' : '#e0e7ff') : undefined,
+                }}
+                onClick={() => {
+                  setOpen(false);
+                  onChange(opt.value);
+                }}
+                type="button"
+              >
+                {opt.color && (
+                  <span className="mr-2 h-2 w-2 rounded-full" style={{ background: opt.color }} />
+                )}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

@@ -659,3 +659,132 @@ func SearchMarketplacePluginsHandler(c *gin.Context) {
 		"plugins": plugins,
 	})
 }
+
+// pull the tar.gz from git repo, extract it to plugins/ folder
+// save info to database
+func InstallMarketplacePluginHandler(c *gin.Context) {
+	// mark starting time for the LoadTime of the plugin
+	startTime := time.Now()
+
+	pluginIDStr := c.Param("id")
+	pluginID, err := strconv.Atoi(pluginIDStr)
+	if err != nil {
+		log.LogError(
+			"error converting plugin ID from string to int",
+			zap.String("plugin_id", pluginIDStr),
+			zap.String("error", err.Error()),
+		)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID"})
+		return
+	}
+
+	// get the current user id
+	userIDStr, exists := c.Get("user_id")
+	if !exists {
+		log.LogError("user ID not found in the request context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userID := userIDStr.(int)
+
+	// get the plugin name
+	marketplaceManager := marketplace.GetGlobalMarketplaceManager()
+	if marketplaceManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
+		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
+		return
+	}
+
+	plugin, err := marketplaceManager.GetPluginByID(pluginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin from marketplace manager"})
+		log.LogError("error getting plugin from marketplace manager", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	pluginKey := fmt.Sprintf("%s-%d", plugin.PluginName, pluginID)
+	fileKey := fmt.Sprintf("%s.tar.gz", pluginKey)
+
+	// download the plugin from git repo and extract it to plugins/ folder
+	pluginFolder := filepath.Join(".", "plugins")
+
+	err = marketplaceManager.Store.DownloadFile(c.Request.Context(), fileKey, pluginFolder)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":         "failed to download plugin to folder",
+			"plugin":        pluginKey,
+			"plugin_folder": pluginFolder,
+		})
+		log.LogError(
+			"error downloading plugin",
+			zap.String("plugin_key", pluginKey),
+			zap.String("plugin_folder_destination", pluginFolder),
+			zap.String("error", err.Error()),
+		)
+		return
+	}
+
+	// update the installed_plugins table
+	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(pluginID)
+	if err != nil {
+		log.LogError("error getting marketplace plugin ID", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get marketplace plugin ID"})
+		return
+	}
+	installedPath := filepath.Join(pluginFolder, pluginKey)
+
+	installedPlugin := &models.InstalledPlugin{
+		PluginDetailsID:     pluginID,
+		MarketplacePluginID: &marketplacePluginID,
+		UserID:              userID,
+		InstalledMethod:     "marketplace",
+		Enabled:             true,
+		Status:              "active",
+		InstalledPath:       installedPath,
+		LoadTime:            int(time.Since(startTime).Milliseconds()),
+	}
+
+	// add to DB
+	installedPluginID, err := pluginpkg.AddInstalledPluginToDB(
+		installedPlugin.PluginDetailsID,
+		installedPlugin.MarketplacePluginID,
+		installedPlugin.UserID,
+		installedPlugin.InstalledMethod,
+		installedPlugin.Enabled,
+		installedPlugin.Status,
+		installedPlugin.InstalledPath,
+		installedPlugin.LoadTime,
+	)
+	if err != nil {
+		log.LogError(
+			"error adding installed plugin to DB",
+			zap.Int("plugin_details_id", installedPlugin.PluginDetailsID),
+			zap.String("error", err.Error()),
+		)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add installed plugin to database"})
+		return
+	}
+	log.LogInfo("installed plugin ID", zap.Int("installed_plugin_id", installedPluginID))
+
+	pluginManager := GetGlobalPluginManager()
+	if pluginManager == nil {
+		log.LogError("Plugin manager not available", zap.String("plugin", pluginKey))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Plugin manager not available"})
+		return
+	}
+
+	// Load the plugin dynamically using the global plugin manager
+	if err := pluginManager.LoadPlugin(installedPath); err != nil {
+		log.LogError("Failed to load plugin after installation",
+			zap.String("plugin", pluginKey),
+			zap.String("installed_path", installedPath),
+			zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load plugin"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Plugin installed successfully",
+		"plugin":  pluginKey,
+	})
+}

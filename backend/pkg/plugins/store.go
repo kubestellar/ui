@@ -332,7 +332,7 @@ func UpdatePluginStatusDB(pluginID int, status string, userID int) error {
 func GetPluginStatusDB(pluginID int) (string, error) {
 	query := `
 		SELECT status FROM installed_plugins
-		WHERE id = $1
+		WHERE plugin_details_id = $1
 	`
 
 	var status string
@@ -352,7 +352,7 @@ func GetPluginStatusDB(pluginID int) (string, error) {
 func UninstallPluginFromDB(pluginID int, userID int) error {
 	query := `
 		DELETE FROM installed_plugins
-		WHERE id = $1 AND user_id = $2
+		WHERE plugin_details_id = $1 AND user_id = $2
 	`
 
 	_, err := database.DB.Exec(query, pluginID, userID)
