@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, User, Globe } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import toast, { ToastIcon } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { useLogin } from '../../hooks/queries/useLogin';
 import { useTranslation } from 'react-i18next'; // Add this import
 import { decryptData, isEncrypted, migratePassword, secureGet } from '../../utils/secureStorage';
