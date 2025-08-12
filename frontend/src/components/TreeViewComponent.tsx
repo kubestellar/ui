@@ -188,7 +188,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
         position: isFullscreen ? 'fixed' : 'relative',
         top: isFullscreen ? 0 : 'auto',
         left: isFullscreen ? 0 : 'auto',
-        zIndex: isFullscreen ? 9999 : 'auto',
+        zIndex: isFullscreen ? 1300 : 'auto',
         backgroundColor: isFullscreen ? (theme === 'dark' ? '#0f172a' : '#ffffff') : 'transparent',
       }}
     >
