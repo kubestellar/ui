@@ -48,7 +48,6 @@ const CustomDropdown = ({
   const menuRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Close on outside click
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -129,8 +128,6 @@ const CustomDropdown = ({
         aria-controls="dropdown-menu"
         onClick={() => !disabled && setOpen(v => !v)}
         onKeyDown={handleButtonKeyDown}
-
-        onClick={() => !disabled && setOpen(v => !v)}
         disabled={disabled}
       >
         {selected?.color && (
