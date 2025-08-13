@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { motion, Variants } from 'framer-motion';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
 import {
   Activity,
   BarChart3,
@@ -36,6 +36,151 @@ const itemAnimationVariant: Variants = {
   exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
 };
 
+// Custom Select component matching the design system
+const CustomSelect = ({
+  options,
+  value,
+  onChange,
+  disabled = false,
+}: {
+  options: { value: number; label: string }[];
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  // Focus management when opening/closing
+  useEffect(() => {
+    if (open && menuRefs.current[0]) {
+      setFocusedIndex(0);
+      setTimeout(() => menuRefs.current[0]?.focus(), 0);
+    } else if (!open) {
+      setFocusedIndex(-1);
+      buttonRef.current?.focus();
+    }
+  }, [open]);
+
+  // Keyboard navigation on trigger button
+  const handleButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setOpen(true);
+    }
+  };
+
+  // Keyboard navigation in menu
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex(i => {
+        const next = i + 1 < options.length ? i + 1 : 0;
+        menuRefs.current[next]?.focus();
+        return next;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex(i => {
+        const prev = i - 1 >= 0 ? i - 1 : options.length - 1;
+        menuRefs.current[prev]?.focus();
+        return prev;
+      });
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+      buttonRef.current?.focus();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (focusedIndex >= 0) {
+        setOpen(false);
+        onChange(options[focusedIndex].value);
+      }
+    } else if (e.key === 'Tab') {
+      setOpen(false);
+    }
+  };
+
+  const selected = options.find(opt => opt.value === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+        } border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700`}
+        onClick={() => !disabled && setOpen(v => !v)}
+        onKeyDown={handleButtonKeyDown}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span>{selected ? selected.label : value}</span>
+        <svg
+          className={`ml-2 h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            onKeyDown={handleMenuKeyDown}
+            role="listbox"
+          >
+            <div className="py-1">
+              {options.map((option, index) => (
+                <button
+                  key={option.value}
+                  ref={el => (menuRefs.current[index] = el)}
+                  role="option"
+                  aria-selected={value === option.value}
+                  tabIndex={focusedIndex === index ? 0 : -1}
+                  className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:outline-none dark:hover:bg-gray-700 dark:focus:bg-gray-700 ${
+                    value === option.value
+                      ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                      : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                  onClick={() => {
+                    setOpen(false);
+                    onChange(option.value);
+                  }}
+                  onFocus={() => setFocusedIndex(index)}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 // Metric card component with KubeStellar styling
 const MetricCard = ({
   title,
@@ -436,17 +581,17 @@ const MetricsDashboard = () => {
                 Auto-refresh
               </button>
 
-              <select
+              <CustomSelect
+                options={[
+                  { value: 10, label: '10s' },
+                  { value: 30, label: '30s' },
+                  { value: 60, label: '1m' },
+                  { value: 300, label: '5m' },
+                ]}
                 value={refreshInterval}
-                onChange={e => setRefreshInterval(Number(e.target.value))}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                onChange={setRefreshInterval}
                 disabled={!autoRefresh}
-              >
-                <option value={10}>10s</option>
-                <option value={30}>30s</option>
-                <option value={60}>1m</option>
-                <option value={300}>5m</option>
-              </select>
+              />
             </div>
 
             <button
