@@ -14,11 +14,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv" // Add this import
 	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/marketplace"
 	"github.com/kubestellar/ui/backend/models"
+	config "github.com/kubestellar/ui/backend/pkg/config"
 	"github.com/kubestellar/ui/backend/pkg/plugins"
-	config "github.com/kubestellar/ui/backend/postgresql"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"github.com/kubestellar/ui/backend/routes"
+	_ "github.com/kubestellar/ui/backend/routes"
 	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
 )
@@ -41,7 +43,9 @@ func main() {
 	logger.Info("Configuration loaded",
 		zap.String("port", cfg.Port),
 		zap.String("gin_mode", cfg.GinMode),
-		zap.String("database_url", maskPassword(cfg.DatabaseURL)))
+		zap.String("database_url", maskPassword(cfg.DatabaseURL)),
+		zap.String("storage provider", cfg.StorageProvider),
+	)
 
 	// Set Gin mode
 	gin.SetMode(cfg.GinMode)
@@ -106,6 +110,14 @@ func main() {
 
 	// Setup authentication routes
 	routes.SetupRoutes(router)
+
+	// Initialize Marketplace
+	logger.Info("Initializing marketplace...")
+	if err := InitializeMarketplace(cfg.StorageProvider); err != nil {
+		logger.Error("Error initialize the marketplace", zap.String("error", err.Error()))
+	} else {
+		logger.Info("Successfully initialize marketplace", zap.String("provider", cfg.StorageProvider))
+	}
 
 	// Initialize plugin system
 	logger.Info("Initializing plugin system...")
@@ -221,6 +233,12 @@ func ZapMiddleware() gin.HandlerFunc {
 		// Only try to get response details if connection wasn't hijacked
 		responseSize := c.Writer.Size()
 		headers := c.Request.Header
+
+		// Truncate the request body length
+		maxBodyLen := 500
+		if len(requestBody) > maxBodyLen {
+			requestBody = requestBody[:maxBodyLen] + "...[truncated]"
+		}
 
 		// Log in structured JSON format
 		logger.Info("HTTP Request",
@@ -466,5 +484,57 @@ func initializePlugins(registry *plugins.PluginRegistry, logger *zap.Logger) err
 		logger.Info("Plugin watcher started")
 	}
 
+	return nil
+}
+
+func InitializeMarketplace(storageProvider string) error {
+	// load storage config
+	var storeCfg marketplace.StorageConfig
+	switch storageProvider {
+	case "git":
+		remoteURL := config.GetEnv("GIT_REMOTE_URL", "")
+		branch := config.GetEnv("GIT_BRANCH", "")
+		baseURL := config.GetEnv("GIT_BASE_URL", "")
+		token := config.GetEnv("GIT_TOKEN", "")
+
+		logger.Info("git storage config",
+			zap.String("remote_url", remoteURL),
+			zap.String("branch", branch),
+			zap.String("base_url", baseURL))
+
+		storeCfg = marketplace.StorageConfig{
+			Type:         marketplace.StorageGit,
+			GitRemoteURL: remoteURL,
+			GitBranch:    branch,
+			GitBaseURL:   baseURL,
+			GitToken:     token,
+		}
+	case "r2":
+		bucket := config.GetEnv("R2_BUCKET_NAME", "")
+		accessKey := config.GetEnv("R2_ACCESS_KEY", "")
+		secretKey := config.GetEnv("R2_SECRET_KEY", "")
+		endpoint := config.GetEnv("R2_ENDPOINT", "")
+
+		storeCfg = marketplace.StorageConfig{
+			Type:      marketplace.StorageR2,
+			Bucket:    bucket,
+			AccessKey: accessKey,
+			SecretKey: secretKey,
+			Endpoint:  endpoint,
+		}
+	default:
+		localBase := "./marketplace/local-plugin"
+		baseURL := fmt.Sprintf("https://localhost:%s/marketplace/plugins", config.GetEnv("PORT", "4000"))
+		storeCfg = marketplace.StorageConfig{
+			Type:      marketplace.StorageLocal,
+			LocalBase: localBase,
+			BaseURL:   baseURL,
+		}
+	}
+
+	if err := marketplace.SetGlobalMarketplaceManager(storeCfg); err != nil {
+		logger.Error("error setting global marketplace manager", zap.String("error", err.Error()))
+		return err
+	}
 	return nil
 }

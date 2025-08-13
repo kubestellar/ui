@@ -49,7 +49,11 @@ const TreeViewContextMenu = memo<TreeViewContextMenuProps>(({ contextMenu, onClo
           color: theme === 'dark' ? '#fff' : '#333',
           boxShadow:
             theme === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.5)' : '0 4px 20px rgba(0, 0, 0, 0.15)',
+          zIndex: 10000, // High z-index to ensure it appears above fullscreen container
         },
+      }}
+      sx={{
+        zIndex: 10000, // Ensure menu appears above fullscreen container
       }}
     >
       {menuItems

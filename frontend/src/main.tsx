@@ -10,6 +10,8 @@ import { PluginProvider } from './plugins/PluginLoader.tsx';
 import './i18n.ts';
 import NetworkErrorToastManager from './components/NetworkErrorToastManager';
 import useBackendHealthCheck from './hooks/useBackendHealthCheck';
+import * as React from 'react';
+window.React = React;
 
 const AppWrapper = () => {
   useBackendHealthCheck();

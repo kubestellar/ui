@@ -16,7 +16,7 @@ const useBackendHealthCheck = () => {
         console.log('useBackendHealthCheck: Polling backend health...');
         try {
           // Make a lightweight request to the health endpoint
-          await api.get('/api/health');
+          await api.get('/health');
           console.log('useBackendHealthCheck: Backend health check succeeded.');
           // If successful, the Axios interceptor will handle clearing isNetworkError
           // No need to explicitly call setNetworkError(false) here

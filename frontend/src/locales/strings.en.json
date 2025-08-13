@@ -206,6 +206,12 @@
       "prerequisites": "Prerequisites",
       "title": "System Prerequisites",
       "description": "Ensure these tools are installed before proceeding",
+      "kubeflexDescription": "KubeFlex CLI tool (required version ≥ 0.8.0)",
+      "ocmDescription": "Open Cluster Management CLI (required version between 0.7 and 0.11)",
+      "helmDescription": "Kubernetes package manager (required version ≥ 3.0.0)",
+      "kubectlDescription": "Kubernetes command-line tool (required version ≥ 1.27.0)",
+      "kindDescription": "Tool for running local Kubernetes clusters (required version ≥ 0.20.0)",
+      "dockerDescription": "Container runtime (required version ≥ 20.0.0)",
       "status": {
         "success": "Success",
         "warnings": "Warnings",
@@ -215,8 +221,9 @@
       "coreRequirements": "Core Requirements",
       "demoEnvironmentRequirements": "Demo Environment Requirements",
       "buttons": {
-        "refresh": "Refresh",
-        "nextInstallation": "Next: Installation"
+        "nextInstallation": "Next: Installation",
+        "checking": "Checking...",
+        "refresh": "Refresh"
       }
     },
     "installation": {
@@ -294,7 +301,10 @@
       "preparingInstructions": "Preparing installation instructions...",
       "followInstructions": "Follow the CLI installation instructions below to install KubeStellar",
       "loadInstructionsFailed": "Failed to load installation instructions. Please refresh the page and try again.",
-      "installationDetected": "KubeStellar installation detected! Redirecting to login page..."
+      "installationDetected": "KubeStellar installation detected! Redirecting to login page...",
+      "recheckingPrerequisites": "Rechecking prerequisites...",
+      "prerequisitesRechecked": "Prerequisites rechecked successfully",
+      "recheckFailed": "Failed to recheck prerequisites"
     }
   },
   "header": {
@@ -833,9 +843,12 @@
       "collapseAll": "Collapse all the child nodes of all parent nodes",
       "zoomIn": "Zoom In",
       "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
       "edgeStyle": "Edge Style",
       "curvy": "Curvy",
-      "square": "Square"
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
     },
     "nodeLabel": {
       "labels": "Labels:",
@@ -938,6 +951,19 @@
     },
     "fullscreen": {
       "toggle": "Toggle fullscreen view"
+    },
+    "zoomControls": {
+      "groupByResource": "Group By Resource/Kind",
+      "expandAll": "Expand all the child nodes of all parent nodes",
+      "collapseAll": "Collapse all the child nodes of all parent nodes",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
     },
     "contextMenu": {
       "details": "Details",
@@ -1088,7 +1114,7 @@
     "table": {
       "name": "Binding Policy Name",
       "clusters": "Clusters",
-      "workload": "Workload",
+      "workload": "Resources",
       "creationDate": "Creation Date",
       "status": "Status",
       "actions": "Actions",

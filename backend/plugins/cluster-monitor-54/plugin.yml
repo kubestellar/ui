@@ -28,6 +28,16 @@ spec:
       - path: "/read"
         methods: ["POST"]
         handler: "read_data"
+  # Frontend integration
+  frontend:
+    enabled: true
+    navigation:
+      - label: "Cluster Monitor"
+        icon: "icon.svg"
+        path: "/plugins/cluster-monitor"
+    routes:
+      - path: "/plugins/cluster-monitor"
+        component: "plugin-component.js"
   # Basic permissions
   permissions:
     - "kubestellar:read:clusters"

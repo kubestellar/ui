@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useTheme from '../../stores/themeStore';
 import getThemeStyles from '../../lib/theme-utils';
@@ -12,6 +12,7 @@ import {
   FiX,
   FiArrowUp,
   FiArrowDown,
+  FiChevronDown,
 } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -22,6 +23,105 @@ import UserFormModal from './UserFormModal';
 import DeleteUserModal from './DeleteUserModal';
 import UserList from './UserList';
 import UserService from './UserService';
+
+const CustomDropdown = ({
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  isDark,
+  style,
+}: {
+  options: { value: string; label: string; color?: string }[];
+  value: string | null;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  isDark: boolean;
+  style?: React.CSSProperties;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  const selected = options.find(opt => opt.value === value);
+
+  return (
+    <div ref={ref} className="relative" style={style}>
+      <button
+        type="button"
+        className={`flex w-full items-center rounded-lg border px-3 py-2 text-left transition-all duration-200 focus:outline-none ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        style={{
+          background: isDark ? 'rgba(17,24,39,0.9)' : 'rgba(255,255,255,0.95)',
+          color: isDark ? '#fff' : '#222',
+          border: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
+          boxShadow: open ? (isDark ? '0 4px 24px #0008' : '0 4px 24px #0002') : undefined,
+          ...style,
+        }}
+        onClick={() => !disabled && setOpen(v => !v)}
+        disabled={disabled}
+      >
+        {selected?.color && (
+          <span className="mr-2 h-2 w-2 rounded-full" style={{ background: selected.color }} />
+        )}
+        <span className={selected ? 'font-medium' : 'text-gray-400'}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <FiChevronDown className="ml-auto opacity-60" size={16} />
+      </button>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.15 }}
+          className="absolute z-20 mt-2 w-full rounded-xl border shadow-xl"
+          style={{
+            background: isDark ? '#1e293b' : '#fff',
+            border: isDark ? '1px solid #334155' : '1px solid #e5e7eb',
+          }}
+        >
+          <div className="py-1">
+            {options.map(opt => (
+              <button
+                key={opt.value}
+                className={`flex w-full items-center px-4 py-2 text-left transition-colors hover:bg-blue-500/10 ${value === opt.value ? 'font-bold' : ''}`}
+                style={{
+                  color: isDark
+                    ? value === opt.value
+                      ? '#60a5fa'
+                      : '#fff'
+                    : value === opt.value
+                      ? '#2563eb'
+                      : '#222',
+                  background: value === opt.value ? (isDark ? '#334155' : '#e0e7ff') : undefined,
+                }}
+                onClick={() => {
+                  setOpen(false);
+                  onChange(opt.value);
+                }}
+                type="button"
+              >
+                {opt.color && (
+                  <span className="mr-2 h-2 w-2 rounded-full" style={{ background: opt.color }} />
+                )}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
 
 const UserManagement = () => {
   const { t } = useTranslation();
@@ -356,6 +456,22 @@ const UserManagement = () => {
       }));
     }
   };
+  // Helper arrays for colored options
+  const roleOptions = [
+    { value: 'all', label: t('admin.users.filters.allRoles') },
+    { value: 'admin', label: t('admin.users.roles.admin'), color: '#22c55e' }, // green
+    { value: 'user', label: t('admin.users.roles.user'), color: '#6b7280' }, // gray
+  ];
+  const permissionOptions = permissionComponents.map((c, i) => ({
+    value: c.id,
+    label: c.name,
+    color: ['#3b82f6', '#10b981', '#a78bfa', '#f59e42'][i % 4], // blue, green, purple, orange
+  }));
+  const permissionLevelOptions = [
+    { value: '', label: t('admin.users.filters.anyLevel') },
+    { value: 'read', label: t('admin.users.permissions.levels.read'), color: '#f59e42' }, // orange
+    { value: 'write', label: t('admin.users.permissions.levels.write'), color: '#22c55e' }, // green
+  ];
 
   const resetFilters = () => {
     setFilters({
@@ -550,7 +666,7 @@ const UserManagement = () => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="overflow-hidden"
+              className=""
             >
               <div
                 className="mb-4 rounded-lg p-4"
@@ -592,34 +708,14 @@ const UserManagement = () => {
                     >
                       {t('admin.users.filters.role')}
                     </label>
-                    <select
-                      className="w-full rounded-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                      style={{
-                        background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                        color: themeStyles.colors.text.primary,
-                        border: `1px solid ${
-                          isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                        }`,
-                      }}
-                      onFocus={e => {
-                        e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                        e.target.style.boxShadow = isDark
-                          ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                          : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                      }}
-                      onBlur={e => {
-                        e.target.style.borderColor = isDark
-                          ? 'rgba(75, 85, 99, 0.2)'
-                          : 'rgba(226, 232, 240, 0.8)';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                      value={filters.role || 'all'}
-                      onChange={e => handleFilterChange('role', e.target.value)}
-                    >
-                      <option value="all">{t('admin.users.filters.allRoles')}</option>
-                      <option value="admin">{t('admin.users.roles.admin')}</option>
-                      <option value="user">{t('admin.users.roles.user')}</option>
-                    </select>
+
+                    <CustomDropdown
+                      options={roleOptions}
+                      value={filters.role}
+                      onChange={v => handleFilterChange('role', v)}
+                      placeholder={t('admin.users.filters.role')}
+                      isDark={isDark}
+                    />
                   </div>
 
                   {/* Permission Filter */}
@@ -630,40 +726,20 @@ const UserManagement = () => {
                     >
                       {t('admin.users.filters.permission')}
                     </label>
-                    <select
-                      className="w-full rounded-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                      style={{
-                        background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                        color: themeStyles.colors.text.primary,
-                        border: `1px solid ${
-                          isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                        }`,
-                      }}
-                      onFocus={e => {
-                        e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                        e.target.style.boxShadow = isDark
-                          ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                          : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                      }}
-                      onBlur={e => {
-                        e.target.style.borderColor = isDark
-                          ? 'rgba(75, 85, 99, 0.2)'
-                          : 'rgba(226, 232, 240, 0.8)';
-                        e.target.style.boxShadow = 'none';
-                      }}
+
+                    <CustomDropdown
+                      options={[
+                        { value: '', label: t('admin.users.filters.anyPermission') },
+                        ...permissionOptions,
+                      ]}
                       value={filters.permission || ''}
-                      onChange={e => handleFilterChange('permission', e.target.value || null)}
-                    >
-                      <option value="">{t('admin.users.filters.anyPermission')}</option>
-                      {permissionComponents.map(component => (
-                        <option key={component.id} value={component.id}>
-                          {component.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={v => handleFilterChange('permission', v || null)}
+                      placeholder={t('admin.users.filters.permission')}
+                      isDark={isDark}
+                    />
                   </div>
 
-                  {/* Permission Level Filter - Only enabled if permission is selected */}
+                  {/* Permission Level Filter */}
                   <div>
                     <label
                       className="mb-1 block text-sm font-medium"
@@ -671,41 +747,14 @@ const UserManagement = () => {
                     >
                       {t('admin.users.filters.permissionLevel')}
                     </label>
-                    <select
-                      className="w-full rounded-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                      style={{
-                        background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                        color: themeStyles.colors.text.primary,
-                        border: `1px solid ${
-                          isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                        }`,
-                        opacity: filters.permission ? 1 : 0.5,
-                      }}
-                      onFocus={e => {
-                        if (filters.permission) {
-                          e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                          e.target.style.boxShadow = isDark
-                            ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                            : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                        }
-                      }}
-                      onBlur={e => {
-                        e.target.style.borderColor = isDark
-                          ? 'rgba(75, 85, 99, 0.2)'
-                          : 'rgba(226, 232, 240, 0.8)';
-                        e.target.style.boxShadow = 'none';
-                      }}
+                    <CustomDropdown
+                      options={permissionLevelOptions}
                       value={filters.permissionLevel || ''}
-                      onChange={e => handleFilterChange('permissionLevel', e.target.value || null)}
+                      onChange={v => handleFilterChange('permissionLevel', v || null)}
+                      placeholder={t('admin.users.filters.permissionLevel')}
+                      isDark={isDark}
                       disabled={!filters.permission}
-                    >
-                      <option value="">{t('admin.users.filters.anyLevel')}</option>
-                      {permissionLevels.map(level => (
-                        <option key={level.id} value={level.id}>
-                          {level.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   {/* Sort By Filter */}
@@ -717,39 +766,21 @@ const UserManagement = () => {
                       {t('admin.users.filters.sortBy')}
                     </label>
                     <div className="flex">
-                      <select
-                        className="w-full rounded-l-lg px-3 py-2 transition-all duration-200 focus:outline-none"
-                        style={{
-                          background: isDark ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.9)',
-                          color: themeStyles.colors.text.primary,
-                          border: `1px solid ${
-                            isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.8)'
-                          }`,
-                          borderRight: 'none',
-                        }}
-                        onFocus={e => {
-                          e.target.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
-                          e.target.style.boxShadow = isDark
-                            ? '0 0 0 3px rgba(96, 165, 250, 0.1)'
-                            : '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                        }}
-                        onBlur={e => {
-                          e.target.style.borderColor = isDark
-                            ? 'rgba(75, 85, 99, 0.2)'
-                            : 'rgba(226, 232, 240, 0.8)';
-                          e.target.style.boxShadow = 'none';
-                        }}
+                      <CustomDropdown
+                        options={[
+                          { value: 'username', label: t('admin.users.table.username') },
+                          { value: 'role', label: t('admin.users.table.role') },
+                          { value: 'created', label: t('admin.users.filters.created') },
+                        ]}
                         value={filters.sortBy || 'username'}
-                        onChange={e => handleFilterChange('sortBy', e.target.value || null)}
-                      >
-                        <option value="username">{t('admin.users.table.username')}</option>
-                        <option value="role">{t('admin.users.table.role')}</option>
-                        <option value="created">{t('admin.users.filters.created')}</option>
-                      </select>
+                        onChange={v => handleFilterChange('sortBy', v)}
+                        placeholder={t('admin.users.filters.sortBy')}
+                        isDark={isDark}
+                      />
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="ml-2 flex items-center justify-center rounded-r-lg px-3 transition-all duration-200"
+                        className="ml-2 flex items-center justify-center rounded-lg px-3 transition-all duration-200"
                         style={{
                           background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(243, 244, 246, 0.8)',
                           color: themeStyles.colors.text.secondary,

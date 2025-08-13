@@ -4,7 +4,8 @@ import { useWebSocket } from '../../../context/webSocketExports';
 import { useLocation } from 'react-router-dom';
 import * as dagre from 'dagre';
 import { isEqual } from 'lodash';
-import ReactDOM from 'react-dom';
+import useTheme from '../../../stores/themeStore';
+import useZoomStore from '../../../stores/zoomStore';
 import {
   NamespaceResource,
   CustomNode,
@@ -14,7 +15,6 @@ import {
 } from '../types';
 import { useTreeViewNodes } from '../TreeViewNodes';
 import { useTreeViewEdges } from '../TreeViewEdges';
-import useZoomStore from '../../../stores/zoomStore';
 
 interface UseTreeViewDataProps {
   filteredContext: string;
@@ -70,7 +70,8 @@ export const useTreeViewData = ({
     isExpanded,
   });
 
-  const { getDescendantEdges } = useTreeViewEdges({ theme: 'dark' }); // This should be dynamic
+  const theme = useTheme(state => state.theme);
+  const { getDescendantEdges } = useTreeViewEdges({ theme: theme as 'light' | 'dark' });
 
   // Component mount effect
   useEffect(() => {
@@ -114,8 +115,8 @@ export const useTreeViewData = ({
       dagreGraph.setDefaultEdgeLabel(() => ({}));
       dagreGraph.setGraph({
         rankdir: direction,
-        nodesep: 30 * scaleFactor,
-        ranksep: 60 * scaleFactor,
+        nodesep: 50 * scaleFactor, // Increased from 30
+        ranksep: 130 * scaleFactor, // Increased from 60
       });
 
       const nodeMap = new Map<string, CustomNode>();
@@ -131,7 +132,7 @@ export const useTreeViewData = ({
         if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
           dagreGraph.setNode(node.id, {
             width: 146 * scaleFactor,
-            height: 20 * scaleFactor,
+            height: 30 * scaleFactor, // Match the actual node height from zoom store
           });
           newNodes.push(node);
         } else {
@@ -152,7 +153,7 @@ export const useTreeViewData = ({
               ...node,
               position: {
                 x: dagreNode.x - 73 * scaleFactor + 50 * scaleFactor,
-                y: dagreNode.y - 15 * scaleFactor + 50 * scaleFactor,
+                y: dagreNode.y - 15 * scaleFactor + 50 * scaleFactor, // This is correct: 30/2 = 15
               },
             }
           : node;
@@ -160,7 +161,8 @@ export const useTreeViewData = ({
 
       return { nodes: layoutedNodes, edges };
     },
-    []
+    // Include dependencies for useZoomStore.getState() and any other external values
+    [prevNodes]
   );
 
   const transformDataToTree = useCallback(
@@ -315,11 +317,10 @@ export const useTreeViewData = ({
           'LR'
         );
 
-        ReactDOM.unstable_batchedUpdates(() => {
-          setNodes(layoutedNodes);
-          setEdges(layoutedEdges);
-          setIsTransforming(false);
-        });
+        // React 18 automatically batches updates, no need for unstable_batchedUpdates
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        setIsTransforming(false);
 
         prevNodes.current = layoutedNodes;
 

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import useTheme from '../stores/themeStore';
 import { HiLanguage } from 'react-icons/hi2';
 import getThemeStyles from '../lib/theme-utils';
@@ -23,8 +23,8 @@ const LanguageSwitcher = () => {
     { code: 'de', name: 'Deutsch' },
     { code: 'fr', name: 'Français' },
     { code: 'it', name: 'Italiano' },
-    { code: 'zh-Hans', name: '简体中文' },
-    { code: 'zh-Hant', name: '繁體中文' },
+    { code: 'SC', name: '简体中文' }, // zh-Hans
+    { code: 'TC', name: '繁體中文' }, // zh-Hant
     { code: 'pt', name: 'Português' },
   ];
 
@@ -37,7 +37,7 @@ const LanguageSwitcher = () => {
   const isLoginPage = window.location.pathname.includes('login');
 
   // Icon animation variants
-  const iconVariants = {
+  const iconVariants: Variants = {
     rest: {
       rotate: 0,
       scale: 1,

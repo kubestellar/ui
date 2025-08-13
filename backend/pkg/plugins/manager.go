@@ -18,6 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/middleware"
 	"github.com/kubestellar/ui/backend/models"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
@@ -34,8 +35,9 @@ type PluginManager struct {
 	ctx     context.Context // Context shared across plugin execution
 	mu      sync.RWMutex    // Mutex to manage concurrent plugin map access
 	// Route tracking for unregistration
-	registeredRoutes map[int][]string // Map of plugin ID to route paths for tracking
-	routeMutex       sync.RWMutex     // Mutex for route tracking
+	registeredRoutes   map[int][]string // Map of plugin ID to route paths for tracking
+	isRegisteredBefore map[int]bool     // Track if plugin routes are registered before
+	routeMutex         sync.RWMutex     // Mutex for route tracking
 }
 
 // Plugin represents a single loaded WASM plugin and its runtime details.
@@ -50,98 +52,95 @@ type Plugin struct {
 
 // PluginManifest defines the plugin.yml schema for plugin configuration.
 type PluginManifest struct {
-	APIVersion string         `yaml:"apiVersion"` // API version
-	Kind       string         `yaml:"kind"`       // Resource kind (e.g., "Plugin")
-	Metadata   PluginMetadata `yaml:"metadata"`   // Plugin metadata
-	Spec       PluginSpec     `yaml:"spec"`       // Plugin specification
+	APIVersion string         `yaml:"apiVersion" json:"apiVersion"` // API version
+	Kind       string         `yaml:"kind" json:"kind"`             // Resource kind (e.g., "Plugin")
+	Metadata   PluginMetadata `yaml:"metadata" json:"metadata"`     // Plugin metadata
+	Spec       PluginSpec     `yaml:"spec" json:"spec"`             // Plugin specification
 }
 
 // PluginMetadata defines the plugin metadata information
 type PluginMetadata struct {
-	Name        string `yaml:"name"`        // Unique name of the plugin
-	Version     string `yaml:"version"`     // Plugin version
-	Author      string `yaml:"author"`      // Plugin author
-	Description string `yaml:"description"` // Plugin description
+	Name        string `yaml:"name" json:"name"`               // Unique name of the plugin
+	Version     string `yaml:"version" json:"version"`         // Plugin version
+	Author      string `yaml:"author" json:"author"`           // Plugin author
+	Description string `yaml:"description" json:"description"` // Plugin description
 }
 
 // PluginSpec contains the plugin specification
 type PluginSpec struct {
-	Wasm          *PluginWasmConfig      `yaml:"wasm,omitempty"`          // WASM binary configuration
-	Build         *PluginBuildConfig     `yaml:"build,omitempty"`         // Build configuration
-	Backend       *PluginBackendConfig   `yaml:"backend,omitempty"`       // Backend configuration
-	Permissions   []string               `yaml:"permissions,omitempty"`   // Required permissions - "kubestellar:read:clusters" "kubestellar:read:workloads"
-	Frontend      *PluginFrontendConfig  `yaml:"frontend,omitempty"`      // Frontend configuration
-	Navigation    []PluginNavigationItem `yaml:"navigation,omitempty"`    // Navigation integration
-	Widgets       []PluginWidgetConfig   `yaml:"widgets,omitempty"`       // Dashboard widgets
-	Routes        []PluginFrontendRoute  `yaml:"routes,omitempty"`        // Frontend routes
-	Configuration []PluginConfigItem     `yaml:"configuration,omitempty"` // Plugin configuration options
+	Wasm          *PluginWasmConfig     `yaml:"wasm,omitempty" json:"wasm,omitempty"`                   // WASM binary configuration
+	Build         *PluginBuildConfig    `yaml:"build,omitempty" json:"build,omitempty"`                 // Build configuration
+	Backend       *PluginBackendConfig  `yaml:"backend,omitempty" json:"backend,omitempty"`             // Backend configuration
+	Permissions   []string              `yaml:"permissions,omitempty" json:"permissions,omitempty"`     // Required permissions
+	Frontend      *PluginFrontendConfig `yaml:"frontend,omitempty" json:"frontend,omitempty"`           // Frontend configuration
+	Configuration []PluginConfigItem    `yaml:"configuration,omitempty" json:"configuration,omitempty"` // Plugin configuration options
 }
 
 // PluginWasmConfig contains WASM binary information
 type PluginWasmConfig struct {
-	File        string `yaml:"file"`         // WASM file name
-	Entrypoint  string `yaml:"entrypoint"`   // Main function entry point
-	MemoryLimit string `yaml:"memory_limit"` // Memory limit (e.g., "64MB")
+	File        string `yaml:"file" json:"file"`                 // WASM file name
+	Entrypoint  string `yaml:"entrypoint" json:"entrypoint"`     // Main function entry point
+	MemoryLimit string `yaml:"memory_limit" json:"memory_limit"` // Memory limit (e.g., "64MB")
 }
 
 // PluginBuildConfig contains build information
 type PluginBuildConfig struct {
-	GoVersion     string `yaml:"go_version"`     // Go version used for building
-	TinyGoVersion string `yaml:"tinygo_version"` // TinyGo version used for WASM compilation
+	GoVersion     string `yaml:"go_version" json:"go_version"`         // Go version used for building
+	TinyGoVersion string `yaml:"tinygo_version" json:"tinygo_version"` // TinyGo version used for WASM compilation
 }
 
 // PluginBackendConfig contains backend integration configuration
 type PluginBackendConfig struct {
-	Enabled bool          `yaml:"enabled"`          // Whether backend is enabled
-	Routes  []PluginRoute `yaml:"routes,omitempty"` // Backend API routes
+	Enabled bool          `yaml:"enabled" json:"enabled"`                   // Whether backend is enabled
+	Routes  []PluginRoute `yaml:"routes,omitempty" json:"routes,omitempty"` // Backend API routes
 }
 
 // PluginRoute describes a single HTTP route exposed by a plugin.
 type PluginRoute struct {
-	Path    string   `yaml:"path"`    // Route path (e.g., "/status")
-	Methods []string `yaml:"methods"` // HTTP methods (["GET", "POST"], etc.)
-	Handler string   `yaml:"handler"` // Name of the WASM function to call
+	Path    string   `yaml:"path" json:"path"`       // Route path (e.g., "/status")
+	Methods []string `yaml:"methods" json:"methods"` // HTTP methods
+	Handler string   `yaml:"handler" json:"handler"` // Name of the WASM function to call
 }
 
 // PluginFrontendConfig contains frontend integration configuration
 type PluginFrontendConfig struct {
-	Enabled    bool                   `yaml:"enabled"`              // Whether frontend integration is enabled
-	Navigation []PluginNavigationItem `yaml:"navigation,omitempty"` // Navigation integration
-	Widgets    []PluginWidgetConfig   `yaml:"widgets,omitempty"`    // Dashboard widgets
-	Routes     []PluginFrontendRoute  `yaml:"routes,omitempty"`     // Frontend routes
+	Enabled    bool                   `yaml:"enabled" json:"enabled"`                           // Whether frontend integration is enabled
+	Navigation []PluginNavigationItem `yaml:"navigation,omitempty" json:"navigation,omitempty"` // Navigation integration
+	Widgets    []PluginWidgetConfig   `yaml:"widgets,omitempty" json:"widgets,omitempty"`       // Dashboard widgets
+	Routes     []PluginFrontendRoute  `yaml:"routes,omitempty" json:"routes,omitempty"`         // Frontend routes
 }
 
 // PluginNavigationItem describes a navigation menu item
 type PluginNavigationItem struct {
-	Label    string `yaml:"label"`    // Display label
-	Icon     string `yaml:"icon"`     // Icon identifier
-	Path     string `yaml:"path"`     // Route path
-	Position string `yaml:"position"` // Position in menu (e.g., "main")
-	Order    int    `yaml:"order"`    // Display order
+	Label    string `yaml:"label" json:"label"`       // Display label
+	Icon     string `yaml:"icon" json:"icon"`         // Icon identifier
+	Path     string `yaml:"path" json:"path"`         // Route path
+	Position string `yaml:"position" json:"position"` // Position in menu (e.g., "main")
+	Order    int    `yaml:"order" json:"order"`       // Display order
 }
 
 // PluginWidgetConfig describes a dashboard widget
 type PluginWidgetConfig struct {
-	Name      string `yaml:"name"`      // Widget name
-	Title     string `yaml:"title"`     // Widget title
-	Size      string `yaml:"size"`      // Widget size (e.g., "medium")
-	Dashboard string `yaml:"dashboard"` // Target dashboard (e.g., "overview")
-	Component string `yaml:"component"` // React component name
+	Name      string `yaml:"name" json:"name"`           // Widget name
+	Title     string `yaml:"title" json:"title"`         // Widget title
+	Size      string `yaml:"size" json:"size"`           // Widget size (e.g., "medium")
+	Dashboard string `yaml:"dashboard" json:"dashboard"` // Target dashboard
+	Component string `yaml:"component" json:"component"` // React component name
 }
 
 // PluginFrontendRoute describes a frontend route definition
 type PluginFrontendRoute struct {
-	Path      string `yaml:"path"`      // Route path
-	Component string `yaml:"component"` // React component name
-	Exact     bool   `yaml:"exact"`     // Whether route matching should be exact
+	Path      string `yaml:"path" json:"path"`           // Route path
+	Component string `yaml:"component" json:"component"` // React component name
+	Exact     bool   `yaml:"exact" json:"exact"`         // Whether route matching should be exact
 }
 
 // PluginConfigItem describes a configuration option
 type PluginConfigItem struct {
-	Name        string      `yaml:"name"`        // Configuration name
-	Type        string      `yaml:"type"`        // Type (e.g., "integer", "string")
-	Default     interface{} `yaml:"default"`     // Default value
-	Description string      `yaml:"description"` // Description of the configuration
+	Name        string      `yaml:"name" json:"name"`               // Configuration name
+	Type        string      `yaml:"type" json:"type"`               // Type (e.g., "integer", "string")
+	Default     interface{} `yaml:"default" json:"default"`         // Default value
+	Description string      `yaml:"description" json:"description"` // Description of the configuration
 }
 
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
@@ -158,11 +157,12 @@ func NewPluginManager(router *gin.Engine) *PluginManager {
 	}
 
 	pm := &PluginManager{
-		runtime:          runtime,
-		plugins:          make(map[int]*Plugin),
-		router:           router,
-		ctx:              ctx,
-		registeredRoutes: make(map[int][]string),
+		runtime:            runtime,
+		plugins:            make(map[int]*Plugin),
+		router:             router,
+		ctx:                ctx,
+		registeredRoutes:   make(map[int][]string),
+		isRegisteredBefore: make(map[int]bool),
 	}
 
 	// Register host functions for WASM runtime bridge
@@ -189,7 +189,7 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		return err
 	}
 
-	pluginID, err := extractPluginPathID(pluginPath)
+	pluginID, err := ExtractPluginPathID(pluginPath)
 	if err != nil {
 		log.LogError("error getting pluginID", zap.String("error", err.Error()))
 		return err
@@ -256,7 +256,20 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 
 // registerPluginRoutes maps each declared route from plugin manifest to Gin route group.
 func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
+	// check if the routes of this plugin have registered or not
+	pm.routeMutex.RLock()
+	_, exists := pm.registeredRoutes[plugin.ID]
+	pm.routeMutex.RUnlock()
+
+	if exists {
+		log.LogInfo("Plugin routes already registered", zap.Int("pluginID", plugin.ID))
+		return
+	}
+
 	group := pm.router.Group("/api/plugins/" + strconv.Itoa(plugin.ID))
+
+	// middleware to check if plugin is disabled
+	group.Use(middleware.PluginMiddleware(pm.IsPluginDisabled))
 
 	// Track routes for this plugin
 	pm.routeMutex.Lock()
@@ -268,18 +281,20 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 			handler := pm.createPluginHandler(plugin, route.Handler)
 			routePath := route.Path
 
-			for _, method := range route.Methods {
-				switch method {
-				case "GET":
-					group.GET(routePath, handler)
-				case "POST":
-					group.POST(routePath, handler)
-				case "PUT":
-					group.PUT(routePath, handler)
-				case "DELETE":
-					group.DELETE(routePath, handler)
-				case "PATCH":
-					group.PATCH(routePath, handler)
+			if !pm.isRegisteredBefore[plugin.ID] {
+				for _, method := range route.Methods {
+					switch method {
+					case "GET":
+						group.GET(routePath, handler)
+					case "POST":
+						group.POST(routePath, handler)
+					case "PUT":
+						group.PUT(routePath, handler)
+					case "DELETE":
+						group.DELETE(routePath, handler)
+					case "PATCH":
+						group.PATCH(routePath, handler)
+					}
 				}
 			}
 
@@ -295,6 +310,8 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 			pm.routeMutex.Unlock()
 		}
 	}
+	// mark as registered
+	pm.isRegisteredBefore[plugin.ID] = true
 }
 
 // createPluginHandler returns a Gin handler that executes the WASM plugin function.
@@ -602,7 +619,7 @@ func (pm *PluginManager) UninstallAllPlugins() error {
 
 // Helper functions
 
-func extractPluginPathID(s string) (int, error) {
+func ExtractPluginPathID(s string) (int, error) {
 	parts := strings.Split(s, "-")
 	if len(parts) == 0 {
 		return 0, fmt.Errorf("invalid format")
@@ -613,4 +630,13 @@ func extractPluginPathID(s string) (int, error) {
 		return 0, fmt.Errorf("not a number: %w", err)
 	}
 	return num, nil
+}
+
+// IsPluginDisabled checks if a plugin is disabled
+func (pm *PluginManager) IsPluginDisabled(id int) bool {
+	plugin, exists := pm.GetPlugin(id)
+	if !exists {
+		return false
+	}
+	return plugin.Status == "inactive"
 }

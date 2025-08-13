@@ -62,7 +62,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
-- **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
+- **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.28.0/direct/get-started/)
 
 > [!NOTE]
 > If you're running on macOS, you may need to manually add a host entry to resolve `its1.localtest.me` to `localhost` using:
@@ -112,6 +112,7 @@ cp .env.example .env
 **Example `.env` file:**
 
 ```env
+VITE_PROMETHEUS_URL=http://localhost:9090
 VITE_BASE_URL=http://localhost:4000
 VITE_APP_VERSION=0.1.0
 VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH
@@ -128,6 +129,7 @@ KubestellarUI uses environment variables to track the app version and the curren
 
 | Variable               | Purpose                                 | Example                 |
 | ---------------------- | --------------------------------------- | ----------------------- |
+| `VITE_PROMETHEUS_URL`  | Defines the Prometheus URL              | `http://localhost:9090` |
 | `VITE_BASE_URL`        | Defines the base URL for API calls      | `http://localhost:4000` |
 | `VITE_APP_VERSION`     | Defines the current application version | `0.1.0`                 |
 | `VITE_GIT_COMMIT_HASH` | Captures the current Git commit hash    | (Set during build)      |

@@ -37,6 +37,11 @@ export interface CustomEdge extends BaseEdge {
     height?: number;
     color?: string;
   };
+  data?: {
+    status?: 'default' | 'active' | 'success' | 'warning' | 'error';
+    animated?: boolean;
+    [key: string]: string | number | boolean | undefined;
+  };
 }
 
 export interface ResourceItem {
