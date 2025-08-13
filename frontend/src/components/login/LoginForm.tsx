@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, User, Globe } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { useLogin } from '../../hooks/queries/useLogin';
 import { useTranslation } from 'react-i18next'; // Add this import
 import { decryptData, isEncrypted, migratePassword, secureGet } from '../../utils/secureStorage';
+import { FiInfo } from 'react-icons/fi';
 
 const LoginForm = () => {
   const { t } = useTranslation(); // Add translation hook
@@ -101,7 +102,20 @@ const LoginForm = () => {
       }
 
       if (infoMessage) {
-        toast.success(infoMessage, { id: 'auth-redirect-info' });
+        if (infoMessage === 'Please sign in to continue') {
+          toast.loading(infoMessage, {
+            id: 'auth-redirect-info',
+            duration: 4000,
+            icon: <FiInfo size={20} color="#ffffff" />,
+            style: {
+              background: 'linear-gradient(45deg, #2f43c4, #3a4fd0, #5a76e0, #4b74f0)',
+              color: '#ffffff',
+              border: '1px solid #5c7ef9ff',
+            },
+          });
+        } else {
+          toast.success(infoMessage, { id: 'auth-redirect-info' });
+        }
         console.log(
           `[LoginForm] Displayed info message "${infoMessage}" at ${performance.now() - renderStartTime.current}ms`
         );

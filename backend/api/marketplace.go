@@ -78,9 +78,9 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 	}
 	if existed {
 		c.JSON(http.StatusConflict, gin.H{
-			"error": "Plugin already installed: " + manifest.Metadata.Name,
+			"error": "Plugin already uploaded: " + manifest.Metadata.Name,
 		})
-		log.LogWarn("plugin already installed", zap.String("plugin", manifest.Metadata.Name))
+		log.LogWarn("plugin already uploaded", zap.String("plugin", manifest.Metadata.Name))
 		return "", nil, err
 	}
 
@@ -773,11 +773,23 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		return
 	}
 
+	// use installed plugin id for creating newly created plugin directpry
+	pluginKey = fmt.Sprintf("%s-%d", plugin.PluginName, installedPluginID)
+
+	newInstalledPath := filepath.Join(pluginFolder, pluginKey)
+
+	// Rename the directory
+	renameErr := os.Rename(installedPath, newInstalledPath)
+	if renameErr != nil {
+		log.LogError("Error renaming directory:", zap.Error(renameErr))
+		return
+	}
+
 	// Load the plugin dynamically using the global plugin manager
-	if err := pluginManager.LoadPlugin(installedPath); err != nil {
+	if err := pluginManager.LoadPlugin(newInstalledPath); err != nil {
 		log.LogError("Failed to load plugin after installation",
 			zap.String("plugin", pluginKey),
-			zap.String("installed_path", installedPath),
+			zap.String("installed_path", newInstalledPath),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load plugin"})
 		return
