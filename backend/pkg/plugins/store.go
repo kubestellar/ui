@@ -217,7 +217,6 @@ func CheckPluginWithInfo(pluginName, pluginVersion, pluginDescription string, us
 }
 
 func CheckInstalledPluginWithID(pluginID int) (bool, error) {
-	fmt.Println("pluginID->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", pluginID)
 	query := `
 		SELECT EXISTS (
 			SELECT 1 FROM installed_plugins
@@ -227,11 +226,9 @@ func CheckInstalledPluginWithID(pluginID int) (bool, error) {
 
 	var exist bool
 	row := database.DB.QueryRow(query, pluginID)
-	fmt.Println("row->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", row)
 	if err := row.Scan(&exist); err != nil {
 		return false, fmt.Errorf("failed to check plugin existence: %w", err)
 	}
-	fmt.Println("exist->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", exist)
 
 	return exist, nil
 }
