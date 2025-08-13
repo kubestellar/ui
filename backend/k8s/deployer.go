@@ -91,7 +91,7 @@ type ConfigMapRef struct {
 // getResourceGVR dynamically fetches the correct GroupVersionResource (GVR) using the Discovery API
 func getResourceGVR(discoveryClient discovery.DiscoveryInterface, kind string) (schema.GroupVersionResource, error) {
 	log.LogDebug("Getting resource GVR", zap.String("kind", kind))
-	
+
 	resourceList, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
 		log.LogError("Failed to get API resources", zap.Error(err))
@@ -410,10 +410,10 @@ func StoreManifestsDeployment(data map[string]string) error {
 
 // storeConfigMapData creates or updates a ConfigMap with the provided data
 func storeConfigMapData(configMapName string, data map[string]string) error {
-	log.LogInfo("Storing ConfigMap data", 
+	log.LogInfo("Storing ConfigMap data",
 		zap.String("configmap_name", configMapName),
 		zap.Int("data_entries", len(data)))
-	
+
 	// Ensure namespace exists first
 	clientset, dynamicClient, err := GetClientSetWithContext("its1")
 	if err != nil {
@@ -423,7 +423,7 @@ func storeConfigMapData(configMapName string, data map[string]string) error {
 
 	// Ensure the namespace exists (without workload label as this is an internal storage operation)
 	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace, ""); err != nil {
-		log.LogError("Failed to ensure namespace for ConfigMap", 
+		log.LogError("Failed to ensure namespace for ConfigMap",
 			zap.String("namespace", KubeStellarNamespace),
 			zap.Error(err))
 		return fmt.Errorf("failed to ensure namespace for ConfigMap: %v", err)
@@ -1329,17 +1329,17 @@ func ListGithubDeployments(c *gin.Context) {
 	deployments, err := GetGithubDeployments(contextName)
 	if err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/github/deployments", "500").Inc()
-		log.LogError("Failed to retrieve GitHub deployments", 
+		log.LogError("Failed to retrieve GitHub deployments",
 			zap.String("context", contextName),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	
-	log.LogInfo("GitHub deployments retrieved successfully", 
+
+	log.LogInfo("GitHub deployments retrieved successfully",
 		zap.String("context", contextName),
 		zap.Int("count", len(deployments)))
-	
+
 	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "GitHub deployments retrieved successfully",
@@ -1357,17 +1357,17 @@ func ListHelmDeploymentsHandler(c *gin.Context) {
 	deployments, err := GetHelmDeployments(contextName)
 	if err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployments", "500").Inc()
-		log.LogError("Failed to retrieve Helm deployments", 
+		log.LogError("Failed to retrieve Helm deployments",
 			zap.String("context", contextName),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	
-	log.LogInfo("Helm deployments retrieved successfully", 
+
+	log.LogInfo("Helm deployments retrieved successfully",
 		zap.String("context", contextName),
 		zap.Int("count", len(deployments)))
-	
+
 	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "Helm deployments retrieved successfully",
@@ -1598,7 +1598,7 @@ func DeleteHelmDeploymentHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
 	deploymentID := c.Param("id")
 
-	log.LogInfo("Deleting Helm deployment", 
+	log.LogInfo("Deleting Helm deployment",
 		zap.String("context", contextName),
 		zap.String("deployment_id", deploymentID))
 
@@ -1616,18 +1616,18 @@ func DeleteHelmDeploymentHandler(c *gin.Context) {
 		if strings.Contains(err.Error(), "not found") {
 			status = http.StatusNotFound
 		}
-		log.LogError("Failed to delete Helm deployment", 
+		log.LogError("Failed to delete Helm deployment",
 			zap.String("context", contextName),
 			zap.String("deployment_id", deploymentID),
 			zap.Error(err))
 		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
 		return
 	}
-	
-	log.LogInfo("Helm deployment deleted successfully", 
+
+	log.LogInfo("Helm deployment deleted successfully",
 		zap.String("context", contextName),
 		zap.String("deployment_id", deploymentID))
-	
+
 	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/helm/deployment/:id", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Helm deployment %s deleted successfully", deploymentID),
