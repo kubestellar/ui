@@ -284,7 +284,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 				// First try to extract from specificWorkloads annotation
 				if specificWorkloadsStr, ok := annotations["specificWorkloads"]; ok && specificWorkloadsStr != "" {
 					// Parse the specificWorkloads annotation which contains: apiVersion,kind,name,namespace
-					parts := strings.Split(specificWorkloadsStr, ",")
+					parts := strings.Split(specificWorkloadsStr, workloadDelimiter)
 					if len(parts) >= expectedSpecificWorkloadsParts {
 						apiVersion := parts[0]
 						kind := parts[1]
