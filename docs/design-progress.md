@@ -68,6 +68,8 @@ This document tracks the progress of the design system foundation efforts for th
 6. **Type Hierarchy**  
    🔗 [Type Hierarchy – Figma](https://www.figma.com/design/Gi24EeUOBqcWbdutYEPlE4/Type-Hierarchy?node-id=0-1&t=XXfQVjh9T7DgVtXB-1)
 
+7. **Landing Page Design**  
+   🔗 [Kubestellar Docs – Figma Design](https://www.figma.com/design/YeGMzcwefc2LYWmmx0rVmN/Kubestellar-Docs-Figma-Design?node-id=0-1&t=X5tOTPfk760XFboI-1)
 
 ---
 
@@ -290,5 +292,20 @@ This section covers foundational analysis and planning to improve the structure,
 Redesigned the footer to enhance usability and user engagement:
 - ⚓️ **Quick Navigation**: Added streamlined links to key sections (Home, Docs, Community, GitHub, etc)
 - 📬 **Stay Updated**: Integrated a simple email input for newsletter subscriptions
+
+### 🎨 Designed Navbar Button Dropdown with Meaningful Icons
+- Added **dropdown menus** to navbar buttons for improved navigation clarity.
+- Each dropdown item paired with a **meaningful icon** for quick scanning.
+- Smooth open/close animation with slight fade and slide.
+- Keyboard-accessible with focus highlights.
+- Matches design system spacing, typography, and hover states.
+
+### 🧩 Implemented Atomic Design in Figma
+
+- Structured components into **Atoms, Molecules, Organisms, Templates, and Pages** for a scalable and reusable design system.
+- Ensures:
+  - Consistent styling across the platform
+  - Easier updates to UI components
+  - Improved collaboration between design and development teams
 
 ---

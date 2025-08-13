@@ -1,14 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import {
-  HiOutlineStar,
-  HiStar,
-  HiOutlineArrowDownTray,
-  HiOutlineHeart,
-  HiHeart,
-} from 'react-icons/hi2';
+import React, { useMemo, useCallback } from 'react';
+import { HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineCheckCircle } from 'react-icons/hi2';
+import { Circle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import useTheme from '../../stores/themeStore';
 import getThemeStyles from '../../lib/theme-utils';
 import { formatDistanceToNow } from 'date-fns';
+import { useMarketplaceQueries } from '../../hooks/queries/useMarketplaceQueries';
+import logo from '../../assets/logo.svg';
 
 interface PluginData {
   id: number;
@@ -24,200 +22,530 @@ interface PluginData {
   rating?: string;
   downloads?: number;
   lastUpdated: Date;
+  createdAt?: Date;
+  license?: string;
+  tags?: string[];
 }
 
-interface PluginCardProps {
+interface EnhancedPluginCardProps {
   plugin: PluginData;
   onClick: () => void;
 }
 
-export const PluginCard: React.FC<PluginCardProps> = React.memo(({ plugin, onClick }) => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const themeStyles = getThemeStyles(isDark);
-  const [isFavorite, setIsFavorite] = useState(false);
+export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
+  ({ plugin, onClick }) => {
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
+    const themeStyles = getThemeStyles(isDark);
 
-  // Generate random pastel color for plugin icon background
-  const iconColor = useMemo(() => {
-    // Generate a pastel color based on the plugin name
-    const hash = plugin.name.split('').reduce((acc, char) => {
-      return char.charCodeAt(0) + ((acc << 5) - acc);
-    }, 0);
+    const { useInstallPlugin } = useMarketplaceQueries();
+    const installMutation = useInstallPlugin();
 
-    const h = Math.abs(hash) % 360;
-    const s = isDark ? '60%' : '70%';
-    const l = isDark ? '65%' : '80%';
-
-    return `hsl(${h}, ${s}, ${l})`;
-  }, [plugin.name, isDark]);
-
-  // Generate stars based on rating
-  const stars = useMemo(() => {
-    const rating = parseFloat(plugin.rating || '0');
-    const starsArray = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= Math.floor(rating)) {
-        starsArray.push(<HiStar key={i} className="text-yellow-400" />);
-      } else if (i - 0.5 <= rating) {
-        starsArray.push(<HiStar key={i} className="text-yellow-400" />);
-      } else {
-        starsArray.push(<HiOutlineStar key={i} className="text-gray-400" />);
+    // Memoized utility functions for better performance
+    const iconColor = useMemo(() => {
+      if (!plugin?.name) {
+        return isDark ? 'hsl(220, 60%, 65%)' : 'hsl(220, 70%, 80%)';
       }
-    }
-    return starsArray;
-  }, [plugin.rating]);
+      const hash = plugin.name.split('').reduce((acc, char) => {
+        return char.charCodeAt(0) + ((acc << 5) - acc);
+      }, 0);
 
-  // Format download count
-  const formattedDownloads = useMemo(() => {
-    const count = plugin.downloads || 0;
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}k`;
-    }
-    return count.toString();
-  }, [plugin.downloads]);
+      const h = Math.abs(hash) % 360;
+      const s = isDark ? '60%' : '70%';
+      const l = isDark ? '65%' : '80%';
 
-  // Format the last updated date
-  const lastUpdated = useMemo(() => {
-    try {
-      return formatDistanceToNow(new Date(plugin.lastUpdated), { addSuffix: true });
-    } catch {
-      return 'recently';
-    }
-  }, [plugin.lastUpdated]);
+      return `hsl(${h}, ${s}, ${l})`;
+    }, [plugin.name, isDark]);
 
-  // Handle favorite toggle
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsFavorite(!isFavorite);
-  };
+    // Memoized rating display with KubeStellar logo
+    const ratingDisplay = useMemo(() => {
+      const rating = parseFloat(plugin.rating || '0');
+      const ratingArray = [];
 
-  return (
-    <div
-      className="relative cursor-pointer overflow-hidden rounded-xl p-4 transition-transform duration-200 ease-out hover:scale-[1.02]"
-      style={{
-        background: isDark
-          ? 'linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(31, 41, 55, 0.8))'
-          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.9))',
-        backdropFilter: 'blur(10px)',
-        border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
-        boxShadow: themeStyles.card.shadow,
-      }}
-      onClick={onClick}
-    >
-      {/* Favorite button */}
-      <button
-        className="absolute right-2 top-2 z-10 rounded-full p-1.5 transition-transform duration-150 hover:scale-110"
-        onClick={handleFavoriteClick}
+      for (let i = 1; i <= 5; i++) {
+        if (i <= Math.floor(rating)) {
+          ratingArray.push(
+            <div key={i} className="h-4 w-4">
+              <div
+                className="h-4 w-4 bg-contain bg-center bg-no-repeat"
+                style={{
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskSize: 'cover',
+                  backgroundImage: `url(${logo})`,
+                }}
+              />
+            </div>
+          );
+        } else if (i - 0.5 <= rating) {
+          ratingArray.push(
+            <div key={i} className="h-4 w-4">
+              <div
+                className="h-4 w-4 bg-contain bg-center bg-no-repeat opacity-60"
+                style={{
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskSize: 'cover',
+                  backgroundImage: `url(${logo})`,
+                }}
+              />
+            </div>
+          );
+        } else {
+          ratingArray.push(
+            <div key={i} className="h-4 w-4">
+              <Circle
+                className="h-4 w-4 transition-colors duration-200"
+                style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+              />
+            </div>
+          );
+        }
+      }
+      return ratingArray;
+    }, [plugin.rating, isDark]);
+
+    // Memoized formatted values
+    const formattedDownloads = useMemo(() => {
+      const count = plugin.downloads || 0;
+      if (count >= 1000) {
+        return `${(count / 1000).toFixed(1)}k`;
+      }
+      return count.toString();
+    }, [plugin.downloads]);
+
+    const lastUpdated = useMemo(() => {
+      try {
+        return formatDistanceToNow(new Date(plugin.lastUpdated), { addSuffix: true });
+      } catch {
+        return 'recently';
+      }
+    }, [plugin.lastUpdated]);
+
+    const createdAt = useMemo(() => {
+      if (!plugin.createdAt) return null;
+      try {
+        return formatDistanceToNow(new Date(plugin.createdAt), { addSuffix: true });
+      } catch {
+        return 'recently';
+      }
+    }, [plugin.createdAt]);
+
+    // Memoized event handlers
+    const handleInstall = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        installMutation.mutate(plugin.id);
+      },
+      [installMutation, plugin.id]
+    );
+
+    const handleClick = useCallback(() => {
+      onClick();
+    }, [onClick]);
+
+    return (
+      <motion.div
+        className="group relative cursor-pointer overflow-hidden rounded-xl p-5 transition-all duration-300"
         style={{
-          background: isDark ? 'rgba(31, 41, 55, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(4px)',
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.95))'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 251, 0.95))',
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
+          boxShadow: isDark ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.06)',
         }}
+        onClick={handleClick}
+        whileHover={{
+          y: -4,
+          scale: 1.02,
+          boxShadow: isDark ? '0 12px 30px rgba(0, 0, 0, 0.3)' : '0 12px 30px rgba(0, 0, 0, 0.1)',
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 400,
+          damping: 25,
+        }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
       >
-        {isFavorite ? (
-          <HiHeart className="h-4 w-4 text-red-500" />
-        ) : (
-          <HiOutlineHeart
-            className="h-4 w-4"
-            style={{ color: themeStyles.colors.text.secondary }}
-          />
-        )}
-      </button>
+        {/* Simplified decorative background elements */}
+        <div
+          className="absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-10"
+          style={{
+            background: `radial-gradient(circle, ${iconColor} 0%, transparent 70%)`,
+            filter: 'blur(15px)',
+          }}
+        />
 
-      <div className="mb-3 flex items-start justify-between">
-        <div className="flex items-center">
+        {/* Status indicator */}
+        {plugin.status === 'installed' && (
           <div
-            className="relative mr-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl"
+            className="absolute -right-4 -top-4 flex h-10 w-10 items-center justify-center rounded-full"
             style={{
-              background: `linear-gradient(135deg, ${iconColor}, ${iconColor}90)`,
-              boxShadow: `0 4px 10px rgba(0, 0, 0, 0.2), 0 0 15px ${iconColor}50`,
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
             }}
           >
-            {/* Plugin icon - first letter of name */}
-            <span
-              className="relative z-10 text-xl font-bold"
-              style={{ color: '#ffffff', textShadow: '0 2px 5px rgba(0, 0, 0, 0.3)' }}
+            <HiOutlineCheckCircle className="h-5 w-5 text-white" />
+          </div>
+        )}
+
+        <div className="mb-5 flex items-start justify-between">
+          <div className="flex items-center">
+            <div
+              className="relative mr-4 flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl"
+              style={{
+                background: `linear-gradient(135deg, ${iconColor}, ${iconColor}90)`,
+                boxShadow: `0 4px 12px rgba(0, 0, 0, 0.2)`,
+              }}
             >
-              {plugin.name?.charAt(0).toUpperCase() || 'P'}
-            </span>
+              {/* Plugin icon - first letter of name */}
+              <span
+                className="relative z-10 text-xl font-bold"
+                style={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}
+              >
+                {(plugin.name && plugin.name.charAt(0).toUpperCase()) || 'P'}
+              </span>
+
+              {/* Simple decorative element inside icon */}
+              <div
+                className="absolute bottom-0 left-0 right-0 top-0 opacity-30"
+                style={{
+                  background: `radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 60%)`,
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <h3
+                className="text-lg font-bold tracking-tight"
+                style={{ color: themeStyles.colors.text.primary }}
+              >
+                {plugin.name || 'Unnamed Plugin'}
+              </h3>
+              <p
+                className="text-sm font-medium"
+                style={{ color: themeStyles.colors.text.secondary }}
+              >
+                by{' '}
+                <span className="text-blue-500 dark:text-blue-400">
+                  {plugin.author || 'Unknown author'}
+                </span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-medium" style={{ color: themeStyles.colors.text.primary }}>
-              {plugin.name}
-            </h3>
-            <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-              {plugin.author || 'Unknown author'}
-            </p>
+
+          <div
+            className="rounded-full px-3 py-1.5 text-xs font-bold tracking-wide"
+            style={{
+              background: `linear-gradient(135deg, ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'}, ${isDark ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.1)'})`,
+              color: themeStyles.colors.brand.primary,
+              border: `1px solid ${isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+              boxShadow: `0 2px 8px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
+            }}
+          >
+            {plugin.category || 'Misc'}
           </div>
         </div>
 
-        <div
-          className="rounded-full px-2 py-1 text-xs"
-          style={{
-            background: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
-            color: themeStyles.colors.brand.primary,
-            border: `1px solid ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
-          }}
-        >
-          {plugin.category || 'Misc'}
-        </div>
-      </div>
-
-      <p
-        className="mb-4 line-clamp-2 h-10 text-sm"
-        style={{ color: themeStyles.colors.text.secondary }}
-      >
-        {plugin.description || 'No description available'}
-      </p>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="mr-1 flex">{stars}</div>
-          <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
-            ({plugin.rating || '0.0'})
-          </span>
-        </div>
-
-        <div className="flex items-center">
-          <HiOutlineArrowDownTray
-            className="mr-1 h-4 w-4"
+        <div className="mb-5">
+          <p
+            className="line-clamp-2 text-sm leading-relaxed"
             style={{ color: themeStyles.colors.text.secondary }}
-          />
-          <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
-            {formattedDownloads}
-          </span>
-        </div>
-      </div>
-
-      <div
-        className="mt-3 flex items-center justify-between pt-3"
-        style={{
-          borderTop: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.2)' : 'rgba(226, 232, 240, 0.8)'}`,
-        }}
-      >
-        <div
-          className="flex items-center text-xs"
-          style={{ color: themeStyles.colors.text.secondary }}
-        >
-          <span className="mr-1">v{plugin.version || '1.0.0'}</span>•
-          <span className="ml-1">Updated {lastUpdated}</span>
+          >
+            {plugin.description || 'No description available'}
+          </p>
         </div>
 
-        <button
-          className="rounded-md px-3 py-1 text-xs transition-transform duration-150 hover:scale-105"
-          style={{
-            background: themeStyles.colors.brand.primary,
-            color: '#ffffff',
-          }}
-          onClick={e => {
-            e.stopPropagation();
-            // Install logic would go here
-          }}
-        >
-          {plugin.status === 'installed' ? 'Installed' : 'Install'}
-        </button>
-      </div>
-    </div>
-  );
-});
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div
+            className="group/rating flex items-center rounded-xl bg-opacity-20 px-4 py-2"
+            style={{
+              background: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
+              border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <div className="mr-3 flex gap-1">{ratingDisplay}</div>
+            <div className="flex flex-col items-start">
+              <span
+                className="text-sm font-bold"
+                style={{ color: themeStyles.colors.brand.primary }}
+              >
+                {plugin.rating || '0.0'}
+              </span>
+              <span
+                className="-mt-1 text-xs font-medium"
+                style={{ color: themeStyles.colors.text.tertiary }}
+              >
+                rating
+              </span>
+            </div>
+          </div>
 
-PluginCard.displayName = 'PluginCard';
+          <div
+            className="group/downloads flex items-center rounded-xl bg-opacity-20 px-4 py-2"
+            style={{
+              background: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
+              border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <HiOutlineArrowDownTray
+              className="mr-3 h-5 w-5"
+              style={{ color: themeStyles.colors.text.secondary }}
+            />
+            <div className="flex flex-col items-start">
+              <span
+                className="text-sm font-bold"
+                style={{ color: themeStyles.colors.text.primary }}
+              >
+                {formattedDownloads}
+              </span>
+              <span
+                className="-mt-1 text-xs font-medium"
+                style={{ color: themeStyles.colors.text.tertiary }}
+              >
+                downloads
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Technical Details Section */}
+        <div className="mb-5 space-y-4">
+          {/* Version and Update Info */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <span
+                  className="rounded-lg px-3 py-1.5 text-sm font-bold"
+                  style={{
+                    background: `linear-gradient(135deg, ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'}, ${isDark ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.1)'})`,
+                    color: themeStyles.colors.brand.primary,
+                    border: `1px solid ${isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+                    boxShadow: `0 2px 8px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
+                  }}
+                >
+                  <span className="mr-1 text-xs opacity-80">v</span>
+                  {plugin.version || '1.0.0'}
+                </span>
+
+                <div
+                  className="flex items-center space-x-1 rounded-full px-2 py-1 text-xs"
+                  style={{
+                    background: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
+                    color: themeStyles.colors.text.secondary,
+                    border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
+                  }}
+                >
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-green-400"></span>
+                  <span>Updated {lastUpdated}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Plugin Status */}
+            {plugin.status && (
+              <div
+                className="rounded-md px-2 py-1 text-xs font-medium"
+                style={{
+                  background:
+                    plugin.status === 'installed'
+                      ? 'rgba(16, 185, 129, 0.15)'
+                      : plugin.status === 'active'
+                        ? 'rgba(59, 130, 246, 0.15)'
+                        : 'rgba(156, 163, 175, 0.15)',
+                  color:
+                    plugin.status === 'installed'
+                      ? '#10b981'
+                      : plugin.status === 'active'
+                        ? themeStyles.colors.brand.primary
+                        : '#9ca3af',
+                  border: `1px solid ${
+                    plugin.status === 'installed'
+                      ? 'rgba(16, 185, 129, 0.3)'
+                      : plugin.status === 'active'
+                        ? 'rgba(59, 130, 246, 0.3)'
+                        : 'rgba(156, 163, 175, 0.3)'
+                  }`,
+                }}
+              >
+                {plugin.status.charAt(0).toUpperCase() + plugin.status.slice(1)}
+              </div>
+            )}
+          </div>
+
+          {/* Additional Details Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* License Information */}
+            {plugin.license && (
+              <div
+                className="flex items-center space-x-2 rounded-lg px-3 py-2"
+                style={{
+                  background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                  border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)'}`,
+                }}
+              >
+                <div className="h-2 w-2 rounded-full bg-blue-400"></div>
+                <div className="flex flex-col">
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    License
+                  </span>
+                  <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    {plugin.license}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Creation Date */}
+            {createdAt && (
+              <div
+                className="flex items-center space-x-2 rounded-lg px-3 py-2"
+                style={{
+                  background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                  border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)'}`,
+                }}
+              >
+                <div className="h-2 w-2 rounded-full bg-purple-400"></div>
+                <div className="flex flex-col">
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    Created
+                  </span>
+                  <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    {createdAt}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Routes Count */}
+            {plugin.routes && plugin.routes.length > 0 && (
+              <div
+                className="flex items-center space-x-2 rounded-lg px-3 py-2"
+                style={{
+                  background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                  border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)'}`,
+                }}
+              >
+                <div className="h-2 w-2 rounded-full bg-green-400"></div>
+                <div className="flex flex-col">
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    Routes
+                  </span>
+                  <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    {plugin.routes.length} endpoint{plugin.routes.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Load Time */}
+            {plugin.loadTime && (
+              <div
+                className="flex items-center space-x-2 rounded-lg px-3 py-2"
+                style={{
+                  background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                  border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)'}`,
+                }}
+              >
+                <div className="h-2 w-2 rounded-full bg-yellow-400"></div>
+                <div className="flex flex-col">
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    Load Time
+                  </span>
+                  <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    {Math.round(plugin.loadTime.getTime() / 1000)}s
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Tags Section */}
+          {plugin.tags && plugin.tags.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              <span
+                className="text-xs font-medium"
+                style={{ color: themeStyles.colors.text.secondary }}
+              >
+                Tags:
+              </span>
+              {plugin.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="rounded-full px-2 py-1 text-xs font-medium"
+                  style={{
+                    background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                    color: themeStyles.colors.text.secondary,
+                    border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Install Button - Moved to bottom */}
+          <motion.button
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-70"
+            style={{
+              background:
+                plugin.status === 'installed'
+                  ? 'linear-gradient(135deg, #10b981, #059669)'
+                  : `linear-gradient(135deg, ${themeStyles.colors.brand.primary}, ${themeStyles.colors.brand.primaryDark})`,
+              color: '#ffffff',
+              boxShadow:
+                plugin.status === 'installed'
+                  ? '0 4px 15px rgba(16, 185, 129, 0.3)'
+                  : `0 4px 15px ${isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(37, 99, 235, 0.25)'}`,
+            }}
+            onClick={handleInstall}
+            disabled={installMutation.isPending || plugin.status === 'installed'}
+            whileHover={{
+              scale: 1.02,
+              y: -2,
+              boxShadow:
+                plugin.status === 'installed'
+                  ? '0 8px 25px rgba(16, 185, 129, 0.4)'
+                  : `0 8px 25px ${isDark ? 'rgba(59, 130, 246, 0.4)' : 'rgba(37, 99, 235, 0.35)'}`,
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {installMutation.isPending ? (
+              <>
+                <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                <span>Installing...</span>
+              </>
+            ) : plugin.status === 'installed' ? (
+              <>
+                <HiOutlineCheckCircle className="h-4 w-4" />
+                <span>Installed</span>
+              </>
+            ) : (
+              <>
+                <HiOutlineArrowDownTray className="h-4 w-4" />
+                <span>Install Plugin</span>
+              </>
+            )}
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  }
+);
+
+EnhancedPluginCard.displayName = 'EnhancedPluginCard';

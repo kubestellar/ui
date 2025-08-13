@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/backend/log"
 	"github.com/kubestellar/ui/backend/telemetry"
+	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -88,8 +90,11 @@ type ConfigMapRef struct {
 
 // getResourceGVR dynamically fetches the correct GroupVersionResource (GVR) using the Discovery API
 func getResourceGVR(discoveryClient discovery.DiscoveryInterface, kind string) (schema.GroupVersionResource, error) {
+	log.LogDebug("Getting resource GVR", zap.String("kind", kind))
+
 	resourceList, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
+		log.LogError("Failed to get API resources", zap.Error(err))
 		return schema.GroupVersionResource{}, fmt.Errorf("failed to get API resources: %v", err)
 	}
 
@@ -105,14 +110,22 @@ func getResourceGVR(discoveryClient discovery.DiscoveryInterface, kind string) (
 		}
 	}
 	telemetry.K8sClientErrorCounter.WithLabelValues("getResourceGVR", "kind_not_found", "404").Inc()
+	log.LogWarn("Resource kind not found", zap.String("kind", kind))
 	return schema.GroupVersionResource{}, fmt.Errorf("resource kind '%s' not found", kind)
 }
 
 // DeployManifests applies Kubernetes manifests from a directory with optional dry-run mode
 // and adds the specified workload label to all resources
 func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, workloadLabel string) (*DeploymentTree, error) {
+	log.LogInfo("Starting manifest deployment",
+		zap.String("deploy_path", deployPath),
+		zap.Bool("dry_run", dryRun),
+		zap.String("dry_run_strategy", dryRunStrategy),
+		zap.String("workload_label", workloadLabel))
+
 	clientSet, dynamicClient, err := GetClientSet()
 	if err != nil {
+		log.LogError("Failed to get Kubernetes client", zap.Error(err))
 		return nil, fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
@@ -120,6 +133,9 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 	files, err := os.ReadDir(deployPath)
 	if err != nil {
 		telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "read_folder", "500").Inc()
+		log.LogError("Failed to read deployment directory",
+			zap.String("deploy_path", deployPath),
+			zap.Error(err))
 		return nil, fmt.Errorf("failed to read folder: %v", err)
 	}
 
@@ -136,11 +152,17 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 		data, err := os.ReadFile(filePath)
 		if err != nil {
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "read_file", "500").Inc()
+			log.LogError("Failed to read manifest file",
+				zap.String("file_path", filePath),
+				zap.Error(err))
 			return nil, fmt.Errorf("failed to read manifest %s: %v", filePath, err)
 		}
 
 		var obj unstructured.Unstructured
 		if err := yaml.Unmarshal(data, &obj); err != nil {
+			log.LogError("Failed to parse YAML manifest",
+				zap.String("file_path", filePath),
+				zap.Error(err))
 			return nil, fmt.Errorf("failed to parse YAML %s: %v", filePath, err)
 		}
 
@@ -166,7 +188,9 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 		// Get correct resource GVR using Discovery API
 		gvr, err := getResourceGVR(discoveryClient, obj.GetKind())
 		if err != nil {
-			fmt.Printf("Skipping unsupported kind: %s\n", obj.GetKind())
+			log.LogWarn("Skipping unsupported kind",
+				zap.String("kind", obj.GetKind()),
+				zap.Error(err))
 			continue
 		}
 
@@ -187,6 +211,9 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 			err = EnsureNamespaceExists(dynamicClient, finalNamespace, workloadLabel)
 			if err != nil {
 				telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "ensure_namespace", "500").Inc()
+				log.LogError("Failed to ensure namespace exists",
+					zap.String("namespace", finalNamespace),
+					zap.Error(err))
 				return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", finalNamespace, err)
 			}
 		}
@@ -195,6 +222,11 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 		err = applyOrCreateResource(dynamicClient, gvr, &obj, finalNamespace, dryRun, dryRunStrategy)
 		if err != nil {
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployManifests", "apply_resource", "500").Inc()
+			log.LogError("Failed to apply resource",
+				zap.String("kind", obj.GetKind()),
+				zap.String("name", obj.GetName()),
+				zap.String("namespace", finalNamespace),
+				zap.Error(err))
 			return nil, fmt.Errorf("failed to apply %s: %v", obj.GetKind(), err)
 		}
 
@@ -213,6 +245,12 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 	}
 
 	tree.Namespace = detectedNamespace
+
+	log.LogInfo("Manifest deployment completed",
+		zap.String("namespace", detectedNamespace),
+		zap.Int("total_resources", len(appliedResources)),
+		zap.Any("resource_types", appliedResources))
+
 	return tree, nil
 }
 
@@ -256,14 +294,18 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 					telemetry.K8sClientErrorCounter.WithLabelValues("EnsureNamespaceExists", "update_namespace", "500").Inc()
 					return fmt.Errorf("failed to update namespace %s with workload label: %v", namespace, err)
 				}
-				fmt.Printf("Updated namespace %s with workload label\n", namespace)
+				log.LogInfo("Updated namespace with workload label",
+					zap.String("namespace", namespace),
+					zap.String("workload_label", workloadLabel))
 			}
 		}
 		return nil
 	}
 
 	// Create namespace if it doesn't exist
-	fmt.Printf("Creating namespace: %s\n", namespace)
+	log.LogInfo("Creating namespace",
+		zap.String("namespace", namespace),
+		zap.String("workload_label", workloadLabel))
 	nsObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "v1",
@@ -298,7 +340,10 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 	// If dry-run, simulate creation based on strategy
 	if dryRun {
 		if dryRunStrategy == "server" {
-			fmt.Printf("[Server Dry Run] Validating %s %s on server\n", obj.GetKind(), obj.GetName())
+			log.LogInfo("Server dry run validation",
+				zap.String("kind", obj.GetKind()),
+				zap.String("name", obj.GetName()),
+				zap.String("namespace", namespace))
 			// Use server-side dry run for validation
 			dryRunOpts := v1.CreateOptions{DryRun: []string{"All"}}
 			_, err := resource.Create(context.TODO(), obj, dryRunOpts)
@@ -306,10 +351,16 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 				telemetry.K8sClientErrorCounter.WithLabelValues("applyOrCreateResource", "server_dry_run", "400").Inc()
 				return fmt.Errorf("server validation failed for %s %s: %v", obj.GetKind(), obj.GetName(), err)
 			}
-			fmt.Printf("[Server Dry Run] Validated: %s %s\n", obj.GetKind(), obj.GetName())
+			log.LogInfo("Server dry run validation successful",
+				zap.String("kind", obj.GetKind()),
+				zap.String("name", obj.GetName()),
+				zap.String("namespace", namespace))
 		} else {
 			// Client-side dry run (just log the action)
-			fmt.Printf("[Client Dry Run] Would apply %s %s in namespace %s\n", obj.GetKind(), obj.GetName(), namespace)
+			log.LogInfo("Client dry run simulation",
+				zap.String("kind", obj.GetKind()),
+				zap.String("name", obj.GetName()),
+				zap.String("namespace", namespace))
 		}
 		return nil
 	}
@@ -325,7 +376,10 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 				telemetry.K8sClientErrorCounter.WithLabelValues("applyOrCreateResource", "update_resource", "500").Inc()
 				return fmt.Errorf("failed to update %s %s: %v", obj.GetKind(), obj.GetName(), updateErr)
 			}
-			fmt.Printf("Updated: %s %s\n", obj.GetKind(), obj.GetName())
+			log.LogInfo("Resource updated",
+				zap.String("kind", obj.GetKind()),
+				zap.String("name", obj.GetName()),
+				zap.String("namespace", namespace))
 		} else {
 			// Resource doesn't exist, create it
 			_, createErr := resource.Create(context.TODO(), obj, v1.CreateOptions{})
@@ -333,7 +387,10 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 				telemetry.K8sClientErrorCounter.WithLabelValues("applyOrCreateResource", "create_resource", "500").Inc()
 				return fmt.Errorf("failed to create %s %s: %v", obj.GetKind(), obj.GetName(), createErr)
 			}
-			fmt.Printf("Created: %s %s\n", obj.GetKind(), obj.GetName())
+			log.LogInfo("Resource created",
+				zap.String("kind", obj.GetKind()),
+				zap.String("name", obj.GetName()),
+				zap.String("namespace", namespace))
 		}
 		return nil
 	})
@@ -341,12 +398,9 @@ func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 
 // PrettyPrint prints JSON formatted output of DeploymentTree
 func PrettyPrint(tree *DeploymentTree) {
-	jsonData, err := json.MarshalIndent(tree, "", "  ")
-	if err != nil {
-		fmt.Println("Error converting tree to JSON:", err)
-		return
-	}
-	fmt.Println(string(jsonData))
+	log.LogInfo("Deployment tree",
+		zap.String("namespace", tree.Namespace),
+		zap.Any("resources", tree.Resources))
 }
 
 // Store Manifests deployment data to a ConfigMap
@@ -356,14 +410,22 @@ func StoreManifestsDeployment(data map[string]string) error {
 
 // storeConfigMapData creates or updates a ConfigMap with the provided data
 func storeConfigMapData(configMapName string, data map[string]string) error {
+	log.LogInfo("Storing ConfigMap data",
+		zap.String("configmap_name", configMapName),
+		zap.Int("data_entries", len(data)))
+
 	// Ensure namespace exists first
 	clientset, dynamicClient, err := GetClientSetWithContext("its1")
 	if err != nil {
+		log.LogError("Failed to get Kubernetes client for ConfigMap storage", zap.Error(err))
 		return fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
 	// Ensure the namespace exists (without workload label as this is an internal storage operation)
 	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace, ""); err != nil {
+		log.LogError("Failed to ensure namespace for ConfigMap",
+			zap.String("namespace", KubeStellarNamespace),
+			zap.Error(err))
 		return fmt.Errorf("failed to ensure namespace for ConfigMap: %v", err)
 	}
 
@@ -694,23 +756,45 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		req.WorkloadLabel = req.ChartName
 	}
 
+	log.LogInfo("Starting Helm chart deployment",
+		zap.String("repo_name", req.RepoName),
+		zap.String("repo_url", req.RepoURL),
+		zap.String("chart_name", req.ChartName),
+		zap.String("release_name", req.ReleaseName),
+		zap.String("namespace", req.Namespace),
+		zap.String("version", req.Version),
+		zap.String("workload_label", req.WorkloadLabel),
+		zap.Bool("store", store))
+
 	// Check current context first to avoid unnecessary switching
 	cmd := exec.CommandContext(ctx, "kubectl", "config", "current-context")
 	output, err := cmd.Output()
 	if err != nil {
 		telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "get_current_context", "500").Inc()
+		log.LogError("Failed to get current kubectl context", zap.Error(err))
 		return nil, fmt.Errorf("failed to get current context: %v", err)
 	}
 
 	currentContext := strings.TrimSpace(string(output))
 	needsContextSwitch := currentContext != "wds1"
 
+	log.LogDebug("Kubectl context check",
+		zap.String("current_context", currentContext),
+		zap.Bool("needs_switch", needsContextSwitch))
+
 	// Only switch if needed
 	if needsContextSwitch {
+		log.LogInfo("Switching kubectl context",
+			zap.String("from", currentContext),
+			zap.String("to", "wds1"))
+
 		cmd = exec.CommandContext(ctx, "kubectl", "config", "use-context", "wds1")
 		if err := cmd.Run(); err != nil {
 			telemetry.InstrumentKubectlCommand(cmd, "DeployHelmChart", "wds1")
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "switch_context", "500").Inc()
+			log.LogError("Failed to switch kubectl context",
+				zap.String("target_context", "wds1"),
+				zap.Error(err))
 			return nil, fmt.Errorf("failed to switch to wds1 context: %v", err)
 		}
 
@@ -720,7 +804,9 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 			telemetry.InstrumentKubectlCommand(cmd, "DeployHelmChart", currentContext)
 			if restoreErr := restoreCmd.Run(); restoreErr != nil {
 				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "restore_context", "500").Inc()
-				fmt.Printf("Warning: failed to restore original context: %v\n", restoreErr)
+				log.LogWarn("Failed to restore original context",
+					zap.String("original_context", currentContext),
+					zap.Error(restoreErr))
 			}
 		}()
 	}
@@ -728,6 +814,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	// Get Kubernetes client to check/create namespace
 	_, dynamicClient, err := GetClientSet()
 	if err != nil {
+		log.LogError("Failed to get Kubernetes client for namespace operations", zap.Error(err))
 		return nil, fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
@@ -765,7 +852,9 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "create_namespace", "500").Inc()
 			return nil, fmt.Errorf("failed to create labeled namespace: %v", err)
 		}
-		fmt.Printf("Created namespace %s with workload label\n", req.Namespace)
+		log.LogInfo("Created namespace with workload label",
+			zap.String("namespace", req.Namespace),
+			zap.String("workload_label", req.WorkloadLabel))
 	} else {
 		// Update existing namespace to add label
 		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
@@ -794,7 +883,9 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 				if err != nil {
 					return err
 				}
-				fmt.Printf("Added workload label to existing namespace %s\n", req.Namespace)
+				log.LogInfo("Added workload label to existing namespace",
+					zap.String("namespace", req.Namespace),
+					zap.String("workload_label", req.WorkloadLabel))
 			}
 
 			return nil
@@ -802,13 +893,19 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 		if err != nil {
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "update_namespace_labels", "500").Inc()
-			fmt.Printf("Warning: failed to update namespace labels: %v\n", err)
+			log.LogWarn("Failed to update namespace labels",
+				zap.String("namespace", req.Namespace),
+				zap.Error(err))
 		}
 	}
 
 	// Initialize Helm action configuration
 	actionConfig := new(action.Configuration)
 	settings := cli.New()
+
+	log.LogInfo("Initializing Helm configuration",
+		zap.String("namespace", req.Namespace),
+		zap.String("helm_driver", os.Getenv("HELM_DRIVER")))
 
 	// Use concurrent initialization where possible
 	initDone := make(chan error, 1)
@@ -820,6 +917,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	// Wait for Helm initialization to complete
 	if err := <-initDone; err != nil {
 		telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "helm_init", "500").Inc()
+		log.LogError("Failed to initialize Helm", zap.Error(err))
 		return nil, fmt.Errorf("failed to initialize Helm: %v", err)
 	}
 
@@ -844,11 +942,24 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 	// Only add repo if it doesn't exist
 	if !repoExists {
+		log.LogInfo("Adding Helm repository",
+			zap.String("repo_name", req.RepoName),
+			zap.String("repo_url", req.RepoURL))
+
 		addRepoCmd := exec.CommandContext(ctx, "helm", "repo", "add", req.RepoName, req.RepoURL, "--force-update")
 		if out, err := addRepoCmd.CombinedOutput(); err != nil {
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "add_repo", "500").Inc()
+			log.LogError("Failed to add Helm repository",
+				zap.String("repo_name", req.RepoName),
+				zap.String("repo_url", req.RepoURL),
+				zap.String("output", string(out)),
+				zap.Error(err))
 			return nil, fmt.Errorf("failed to add helm repository: %v, output: %s", err, string(out))
 		}
+	} else {
+		log.LogDebug("Helm repository already exists",
+			zap.String("repo_name", req.RepoName),
+			zap.String("repo_url", req.RepoURL))
 	}
 
 	// Run Helm install with optimized configuration
@@ -871,23 +982,43 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	}
 	chartChan := make(chan chartResult, 1)
 
+	log.LogInfo("Locating and loading Helm chart",
+		zap.String("chart_name", req.ChartName),
+		zap.String("repo_name", req.RepoName))
+
 	go func() {
 		chartPath, err := install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
 		if err != nil {
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "locate_chart", "500").Inc()
+			log.LogError("Failed to locate Helm chart",
+				zap.String("chart_name", req.ChartName),
+				zap.String("repo_name", req.RepoName),
+				zap.Error(err))
 			chartChan <- chartResult{nil, fmt.Errorf("failed to locate chart: %v", err)}
 			return
 		}
 
+		log.LogDebug("Chart located", zap.String("chart_path", chartPath))
 		chartObj, err := loader.Load(chartPath)
+		if err != nil {
+			log.LogError("Failed to load Helm chart",
+				zap.String("chart_path", chartPath),
+				zap.Error(err))
+		}
 		chartChan <- chartResult{chartObj, err}
 	}()
 
 	// Get chart result
 	chartRes := <-chartChan
 	if chartRes.err != nil {
+		log.LogError("Failed to load chart", zap.Error(chartRes.err))
 		return nil, chartRes.err
 	}
+
+	log.LogInfo("Chart loaded successfully",
+		zap.String("chart_name", chartRes.chartObj.Metadata.Name),
+		zap.String("chart_version", chartRes.chartObj.Metadata.Version),
+		zap.String("chart_description", chartRes.chartObj.Metadata.Description))
 
 	// Prepare values for the chart
 	chartValues := make(map[string]interface{})
@@ -998,11 +1129,26 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	install.Timeout = 4 * time.Minute
 
 	// Install the chart
+	log.LogInfo("Installing Helm chart",
+		zap.String("release_name", req.ReleaseName),
+		zap.String("namespace", req.Namespace),
+		zap.String("timeout", install.Timeout.String()))
+
 	release, err := install.Run(chartRes.chartObj, chartValues)
 	if err != nil {
 		telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "install_chart", "500").Inc()
+		log.LogError("Failed to install Helm chart",
+			zap.String("release_name", req.ReleaseName),
+			zap.String("namespace", req.Namespace),
+			zap.Error(err))
 		return nil, fmt.Errorf("failed to install chart: %v", err)
 	}
+
+	log.LogInfo("Helm chart installed successfully",
+		zap.String("release_name", release.Name),
+		zap.String("namespace", release.Namespace),
+		zap.String("status", release.Info.Status.String()),
+		zap.String("version", release.Chart.Metadata.Version))
 
 	if store {
 		// Store deployment information in ConfigMap
@@ -1024,9 +1170,14 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		err = StoreHelmDeployment(helmDeployData)
 		if err != nil {
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "store_helm_deployment", "500").Inc()
-			fmt.Printf("Warning: failed to store Helm deployment data in ConfigMap: %v\n", err)
+			log.LogWarn("Failed to store Helm deployment data in ConfigMap",
+				zap.String("configmap", HelmConfigMapName),
+				zap.Error(err))
 		} else {
-			fmt.Printf("Helm deployment data stored in ConfigMap: %s\n", HelmConfigMapName)
+			log.LogInfo("Helm deployment data stored in ConfigMap",
+				zap.String("configmap", HelmConfigMapName),
+				zap.String("release_name", req.ReleaseName),
+				zap.String("namespace", req.Namespace))
 		}
 	}
 
@@ -1042,8 +1193,13 @@ type labelAddingPostRenderer struct {
 func (r *labelAddingPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
 	if renderedManifests == nil {
 		telemetry.K8sClientErrorCounter.WithLabelValues("labelAddingPostRenderer", "run", "nil_manifests").Inc()
+		log.LogError("Post-renderer received nil manifests")
 		return nil, fmt.Errorf("rendered manifests is nil")
 	}
+
+	log.LogDebug("Post-renderer processing manifests",
+		zap.String("workload_label", r.workloadLabel),
+		zap.Int("manifest_size", renderedManifests.Len()))
 
 	decoder := k8syaml.NewDocumentDecoder(io.NopCloser(renderedManifests))
 	var resultBuffer bytes.Buffer
@@ -1060,6 +1216,7 @@ func (r *labelAddingPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.B
 			break
 		}
 		if err != nil {
+			log.LogError("Error reading document from decoder", zap.Error(err))
 			return nil, err
 		}
 		buf.Write(buffer[:n])
@@ -1100,6 +1257,7 @@ func (r *labelAddingPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.B
 		// Marshal the modified document
 		modifiedDoc, err := yaml.Marshal(obj)
 		if err != nil {
+			log.LogError("Error marshaling modified document", zap.Error(err))
 			return nil, err
 		}
 
@@ -1119,7 +1277,9 @@ func HelmDeployHandler(c *gin.Context) {
 	var req HelmDeploymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/deploy", "400").Inc()
-		fmt.Printf("Error binding request: %v\n", err)
+		log.LogError("Error binding request",
+			zap.String("endpoint", "/deploy"),
+			zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
@@ -1164,12 +1324,22 @@ func HelmDeployHandler(c *gin.Context) {
 func ListGithubDeployments(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
 
+	log.LogInfo("Listing GitHub deployments", zap.String("context", contextName))
+
 	deployments, err := GetGithubDeployments(contextName)
 	if err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/github/deployments", "500").Inc()
+		log.LogError("Failed to retrieve GitHub deployments",
+			zap.String("context", contextName),
+			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
+
+	log.LogInfo("GitHub deployments retrieved successfully",
+		zap.String("context", contextName),
+		zap.Int("count", len(deployments)))
+
 	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/github/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "GitHub deployments retrieved successfully",
@@ -1182,12 +1352,22 @@ func ListGithubDeployments(c *gin.Context) {
 func ListHelmDeploymentsHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
 
+	log.LogInfo("Listing Helm deployments", zap.String("context", contextName))
+
 	deployments, err := GetHelmDeployments(contextName)
 	if err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/helm/deployments", "500").Inc()
+		log.LogError("Failed to retrieve Helm deployments",
+			zap.String("context", contextName),
+			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
+
+	log.LogInfo("Helm deployments retrieved successfully",
+		zap.String("context", contextName),
+		zap.Int("count", len(deployments)))
+
 	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/helm/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "Helm deployments retrieved successfully",
@@ -1418,8 +1598,13 @@ func DeleteHelmDeploymentHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
 	deploymentID := c.Param("id")
 
+	log.LogInfo("Deleting Helm deployment",
+		zap.String("context", contextName),
+		zap.String("deployment_id", deploymentID))
+
 	if deploymentID == "" {
 		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/helm/deployment/:id", "400").Inc()
+		log.LogWarn("Delete request missing deployment ID")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
 		return
 	}
@@ -1431,9 +1616,18 @@ func DeleteHelmDeploymentHandler(c *gin.Context) {
 		if strings.Contains(err.Error(), "not found") {
 			status = http.StatusNotFound
 		}
+		log.LogError("Failed to delete Helm deployment",
+			zap.String("context", contextName),
+			zap.String("deployment_id", deploymentID),
+			zap.Error(err))
 		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
 		return
 	}
+
+	log.LogInfo("Helm deployment deleted successfully",
+		zap.String("context", contextName),
+		zap.String("deployment_id", deploymentID))
+
 	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/helm/deployment/:id", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Helm deployment %s deleted successfully", deploymentID),

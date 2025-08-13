@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import useTheme from '../stores/themeStore';
 import getThemeStyles from '../lib/theme-utils';
 import {
@@ -435,7 +435,7 @@ const CommandPalette: React.FC = () => {
   }, [selectedIndex, filteredCommands.length]);
 
   // Command button icon variants
-  const iconVariants = {
+  const iconVariants: Variants = {
     rest: {
       rotate: 0,
       scale: 1,

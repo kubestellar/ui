@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	config "github.com/kubestellar/ui/backend/postgresql"
+	config "github.com/kubestellar/ui/backend/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 

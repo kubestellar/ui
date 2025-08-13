@@ -24,7 +24,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       <Navigate
         to="/login"
         state={{
-          errorMessage: 'Please sign in to continue',
+          infoMessage: 'Please sign in to continue',
           from: location.pathname,
         }}
         replace

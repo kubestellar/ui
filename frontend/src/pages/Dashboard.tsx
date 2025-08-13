@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useK8sQueries } from '../hooks/queries/useK8sQueries';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ClusterSkeleton from '../components/skeleton/ClusterSkeleton';
 import {
   Activity,
@@ -250,13 +250,13 @@ interface ProcessedCluster {
 }
 
 // Revised dashboard header and transition animations
-const pageAnimationVariant = {
+const pageAnimationVariant: Variants = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.6, staggerChildren: 0.1 } },
   exit: { opacity: 0, transition: { duration: 0.4 } },
 };
 
-const itemAnimationVariant = {
+const itemAnimationVariant: Variants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
   exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },

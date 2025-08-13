@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import useTheme from '../stores/themeStore';
 import { HiLanguage } from 'react-icons/hi2';
 import getThemeStyles from '../lib/theme-utils';
@@ -37,7 +37,7 @@ const LanguageSwitcher = () => {
   const isLoginPage = window.location.pathname.includes('login');
 
   // Icon animation variants
-  const iconVariants = {
+  const iconVariants: Variants = {
     rest: {
       rotate: 0,
       scale: 1,

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import {
   Activity,
   BarChart3,
@@ -24,13 +24,13 @@ import {
 } from '../hooks/queries/useMetricsQueries';
 
 // Enhanced animations matching KubeStellar theme
-const pageAnimationVariant = {
+const pageAnimationVariant: Variants = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.6, staggerChildren: 0.1 } },
   exit: { opacity: 0, transition: { duration: 0.4 } },
 };
 
-const itemAnimationVariant = {
+const itemAnimationVariant: Variants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
   exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },

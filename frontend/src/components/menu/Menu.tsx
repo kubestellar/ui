@@ -1,6 +1,6 @@
 import { useMenuData } from './useMenuData';
 import MenuItem from './MenuItem';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import useTheme from '../../stores/themeStore';
@@ -14,8 +14,9 @@ interface MenuProps {
 export interface MenuListItem {
   isLink: boolean;
   url: string;
-  icon: IconType;
+  icon: IconType | string;
   label: string;
+  isPlugin?: boolean;
 }
 
 export interface MenuItemData {
@@ -39,7 +40,7 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
   }, [location.pathname]);
 
   // Animation variants
-  const containerVariants = {
+  const containerVariants: Variants = {
     expanded: {
       width: '100%',
       transition: {

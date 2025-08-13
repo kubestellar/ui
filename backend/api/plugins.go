@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -115,6 +116,11 @@ type PluginFeedback struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type PluginManifestWithID struct {
+	ID       int                 `json:"id"`
+	Manifest *pkg.PluginManifest `json:"manifest"`
+}
+
 // ListPluginsHandler returns a list of all available plugins
 func ListPluginsHandler(c *gin.Context) {
 	log.LogInfo("Handling ListPluginsHandler request")
@@ -214,8 +220,6 @@ func InstallPluginHandler(c *gin.Context) {
 		})
 		return
 	}
-	log.LogInfo("user ID", zap.Any("id", userIDInt))
-	fmt.Println(reflect.TypeOf(userIDInt))
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -339,6 +343,7 @@ func InstallPluginHandler(c *gin.Context) {
 	// plugin not existed - add to database and retrieve the ID
 
 	var pluginID int
+	var pluginDetailsID int
 
 	// upload plugin details to plugin_details table for the 1st time
 	// check if plugin details already exist
@@ -349,7 +354,7 @@ func InstallPluginHandler(c *gin.Context) {
 		})
 	}
 	if !exist {
-		pluginDetailsID, err := pkg.AddPluginToDB(
+		pluginDetailsID, err = pkg.AddPluginToDB(
 			manifest.Metadata.Name,
 			manifest.Metadata.Version,
 			manifest.Metadata.Description,
@@ -360,7 +365,7 @@ func InstallPluginHandler(c *gin.Context) {
 			[]string{"monitoring", "cluster"},
 			"0.0.1",  // will change this after we have a versioning system
 			"0.28.0", // will change this after we have a versioning system
-			[]byte(`{"dependencies": "not mentioned"}`),
+			[]byte(`[{"dependencies": "not mentioned"}]`),
 			"unknown",
 			int(file.Size),
 		)
@@ -408,7 +413,7 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// combine the plugin name and the ID to make it readable and unique for plugin's Folder
-	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginID) // e.g. myplugin-123
+	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginID) // e.g. myplugin-123 // TODO: use pluginDetailsID instead of pluginID
 
 	// Create plugin directory in plugins folder
 	pluginDir := filepath.Join("./plugins", pluginKey)
@@ -448,11 +453,20 @@ func InstallPluginHandler(c *gin.Context) {
 	// Copy frontend directory if it exists
 	frontendSrc := filepath.Join(extractDir, "frontend")
 	frontendDest := filepath.Join(pluginDir, "frontend")
+	if err := os.MkdirAll(frontendDest, 0755); err != nil {
+		log.LogError("Failed to create plugin frontend directory", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create plugin frontend directory",
+		})
+		return
+	}
 	if _, err := os.Stat(frontendSrc); err == nil {
 		if err := copyDir(frontendSrc, frontendDest); err != nil {
 			log.LogError("Failed to copy frontend directory", zap.Error(err))
 			// Don't fail the installation for frontend copy errors
 		}
+	} else {
+		log.LogInfo("No frontend directory found in the archive", zap.String("path", frontendSrc))
 	}
 
 	// Load the plugin dynamically using the global plugin manager
@@ -1048,9 +1062,12 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 	pluginList := pluginManager.GetPluginList()
 
 	// Extract manifests
-	manifests := make([]pkg.PluginManifest, 0, len(pluginList))
+	manifests := make([]PluginManifestWithID, 0, len(pluginList))
 	for _, plugin := range pluginList {
-		manifests = append(manifests, *plugin.Manifest)
+		manifests = append(manifests, PluginManifestWithID{
+			ID:       plugin.ID,
+			Manifest: plugin.Manifest,
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -1058,6 +1075,90 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 		"count":  len(manifests),
 		"data":   manifests,
 	})
+}
+
+// ServePluginFrontendAssets serves static files from plugin frontend folder
+func ServePluginFrontendAssets(c *gin.Context) {
+	pluginName := c.Param("id") // its actually pluginname-id like cluster-monitor-13
+
+	pluginID, err := pkg.ExtractPluginPathID(pluginName)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID"})
+		return
+	}
+
+	filePath := c.Param("filepath")
+
+	// Get plugin details to find the plugin directory
+	pluginManager := GetGlobalPluginManager()
+	if pluginManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Plugin manager not available"})
+		return
+	}
+
+	// Find plugin by ID
+	plugin := findPluginByID(pluginID)
+	if plugin == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
+		return
+	}
+
+	// Get the plugin directory
+	pluginsDir := "./plugins"
+	var pluginDir string
+	entries, err := os.ReadDir(pluginsDir)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read plugins directory"})
+		return
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() && strings.HasPrefix(entry.Name(), pluginName) {
+			pluginDir = filepath.Join(pluginsDir, entry.Name())
+			break
+		}
+	}
+
+	if pluginDir == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin directory not found"})
+		return
+	}
+
+	frontendPath := filepath.Join(pluginDir, "frontend", filePath)
+
+	// Check if path is within the plugins directory
+	absPluginDir, err := filepath.Abs(pluginDir)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve plugin directory"})
+		return
+	}
+
+	absFrontendPath, err := filepath.Abs(frontendPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve frontend path"})
+		return
+	}
+
+	// Check if the requested file is within the plugin directory
+	if !strings.HasPrefix(absFrontendPath, absPluginDir) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(absFrontendPath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// Get the file extension and MIME type
+	ext := filepath.Ext(absFrontendPath)
+	mimeType := mime.TypeByExtension(ext)
+	if mimeType != "" {
+		c.Header("Content-Type", mimeType)
+	}
+
+	c.File(absFrontendPath)
 }
 
 // Helper functions
@@ -1130,6 +1231,11 @@ func extractTarGz(tarGzPath, extractPath string) error {
 
 		// Skip if it's a directory
 		if header.Typeflag == tar.TypeDir {
+			continue
+		}
+
+		// Skip macOS metadata files (._*)
+		if strings.HasPrefix(header.Name, "._") {
 			continue
 		}
 

@@ -6,8 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/installer"
+	"github.com/kubestellar/ui/backend/log"
 	"github.com/kubestellar/ui/backend/telemetry"
 	"github.com/kubestellar/ui/backend/utils"
+	"go.uber.org/zap"
 )
 
 // InstallationRequest represents the installation request parameters
@@ -34,38 +36,56 @@ type WindowsInstructions struct {
 
 // CheckPrerequisitesHandler checks if all prerequisites are installed
 func CheckPrerequisitesHandler(c *gin.Context) {
+	log.LogInfo("Checking prerequisites", zap.String("client_ip", c.ClientIP()))
 	response := installer.CheckAllPrerequisites()
+	log.LogInfo("Prerequisites check completed", zap.Bool("all_installed", response.AllInstalled))
 	c.JSON(http.StatusOK, response)
 }
 
 // InstallHandler handles the KubeStellar installation request
 func InstallHandler(c *gin.Context) {
+	log.LogInfo("Installation request received", zap.String("client_ip", c.ClientIP()))
+
 	var req InstallationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.LogError("Failed to bind JSON request", zap.Error(err))
 		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/install", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
+	log.LogInfo("Installation request", zap.String("platform", req.Platform))
+
 	// Validate platform
 	if req.Platform != "kind" && req.Platform != "k3d" {
+		log.LogError("Invalid platform specified", zap.String("platform", req.Platform))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Platform must be 'kind' or 'k3d'"})
 		return
 	}
 
 	// Handle Windows differently
 	if runtime.GOOS == "windows" {
+		log.LogInfo("Windows installation detected, providing instructions")
 		handleWindowsInstall(c, req)
 		return
 	}
 
 	// Generate an installation ID and start the installation
 	installID := utils.GenerateInstallID()
+	log.LogInfo("Starting installation", zap.String("install_id", installID), zap.String("platform", req.Platform))
+
 	installer.InitializeLogStorage(installID)
 
 	// Start installation in background
-	go installer.InstallKubeStellar(installID, req.Platform)
+	go func() {
+		log.LogInfo("Starting background installation process", zap.String("install_id", installID))
+		installer.InstallKubeStellar(installID, req.Platform)
+		log.LogInfo("Background installation process completed", zap.String("install_id", installID))
+	}()
+
 	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/install", "200").Inc()
+	log.LogInfo("Installation request processed successfully", zap.String("install_id", installID))
+
 	// Return response with install ID
 	c.JSON(http.StatusOK, InstallationResponse{
 		Success:   true,
@@ -76,13 +96,17 @@ func InstallHandler(c *gin.Context) {
 // GetLogsHandler returns the logs for a specific installation
 func GetLogsHandler(c *gin.Context) {
 	installID := c.Param("id")
+	log.LogInfo("Log request received", zap.String("install_id", installID), zap.String("client_ip", c.ClientIP()))
 
 	logs, ok := installer.GetLogs(installID)
 	if !ok {
+		log.LogError("Installation ID not found", zap.String("install_id", installID))
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/install/logs/"+installID, "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Installation ID not found"})
 		return
 	}
+
+	log.LogInfo("Successfully retrieved logs", zap.String("install_id", installID))
 	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/install/logs/"+installID, "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"id":   installID,
@@ -92,6 +116,7 @@ func GetLogsHandler(c *gin.Context) {
 
 // handleWindowsInstall provides instructions for Windows users
 func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
+	log.LogInfo("Providing Windows installation instructions", zap.String("platform", req.Platform))
 	windows := WindowsInstructions{
 		Steps: []string{
 			"1. Install WSL2 (Windows Subsystem for Linux)",
@@ -122,6 +147,8 @@ func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
 		},
 	}
 	telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/install/windows", "200").Inc()
+	log.LogInfo("Windows installation instructions provided successfully")
+
 	// Send response
 	c.JSON(http.StatusOK, InstallationResponse{
 		Success: true,
@@ -131,6 +158,8 @@ func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
 
 // getWindowsKubeflexInstructions provides kubeflex installation instructions for Windows
 func getWindowsKubeflexInstructions() *WindowsInstructions {
+	log.LogInfo("Generating Windows Kubeflex installation instructions")
+
 	return &WindowsInstructions{
 		Steps: []string{
 			"1. Install WSL2 (Windows Subsystem for Linux)",

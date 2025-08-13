@@ -1,21 +1,20 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import {
-  PluginManifest,
-  PluginInstance,
-  PluginWidgetConfig,
-  PluginNavigationItem,
-  PluginAssetConfig,
-} from './types';
+import React, { createContext, useContext, useState, useCallback, Suspense } from 'react';
+import { PluginManifest, PluginInstance } from './types';
 import { PluginAPI } from './PluginAPI';
+import { MenuListItem } from '../components/menu/Menu';
+import ProtectedRoute from '../components/ProtectedRoute';
+import LoadingFallback from '../components/LoadingFallback';
+import { RouteObject } from 'react-router-dom';
+import useTheme from '../stores/themeStore';
+import { api } from '../lib/api';
 
 interface PluginContextType {
   plugins: Map<number, PluginInstance>;
   loadedPlugins: PluginManifest[];
   loadPlugin: (manifest: PluginManifest) => Promise<void>;
   unloadPlugin: (pluginID: number) => Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getPluginWidget: (pluginID: number, widgetName: string) => React.ComponentType<any> | null;
-  getPluginNavigation: () => PluginNavigationItem[];
+  pluginMenuItems: MenuListItem[];
+  pluginRoutes: RouteObject[];
   isPluginLoaded: (pluginID: number) => boolean;
   loadAvailablePlugins: () => Promise<void>;
 }
@@ -40,75 +39,129 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const [plugins, setPlugins] = useState<Map<number, PluginInstance>>(new Map());
   const [loadedPlugins, setLoadedPlugins] = useState<PluginManifest[]>([]);
   const [pluginAPI] = useState(() => new PluginAPI());
-
-  const loadPluginAssets = useCallback(async (assets: PluginAssetConfig[], pluginID: number) => {
-    for (const asset of assets) {
-      try {
-        if (asset.type === 'css') {
-          await loadCSS(asset.path, pluginID);
-        } else if (asset.type === 'js') {
-          await loadJS(asset.path, pluginID);
-        }
-      } catch (error) {
-        console.error(`Failed to load asset ${asset.path}:`, error);
-      }
-    }
-  }, []);
+  const [pluginMenuItems, setPluginMenuItems] = useState<MenuListItem[]>([]);
+  const [pluginRoutes, setPluginRoutes] = useState<RouteObject[]>([]);
+  const { theme } = useTheme();
 
   const loadPlugin = useCallback(
     async (manifest: PluginManifest) => {
       try {
-        console.log(`Loading plugin: ${manifest.name}`);
-
-        // Check if plugin is already loaded
+        // // Check if plugin is already loaded
         if (plugins.has(manifest.id)) {
-          console.warn(`Plugin ${manifest.name} is already loaded`);
+          console.warn(`Plugin ${manifest.metadata.name} is already loaded`);
           return;
         }
 
-        // Create plugin instance
-        const pluginInstance: PluginInstance = {
-          manifest,
-          widgets: new Map(),
-          isLoaded: true,
-          loadedAt: new Date(),
-        };
-
-        // Load plugin widgets
-        if (manifest.frontend.widgets) {
-          for (const widgetConfig of manifest.frontend.widgets) {
-            const widget = await loadPluginWidget(manifest, widgetConfig);
-            if (widget) {
-              pluginInstance.widgets.set(widgetConfig.name, widget);
-            }
-          }
-        }
-
-        // Load plugin assets (CSS, JS)
-        if (manifest.frontend.assets) {
-          await loadPluginAssets(manifest.frontend.assets, manifest.id);
-        }
-
         // Update plugins map
-        setPlugins(prev => new Map(prev).set(manifest.id, pluginInstance));
+        setPlugins(prev => {
+          console.log('Map: ', prev);
 
-        console.log(`Plugin ${manifest.name} loaded successfully`);
+          return new Map(prev).set(manifest.id, {
+            manifest,
+            isLoaded: true,
+            loadedAt: new Date(),
+          });
+        });
+
+        if (manifest.spec.frontend.navigation) {
+          const items = await Promise.all(
+            manifest.spec.frontend.navigation.map(async navItem => {
+              const LoadedPluginComponent = PluginComponent(
+                `/api/plugins/${manifest.metadata.name}-${manifest.id}/frontend/dist/${manifest.spec.frontend.routes[0].component}`
+              );
+
+              const res = await api.get(
+                `/api/plugins/${manifest.metadata.name}-${manifest.id}/frontend/dist/${navItem.icon}`
+              );
+              const iconBlob = new Blob([res.data], { type: res.headers['content-type'] });
+              const iconUrl = URL.createObjectURL(iconBlob);
+
+              const Element = await LoadedPluginComponent;
+
+              const pluginRoute: RouteObject = {
+                path: `${navItem.path}-${manifest.id}`,
+                element: (
+                  <ProtectedRoute>
+                    <Suspense
+                      fallback={
+                        <LoadingFallback message="Loading Plugin Manager..." size="medium" />
+                      }
+                    >
+                      {/* pluginId is passed to interact with plugin backend api which routes are
+                      registered from its id. */}
+                      <Element pluginId={manifest.id} theme={theme} />
+                    </Suspense>
+                  </ProtectedRoute>
+                ),
+              };
+
+              setPluginRoutes(prev => {
+                const exists = prev.some(route => route.path === pluginRoute.path);
+                if (exists) {
+                  console.warn(`Plugin route already exists: ${pluginRoute.path}`);
+                  return prev;
+                }
+                const routes = [...prev, pluginRoute];
+                return routes;
+              });
+
+              return {
+                isLink: true,
+                url: `${navItem.path}-${manifest.id}`,
+                icon: iconUrl,
+                label: navItem.label,
+                isPlugin: true,
+              };
+            })
+          );
+
+          // Dont add duplicate menu items
+          setPluginMenuItems(prev => {
+            const newItems = items.filter(item => {
+              // Check if this menu item already exists
+              const exists = prev.some(
+                existingItem => existingItem.isPlugin && existingItem.url === item.url
+              );
+              if (exists) {
+                console.warn(`Plugin menu item already exists: ${item.url}`);
+                return false;
+              }
+              return true;
+            });
+
+            return [...prev, ...newItems];
+          });
+        }
+
+        console.log(`Plugin ${manifest} loaded successfully`);
       } catch (error) {
-        console.error(`Failed to load plugin ${manifest.name}:`, error);
+        console.error(`Failed to load plugin ${manifest.metadata.name}:`, error);
         throw error;
       }
     },
-    [plugins, loadPluginAssets]
+    [plugins]
   );
 
   const loadAvailablePlugins = useCallback(async () => {
     try {
       const manifests = await pluginAPI.getPluginManifests();
-      setLoadedPlugins(manifests);
+
+      const manifestsWithID = manifests.map(manifest => {
+        return {
+          ...manifest.manifest,
+          id: manifest.id,
+        };
+      });
+      setLoadedPlugins(manifestsWithID);
+
+      console.log(manifestsWithID);
 
       // Auto-load enabled plugins
-      for (const manifest of manifests) {
-        if (manifest.frontend.enabled) {
+      for (const manifest of manifestsWithID) {
+        const plugin = await pluginAPI.getPluginDetails(manifest.id);
+
+        console.log(manifest);
+        if (manifest.spec.frontend.enabled && plugin.enabled) {
           await loadPlugin(manifest);
         }
       }
@@ -126,8 +179,24 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
           return;
         }
 
-        // Remove plugin assets
-        removePluginAssets(pluginID);
+        // remove plugin routes
+        setPluginRoutes(prev => {
+          const pluginRoutePaths = plugin.manifest.spec.frontend.navigation.map(
+            item => `${item.path}-${pluginID}`
+          );
+
+          const newRoutes = prev.filter(item => !pluginRoutePaths.includes(item.path as string));
+          return newRoutes;
+        });
+
+        // remove plugin menu items
+        setPluginMenuItems(prev => {
+          const pluginRoutePaths = plugin.manifest.spec.frontend.navigation.map(
+            item => `${item.path}-${pluginID}`
+          );
+          const newMenuItems = prev.filter(item => !pluginRoutePaths.includes(item.url));
+          return newMenuItems;
+        });
 
         // Update plugins map
         setPlugins(prev => {
@@ -145,98 +214,21 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     [plugins]
   );
 
-  const loadPluginWidget = async (
-    manifest: PluginManifest,
-    widgetConfig: PluginWidgetConfig
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<React.ComponentType<any> | null> => {
+  const PluginComponent = async (pluginUrl: string) => {
     try {
-      switch (widgetConfig.type) {
-        case 'chart':
-          return createChartWidget(manifest, widgetConfig);
-        case 'table':
-          return createTableWidget(manifest, widgetConfig);
-        case 'metrics':
-          return createMetricsWidget(manifest, widgetConfig);
-        case 'custom':
-          return createCustomWidget(manifest, widgetConfig);
-        default:
-          console.warn(`Unknown widget type: ${widgetConfig.type}`);
-          return null;
-      }
+      const res = await api.get(pluginUrl);
+
+      const blob = new Blob([res.data], { type: 'application/javascript' });
+      const url = URL.createObjectURL(blob);
+
+      const module = await import(/* @vite-ignore */ url);
+
+      return module.default;
     } catch (error) {
-      console.error(`Failed to load widget ${widgetConfig.name}:`, error);
-      return null;
+      console.error(`Failed to load plugin component ${pluginUrl}:`, error);
+      throw error;
     }
   };
-
-  const loadCSS = (path: string, pluginID: number): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = `/api/plugins/${pluginID}/assets${path}`;
-      link.id = `plugin-css-${pluginID}`;
-      link.onload = () => resolve();
-      link.onerror = () => reject(new Error(`Failed to load CSS: ${path}`));
-      document.head.appendChild(link);
-    });
-  };
-
-  const loadJS = (path: string, pluginID: number): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = `/api/plugins/${pluginID}/assets${path}`;
-      script.id = `plugin-js-${pluginID}`;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load JS: ${path}`));
-      document.head.appendChild(script);
-    });
-  };
-
-  const removePluginAssets = (pluginID: number) => {
-    // Remove CSS
-    const cssElement = document.getElementById(`plugin-css-${pluginID}`);
-    if (cssElement) {
-      cssElement.remove();
-    }
-
-    // Remove JS
-    const jsElement = document.getElementById(`plugin-js-${pluginID}`);
-    if (jsElement) {
-      jsElement.remove();
-    }
-  };
-
-  const getPluginWidget = useCallback(
-    (pluginID: number, widgetName: string) => {
-      const plugin = plugins.get(pluginID);
-      if (!plugin) {
-        console.warn(`Plugin ${pluginID} not found`);
-        return null;
-      }
-
-      const widget = plugin.widgets.get(widgetName);
-      if (!widget) {
-        console.warn(`Widget ${widgetName} not found in plugin ${pluginID}`);
-        return null;
-      }
-
-      return widget;
-    },
-    [plugins]
-  );
-
-  const getPluginNavigation = useCallback(() => {
-    const navigation: PluginNavigationItem[] = [];
-
-    plugins.forEach(plugin => {
-      if (plugin.manifest.frontend.navigation) {
-        navigation.push(...plugin.manifest.frontend.navigation);
-      }
-    });
-
-    return navigation;
-  }, [plugins]);
 
   const isPluginLoaded = useCallback(
     (pluginID: number) => {
@@ -250,135 +242,11 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     loadedPlugins,
     loadPlugin,
     unloadPlugin,
-    getPluginWidget,
-    getPluginNavigation,
     isPluginLoaded,
     loadAvailablePlugins,
+    pluginMenuItems,
+    pluginRoutes,
   };
 
   return <PluginContext.Provider value={contextValue}>{children}</PluginContext.Provider>;
-};
-
-// Widget creation functions
-const createChartWidget = (manifest: PluginManifest, config: PluginWidgetConfig) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-  return React.memo(function ChartWidget(_props: any) {
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-      // Simulate loading for now
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }, []);
-
-    if (loading) {
-      return <div className="plugin-widget-loading">Loading chart...</div>;
-    }
-
-    // This would integrate with your actual chart library
-    return (
-      <div className="plugin-chart-widget">
-        <h3>{config.config.title}</h3>
-        <div className="chart-container">
-          {/* Chart implementation goes here */}
-          <div>Chart widget for {manifest.name}</div>
-        </div>
-      </div>
-    );
-  });
-};
-
-const createTableWidget = (manifest: PluginManifest, config: PluginWidgetConfig) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-  return React.memo(function TableWidget(_props: any) {
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-      // Simulate loading for now
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }, []);
-
-    if (loading) {
-      return <div className="plugin-widget-loading">Loading table...</div>;
-    }
-
-    return (
-      <div className="plugin-table-widget">
-        <h3>{config.config.title}</h3>
-        <div className="table-container">
-          {/* Table implementation goes here */}
-          <div>Table widget for {manifest.name}</div>
-        </div>
-      </div>
-    );
-  });
-};
-
-const createMetricsWidget = (_manifest: PluginManifest, config: PluginWidgetConfig) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-  return React.memo(function MetricsWidget(_props: any) {
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-      // Simulate loading for now
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }, []);
-
-    if (loading) {
-      return <div className="plugin-widget-loading">Loading metrics...</div>;
-    }
-
-    return (
-      <div className="plugin-metrics-widget">
-        <h3>{config.config.title}</h3>
-        <div className="metrics-container">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {config.config.metrics?.map((metric: any) => (
-            <div key={metric.name} className="metric-item">
-              <span className="metric-label">{metric.label}:</span>
-              <span className="metric-value">N/A</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  });
-};
-
-const createCustomWidget = (manifest: PluginManifest, config: PluginWidgetConfig) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-  return React.memo(function CustomWidget(_props: any) {
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-      // Simulate loading for now
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }, []);
-
-    if (loading) {
-      return <div className="plugin-widget-loading">Loading widget...</div>;
-    }
-
-    return (
-      <div className="plugin-custom-widget">
-        <h3>{config.config.title}</h3>
-        <div className="custom-widget-content">Custom widget for {manifest.name}</div>
-      </div>
-    );
-  });
 };
