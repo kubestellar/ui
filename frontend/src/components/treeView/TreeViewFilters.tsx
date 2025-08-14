@@ -20,9 +20,14 @@ const TreeViewFilters = memo<TreeViewFiltersProps>(
     const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
 
     const handleResourceFiltersChange = (filters: ResourceFilter) => {
-      setResourceFilters(filters);
-      if (onResourceFiltersChange) {
-        onResourceFiltersChange(filters);
+      // Only update if filters actually changed to prevent unnecessary re-renders
+      const filtersChanged = JSON.stringify(resourceFilters) !== JSON.stringify(filters);
+
+      if (filtersChanged) {
+        setResourceFilters(filters);
+        if (onResourceFiltersChange) {
+          onResourceFiltersChange(filters);
+        }
       }
     };
 

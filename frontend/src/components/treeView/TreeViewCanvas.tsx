@@ -44,6 +44,7 @@ interface TreeViewCanvasProps {
   isCollapsed: boolean;
   containerRef: React.RefObject<HTMLDivElement>;
   resourceFilters?: ResourceFilter;
+  onResourceFiltersChange?: (filters: ResourceFilter) => void;
   onToggleFullscreen?: () => void;
   isFullscreen?: boolean;
 }
@@ -63,6 +64,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
     onCollapseAll,
     isCollapsed,
     resourceFilters,
+    onResourceFiltersChange,
     onToggleFullscreen,
     isFullscreen = false,
   }) => {
@@ -104,6 +106,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
           filteredContext={filteredContext}
           onResourceDataChange={handleResourceDataChange}
           initialResourceFilters={resourceFilters}
+          onResourceFiltersChange={onResourceFiltersChange}
         />
       );
     }
