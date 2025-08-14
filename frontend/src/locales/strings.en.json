@@ -630,6 +630,7 @@
       "notAvailable": "N/A",
       "invalidDate": "Invalid Date",
       "managedClusters": "Managed Clusters",
+      "grafana":"Grafana",
       "total": "total",
       "viewAll": "View all",
       "cpuCapacity": "CPU Capacity",
@@ -2104,6 +2105,10 @@
         "title": "Managed Clusters",
         "description": "Manage Kubernetes clusters"
       },
+      "Grafana":{
+        "title":"Grafana Dashboard",
+        "description":"Grafana Dashboard"
+      },
       "workloads": {
         "title": "Workloads",
         "description": "Manage workloads across clusters"
@@ -2164,6 +2169,7 @@
     "items": {
       "home": "Home",
       "managedClusters": "Managed Clusters",
+      "Grafana":"Grafana Dashboard",
       "stagedWorkloads": "Staged Workloads",
       "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Deployed Workloads",

@@ -169,6 +169,7 @@
     "items": {
       "home": "Início",
       "managedClusters": "Clusters Gerenciados",
+      "Grafana":"Grafana",
       "stagedWorkloads": "Workloads Preparados",
       "bindingPolicies": "Políticas de binding",
       "deployedWorkloads": "Workloads Implantados",
