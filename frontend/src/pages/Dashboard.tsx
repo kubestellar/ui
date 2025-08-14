@@ -1201,14 +1201,14 @@ const K8sInfo = () => {
             to="/its"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-md active:scale-95"
           >
-            <Settings size={16}/>
+            <Settings size={16} />
             <span className="font-medium">{t('clusters.dashboard.manageClusters')}</span>
           </Link>
           <Link
             to="/resources"
             className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-all duration-200 hover:bg-green-700 hover:shadow-md active:scale-95"
           >
-            <Search size={16}/>
+            <Search size={16} />
             <span>{t('clusters.dashboard.objectExplorer')}</span>
           </Link>
         </div>
