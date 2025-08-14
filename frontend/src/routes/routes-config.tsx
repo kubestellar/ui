@@ -47,7 +47,9 @@ export const useRoutesConfig = (): RouteObject[] => {
         element: (
           <PublicRoute>
             <KubeStellarStatusChecker>
-              <Suspense fallback={<LoadingFallback message="Loading installation..." size="medium" />}>
+              <Suspense
+                fallback={<LoadingFallback message="Loading installation..." size="medium" />}
+              >
                 <InstallationPageLazy />
               </Suspense>
             </KubeStellarStatusChecker>
@@ -66,7 +68,9 @@ export const useRoutesConfig = (): RouteObject[] => {
             index: true,
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading clusters..." size="medium" />}>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading clusters..." size="medium" />}
+                >
                   <ClustersLazy />
                 </Suspense>
               </ProtectedRoute>
@@ -86,7 +90,9 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'workloads/manage',
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading Workloads..." size="medium" />}>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading Workloads..." size="medium" />}
+                >
                   <WDSLazy />
                 </Suspense>
               </ProtectedRoute>
@@ -96,7 +102,9 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'bp/manage',
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading Binding Policies..." size="medium" />}>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading Binding Policies..." size="medium" />}
+                >
                   <BPLazy />
                 </Suspense>
               </ProtectedRoute>
@@ -106,7 +114,9 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'wds/treeview',
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading Tree View..." size="medium" />}>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading Tree View..." size="medium" />}
+                >
                   <TreeViewLazy />
                 </Suspense>
               </ProtectedRoute>
@@ -116,7 +126,9 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'wecs/treeview',
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading WECS Tree View..." size="medium" />}>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading WECS Tree View..." size="medium" />}
+                >
                   <WecsTreeviewLazy />
                 </Suspense>
               </ProtectedRoute>
@@ -126,7 +138,9 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'plugins/manage',
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading Plugin Manager..." size="medium" />}>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading Plugin Manager..." size="medium" />}
+                >
                   <PluginManagerLazy />
                 </Suspense>
               </ProtectedRoute>
@@ -137,7 +151,11 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'plugins/marketplace',
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading Galaxy Marketplace..." size="medium" />}>
+                <Suspense
+                  fallback={
+                    <LoadingFallback message="Loading Galaxy Marketplace..." size="medium" />
+                  }
+                >
                   <GalaxyMarketplaceLazy />
                 </Suspense>
               </ProtectedRoute>
@@ -175,7 +193,9 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'resources',
             element: (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading resources..." size="medium" />}>
+                <Suspense
+                  fallback={<LoadingFallback message="Loading resources..." size="medium" />}
+                >
                   <ResourceFilterPageLazy />
                 </Suspense>
               </ProtectedRoute>
