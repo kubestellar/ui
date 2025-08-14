@@ -169,7 +169,7 @@
     "items": {
       "home": "首页",
       "managedClusters": "管理集群",
-      "grafana":"监控面板",
+      "grafana": "监控面板",
       "stagedWorkloads": "已暂存工作负载",
       "bindingPolicies": "绑定策略",
       "deployedWorkloads": "已部署工作负载",

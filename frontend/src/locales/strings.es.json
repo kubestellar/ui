@@ -2007,7 +2007,7 @@
     "items": {
       "home": "Inicio",
       "managedClusters": "Clústeres Administrados",
-      "grafana":"Grafana",
+      "grafana": "Grafana",
       "stagedWorkloads": "Cargas de Trabajo Preparadas",
       "bindingPolicies": "Políticas de Vinculación",
       "deployedWorkloads": "Cargas de Trabajo Desplegadas",
