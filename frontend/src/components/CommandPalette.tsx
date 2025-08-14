@@ -322,7 +322,7 @@ const CommandPalette: React.FC = () => {
       title: t('commandPalette.commands.documentation.title'),
       description: t('commandPalette.commands.documentation.description'),
       action: () =>
-        window.open('https://docs.kubestellar.io/release-0.27.2/', '_blank', 'noopener,noreferrer'),
+        window.open('https://docs.kubestellar.io/latest/', '_blank', 'noopener,noreferrer'),
       keywords: [
         'docs',
         'help',
