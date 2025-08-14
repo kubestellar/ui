@@ -15,7 +15,7 @@ const config = {
     },
   },
   customMessages: {
-    markdown: (props: any) => <MarkdownMessage {...props} />,
+    markdown: (props: { payload: { message: string } }) => <MarkdownMessage {...props} />,
   },
 };
 
