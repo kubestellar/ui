@@ -10,6 +10,11 @@ jobs:
   frontend:
     name: Frontend Checks
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +42,39 @@ jobs:
       - name: ✅ Lint Check Passed
         if: success()
         run: echo "Linting successful ✅"
+
+      - name: Locale Sync Check
+        id: locale-sync
+        working-directory: frontend
+        run: |
+          echo "=== TOKEN DEBUG INFO ==="
+          echo "GH_REPO_TOKEN length: ${#GH_REPO_TOKEN}"
+          echo "GITHUB_TOKEN length: ${#GITHUB_TOKEN}"
+          if [ -n "$GH_REPO_TOKEN" ]; then
+            echo "✅ GH_REPO_TOKEN is set (length: ${#GH_REPO_TOKEN})"
+          elif [ -n "$GITHUB_TOKEN" ]; then
+            echo "✅ GITHUB_TOKEN is set (length: ${#GITHUB_TOKEN})"
+          else
+            echo "❌ No token available"
+          fi
+          echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "PR_NUMBER: $PR_NUMBER"
+          echo "=== END TOKEN DEBUG ==="
+          npm run local-sync-check
+        env:
+          GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF: ${{ github.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_OUTPUT: ${{ github.output }}
+      - name: ✅ Locale Sync Check Passed
+        if: success()
+        run: |
+          echo "Locale sync check passed ✅"
+          echo "Has issues: ${{ steps.locale-sync.outputs.has-issues }}"
+          echo "Comment posted: ${{ steps.locale-sync.outputs.comment-posted }}"
 
       - name: Run Frontend Tests
         working-directory: frontend
