@@ -414,6 +414,7 @@ const FeaturedHeroCard = React.memo(
                       ? 'linear-gradient(135deg, #10b981, #059669)'
                       : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                   color: '#ffffff',
+                  backdropFilter: 'blur(10px)',
                   boxShadow:
                     plugin.status === 'installed'
                       ? '0 4px 20px rgba(16, 185, 129, 0.3)'
