@@ -120,8 +120,15 @@
       "demoEnvironmentRequirements": "Exigences de l'environnement de démonstration",
       "buttons": {
         "refresh": "Rafraîchir",
-        "nextInstallation": "Suivant : Installation"
-      }
+        "nextInstallation": "Suivant : Installation",
+        "checking": "Vérification en cours..."
+      },
+      "dockerDescription": "Runtime de conteneurs (version requise ≥ 20.0.0)",
+      "helmDescription": "Gestionnaire de paquets Kubernetes (version requise ≥ 3.0.0)",
+      "kindDescription": "Outil pour exécuter des clusters Kubernetes locaux (version requise ≥ 0.20.0)",
+      "kubectlDescription": "Outil en ligne de commande Kubernetes (version requise ≥ 1.27.0)",
+      "kubeflexDescription": "Outil CLI KubeFlex (version requise ≥ 0.8.0)",
+      "ocmDescription": "CLI Open Cluster Management (version requise entre 0.7 et 0.11)"
     },
     "installation": {
       "title": "Installer KubeStellar",
@@ -198,7 +205,10 @@
       "preparingInstructions": "Préparation des instructions d'installation...",
       "followInstructions": "Suivez les instructions CLI ci-dessous pour installer KubeStellar",
       "loadInstructionsFailed": "Échec du chargement des instructions d'installation. Veuillez actualiser la page et réessayer.",
-      "installationDetected": "Installation de KubeStellar détectée ! Redirection vers la page de connexion..."
+      "installationDetected": "Installation de KubeStellar détectée ! Redirection vers la page de connexion...",
+      "prerequisitesRechecked": "Prérequis revérifiés avec succès",
+      "recheckFailed": "Échec de la revérification des prérequis",
+      "recheckingPrerequisites": "Revérification des prérequis en cours..."
     }
   },
   "header": {
@@ -215,7 +225,12 @@
     "goToHome": "Aller à la page d'accueil",
     "logoAlt": "Logo KubeStellar",
     "themeToggleTip": "Alt+Q pour changer de thème",
-    "switchTheme": "Passer en mode {{mode}}"
+    "switchTheme": "Passer en mode {{mode}}",
+    "enterFullscreen": "Passer en mode plein écran",
+    "exitFullscreen": "Quitter le mode plein écran",
+    "fullscreen": "Basculer le mode plein écran",
+    "selectLanguage": "Sélectionner la langue",
+    "switchLanguage": "Changer de langue"
   },
   "login": {
     "controlPlane": "Plan de contrôle",
@@ -390,7 +405,9 @@
       "cannotDeleteUsed": "Les étiquettes sont utilisées dans une politique de liaison et ne peuvent pas être supprimées. Veuillez d'abord supprimer la politique.",
       "bulkUpdateSuccess": "Étiquettes mises à jour pour les {{count}} clusters",
       "bulkUpdatePartial": "Étiquettes mises à jour pour {{success}} clusters, échec pour {{failures}} clusters",
-      "bulkUpdateFail": "Échec de la mise à jour des étiquettes pour les {{count}} clusters"
+      "bulkUpdateFail": "Échec de la mise à jour des étiquettes pour les {{count}} clusters",
+      "bulkTooltipDisabled": "Sélectionnez au moins 2 clusters pour activer l'étiquetage en lot",
+      "bulkTooltipEnabled": "Gérer les étiquettes des clusters sélectionnés"
     },
     "dialog": {
       "selectMultipleClusters": "Sélectionner plusieurs clusters",
@@ -730,7 +747,13 @@
       "expandAll": "Développer tous les nœuds enfants de tous les nœuds parents",
       "collapseAll": "Réduire tous les nœuds enfants de tous les nœuds parents",
       "zoomIn": "Agrandir",
-      "zoomOut": "Rétrécir"
+      "zoomOut": "Rétrécir",
+      "curvy": "Courbé",
+      "edgeStyle": "Style des arêtes",
+      "exitFullscreen": "Quitter le plein écran",
+      "fullscreen": "Passer en plein écran",
+      "resetZoom": "Réinitialiser le zoom",
+      "square": "Carré"
     },
     "nodeLabel": {
       "labels": "Étiquettes :",
@@ -786,12 +809,31 @@
       "failedLoadClusterDetails": "Échec du chargement des détails du cluster.",
       "failedLoadDetails": "Échec du chargement des détails de {{type}}.",
       "apiNotImplemented": "API non implémentée pour la mise à jour du pod « {{resourceName}} »",
-      "failedFetchContainers": "Échec de la récupération de la liste des conteneurs"
+      "failedFetchContainers": "Échec de la récupération de la liste des conteneurs",
+      "failedConnectExec": "Échec de la connexion à la session d'exécution",
+      "failedFetchLogsContainers": "Échec de la récupération de la liste des conteneurs pour les journaux",
+      "failedInitExec": "Échec de l'initialisation de la session d'exécution",
+      "failedUpdate": "Échec de la mise à jour du manifeste",
+      "invalidManifest": "Format de manifeste invalide",
+      "namespaceRequired": "L'espace de noms est requis",
+      "permissionDenied": "Permission refusée",
+      "resourceNotFound": "Ressource introuvable"
     },
     "cluster": {
       "active": "Actif"
     },
-    "noManifest": "Aucun manifeste disponible"
+    "noManifest": "Aucun manifeste disponible",
+    "exec": {
+      "connected": "Connecté"
+    },
+    "logs": {
+      "currentLogs": "Journaux actuels",
+      "previousLogs": "Journaux précédents",
+      "selectLogsContainer": "Sélectionner le conteneur de journaux"
+    },
+    "success": {
+      "manifestUpdated": "Manifeste mis à jour avec succès"
+    }
   },
   "treeView": {
     "title": "Gérer les charges de travail",
@@ -825,6 +867,19 @@
       "title": "Confirmer la suppression de la ressource",
       "message": "Êtes-vous sûr de vouloir supprimer « {{name}} » ? Cette action est irréversible.",
       "confirm": "Oui, supprimer"
+    },
+    "zoomControls": {
+      "collapseAll": "Réduire tous les nœuds enfants de tous les nœuds parents",
+      "curvy": "Courbé",
+      "edgeStyle": "Style des arêtes",
+      "exitFullscreen": "Quitter le plein écran",
+      "expandAll": "Développer tous les nœuds enfants de tous les nœuds parents",
+      "fullscreen": "Passer en plein écran",
+      "groupByResource": "Grouper par ressource/type",
+      "resetZoom": "Réinitialiser le zoom",
+      "square": "Carré",
+      "zoomIn": "Zoomer",
+      "zoomOut": "Dézoomer"
     }
   },
   "quickConnect": {
@@ -1183,8 +1238,7 @@
       "title": "Étiquettes :",
       "key": "Clé",
       "value": "Valeur",
-      "add": "Ajouter",
-      "count": "{{count}} étiquettes uniques sur {{total}}"
+      "add": "Ajouter"
     },
     "creatingConnection": "Création de la connexion :",
     "previewDialog": {
@@ -1645,7 +1699,9 @@
       "successWithUser": "Connexion réussie pour l'utilisateur : {{username}}. Redirection vers {{path}}",
       "invalidCredentials": "Identifiants invalides",
       "authFailed": "Échec de l'authentification. Veuillez vérifier vos identifiants.",
-      "noToken": "Aucun jeton reçu du serveur"
+      "noToken": "Aucun jeton reçu du serveur",
+      "invalidRequest": "Requête invalide. Veuillez vérifier votre saisie et réessayer.",
+      "serverError": "Erreur serveur. Veuillez réessayer plus tard."
     }
   },
   "kubestellarData": {
@@ -1807,7 +1863,8 @@
       "noResourcesForContext": "Aucune ressource trouvée pour le contexte {{context}}",
       "resourcesFilteredOut": "Des ressources sont disponibles mais filtrées",
       "getStarted": "Commencez par créer votre première charge de travail",
-      "resourcesAvailable": "{{count}} ressources totales disponibles, mais aucune ne correspond au filtre actuel"
+      "resourcesAvailable": "{{count}} ressources totales disponibles, mais aucune ne correspond au filtre actuel",
+      "noMatchingFilters": "Aucune ressource ne correspond aux filtres actuels"
     }
   },
   "kubeconfigImport": {
@@ -1956,10 +2013,7 @@
         "title": "Gestionnaire de Plugins",
         "description": "Gérer et surveiller les plugins de KubeStellar"
       },
-      "clusters": {
-        "title": "Clusters Gérés",
-        "description": "Gérer les clusters Kubernetes"
-      },
+      "clusters": {},
       "workloads": {
         "title": "Charges de travail",
         "description": "Gérer les charges de travail entre clusters"
@@ -1996,6 +2050,18 @@
       "galaxyMarketplace": {
         "title": "Marché Galaxy KubeStellar",
         "description": "Découvrez et installez des plugins pour améliorer votre expérience KubeStellar"
+      },
+      "Grafana": {
+        "description": "Tableau de bord Grafana",
+        "title": "Tableau de bord Grafana"
+      },
+      "managedClusters": {
+        "description": "Gérer les clusters Kubernetes",
+        "title": "Clusters gérés"
+      },
+      "metricsDashboard": {
+        "description": "Surveiller les performances du système et les métriques",
+        "title": "Tableau de bord des métriques"
       }
     }
   },
@@ -2009,13 +2075,15 @@
     "items": {
       "home": "Accueil",
       "managedClusters": "Clusters Gérés",
-      "grafana": "Grafana",
       "stagedWorkloads": "Charges en attente",
       "bindingPolicies": "Politiques d'assignation",
       "deployedWorkloads": "Charges déployées",
       "pluginManager": "Gestionnaire de Plugins",
       "userManagement": "Gestion des Utilisateurs",
-      "galaxyMarketplace": "Marché Galaxy KubeStellar"
+      "galaxyMarketplace": "Marché Galaxy KubeStellar",
+      "Grafana": "Tableau de bord Grafana",
+      "metricsDashboard": "Tableau de bord des métriques",
+      "resourceExplorer": "Explorateur de ressources"
     }
   },
   "plugins": {
@@ -2064,7 +2132,8 @@
         "details": "Détails",
         "uninstall": "Désinstaller",
         "reload": "Recharger",
-        "settings": "Paramètres"
+        "settings": "Paramètres",
+        "feedback": "Commentaires"
       }
     },
     "details": {
@@ -2099,6 +2168,11 @@
         "title": "Confirmer la désactivation du plugin",
         "message": "La désactivation de \"{{name}}\" arrêtera toutes les fonctionnalités du plugin. Vous pourrez le réactiver plus tard.",
         "confirm": "Oui, désactiver"
+      },
+      "enable": {
+        "confirm": "Oui, Activer",
+        "message": "L'activation de \"{{name}}\" activera toutes les fonctionnalités du plugin et le rendra disponible à l'utilisation.",
+        "title": "Confirmer l'activation du plugin"
       }
     },
     "marketplace": {
@@ -2106,7 +2180,8 @@
       "browse": "Parcourir les plugins disponibles",
       "featured": "Plugins en vedette",
       "categories": "Catégories",
-      "search": "Rechercher dans la marketplace..."
+      "search": "Rechercher dans la marketplace...",
+      "description": "Découvrez et installez des plugins pour améliorer votre expérience KubeStellar"
     },
     "development": {
       "title": "Développement de Plugins",
@@ -2255,5 +2330,29 @@
   },
   "validation": {
     "missingRequiredFields": "Champs obligatoires manquants"
+  },
+  "resources": {
+    "applyFilters": "Appliquer les filtres",
+    "clearFilters": "Effacer les filtres",
+    "created": "Créé",
+    "filterByKind": "Filtrer par type de ressource",
+    "filterByLabel": "Filtrer par étiquette",
+    "filterByNamespace": "Filtrer par espace de noms",
+    "filterByStatus": "Filtrer par statut",
+    "kind": "Type",
+    "labels": "Étiquettes",
+    "namespace": "Espace de noms",
+    "noLabelsFound": "Aucune étiquette trouvée",
+    "noMatchingFilters": "Aucune ressource ne correspond aux filtres actuels",
+    "noResourcesFound": "Aucune ressource trouvée correspondant aux critères",
+    "refresh": "Actualiser",
+    "results": "Résultats",
+    "search": "Rechercher des ressources...",
+    "selectKind": "Sélectionner un type / objet",
+    "selectNamespace": "Sélectionner un espace de noms",
+    "selectResourceAndNamespace": "Sélectionnez un type de ressource et un espace de noms pour commencer",
+    "status": "Statut",
+    "title": "Explorateur de ressources",
+    "toggleFilters": "Basculer les filtres"
   }
 }
