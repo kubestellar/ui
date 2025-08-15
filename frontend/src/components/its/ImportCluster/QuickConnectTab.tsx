@@ -105,24 +105,13 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     availableClustersLoading,
     fetchAvailableClusters,
   ]); // Include all dependencies
-  useEffect(() => {
-    return () => {
-      // This runs when component unmounts (tab switch)
-      if (showLogs && onboardingStatus === 'processing') {
-        // User switched tabs during onboarding
-        setOnboardingStatus('failed');
-        setOnboardingError('Onboarding interrupted by tab switch');
-        setManualLoading(false); // Reset loading state
-      }
-    };
-  }, [showLogs, onboardingStatus, setOnboardingStatus, setOnboardingError, setManualLoading]);
 
   // This function will be called when the onboarding is completed via logs
-  const handleOnboardingComplete = () => {
+  const handleOnboardingComplete = (status: 'success' | 'failed') => {
     setTimeout(() => {
       setShowLogs(false);
       // Only set success command if onboarding was successful
-      if (onboardingStatus === 'success' && !manualCommand) {
+      if (status === 'success' && !manualCommand) {
         const successCommand = {
           clusterName: formData.clusterName,
           token: '',
@@ -134,7 +123,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
           setManualCommand(successCommand);
           setSnackbar({
             open: true,
-            message: 'Cluster onboarded successfully!',
+            message: `Cluster '${formData.clusterName}' onboarded successfully!`,
             severity: 'success',
           });
         }, 100);

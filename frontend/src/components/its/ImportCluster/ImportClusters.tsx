@@ -383,17 +383,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       });
 
       console.log('[DEBUG] Onboarding initiated successfully');
-
-      setTimeout(() => {
-        if (!manualCommand) {
-          setManualCommand({
-            clusterName: clusterName,
-            token: '',
-            command:
-              'Cluster onboarded successfully! The cluster is now being added to the platform.',
-          });
-        }
-      }, 5000);
     } catch (error) {
       console.error('[DEBUG] Cluster onboarding error details:', error);
       let errorMessage = 'An unknown error occurred.';
