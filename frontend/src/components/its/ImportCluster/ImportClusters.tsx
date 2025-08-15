@@ -383,7 +383,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       });
 
       console.log('[DEBUG] Onboarding initiated successfully');
-
     } catch (error) {
       console.error('[DEBUG] Cluster onboarding error details:', error);
       let errorMessage = 'An unknown error occurred.';
