@@ -68,6 +68,9 @@ const Navbar = () => {
             <li>
               <Link to="/wds">{t('navbar.wds')}</Link>
             </li>
+            <li>
+              <Link to="/grafana">Grafana Dashboard</Link>
+            </li>
           </ul>
         </div>
         <Link to="/" className="btn btn-ghost text-xl">
@@ -81,6 +84,9 @@ const Navbar = () => {
           </li>
           <li>
             <Link to="/wds">{t('navbar.wds')}</Link>
+          </li>
+          <li>
+            <Link to="/grafana">Grafana Dashboard</Link>
           </li>
         </ul>
       </div>

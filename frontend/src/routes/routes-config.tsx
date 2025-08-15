@@ -6,6 +6,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import PublicRoute from '../components/PublicRoute';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 import UserManagement from '../components/admin/UserManagement';
+import { usePlugins } from '../plugins/PluginLoader';
 
 const WDSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/WDS'));
 const BPLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/BP'));
@@ -22,7 +23,7 @@ const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Das
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
 const MetricsDashboardLazy = lazy(() => import('../components/MetricsDashboard'));
 const ResourceFilterPageLazy = lazy(() => import('../pages/ResourceFilterPage'));
-import { usePlugins } from '../plugins/PluginLoader';
+const GrafanaDashboardPageLazy = lazy(() => import('../pages/GrafanaDashboardPage'));
 
 export const useRoutesConfig = (): RouteObject[] => {
   const { pluginRoutes } = usePlugins();
@@ -174,6 +175,16 @@ export const useRoutesConfig = (): RouteObject[] => {
               <ProtectedRoute>
                 <Suspense fallback={<LoadingFallback message="Loading metrics..." size="medium" />}>
                   <MetricsDashboardLazy />
+                </Suspense>
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'grafana',
+            element: (
+              <ProtectedRoute>
+                <Suspense fallback={<LoadingFallback message="Loading Grafana..." size="medium" />}>
+                  <GrafanaDashboardPageLazy />
                 </Suspense>
               </ProtectedRoute>
             ),

@@ -77,6 +77,9 @@ func main() {
 	// Add Zap middleware first
 	router.Use(ZapMiddleware())
 
+	// Setup metrics routes
+	api.SetupMetricsRoutes(router, logger)
+
 	logger.Info("KubestellarUI application started")
 
 	// CORS Middleware

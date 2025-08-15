@@ -102,7 +102,7 @@ const initialPrerequisites: Prerequisite[] = [
     maxVersion: '0.11.0',
     installCommand:
       'bash <(curl -L https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh) 0.10.1',
-    installUrl: 'https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/',
+    installUrl: 'https://docs.kubestellar.io/latest/direct/pre-reqs/',
     versionCommand: 'clusteradm version',
     status: PrereqStatus.Checking,
     aliasNames: ['ocm cli', 'ocmcli'],
@@ -1211,7 +1211,7 @@ const InstallationPage = () => {
                 {t('installationPage.footer.github')}
               </a>
               <a
-                href="https://docs.kubestellar.io/release-0.27.2/direct/get-started/"
+                href="https://docs.kubestellar.io/latest/direct/get-started/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`group flex items-center text-sm font-medium transition-colors ${
@@ -1485,7 +1485,7 @@ const InstallationPage = () => {
                   className={`mt-6 border-t pt-6 ${isDark ? 'border-slate-800' : 'border-gray-200'}`}
                 >
                   <a
-                    href="https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/"
+                    href="https://docs.kubestellar.io/latest/direct/pre-reqs/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`group flex items-center transition-colors ${
@@ -1742,7 +1742,7 @@ const InstallationPage = () => {
                             )}
                           </p>
                           <a
-                            href="https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/"
+                            href="https://docs.kubestellar.io/latest/direct/pre-reqs/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-500 hover:text-white"

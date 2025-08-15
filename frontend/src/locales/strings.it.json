@@ -613,6 +613,7 @@
       "notAvailable": "N/D",
       "invalidDate": "Data non valida",
       "managedClusters": "Cluster gestiti",
+      "grafana": "Grafana",
       "total": "totale",
       "viewAll": "Vedi tutto",
       "cpuCapacity": "Capacità CPU",
@@ -2106,6 +2107,7 @@
     "items": {
       "home": "Home",
       "managedClusters": "Cluster Gestiti",
+      "grafana": "Grafana",
       "remoteClusters": "Cluster Remoti",
       "stagedWorkloads": "Carichi di Lavoro In Preparazione",
       "bindingPolicies": "Policy di Binding",
