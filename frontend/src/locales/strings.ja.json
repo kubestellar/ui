@@ -613,6 +613,7 @@
       "notAvailable": "該当なし",
       "invalidDate": "無効な日付",
       "managedClusters": "管理中のクラスター",
+      "grafana": "グラファナ",
       "total": "合計",
       "viewAll": "すべて表示",
       "cpuCapacity": "CPUキャパシティ",
@@ -2125,7 +2126,8 @@
       "pluginManager": "プラグインマネージャー",
       "userManagement": "ユーザー管理",
       "galaxyMarketplace": "ギャラクシーマーケットプレイス",
-      "managedClusters": "管理クラスター"
+      "managedClusters": "管理クラスター",
+      "grafana": "グラファナ"
     }
   },
   "plugins": {

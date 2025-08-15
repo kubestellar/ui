@@ -160,7 +160,13 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   }, []);
 
   const handleResourceFiltersChange = useCallback((filters: ResourceFilter) => {
-    setResourceFilters(filters);
+    // Only update if filters actually changed to prevent unnecessary re-renders
+    setResourceFilters(prevFilters => {
+      if (JSON.stringify(prevFilters) === JSON.stringify(filters)) {
+        return prevFilters; // No change, return same reference
+      }
+      return filters;
+    });
   }, []);
 
   // Update node styles when theme or highlighting changes
@@ -188,7 +194,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
         position: isFullscreen ? 'fixed' : 'relative',
         top: isFullscreen ? 0 : 'auto',
         left: isFullscreen ? 0 : 'auto',
-        zIndex: isFullscreen ? 9999 : 'auto',
+        zIndex: isFullscreen ? 1300 : 'auto',
         backgroundColor: isFullscreen ? (theme === 'dark' ? '#0f172a' : '#ffffff') : 'transparent',
       }}
     >
@@ -221,11 +227,13 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
           />
         )}
 
-        <TreeViewFilters
-          filteredContext={filteredContext}
-          resources={allResources}
-          onResourceFiltersChange={handleResourceFiltersChange}
-        />
+        {viewMode !== 'list' && (
+          <TreeViewFilters
+            filteredContext={filteredContext}
+            resources={allResources}
+            onResourceFiltersChange={handleResourceFiltersChange}
+          />
+        )}
 
         <Box sx={{ width: '100%', height: 'calc(100% - 80px)', position: 'relative' }}>
           <TreeViewCanvas
@@ -243,6 +251,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             isCollapsed={isCollapsed}
             containerRef={containerRef}
             resourceFilters={resourceFilters}
+            onResourceFiltersChange={handleResourceFiltersChange}
             onToggleFullscreen={handleToggleFullscreen}
             isFullscreen={isFullscreen}
           />

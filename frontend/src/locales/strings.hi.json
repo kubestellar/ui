@@ -630,6 +630,7 @@
       "notAvailable": "उपलब्ध नहीं",
       "invalidDate": "अमान्य दिनांक",
       "managedClusters": "प्रबंधित क्लस्टर्स",
+      "grafana": "ग्राफाना",
       "total": "कुल",
       "viewAll": "सभी देखें",
       "cpuCapacity": "CPU क्षमता",
@@ -2145,6 +2146,7 @@
         "title": "प्रबंधित क्लस्टर",
         "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
       },
+
       "metricsDashboard": {
         "title": "मेट्रिक्स डैशबोर्ड",
         "description": "सिस्टम प्रदर्शन और मेट्रिक्स मॉनिटर करें"

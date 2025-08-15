@@ -57,12 +57,14 @@ interface ListViewComponentProps {
     totalCount: number;
   }) => void;
   initialResourceFilters?: ResourceFilter;
+  onResourceFiltersChange?: (filters: ResourceFilter) => void;
 }
 
 const ListViewComponent = ({
   filteredContext = 'all',
   onResourceDataChange,
   initialResourceFilters = {},
+  onResourceFiltersChange,
 }: ListViewComponentProps) => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
@@ -80,14 +82,32 @@ const ListViewComponent = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(25);
 
-  // Add resource filters state
+  // Add resource filters state - use a ref to track if this is the initial mount
   const [resourceFilters, setResourceFilters] = useState<ResourceFilter>(initialResourceFilters);
   const prevFiltersRef = useRef({ filteredContext, resourceFilters: initialResourceFilters });
+  const isInitialMountRef = useRef(true);
+  const lastInitialFiltersRef = useRef<ResourceFilter>(initialResourceFilters);
 
-  // Initialize filters from props when they change
+  // Initialize filters from props only on mount or meaningful changes from parent
   useEffect(() => {
-    setResourceFilters(initialResourceFilters);
-  }, [initialResourceFilters]);
+    // On initial mount, always use the provided filters
+    if (isInitialMountRef.current) {
+      setResourceFilters(initialResourceFilters);
+      lastInitialFiltersRef.current = initialResourceFilters;
+      isInitialMountRef.current = false;
+      return;
+    }
+
+    // Only update if the initialResourceFilters actually changed from what we last received
+    // This prevents loops where parent updates filters in response to our onResourceFiltersChange
+    const initialFiltersChanged =
+      JSON.stringify(lastInitialFiltersRef.current) !== JSON.stringify(initialResourceFilters);
+
+    if (initialFiltersChanged && Object.keys(initialResourceFilters).length > 0) {
+      setResourceFilters(initialResourceFilters);
+      lastInitialFiltersRef.current = initialResourceFilters;
+    }
+  }, [initialResourceFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Add useEffect to notify parent of resource data changes
   useEffect(() => {
@@ -226,10 +246,11 @@ const ListViewComponent = ({
               kind: item.kind || kind,
               name: item.name,
               namespace: item.namespace || '',
+              labels: item.labels || {},
               project: 'default',
               source: sourceUrl,
               destination: `in-cluster/${item.namespace || 'default'}`,
-              context: context, // Add context information
+              context: context,
             });
           });
         });
@@ -255,6 +276,7 @@ const ListViewComponent = ({
                 kind: item.kind || kind,
                 name: item.name,
                 namespace: item.namespace || namespace,
+                labels: item.labels || {}, // Include labels from SSE data
                 project: 'default',
                 source: sourceUrl,
                 destination: `in-cluster/${item.namespace || namespace}`,
@@ -329,6 +351,7 @@ const ListViewComponent = ({
                   kind: item.kind || 'Unknown',
                   name: item.name || 'unknown',
                   namespace: item.namespace || 'Cluster',
+                  labels: item.labels || {}, // Include labels from SSE progress data
                   project: 'default',
                   source: sourceUrl,
                   destination: `in-cluster/${item.namespace || 'default'}`,
@@ -592,7 +615,16 @@ const ListViewComponent = ({
 
   // Handle resource filter changes
   const handleResourceFiltersChange = (filters: ResourceFilter) => {
-    setResourceFilters(filters);
+    // Only update if filters actually changed to prevent unnecessary re-renders and loops
+    const filtersChanged = JSON.stringify(resourceFilters) !== JSON.stringify(filters);
+
+    if (filtersChanged) {
+      setResourceFilters(filters);
+      // Notify parent component about filter changes
+      if (onResourceFiltersChange) {
+        onResourceFiltersChange(filters);
+      }
+    }
   };
 
   return (
