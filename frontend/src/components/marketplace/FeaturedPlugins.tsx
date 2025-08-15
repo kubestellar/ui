@@ -297,9 +297,9 @@ const FeaturedHeroCard = React.memo(
             </div>
 
             <div className="flex w-full flex-wrap justify-center gap-2">
-              {plugin.tags
-                ?.slice(0, 3)
-                .map(tag => <PluginTag key={tag} tag={tag} color={getTagColor(tag)} />)}
+              {plugin.tags?.slice(0, 3).map(tag => (
+                <PluginTag key={tag} tag={tag} color={getTagColor(tag)} />
+              ))}
             </div>
 
             <div className="mt-2 flex flex-col items-center gap-2">
@@ -414,6 +414,7 @@ const FeaturedHeroCard = React.memo(
                       ? 'linear-gradient(135deg, #10b981, #059669)'
                       : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                   color: '#ffffff',
+                  backdropFilter: 'blur(10px)',
                   boxShadow:
                     plugin.status === 'installed'
                       ? '0 4px 20px rgba(16, 185, 129, 0.3)'
