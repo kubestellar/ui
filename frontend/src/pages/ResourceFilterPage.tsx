@@ -102,7 +102,7 @@ const ResourceFilterPage: React.FC = () => {
   }));
 
   // Handler for Autocomplete component
-  const handleKindChange = (event: React.SyntheticEvent, value: ResourceKind | null) => {
+  const handleKindChange = (_event: React.SyntheticEvent, value: ResourceKind | null) => {
     setSelectedKind(value);
   };
 
