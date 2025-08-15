@@ -20,7 +20,7 @@ interface ColorScheme {
 
 interface OnboardingLogsDisplayProps {
   clusterName: string;
-  onComplete: () => void;
+  onComplete: (status: 'success' | 'failed') => void;
   theme: string;
   colors: ColorScheme;
   setOnboardingStatus: (status: 'idle' | 'processing' | 'success' | 'failed') => void;
@@ -79,17 +79,17 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
             setLogs(prevLogs => [...prevLogs, data]);
 
             // Check for completion status
-            if (data.status === 'Completed' || data.status === 'Success') {
+            if (data.status === 'Completed') {
               setOnboardingStatus('success');
               setOnboardingError(null);
               setTimeout(() => {
-                onComplete();
+                onComplete('success');
               }, 1000);
             } else if (data.status === 'Error' || data.status === 'Failed') {
               setOnboardingStatus('failed');
               setOnboardingError(data.message || 'Onboarding failed');
               setTimeout(() => {
-                onComplete();
+                onComplete('failed');
               }, 1000);
             }
           } catch (err) {
@@ -97,7 +97,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
             console.error('Error parsing WebSocket message:', err);
             setOnboardingStatus('failed');
             setOnboardingError('Failed to parse response');
-            onComplete();
+            onComplete('failed');
           }
         };
 
