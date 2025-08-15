@@ -22,6 +22,8 @@ import {
   Collapse,
   IconButton,
   Tooltip,
+  Autocomplete,
+  TextField,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../stores/themeStore';
@@ -31,8 +33,7 @@ import { darkTheme, lightTheme } from '../lib/theme-utils';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { ResourceItem } from '../components/ListViewComponent';
-
-// Define a proper type for the Resource objects from filteredResources
+//
 interface Resource {
   kind: string;
   metadata?: {
@@ -40,11 +41,19 @@ interface Resource {
     namespace?: string;
     uid?: string;
     creationTimestamp?: string;
-    [key: string]: unknown; // Changed from 'any' to 'unknown'
+    [key: string]: unknown;
   };
   status?: string;
   labels?: Record<string, string>;
-  [key: string]: unknown; // Changed from 'any' to 'unknown'
+  [key: string]: unknown;
+}
+
+// Define the type for a single resource kind object for Autocomplete
+interface ResourceKind {
+  name: string;
+  kind: string;
+  group: string;
+  version: string;
 }
 
 // Utility to safely render values as strings
@@ -66,7 +75,8 @@ const ResourceFilterPage: React.FC = () => {
     applyFilters,
   } = useResourceFilters();
 
-  const [selectedKind, setSelectedKind] = useState<string>('');
+  // State for Autocomplete (object or null)
+  const [selectedKind, setSelectedKind] = useState<ResourceKind | null>(null);
   const [selectedNamespace, setSelectedNamespace] = useState<string>('');
   const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
   const [showFilters, setShowFilters] = useState(true);
@@ -91,8 +101,9 @@ const ResourceFilterPage: React.FC = () => {
     metadata: resource.metadata || {},
   }));
 
-  const handleKindChange = (event: SelectChangeEvent) => {
-    setSelectedKind(event.target.value);
+  // Handler for Autocomplete component
+  const handleKindChange = (event: React.SyntheticEvent, value: ResourceKind | null) => {
+    setSelectedKind(value);
   };
 
   const handleNamespaceChange = (event: SelectChangeEvent) => {
@@ -104,15 +115,17 @@ const ResourceFilterPage: React.FC = () => {
   }, []);
 
   const handleApplyFilters = useCallback(async () => {
+    // Use selectedKind.name
     if (selectedKind && selectedNamespace) {
-      await applyFilters(selectedKind, selectedNamespace, resourceFilters);
+      await applyFilters(selectedKind.name, selectedNamespace, resourceFilters);
     }
   }, [selectedKind, selectedNamespace, resourceFilters, applyFilters]);
 
   const handleRefresh = useCallback(async () => {
+    // Use selectedKind.name
     if (selectedKind && selectedNamespace) {
       setIsRefreshing(true);
-      await applyFilters(selectedKind, selectedNamespace, resourceFilters);
+      await applyFilters(selectedKind.name, selectedNamespace, resourceFilters);
       setIsRefreshing(false);
     }
   }, [selectedKind, selectedNamespace, resourceFilters, applyFilters]);
@@ -158,7 +171,7 @@ const ResourceFilterPage: React.FC = () => {
   };
 
   const filteredNamespaces = namespaces.filter(
-    ns => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
+    (ns: { name: string }) => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
   );
 
   return (
@@ -243,78 +256,66 @@ const ResourceFilterPage: React.FC = () => {
         >
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6} md={4}>
-              <FormControl
-                fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: isDark ? darkTheme.element.input : lightTheme.element.input,
-                    color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-                    borderRadius: '8px',
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
-                  },
-                }}
-              >
-                <InputLabel id="resource-kind-label">{t('resources.selectKind')}</InputLabel>
-                <Select
-                  labelId="resource-kind-label"
-                  value={selectedKind}
-                  label={t('resources.selectKind')}
-                  onChange={handleKindChange}
-                  MenuProps={{
-                    PaperProps: {
-                      component: Paper,
-                      elevation: 6,
-                      sx: {
-                        backgroundColor: isDark ? '#1f2937' : '#fff', // Fully opaque
+              <Autocomplete
+                options={resourceKinds as ResourceKind[]}
+                getOptionLabel={option => option.kind}
+                value={selectedKind}
+                onChange={handleKindChange}
+                isOptionEqualToValue={(option, value) => option.name === value.name}
+                PaperComponent={props => (
+                  <Paper
+                    elevation={6}
+                    {...props}
+                    sx={{
+                      backgroundColor: isDark ? '#1f2937' : '#fff',
+                      color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                      boxShadow: isDark
+                        ? '0px 5px 15px rgba(0, 0, 0, 0.4)'
+                        : '0px 5px 15px rgba(0, 0, 0, 0.2)',
+                      borderRadius: '8px',
+                      border: isDark
+                        ? '1px solid rgba(255, 255, 255, 0.1)'
+                        : '1px solid rgba(0, 0, 0, 0.05)',
+                    }}
+                  />
+                )}
+                renderOption={(props, option, { selected }) => (
+                  <li
+                    {...props}
+                    style={{
+                      ...props.style,
+                      backgroundColor: selected
+                        ? isDark
+                          ? 'rgba(59, 130, 246, 0.15)'
+                          : 'rgba(59, 130, 246, 0.08)'
+                        : undefined,
+                    }}
+                  >
+                    {option.kind}
+                  </li>
+                )}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label={t('resources.selectKind')}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: isDark
+                          ? darkTheme.element.input
+                          : lightTheme.element.input,
                         color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-                        boxShadow: isDark
-                          ? '0px 5px 15px rgba(0, 0, 0, 0.4)'
-                          : '0px 5px 15px rgba(0, 0, 0, 0.2)',
-                        maxHeight: 300,
                         borderRadius: '8px',
-                        border: isDark
-                          ? '1px solid rgba(255, 255, 255, 0.1)'
-                          : '1px solid rgba(0, 0, 0, 0.05)',
-                        opacity: 1,
                       },
-                    },
-                  }}
-                >
-                  {resourceKinds.map(kind => (
-                    <MenuItem
-                      key={`${kind.group}/${kind.version}/${kind.kind}`}
-                      value={kind.name}
-                      sx={{
-                        '&:hover': {
-                          backgroundColor: isDark
-                            ? 'rgba(255, 255, 255, 0.08)'
-                            : 'rgba(0, 0, 0, 0.04)',
-                        },
-                        '&.Mui-selected': {
-                          backgroundColor: isDark
-                            ? 'rgba(59, 130, 246, 0.15)'
-                            : 'rgba(59, 130, 246, 0.08)',
-                          '&:hover': {
-                            backgroundColor: isDark
-                              ? 'rgba(59, 130, 246, 0.25)'
-                              : 'rgba(59, 130, 246, 0.12)',
-                          },
-                        },
-                      }}
-                    >
-                      {kind.kind}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                      '& .MuiInputLabel-root': {
+                        color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                      },
+                    }}
+                  />
+                )}
+              />
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
@@ -363,7 +364,7 @@ const ResourceFilterPage: React.FC = () => {
                     },
                   }}
                 >
-                  {filteredNamespaces.map(ns => (
+                  {filteredNamespaces.map((ns: { name: string }) => (
                     <MenuItem
                       key={ns.name}
                       value={ns.name}
@@ -415,7 +416,7 @@ const ResourceFilterPage: React.FC = () => {
             borderRadius: '8px',
           }}
         >
-          {error}
+          {error as string}
         </Alert>
       )}
 
@@ -610,13 +611,14 @@ const ResourceFilterPage: React.FC = () => {
                                   <span>{t('resources.created')}</span>
                                   <span style={{ fontWeight: 500 }}>
                                     {new Date(resource.metadata.creationTimestamp).toLocaleString(
-                                      undefined,
+                                      'en-IN',
                                       {
                                         day: 'numeric',
                                         month: 'short',
                                         year: 'numeric',
                                         hour: '2-digit',
                                         minute: '2-digit',
+                                        hour12: true,
                                       }
                                     )}
                                   </span>
