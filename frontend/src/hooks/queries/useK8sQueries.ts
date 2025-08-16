@@ -16,6 +16,7 @@ interface PodHealthResponse {
   totalPods: number;
   healthyPods: number;
   healthPercent: number;
+  context: string;
 }
 
 // New interfaces for cluster metrics
@@ -70,18 +71,20 @@ export const useK8sQueries = () => {
     });
   };
 
-  const usePodHealthQuery = (options?: QueryOptions) => {
+  const usePodHealthQuery = (contextName?: string, options?: QueryOptions) => {
     return useQuery<PodHealthResponse, Error>({
-      queryKey: ['pod-health'],
+      queryKey: ['pod-health', contextName],
       queryFn: async () => {
-        const response = await api.get('/api/metrics/pod-health');
+        const params = contextName ? { context: contextName } : {};
+        const response = await api.get('/api/metrics/pod-health', { params });
         return response.data;
       },
       staleTime: options?.staleTime || 10000, // Default 10 seconds
       gcTime: options?.cacheTime || 300000, // Default 5 minutes
       refetchInterval: options?.refetchInterval,
       retry: options?.retry !== undefined ? options?.retry : 1,
-      enabled: options?.enabled !== undefined ? options.enabled : true,
+      retryDelay: 5000, // Wait 5 seconds between retries
+      enabled: !!contextName && options?.enabled !== false, // Only run if context is provided
     });
   };
 

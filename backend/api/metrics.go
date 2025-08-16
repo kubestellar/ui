@@ -362,90 +362,73 @@ func GetPodHealthMetrics(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("GetPodHealthMetrics handler called (aggregate all contexts)")
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		home := os.Getenv("HOME")
-		if home == "" {
-			home = os.Getenv("USERPROFILE") // Windows
+	// Get context from query parameter or use default
+	contextName := c.Query("context")
+	if contextName == "" {
+		// Use current context from kubeconfig
+		kubeconfig := os.Getenv("KUBECONFIG")
+		if kubeconfig == "" {
+			home := os.Getenv("HOME")
+			if home == "" {
+				home = os.Getenv("USERPROFILE") // Windows
+			}
+			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
 		}
-		kubeconfig = fmt.Sprintf("%s/.kube/config", home)
+
+		config, err := clientcmd.LoadFromFile(kubeconfig)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load kubeconfig", "details": err.Error()})
+			return
+		}
+		contextName = config.CurrentContext
 	}
 
-	config, err := clientcmd.LoadFromFile(kubeconfig)
+	fmt.Printf("GetPodHealthMetrics handler called for context: %s\n", contextName)
+
+	// Get client for specific context
+	clientset, _, err := k8s.GetClientSetWithContext(contextName)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load kubeconfig", "details": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get client for context", "details": err.Error()})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// List namespaces
+	nsList, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list namespaces", "details": err.Error()})
 		return
 	}
 
 	totalPods := 0
 	healthyPods := 0
 
-	// Use a wait group to parallelize pod health checks
-	var wg sync.WaitGroup
-	var resultLock sync.Mutex
-	semaphore := make(chan struct{}, 5) // Limit concurrency to 5 simultaneous contexts
-
-	for contextName := range config.Contexts {
-		wg.Add(1)
-		go func(contextName string) {
-			defer wg.Done()
-
-			// Acquire semaphore
-			semaphore <- struct{}{}
-			defer func() { <-semaphore }()
-
-			fmt.Printf("Checking context: %s\n", contextName)
-			clientset, _, err := k8s.GetClientSetWithContext(contextName)
-			if err != nil {
-				fmt.Printf("Error getting client for context %s: %v\n", contextName, err)
-				return
-			}
-
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-
-			nsList, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-			if err != nil {
-				fmt.Printf("Error listing namespaces in context %s: %v\n", contextName, err)
-				return
-			}
-
-			localTotalPods := 0
-			localHealthyPods := 0
-
-			for _, ns := range nsList.Items {
-				podList, err := clientset.CoreV1().Pods(ns.Name).List(ctx, metav1.ListOptions{})
-				if err != nil {
-					fmt.Printf("Error listing pods in namespace %s (context %s): %v\n", ns.Name, contextName, err)
-					continue
-				}
-				for _, pod := range podList.Items {
-					localTotalPods++
-					if pod.Status.Phase == "Running" {
-						allReady := true
-						for _, cs := range pod.Status.ContainerStatuses {
-							if !cs.Ready {
-								allReady = false
-								break
-							}
-						}
-						if allReady {
-							localHealthyPods++
-						}
+	// Check pods in each namespace
+	for _, ns := range nsList.Items {
+		podList, err := clientset.CoreV1().Pods(ns.Name).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			fmt.Printf("Error listing pods in namespace %s: %v\n", ns.Name, err)
+			continue
+		}
+		
+		for _, pod := range podList.Items {
+			totalPods++
+			if pod.Status.Phase == "Running" {
+				allReady := true
+				for _, cs := range pod.Status.ContainerStatuses {
+					if !cs.Ready {
+						allReady = false
+						break
 					}
 				}
+				if allReady {
+					healthyPods++
+				}
 			}
-
-			// Update the global counters with a lock
-			resultLock.Lock()
-			totalPods += localTotalPods
-			healthyPods += localHealthyPods
-			resultLock.Unlock()
-		}(contextName)
+		}
 	}
-
-	wg.Wait()
 
 	healthPercent := 0
 	if totalPods > 0 {
@@ -456,6 +439,7 @@ func GetPodHealthMetrics(c *gin.Context) {
 		"totalPods":     totalPods,
 		"healthyPods":   healthyPods,
 		"healthPercent": healthPercent,
+		"context":       contextName,
 	}
 
 	// Update cache
