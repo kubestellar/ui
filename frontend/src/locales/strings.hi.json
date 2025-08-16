@@ -2140,7 +2140,7 @@
       },
       "galaxyMarketplace": {
         "title": "गैलेक्सी मार्केटप्लेस",
-        "description": "गैलेक्सी मार्केटप्लेस से प्लगइन खोजें और इंस्टॉल करें"
+        "description": "गैलेक्सी मार्केटप्लेस से प्लगइन्स खोजें और इंस्टॉल करें"
       },
       "managedClusters": {
         "title": "प्रबंधित क्लस्टर",
@@ -2164,7 +2164,7 @@
     "catalogs": {
       "main": "मुख्य",
       "management": "प्रबंधन",
-      "plugins": "Plugins",
+      "plugins": "प्लगइन्स",
       "admin": "प्रशासन"
     },
     "items": {
@@ -2225,7 +2225,7 @@
         "enable": "सक्षम करें",
         "disable": "अक्षम करें",
         "details": "विवरण",
-        "uninstall": "अनइंस्टॉल करें",
+        "uninstall": "हटाएं",
         "reload": "रीलोड करें",
         "settings": "सेटिंग्स",
         "feedback": "प्रतिक्रिया"
@@ -2234,7 +2234,7 @@
     "details": {
       "title": "प्लगइन विवरण",
       "information": "जानकारी",
-      "configuration": "कॉन्फ़िगरेशन",
+      "configuration": "विन्यास",
       "routes": "API रूट्स",
       "widgets": "विजेट्स",
       "assets": "एसेट्स",
@@ -2271,12 +2271,12 @@
       }
     },
     "marketplace": {
-      "title": "क्यूबस्टेलर गैलेक्सी मार्केटप्लेस",
+      "title": "KubeStellar Galaxy Marketplace",
       "description": "अपने KubeStellar अनुभव को बेहतर बनाने के लिए प्लगइन्स खोजें और इंस्टॉल करें",
-      "browse": "उपलब्ध प्लगइन्स ब्राउज़ करें",
+      "browse": "उपलब्ध प्लगइन्स देखें",
       "featured": "विशेष प्लगइन्स",
       "categories": "श्रेणियां",
-      "search": "मार्केटप्लेस खोजें..."
+      "search": "मार्केटप्लेस में खोजें..."
     },
     "development": {
       "title": "प्लगइन विकास",
@@ -2294,7 +2294,7 @@
       },
       "suggestion": {
         "title": "सुधार के लिए सुझाव",
-        "placeholder": "सुधार के लिए कोई सुझाव?"
+        "placeholder": "सुधार के लिए कोई सुझाव है?"
       }
     }
   },
@@ -2310,21 +2310,21 @@
     "allPlugins": "सभी प्लगइन्स",
     "clearFilters": "फ़िल्टर साफ़ करें",
     "loadMore": "और प्लगइन्स लोड करें",
-    "adminPanel": "एडमिन पैनल",
+    "adminPanel": "प्रशासन पैनल",
     "categories": {
       "all": "सभी प्लगइन्स",
       "management": "प्रबंधन",
       "monitoring": "निगरानी",
       "security": "सुरक्षा",
       "networking": "नेटवर्किंग",
-      "storage": "स्टोरेज",
+      "storage": "संग्रहण",
       "database": "डेटाबेस",
-      "ai": "AI और मशीन लर्निंग",
-      "devops": "DevOps",
-      "automation": "ऑटोमेशन",
+      "ai": "आर्टिफिशियल इंटेलिजेंस और मशीन लर्निंग",
+      "devops": "डेवऑप्स",
+      "automation": "स्वचालन",
       "integration": "एकीकरण",
       "analytics": "विश्लेषण",
-      "backup": "बैकअप और रिकवरी",
+      "backup": "बैकअप और पुनर्प्राप्ति",
       "compliance": "अनुपालन",
       "testing": "परीक्षण",
       "development": "विकास उपकरण"
@@ -2340,13 +2340,13 @@
       },
       "actions": {
         "install": "इंस्टॉल करें",
-        "uninstall": "अनइंस्टॉल करें",
+        "uninstall": "हटाएं",
         "enable": "सक्षम करें",
         "disable": "अक्षम करें",
         "update": "अपडेट करें",
         "viewDetails": "विवरण देखें",
         "download": "डाउनलोड करें",
-        "rate": "रेट करें",
+        "rate": "रेटिंग दें",
         "review": "समीक्षा करें",
         "share": "साझा करें",
         "report": "समस्या रिपोर्ट करें"
@@ -2372,7 +2372,7 @@
         "compatibility": "संगतता",
         "requirements": "आवश्यकताएं",
         "installation": "इंस्टॉलेशन",
-        "configuration": "कॉन्फ़िगरेशन",
+        "configuration": "विन्यास",
         "usage": "उपयोग",
         "troubleshooting": "समस्या समाधान"
       },
@@ -2380,13 +2380,13 @@
         "title": "प्लगइन प्रतिक्रिया",
         "rating": "रेटिंग",
         "comment": "टिप्पणी",
-        "submit": "प्रतिक्रिया सबमिट करें",
-        "submitting": "सबमिट हो रहा है...",
-        "success": "प्रतिक्रिया सफलतापूर्वक सबमिट की गई",
-        "error": "प्रतिक्रिया सबमिट करने में विफल",
+        "submit": "प्रतिक्रिया भेजें",
+        "submitting": "भेज रहे हैं...",
+        "success": "प्रतिक्रिया सफलतापूर्वक भेजी गई",
+        "error": "प्रतिक्रिया भेजने में विफल",
         "placeholder": "इस प्लगइन के साथ अपने अनुभव के बारे में बताएं...",
-        "ratingRequired": "कृपया रेटिंग प्रदान करें",
-        "commentRequired": "कृपया टिप्पणी प्रदान करें"
+        "ratingRequired": "कृपया रेटिंग दें",
+        "commentRequired": "कृपया टिप्पणी दें"
       },
       "installation": {
         "title": "इंस्टॉलेशन",
@@ -2443,11 +2443,26 @@
         "deleting": "हटा रहा है...",
         "success": "प्लगइन सफलतापूर्वक हटाया गया",
         "error": "प्लगइन हटाने में विफल"
-      }
+      },
+      "quickActions": "त्वरित कार्रवाइयां",
+      "uploadNewPlugin": "नया प्लगइन अपलोड करें",
+      "reviewPlugins": "प्लगइन्स की समीक्षा करें",
+      "searchPlugins": "प्लगइन्स खोजें...",
+      "allStatus": "सभी स्थिति",
+      "active": "सक्रिय",
+      "inactive": "निष्क्रिय",
+      "loadingPlugins": "प्लगइन्स लोड हो रहे हैं...",
+      "noPluginsFound": "कोई प्लगइन्स नहीं मिले।",
+      "userManagement": "उपयोगकर्ता प्रबंधन",
+      "userManagementComingSoon": "उपयोगकर्ता प्रबंधन सुविधाएं जल्द ही आ रही हैं।",
+      "adminSettings": "प्रशासन सेटिंग्स",
+      "settingsComingSoon": "सेटिंग्स पैनल जल्द ही आ रहा है।",
+      "marketplaceManagement": "मार्केटप्लेस प्रबंधन",
+      "adminPanel": "एडमिन पैनल"
     },
     "search": {
       "noResults": "कोई प्लगइन नहीं मिला",
-      "noResultsDescription": "अपने खोज शब्दों को समायोजित करने का प्रयास करें या सभी प्लगइन्स ब्राउज़ करें",
+      "noResultsDescription": "अपने खोज शब्दों को समायोजित करने का प्रयास करें या सभी प्लगइन्स देखें",
       "clearSearch": "खोज साफ़ करें",
       "searching": "खोज रहा है...",
       "resultsCount": "{{count}} प्लगइन{{count, plural, one {} other {s}}} मिला"
@@ -2455,10 +2470,10 @@
     "errors": {
       "failedToLoad": "मार्केटप्लेस डेटा लोड करने में विफल",
       "failedToInstall": "प्लगइन इंस्टॉल करने में विफल",
-      "failedToUninstall": "प्लगइन अनइंस्टॉल करने में विफल",
+      "failedToUninstall": "प्लगइन हटाने में विफल",
       "failedToEnable": "प्लगइन सक्षम करने में विफल",
       "failedToDisable": "प्लगइन अक्षम करने में विफल",
-      "failedToSubmitFeedback": "प्रतिक्रिया सबमिट करने में विफल",
+      "failedToSubmitFeedback": "प्रतिक्रिया भेजने में विफल",
       "pluginNotFound": "प्लगइन नहीं मिला",
       "installationFailed": "इंस्टॉलेशन विफल",
       "networkError": "नेटवर्क त्रुटि हुई",
@@ -2466,10 +2481,10 @@
     },
     "success": {
       "pluginInstalled": "प्लगइन सफलतापूर्वक इंस्टॉल किया गया",
-      "pluginUninstalled": "प्लगइन सफलतापूर्वक अनइंस्टॉल किया गया",
+      "pluginUninstalled": "प्लगइन सफलतापूर्वक हटाया गया",
       "pluginEnabled": "प्लगइन सफलतापूर्वक सक्षम किया गया",
       "pluginDisabled": "प्लगइन सफलतापूर्वक अक्षम किया गया",
-      "feedbackSubmitted": "प्रतिक्रिया सफलतापूर्वक सबमिट की गई",
+      "feedbackSubmitted": "प्रतिक्रिया सफलतापूर्वक भेजी गई",
       "pluginUpdated": "प्लगइन सफलतापूर्वक अपडेट किया गया"
     },
     "loading": {
@@ -2478,7 +2493,7 @@
       "loadingMarketplace": "मार्केटप्लेस लोड हो रहा है...",
       "loadingPlugin": "प्लगइन विवरण लोड हो रहे हैं...",
       "installingPlugin": "प्लगइन इंस्टॉल हो रहा है...",
-      "uninstallingPlugin": "प्लगइन अनइंस्टॉल हो रहा है..."
+      "uninstallingPlugin": "प्लगइन हटाया जा रहा है..."
     },
     "empty": {
       "noPlugins": "कोई प्लगइन नहीं मिला",
@@ -2533,17 +2548,111 @@
       "tryAgain": "फिर कोशिश करें",
       "title": "प्लगइन हटाएं"
     },
-    "upload": {
+          "upload": {
+        "dragDrop": "अपना प्लगइन यहां खींचें और छोड़ें",
+        "browseFiles": "फ़ाइलें ब्राउज़ करें",
+        "requirements": "अपलोड आवश्यकताएं:",
+        "reviewFile": "अपना प्लगइन समीक्षा करें",
+        "uploadPlugin": "प्लगइन अपलोड करें",
+        "uploading": "प्लगइन अपलोड हो रहा है...",
+        "success": "प्लगइन सफलतापूर्वक अपलोड किया गया!",
+        "error": "अपलोड विफल",
+        "tryAgain": "फिर कोशिश करें",
+        "title": "प्लगइन अपलोड करें",
+        "supportedFormat": "या क्लिक करके ब्राउज़ करें। समर्थित प्रारूप: .tar.gz",
+        "confirmUpload": "कृपया अपलोड करने से पहले नीचे दिए गए विवरण की पुष्टि करें",
+        "processingFile": "आपकी प्लगइन फ़ाइल को संसाधित किया जा रहा है। इसमें कुछ समय लग सकता है।",
+              "successMessage": "आपका प्लगइन अपलोड किया गया है और अब मार्केटप्लेस में उपलब्ध है।",
+      "errorMessage": "आपका प्लगइन अपलोड करते समय कुछ गलत हो गया।",
+      "success": "प्लगइन सफलतापूर्वक अपलोड किया गया!",
+      "error": "प्लगइन अपलोड करने में विफल। कृपया पुनः प्रयास करें।",
       "dragDrop": "अपना प्लगइन यहां खींचें और छोड़ें",
       "browseFiles": "फ़ाइलें ब्राउज़ करें",
       "requirements": "अपलोड आवश्यकताएं:",
-      "reviewFile": "अपना प्लगइन समीक्षा करें",
+      "reviewFile": "अपने प्लगइन की समीक्षा करें",
       "uploadPlugin": "प्लगइन अपलोड करें",
-      "uploading": "प्लगइन अपलोड हो रहा है...",
-      "success": "प्लगइन सफलतापूर्वक अपलोड किया गया!",
-      "error": "अपलोड विफल",
-      "tryAgain": "फिर कोशिश करें",
-      "title": "प्लगइन अपलोड करें"
+      "invalidFileType": "अमान्य फ़ाइल प्रकार। कृपया .tar.gz फ़ाइल अपलोड करें।",
+      "fileTooLarge": "फ़ाइल का आकार बहुत बड़ा है। अधिकतम आकार 50MB है।"
+    },
+    "common": {
+      "featured": "विशेष",
+      "viewDetails": "विवरण देखें",
+      "installNow": "अभी इंस्टॉल करें",
+      "installing": "इंस्टॉल हो रहा है...",
+      "installed": "इंस्टॉल किया गया",
+      "uninstalling": "हटाया जा रहा है...",
+      "rating": "रेटिंग",
+      "downloads": "डाउनलोड",
+      "updated": "अपडेट किया गया",
+      "recently": "हाल ही में",
+      "by": "द्वारा",
+      "unknownAuthor": "अज्ञात लेखक",
+      "noDescription": "कोई विवरण उपलब्ध नहीं",
+      "premiumPlugins": "प्रीमियम प्लगइन्स खोजें",
+      "enhanceWorkflow": "Kubernetes और cloud-native वातावरण के लिए विशेष रूप से डिज़ाइन किए गए शक्तिशाली प्लगइन्स के साथ अपना कार्यप्रवाह बेहतर बनाएं।",
+      "exploreMarketplace": "मार्केटप्लेस खोजें",
+      "suggestedCategories": ["निगरानी", "सुरक्षा", "विकास", "तैनाती", "संग्रहण"],
+      "noPluginsFound": "कोई प्लगइन्स नहीं मिले",
+      "tryAdjustingSearch": "अपने खोज शब्दों को समायोजित करने का प्रयास करें या सभी प्लगइन्स देखें",
+      "noMatchingFilters": "कोई प्लगइन्स आपके वर्तमान फ़िल्टर्स से मेल नहीं खाते",
+      "showAllPlugins": "सभी प्लगइन्स दिखाएं",
+      "remaining": "शेष",
+      "allPlugins": "सभी प्लगइन्स",
+      "plugin": "प्लगइन",
+      "plugins": "प्लगइन्स",
+      "tags": "टैग्स:",
+      "license": "लाइसेंस",
+      "created": "बनाया गया",
+      "routes": "रूट्स",
+      "loadTime": "लोड समय",
+      "endpoints": "एंडपॉइंट",
+      "endpoints_plural": "एंडपॉइंट्स",
+      "seconds": "सेकंड",
+      "rating": "रेटिंग",
+      "downloads": "डाउनलोड",
+      "misc": "विविध",
+      "installPlugin": "प्लगइन इंस्टॉल करें",
+      "noRoutes": "कोई API रूट्स परिभाषित नहीं",
+      "noWidgets": "कोई विजेट उपलब्ध नहीं",
+      "noAssets": "कोई एसेट लोड नहीं किया गया",
+      "unnamedPlugin": "अनाम प्लगइन",
+      "defaultVersion": "1.0.0",
+      "versionPrefix": "v"
+    },
+    "documentation": {
+      "title": "दस्तावेज़",
+      "overview": "अवलोकन",
+      "installation": "इंस्टॉलेशन",
+      "apiReference": "API संदर्भ",
+      "codeExamples": "कोड उदाहरण",
+      "practicalExamples": "आपको शुरू करने में मदद करने के लिए व्यावहारिक उदाहरण",
+      "tutorials": "ट्यूटोरियल",
+      "faq": "सामान्य प्रश्न",
+      "troubleshooting": "समस्या समाधान",
+      "installationGuide": "इंस्टॉलेशन गाइड",
+      "followSteps": "अपने KubeStellar वातावरण में इंस्टॉल और कॉन्फ़िगर करने के लिए इन चरणों का पालन करें",
+      "inEnvironment": "अपने KubeStellar वातावरण में।",
+      "keyFeatures": "मुख्य विशेषताएं",
+      "requirements": "आवश्यकताएं",
+      "welcomeMessage": "के लिए व्यापक दस्तावेज़ में आपका स्वागत है",
+      "extendsCapabilities": "KubeStellar की क्षमताओं को उन्नत सुविधाओं के साथ विस्तारित करता है जो आपके multi-cluster प्रबंधन अनुभव को बेहतर बनाने के लिए डिज़ाइन की गई हैं।",
+      "powerfulPlugin": "यह शक्तिशाली प्लगइन आधुनिक Kubernetes वातावरण के लिए आवश्यक कार्यक्षमता प्रदान करता है, मौजूदा workflows के साथ निर्बाध एकीकरण और मजबूत प्रदर्शन निगरानी क्षमताओं की पेशकश करता है।",
+      "advancedMultiCluster": "उन्नत multi-cluster सिंक्रनाइज़ेशन",
+      "realTimeMonitoring": "रीयल-टाइम निगरानी और अलर्टिंग",
+      "automatedScaling": "स्वचालित स्केलिंग और अनुकूलन",
+      "securityPolicy": "सुरक्षा नीति प्रवर्तन",
+      "comprehensiveAPI": "व्यापक API कवरेज",
+      "kubestellarVersion": "KubeStellar v1.0.0 या उच्चतर",
+      "kubernetesVersion": "Kubernetes 1.19+",
+      "ramMinimum": "512MB RAM न्यूनतम (1GB अनुशंसित)",
+      "networkConnectivity": "लक्ष्य क्लस्टर्स के लिए नेटवर्क कनेक्टिविटी",
+      "validCredentials": "मान्य प्रमाणीकरण क्रेडेंशियल्स",
+      "copy": "कॉपी करें",
+      "copied": "कॉपी किया गया!",
+      "fileFormat": "फ़ाइल प्रारूप: केवल .tar.gz",
+      "maxFileSize": "अधिकतम फ़ाइल आकार: 50MB",
+      "mustContain": "plugin.yml फ़ाइल होनी चाहिए",
+      "validStructure": "मान्य प्लगइन संरचना आवश्यक"
     }
   },
   "notFoundPage": {

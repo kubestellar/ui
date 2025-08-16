@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   HiPlus,
   HiTrash,
@@ -36,6 +37,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
@@ -203,7 +205,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
           className="mb-4 text-lg font-semibold"
           style={{ color: themeStyles.colors.text.primary }}
         >
-          Quick Actions
+          {t('marketplace.admin.quickActions')}
         </h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <motion.button
@@ -217,7 +219,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
           >
             <HiPlus className="h-5 w-5" style={{ color: themeStyles.colors.brand.primary }} />
             <span className="font-medium" style={{ color: themeStyles.colors.brand.primary }}>
-              Upload New Plugin
+              {t('marketplace.admin.uploadNewPlugin')}
             </span>
           </motion.button>
 
@@ -232,7 +234,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
           >
             <HiEye className="h-5 w-5" style={{ color: themeStyles.colors.text.primary }} />
             <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>
-              Review Plugins
+              {t('marketplace.admin.reviewPlugins')}
             </span>
           </motion.button>
         </div>
@@ -251,7 +253,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
         <div className="flex items-center gap-4">
           <input
             type="text"
-            placeholder="Search plugins..."
+            placeholder={t('marketplace.admin.searchPlugins')}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2"
@@ -272,9 +274,9 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
               color: themeStyles.colors.text.primary,
             }}
           >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="all">{t('marketplace.admin.allStatus')}</option>
+            <option value="active">{t('marketplace.admin.active')}</option>
+            <option value="inactive">{t('marketplace.admin.inactive')}</option>
           </select>
         </div>
 
@@ -288,7 +290,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
           }}
         >
           <HiPlus className="h-4 w-4" />
-          Upload Plugin
+          {t('marketplace.upload.title')}
         </motion.button>
       </div>
 
@@ -300,11 +302,11 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
               className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-current"
               style={{ color: themeStyles.colors.brand.primary }}
             ></div>
-            <p style={{ color: themeStyles.colors.text.secondary }}>Loading plugins...</p>
+            <p style={{ color: themeStyles.colors.text.secondary }}>{t('marketplace.admin.loadingPlugins')}</p>
           </div>
         ) : filteredPlugins.length === 0 ? (
           <div className="py-8 text-center">
-            <p style={{ color: themeStyles.colors.text.secondary }}>No plugins found.</p>
+            <p style={{ color: themeStyles.colors.text.secondary }}>{t('marketplace.admin.noPluginsFound')}</p>
           </div>
         ) : (
           filteredPlugins.map((plugin: PluginData) => (
@@ -408,15 +410,15 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
               className="mx-auto mb-4 h-16 w-16"
               style={{ color: themeStyles.colors.text.secondary }}
             />
-            <h3
-              className="mb-2 text-lg font-medium"
-              style={{ color: themeStyles.colors.text.primary }}
-            >
-              User Management
-            </h3>
-            <p style={{ color: themeStyles.colors.text.secondary }}>
-              User management features coming soon.
-            </p>
+                          <h3
+                className="mb-2 text-lg font-medium"
+                style={{ color: themeStyles.colors.text.primary }}
+              >
+                {t('marketplace.admin.userManagement')}
+              </h3>
+              <p style={{ color: themeStyles.colors.text.secondary }}>
+                {t('marketplace.admin.userManagementComingSoon')}
+              </p>
           </motion.div>
         );
       case 'settings':
@@ -430,13 +432,13 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
               className="mx-auto mb-4 h-16 w-16"
               style={{ color: themeStyles.colors.text.secondary }}
             />
-            <h3
-              className="mb-2 text-lg font-medium"
-              style={{ color: themeStyles.colors.text.primary }}
-            >
-              Admin Settings
-            </h3>
-            <p style={{ color: themeStyles.colors.text.secondary }}>Settings panel coming soon.</p>
+                          <h3
+                className="mb-2 text-lg font-medium"
+                style={{ color: themeStyles.colors.text.primary }}
+              >
+                {t('marketplace.admin.adminSettings')}
+              </h3>
+              <p style={{ color: themeStyles.colors.text.secondary }}>{t('marketplace.admin.settingsComingSoon')}</p>
           </motion.div>
         );
       default:
@@ -489,7 +491,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
                     Admin Panel
                   </h2>
                   <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                    Marketplace Management
+                    {t('marketplace.admin.marketplaceManagement')}
                   </p>
                 </div>
 

@@ -50,13 +50,13 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
   const validateFile = (file: File): string | null => {
     // Check file type
     if (!file.name.endsWith('.tar.gz')) {
-      return 'Invalid file type. Please upload a .tar.gz file.';
+      return t('marketplace.upload.invalidFileType', 'Invalid file type. Please upload a .tar.gz file.');
     }
 
     // Check file size (50MB limit)
     const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      return 'File size too large. Maximum size is 50MB.';
+      return t('marketplace.upload.fileTooLarge', 'File size too large. Maximum size is 50MB.');
     }
 
     return null;
@@ -120,7 +120,7 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
     uploadMutation.mutate(selectedFile, {
       onSuccess: () => {
         setUploadStep('success');
-        toast.success('Plugin uploaded successfully!');
+        toast.success(t('marketplace.upload.success'));
         setTimeout(() => {
           onClose();
         }, 2000);
@@ -129,7 +129,7 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
         console.error('Upload error:', error);
         setUploadStep('error');
         setErrorMessage(
-          error.response?.data?.error || 'Failed to upload plugin. Please try again.'
+          error.response?.data?.error || t('marketplace.upload.error')
         );
       },
     });
@@ -245,10 +245,10 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
                     {t('marketplace.upload.requirements', 'Upload Requirements:')}
                   </p>
                   <ul className="list-inside list-disc space-y-1">
-                    <li>File format: .tar.gz only</li>
-                    <li>Maximum file size: 50MB</li>
-                    <li>Must contain plugin.yml file</li>
-                    <li>Valid plugin structure required</li>
+                    <li>{t('marketplace.documentation.fileFormat')}</li>
+                    <li>{t('marketplace.documentation.maxFileSize')}</li>
+                    <li>{t('marketplace.documentation.mustContain')}</li>
+                    <li>{t('marketplace.documentation.validStructure')}</li>
                   </ul>
                 </div>
               </div>
