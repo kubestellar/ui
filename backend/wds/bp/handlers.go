@@ -21,6 +21,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	// workloadDelimiter is the delimiter used in specificWorkloads annotation
+	// Format: "apiVersion,kind,name,namespace"
+	workloadDelimiter = ","
+
+	// expectedSpecificWorkloadsParts is the expected number of parts when splitting specificWorkloads annotation
+	expectedSpecificWorkloadsParts = 4
+)
+
 type StoredBindingPolicy struct {
 	Name              string              `json:"name"`
 	Namespace         string              `json:"namespace"`
