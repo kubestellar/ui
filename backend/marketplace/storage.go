@@ -117,6 +117,10 @@ func ExtractTarGz(file io.Reader, dest string) error {
 
 		// clean and validate path
 		cleanedName := filepath.Clean(header.Name)
+		if cleanedName == "." {
+			continue // skip the current directory entry
+		}
+
 		targetPath := filepath.Join(dest, cleanedName)
 		if !strings.HasPrefix(targetPath, absDest+string(os.PathSeparator)) {
 			return fmt.Errorf("invalid tar entry: %s", header.Name)
@@ -139,7 +143,6 @@ func ExtractTarGz(file io.Reader, dest string) error {
 			// skip macOS metadata files
 			if strings.HasPrefix(filepath.Base(header.Name), "._") {
 				continue
-
 			}
 
 			f, err := os.Create(targetPath)
