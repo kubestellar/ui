@@ -572,11 +572,6 @@ func GetMarketplacePluginCategoriesHandler(c *gin.Context) {
 		return
 	}
 	tags := marketplaceManager.GetAllPluginTags()
-	if tags == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No marketplace plugins found"})
-		log.LogWarn("no marketplace plugins found", zap.String("tags", "nil"))
-		return
-	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Marketplace plugin categories retrieved successfully",
 		"tags":    tags,

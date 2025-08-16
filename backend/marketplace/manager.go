@@ -199,7 +199,7 @@ func (m *MarketplaceManager) GetAllPluginTags() []string {
 			tagsMap[tag] = struct{}{}
 		}
 	}
-	var tags []string
+	tags := make([]string, 0, len(tagsMap))
 	for tag := range tagsMap {
 		tags = append(tags, tag)
 	}
