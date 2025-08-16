@@ -285,7 +285,9 @@ const FeaturedHeroCard = React.memo(
           <div className="rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-3 py-1 shadow-lg">
             <div className="flex items-center gap-1">
               <HiSparkles className="h-3 w-3 text-white" />
-                              <span className="text-xs font-bold text-white">{t('marketplace.common.featured')}</span>
+              <span className="text-xs font-bold text-white">
+                {t('marketplace.common.featured')}
+              </span>
             </div>
           </div>
         </div>
@@ -327,7 +329,9 @@ const FeaturedHeroCard = React.memo(
 
                 <div className="flex items-center gap-1">
                   <div className="h-2 w-2 rounded-full bg-green-400" />
-                  <span>{t('marketplace.common.updated')} {formatLastUpdated(plugin.lastUpdated)}</span>
+                  <span>
+                    {t('marketplace.common.updated')} {formatLastUpdated(plugin.lastUpdated)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -358,7 +362,8 @@ const FeaturedHeroCard = React.memo(
                     color: themeStyles.colors.brand.primary,
                   }}
                 >
-                  {t('marketplace.common.versionPrefix')}{plugin.version}
+                  {t('marketplace.common.versionPrefix')}
+                  {plugin.version}
                 </span>
                 {plugin.license && (
                   <>
@@ -638,7 +643,9 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              {(t('marketplace.common.suggestedCategories', { returnObjects: true }) as string[]).map((category: string) => (
+              {(
+                t('marketplace.common.suggestedCategories', { returnObjects: true }) as string[]
+              ).map((category: string) => (
                 <motion.div
                   key={category}
                   className="flex items-center gap-2 rounded-full px-4 py-2"
@@ -678,7 +685,7 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
           </div>
         </motion.div>
       ),
-      [isDark, themeStyles]
+      [isDark, themeStyles, t]
     );
 
     if (!plugins || plugins.length === 0) {
@@ -767,9 +774,9 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
                   {t('marketplace.featured', 'Featured Plugins')}
                 </span>
               </h2>
-                              <p className="mt-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
-                  {t('marketplace.featured.subtitle')}
-                </p>
+              <p className="mt-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                {t('marketplace.featured.subtitle')}
+              </p>
             </div>
           </div>
 

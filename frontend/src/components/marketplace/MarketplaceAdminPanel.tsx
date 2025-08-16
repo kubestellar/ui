@@ -302,11 +302,15 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
               className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-current"
               style={{ color: themeStyles.colors.brand.primary }}
             ></div>
-            <p style={{ color: themeStyles.colors.text.secondary }}>{t('marketplace.admin.loadingPlugins')}</p>
+            <p style={{ color: themeStyles.colors.text.secondary }}>
+              {t('marketplace.admin.loadingPlugins')}
+            </p>
           </div>
         ) : filteredPlugins.length === 0 ? (
           <div className="py-8 text-center">
-            <p style={{ color: themeStyles.colors.text.secondary }}>{t('marketplace.admin.noPluginsFound')}</p>
+            <p style={{ color: themeStyles.colors.text.secondary }}>
+              {t('marketplace.admin.noPluginsFound')}
+            </p>
           </div>
         ) : (
           filteredPlugins.map((plugin: PluginData) => (
@@ -410,15 +414,15 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
               className="mx-auto mb-4 h-16 w-16"
               style={{ color: themeStyles.colors.text.secondary }}
             />
-                          <h3
-                className="mb-2 text-lg font-medium"
-                style={{ color: themeStyles.colors.text.primary }}
-              >
-                {t('marketplace.admin.userManagement')}
-              </h3>
-              <p style={{ color: themeStyles.colors.text.secondary }}>
-                {t('marketplace.admin.userManagementComingSoon')}
-              </p>
+            <h3
+              className="mb-2 text-lg font-medium"
+              style={{ color: themeStyles.colors.text.primary }}
+            >
+              {t('marketplace.admin.userManagement')}
+            </h3>
+            <p style={{ color: themeStyles.colors.text.secondary }}>
+              {t('marketplace.admin.userManagementComingSoon')}
+            </p>
           </motion.div>
         );
       case 'settings':
@@ -432,13 +436,15 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
               className="mx-auto mb-4 h-16 w-16"
               style={{ color: themeStyles.colors.text.secondary }}
             />
-                          <h3
-                className="mb-2 text-lg font-medium"
-                style={{ color: themeStyles.colors.text.primary }}
-              >
-                {t('marketplace.admin.adminSettings')}
-              </h3>
-              <p style={{ color: themeStyles.colors.text.secondary }}>{t('marketplace.admin.settingsComingSoon')}</p>
+            <h3
+              className="mb-2 text-lg font-medium"
+              style={{ color: themeStyles.colors.text.primary }}
+            >
+              {t('marketplace.admin.adminSettings')}
+            </h3>
+            <p style={{ color: themeStyles.colors.text.secondary }}>
+              {t('marketplace.admin.settingsComingSoon')}
+            </p>
           </motion.div>
         );
       default:

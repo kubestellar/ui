@@ -47,35 +47,42 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
     }
   }, [isOpen]);
 
-  const validateFile = (file: File): string | null => {
-    // Check file type
-    if (!file.name.endsWith('.tar.gz')) {
-      return t('marketplace.upload.invalidFileType', 'Invalid file type. Please upload a .tar.gz file.');
-    }
+  const handleFile = useCallback(
+    (file: File) => {
+      // Validate file inline to avoid dependency issues
+      const validateFile = (file: File): string | null => {
+        // Check file type
+        if (!file.name.endsWith('.tar.gz')) {
+          return t(
+            'marketplace.upload.invalidFileType',
+            'Invalid file type. Please upload a .tar.gz file.'
+          );
+        }
 
-    // Check file size (50MB limit)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      return t('marketplace.upload.fileTooLarge', 'File size too large. Maximum size is 50MB.');
-    }
+        // Check file size (50MB limit)
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (file.size > maxSize) {
+          return t('marketplace.upload.fileTooLarge', 'File size too large. Maximum size is 50MB.');
+        }
 
-    return null;
-  };
+        return null;
+      };
 
-  const handleFile = useCallback((file: File) => {
-    const validationError = validateFile(file);
+      const validationError = validateFile(file);
 
-    if (validationError) {
-      setErrorMessage(validationError);
-      setUploadStep('error');
-      toast.error(validationError);
-      return;
-    }
+      if (validationError) {
+        setErrorMessage(validationError);
+        setUploadStep('error');
+        toast.error(validationError);
+        return;
+      }
 
-    setSelectedFile(file);
-    setUploadStep('preview');
-    setErrorMessage('');
-  }, []);
+      setSelectedFile(file);
+      setUploadStep('preview');
+      setErrorMessage('');
+    },
+    [t]
+  );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -128,12 +135,10 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
       onError: (error: Error & { response?: { data?: { error?: string } } }) => {
         console.error('Upload error:', error);
         setUploadStep('error');
-        setErrorMessage(
-          error.response?.data?.error || t('marketplace.upload.error')
-        );
+        setErrorMessage(error.response?.data?.error || t('marketplace.upload.error'));
       },
     });
-  }, [selectedFile, uploadMutation, onClose]);
+  }, [selectedFile, uploadMutation, onClose, t]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';

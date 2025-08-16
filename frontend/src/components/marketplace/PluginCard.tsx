@@ -120,7 +120,7 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
       } catch {
         return t('marketplace.common.recently');
       }
-    }, [plugin.lastUpdated]);
+    }, [plugin.lastUpdated, t]);
 
     const createdAt = useMemo(() => {
       if (!plugin.createdAt) return null;
@@ -129,7 +129,7 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
       } catch {
         return t('marketplace.common.recently');
       }
-    }, [plugin.createdAt]);
+    }, [plugin.createdAt, t]);
 
     // Memoized event handlers
     const handleInstall = useCallback(
@@ -275,12 +275,12 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
               >
                 {plugin.rating || '0.0'}
               </span>
-                                <span
-                    className="-mt-1 text-xs font-medium"
-                    style={{ color: themeStyles.colors.text.tertiary }}
-                  >
-                    {t('marketplace.common.rating')}
-                  </span>
+              <span
+                className="-mt-1 text-xs font-medium"
+                style={{ color: themeStyles.colors.text.tertiary }}
+              >
+                {t('marketplace.common.rating')}
+              </span>
             </div>
           </div>
 
@@ -303,12 +303,12 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
               >
                 {formattedDownloads}
               </span>
-                                <span
-                    className="-mt-1 text-xs font-medium"
-                    style={{ color: themeStyles.colors.text.tertiary }}
-                  >
-                    {t('marketplace.common.downloads')}
-                  </span>
+              <span
+                className="-mt-1 text-xs font-medium"
+                style={{ color: themeStyles.colors.text.tertiary }}
+              >
+                {t('marketplace.common.downloads')}
+              </span>
             </div>
           </div>
         </div>
@@ -341,7 +341,9 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
                   }}
                 >
                   <span className="h-2 w-2 animate-pulse rounded-full bg-green-400"></span>
-                  <span>{t('marketplace.common.updated')} {lastUpdated}</span>
+                  <span>
+                    {t('marketplace.common.updated')} {lastUpdated}
+                  </span>
                 </div>
               </div>
             </div>
@@ -390,12 +392,12 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
               >
                 <div className="h-2 w-2 rounded-full bg-blue-400"></div>
                 <div className="flex flex-col">
-                                      <span
-                      className="text-xs font-medium"
-                      style={{ color: themeStyles.colors.text.primary }}
-                    >
-                      {t('marketplace.common.license')}
-                    </span>
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    {t('marketplace.common.license')}
+                  </span>
                   <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
                     {plugin.license}
                   </span>
@@ -414,12 +416,12 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
               >
                 <div className="h-2 w-2 rounded-full bg-purple-400"></div>
                 <div className="flex flex-col">
-                                        <span
-                        className="text-xs font-medium"
-                        style={{ color: themeStyles.colors.text.primary }}
-                      >
-                        {t('marketplace.common.created')}
-                      </span>
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    {t('marketplace.common.created')}
+                  </span>
                   <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
                     {createdAt}
                   </span>
@@ -438,15 +440,18 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
               >
                 <div className="h-2 w-2 rounded-full bg-green-400"></div>
                 <div className="flex flex-col">
-                                          <span
-                          className="text-xs font-medium"
-                          style={{ color: themeStyles.colors.text.primary }}
-                        >
-                          {t('marketplace.common.routes')}
-                        </span>
-                                          <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
-                          {plugin.routes.length} {plugin.routes.length !== 1 ? t('marketplace.common.endpoints_plural') : t('marketplace.common.endpoints')}
-                        </span>
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    {t('marketplace.common.routes')}
+                  </span>
+                  <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    {plugin.routes.length}{' '}
+                    {plugin.routes.length !== 1
+                      ? t('marketplace.common.endpoints_plural')
+                      : t('marketplace.common.endpoints')}
+                  </span>
                 </div>
               </div>
             )}
@@ -462,15 +467,16 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
               >
                 <div className="h-2 w-2 rounded-full bg-yellow-400"></div>
                 <div className="flex flex-col">
-                                          <span
-                          className="text-xs font-medium"
-                          style={{ color: themeStyles.colors.text.primary }}
-                        >
-                          {t('marketplace.common.loadTime')}
-                        </span>
-                                          <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
-                          {Math.round(plugin.loadTime.getTime() / 1000)}{t('marketplace.common.seconds')}
-                        </span>
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: themeStyles.colors.text.primary }}
+                  >
+                    {t('marketplace.common.loadTime')}
+                  </span>
+                  <span className="text-xs" style={{ color: themeStyles.colors.text.secondary }}>
+                    {Math.round(plugin.loadTime.getTime() / 1000)}
+                    {t('marketplace.common.seconds')}
+                  </span>
                 </div>
               </div>
             )}
@@ -479,12 +485,12 @@ export const EnhancedPluginCard: React.FC<EnhancedPluginCardProps> = React.memo(
           {/* Tags Section */}
           {plugin.tags && plugin.tags.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
-                              <span
-                  className="text-xs font-medium"
-                  style={{ color: themeStyles.colors.text.secondary }}
-                >
-                  {t('marketplace.common.tags')}
-                </span>
+              <span
+                className="text-xs font-medium"
+                style={{ color: themeStyles.colors.text.secondary }}
+              >
+                {t('marketplace.common.tags')}
+              </span>
               {plugin.tags.map((tag, index) => (
                 <span
                   key={index}

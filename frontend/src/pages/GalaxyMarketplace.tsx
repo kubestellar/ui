@@ -83,7 +83,9 @@ const GalaxyMarketplace: React.FC = () => {
 
   // Enhanced categories with backend data
   const categories = useMemo(() => {
-    const defaultCategories = [{ id: 'all', name: t('marketplace.allPlugins'), icon: <HiOutlineGlobeAlt /> }];
+    const defaultCategories = [
+      { id: 'all', name: t('marketplace.allPlugins'), icon: <HiOutlineGlobeAlt /> },
+    ];
 
     const backendCategoriesFormatted = backendCategories.map(category => ({
       id: category,
@@ -92,7 +94,7 @@ const GalaxyMarketplace: React.FC = () => {
     }));
 
     return [...defaultCategories, ...backendCategoriesFormatted];
-  }, [backendCategories]);
+  }, [backendCategories, t]);
 
   // Transform marketplace plugins to match existing PluginData interface
   const plugins = useMemo(() => {
@@ -116,7 +118,7 @@ const GalaxyMarketplace: React.FC = () => {
         lastUpdated: plugin.lastUpdated || new Date(),
       })
     );
-  }, [marketplacePlugins, searchResults, searchQuery, selectedCategory]);
+  }, [marketplacePlugins, searchResults, searchQuery, selectedCategory, t]);
 
   // Featured plugins with proper transformation
   const featuredPlugins = useMemo(() => {
@@ -144,7 +146,7 @@ const GalaxyMarketplace: React.FC = () => {
         lastUpdated: plugin.lastUpdated || new Date(),
       })
     );
-  }, [featuredPluginsData, marketplacePlugins]);
+  }, [featuredPluginsData, marketplacePlugins, t]);
 
   // Loading state
   const loading = pluginsLoading || searchLoading || featuredLoading;
@@ -417,7 +419,7 @@ const GalaxyMarketplace: React.FC = () => {
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
                 {t(
-                  'marketplace.description',
+                  'marketplace.subtitle',
                   'Discover and install plugins to enhance your KubeStellar experience'
                 )}
               </motion.p>
@@ -684,7 +686,10 @@ const GalaxyMarketplace: React.FC = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.6 }}
                     >
-                      {filteredPlugins.length} {filteredPlugins.length === 1 ? t('marketplace.common.plugin') : t('marketplace.common.plugins')}
+                      {filteredPlugins.length}{' '}
+                      {filteredPlugins.length === 1
+                        ? t('marketplace.common.plugin')
+                        : t('marketplace.common.plugins')}
                     </motion.span>
                   </h2>
                 </div>

@@ -246,12 +246,28 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
 
   const sections = [
     { id: 'overview', label: t('marketplace.documentation.overview'), icon: HiOutlineDocumentText },
-    { id: 'installation', label: t('marketplace.documentation.installation'), icon: HiOutlineRocketLaunch },
-    { id: 'api', label: t('marketplace.documentation.apiReference'), icon: HiOutlineClipboardDocument },
+    {
+      id: 'installation',
+      label: t('marketplace.documentation.installation'),
+      icon: HiOutlineRocketLaunch,
+    },
+    {
+      id: 'api',
+      label: t('marketplace.documentation.apiReference'),
+      icon: HiOutlineClipboardDocument,
+    },
     { id: 'examples', label: t('marketplace.documentation.codeExamples'), icon: HiCodeBracket },
-    { id: 'tutorials', label: t('marketplace.documentation.tutorials'), icon: HiOutlineAcademicCap },
+    {
+      id: 'tutorials',
+      label: t('marketplace.documentation.tutorials'),
+      icon: HiOutlineAcademicCap,
+    },
     { id: 'faq', label: t('marketplace.documentation.faq'), icon: HiOutlineQuestionMarkCircle },
-    { id: 'troubleshooting', label: t('marketplace.documentation.troubleshooting'), icon: HiOutlineWrenchScrewdriver },
+    {
+      id: 'troubleshooting',
+      label: t('marketplace.documentation.troubleshooting'),
+      icon: HiOutlineWrenchScrewdriver,
+    },
   ] as const;
 
   const renderCodeBlock = (example: CodeExample, index: number) => (
@@ -293,7 +309,9 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
           }}
         >
           <HiOutlineClipboard className="h-3 w-3" />
-          {copiedCode === `code-${index}` ? t('marketplace.documentation.copied') : t('marketplace.documentation.copy')}
+          {copiedCode === `code-${index}`
+            ? t('marketplace.documentation.copied')
+            : t('marketplace.documentation.copy')}
         </motion.button>
       </div>
       <div className="p-4">
@@ -319,12 +337,12 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
       {/* Sidebar Navigation */}
       <div className="w-64 flex-shrink-0 pr-6">
         <div className="sticky top-0">
-                      <h3
-              className="mb-4 text-lg font-semibold"
-              style={{ color: themeStyles.colors.text.primary }}
-            >
-              {t('marketplace.documentation.title')}
-            </h3>
+          <h3
+            className="mb-4 text-lg font-semibold"
+            style={{ color: themeStyles.colors.text.primary }}
+          >
+            {t('marketplace.documentation.title')}
+          </h3>
           <nav className="space-y-1">
             {sections.map(section => {
               const Icon = section.icon;
@@ -401,7 +419,8 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                     className="mb-4"
                     style={{ color: themeStyles.colors.text.secondary, lineHeight: '1.7' }}
                   >
-                    {t('marketplace.documentation.welcomeMessage')} {plugin.name}. {t('marketplace.documentation.extendsCapabilities')}
+                    {t('marketplace.documentation.welcomeMessage')} {plugin.name}.{' '}
+                    {t('marketplace.documentation.extendsCapabilities')}
                   </p>
                   <p style={{ color: themeStyles.colors.text.secondary, lineHeight: '1.7' }}>
                     {plugin.description || t('marketplace.documentation.powerfulPlugin')}
@@ -503,7 +522,8 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                   {t('marketplace.documentation.installationGuide')}
                 </h2>
                 <p className="mb-6" style={{ color: themeStyles.colors.text.secondary }}>
-                  {t('marketplace.documentation.followSteps')} {plugin.name} {t('marketplace.documentation.inEnvironment')}
+                  {t('marketplace.documentation.followSteps')} {plugin.name}{' '}
+                  {t('marketplace.documentation.inEnvironment')}
                 </p>
               </div>
 
