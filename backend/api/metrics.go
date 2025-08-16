@@ -412,7 +412,7 @@ func GetPodHealthMetrics(c *gin.Context) {
 			fmt.Printf("Error listing pods in namespace %s: %v\n", ns.Name, err)
 			continue
 		}
-		
+
 		for _, pod := range podList.Items {
 			totalPods++
 			if pod.Status.Phase == "Running" {
