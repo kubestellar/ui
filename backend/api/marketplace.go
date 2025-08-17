@@ -740,7 +740,7 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 	}
 
 	// add to DB
-	installedPluginID, err := pluginpkg.AddInstalledPluginToDB(
+	_, err = pluginpkg.AddInstalledPluginToDB(
 		installedPlugin.PluginDetailsID,
 		installedPlugin.MarketplacePluginID,
 		installedPlugin.UserID,
@@ -759,7 +759,6 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add installed plugin to database"})
 		return
 	}
-	log.LogInfo("installed plugin ID", zap.Int("installed_plugin_id", installedPluginID))
 
 	pluginManager := GetGlobalPluginManager()
 	if pluginManager == nil {
@@ -768,23 +767,11 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		return
 	}
 
-	// use installed plugin id for creating newly created plugin directpry
-	pluginKey = fmt.Sprintf("%s-%d", plugin.PluginName, installedPluginID)
-
-	newInstalledPath := filepath.Join(pluginFolder, pluginKey)
-
-	// Rename the directory
-	renameErr := os.Rename(installedPath, newInstalledPath)
-	if renameErr != nil {
-		log.LogError("Error renaming directory:", zap.Error(renameErr))
-		return
-	}
-
 	// Load the plugin dynamically using the global plugin manager
-	if err := pluginManager.LoadPlugin(newInstalledPath); err != nil {
+	if err := pluginManager.LoadPlugin(installedPath); err != nil {
 		log.LogError("Failed to load plugin after installation",
 			zap.String("plugin", pluginKey),
-			zap.String("installed_path", newInstalledPath),
+			zap.String("installed_path", installedPath),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load plugin"})
 		return
