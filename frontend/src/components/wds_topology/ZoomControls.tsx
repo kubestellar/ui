@@ -19,6 +19,8 @@ import {
   ViewQuilt,
   Fullscreen,
   FullscreenExit,
+  ChevronLeft,
+  ChevronRight,
 } from '@mui/icons-material';
 import { useReactFlow } from 'reactflow';
 import { useTranslation } from 'react-i18next';
@@ -71,7 +73,11 @@ export const ZoomControls = memo<ZoomControlsProps>(
     const [zoomLevel, setZoomLevel] = useState<number>(120);
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+    const [showControls, setShowControls] = useState<boolean>(true);
 
+    const toggleControls = () => {
+      setShowControls(prev => !prev);
+    };
     const { setZoom } = useZoomStore();
     const { edgeType, setEdgeType } = useEdgeTypeStore();
 
@@ -269,268 +275,23 @@ export const ZoomControls = memo<ZoomControlsProps>(
         }}
       >
         {/* Group/Collapse Controls */}
-        <Tooltip
-          title={t(`${translationPrefix}.zoomControls.groupByResource`)}
-          placement="bottom"
-          arrow
-        >
-          <Button
-            variant="text"
-            onClick={onToggleCollapse}
-            sx={getButtonStyles('collapse', isCollapsed)}
-            onMouseEnter={handleMouseEnter('collapse')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <ViewQuilt />
-          </Button>
-        </Tooltip>
-
-        <Tooltip title={t(`${translationPrefix}.zoomControls.expandAll`)} placement="bottom" arrow>
-          <Button
-            variant="text"
-            onClick={onExpandAll}
-            sx={getButtonStyles('expand')}
-            onMouseEnter={handleMouseEnter('expand')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <Add />
-          </Button>
-        </Tooltip>
-
-        <Tooltip
-          title={t(`${translationPrefix}.zoomControls.collapseAll`)}
-          placement="bottom"
-          arrow
-        >
-          <Button
-            variant="text"
-            onClick={onCollapseAll}
-            sx={getButtonStyles('collapseAll')}
-            onMouseEnter={handleMouseEnter('collapseAll')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <Remove />
-          </Button>
-        </Tooltip>
-
-        {/* Separator */}
-        <Box
-          sx={{
-            width: '1px',
-            height: '32px',
-            background:
-              theme === 'dark'
-                ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-            margin: '0 8px',
-          }}
-        />
-
-        {/* Zoom Controls */}
-        <Tooltip title={t(`${translationPrefix}.zoomControls.zoomIn`)} placement="bottom" arrow>
-          <Button
-            variant="text"
-            onClick={handleZoomIn}
-            sx={getButtonStyles('zoomIn')}
-            onMouseEnter={handleMouseEnter('zoomIn')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <ZoomIn />
-          </Button>
-        </Tooltip>
-
-        <Tooltip title={t(`${translationPrefix}.zoomControls.zoomOut`)} placement="bottom" arrow>
-          <Button
-            variant="text"
-            onClick={handleZoomOut}
-            sx={getButtonStyles('zoomOut')}
-            onMouseEnter={handleMouseEnter('zoomOut')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <ZoomOut />
-          </Button>
-        </Tooltip>
-
-        <Tooltip title={t(`${translationPrefix}.zoomControls.resetZoom`)} placement="bottom" arrow>
-          <Button
-            variant="text"
-            onClick={handleResetZoom}
-            sx={getButtonStyles('reset')}
-            onMouseEnter={handleMouseEnter('reset')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <Refresh />
-          </Button>
-        </Tooltip>
-
-        {/* Zoom Level Display */}
-        <Typography
-          variant="body1"
-          sx={{
-            background:
-              theme === 'dark'
-                ? 'linear-gradient(135deg, #1e293b, #334155)'
-                : 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
-            color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
-            padding: '8px 12px',
-            borderRadius: '10px',
-            textAlign: 'center',
-            minWidth: '60px',
-            cursor: 'pointer',
-            userSelect: 'none',
-            fontWeight: '600',
-            fontSize: '13px',
-            border: `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              background:
-                theme === 'dark'
-                  ? 'linear-gradient(135deg, #334155, #475569)'
-                  : 'linear-gradient(135deg, #e2e8f0, #cbd5e1)',
-              transform: 'scale(1.05)',
-              boxShadow:
-                theme === 'dark'
-                  ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                  : '0 4px 12px rgba(0, 0, 0, 0.1)',
-            },
-          }}
-          onClick={handlePresetMenuOpen}
-        >
-          {zoomLevel}%
-        </Typography>
-
-        {/* Zoom Presets Menu */}
-        <Menu
-          anchorEl={presetMenuAnchor}
-          open={Boolean(presetMenuAnchor)}
-          onClose={handlePresetMenuClose}
-          PaperProps={{
-            sx: {
-              background:
-                theme === 'dark'
-                  ? 'linear-gradient(135deg, #1e293b, #334155)'
-                  : 'linear-gradient(135deg, #ffffff, #f8fafc)',
-              color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
-              boxShadow:
-                theme === 'dark'
-                  ? '0 12px 40px rgba(0, 0, 0, 0.4)'
-                  : '0 12px 40px rgba(0, 0, 0, 0.15)',
-              borderRadius: '12px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
-              backdropFilter: 'blur(20px)',
-              overflow: 'hidden',
-            },
-          }}
-        >
-          {zoomPresets.map(preset => (
-            <MenuItem
-              key={preset.level}
-              onClick={() => handlePresetClick(preset)}
-              sx={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                margin: '4px',
-                fontWeight: '500',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  background:
-                    theme === 'dark'
-                      ? 'linear-gradient(135deg, #3b82f6, #6366f1)'
-                      : 'linear-gradient(135deg, #60a5fa, #3b82f6)',
-                  color: '#ffffff',
-                  transform: 'translateX(4px)',
-                },
-              }}
-            >
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {preset.label} ({Math.round(preset.level * 100)}%)
-              </Typography>
-            </MenuItem>
-          ))}
-        </Menu>
-
-        {/* Separator */}
-        <Box
-          sx={{
-            width: '1px',
-            height: '32px',
-            background:
-              theme === 'dark'
-                ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-            margin: '0 8px',
-          }}
-        />
-
-        {/* Edge Type Controls */}
-        <Tooltip title={t(`${translationPrefix}.zoomControls.edgeStyle`)} placement="bottom" arrow>
-          <ToggleButtonGroup
-            value={edgeType}
-            exclusive
-            onChange={handleEdgeTypeChange}
-            size="small"
-            aria-label="Edge Type"
-            sx={{
-              borderRadius: '10px',
-              overflow: 'hidden',
-              '& .MuiToggleButtonGroup-grouped': {
-                background: theme === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
-                border: `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
-                color: theme === 'dark' ? '#94a3b8' : '#64748b',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&.Mui-selected': {
-                  background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                  color: '#ffffff',
-                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                  transform: 'scale(1.05)',
-                  border: 'none',
-                },
-                '&:hover': {
-                  background:
-                    theme === 'dark'
-                      ? 'linear-gradient(135deg, #475569, #64748b)'
-                      : 'linear-gradient(135deg, #e2e8f0, #cbd5e1)',
-                  transform: 'scale(1.02)',
-                },
-                '&:first-of-type': {
-                  borderRadius: '10px 0 0 10px',
-                },
-                '&:last-of-type': {
-                  borderRadius: '0 10px 10px 0',
-                },
-              },
-            }}
-          >
-            <ToggleButton
-              value="step"
-              aria-label={t(`${translationPrefix}.zoomControls.square`)}
-              sx={{
-                px: 2,
-                py: 1,
-                minWidth: '44px',
-                height: '36px',
-              }}
-            >
-              <i className="fa fa-project-diagram" style={{ fontSize: '14px' }} />
-            </ToggleButton>
-            <ToggleButton
-              value="bezier"
-              aria-label={t(`${translationPrefix}.zoomControls.curvy`)}
-              sx={{
-                px: 2,
-                py: 1,
-                minWidth: '44px',
-                height: '36px',
-              }}
-            >
-              <i className="fa fa-bezier-curve" style={{ fontSize: '14px' }} />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Tooltip>
-
-        {/* Fullscreen Controls - Only show if handler is provided */}
-        {onToggleFullscreen && (
+        {showControls && (
           <>
+            <Tooltip
+              title={t(`${translationPrefix}.zoomControls.groupByResource`)}
+              placement="bottom"
+              arrow
+            >
+              <Button
+                variant="text"
+                onClick={onToggleCollapse}
+                sx={getButtonStyles('collapse', isCollapsed)}
+                onMouseEnter={handleMouseEnter('collapse')}
+                onMouseLeave={handleMouseLeave}
+              >
+                <ViewQuilt />
+              </Button>
+            </Tooltip>
             {/* Separator */}
             <Box
               sx={{
@@ -543,28 +304,273 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 margin: '0 8px',
               }}
             />
-
+            {/* Zoom Controls */}
+            <Tooltip title={t(`${translationPrefix}.zoomControls.zoomIn`)} placement="bottom" arrow>
+              <Button
+                variant="text"
+                onClick={handleZoomIn}
+                sx={getButtonStyles('zoomIn')}
+                onMouseEnter={handleMouseEnter('zoomIn')}
+                onMouseLeave={handleMouseLeave}
+              >
+                <ZoomIn />
+              </Button>
+            </Tooltip>
             <Tooltip
-              title={
-                isFullscreen
-                  ? t(`${translationPrefix}.zoomControls.exitFullscreen`)
-                  : t(`${translationPrefix}.zoomControls.fullscreen`)
-              }
+              title={t(`${translationPrefix}.zoomControls.zoomOut`)}
               placement="bottom"
               arrow
             >
               <Button
                 variant="text"
-                onClick={onToggleFullscreen}
-                sx={getButtonStyles('fullscreen', isFullscreen)}
-                onMouseEnter={handleMouseEnter('fullscreen')}
+                onClick={handleZoomOut}
+                sx={getButtonStyles('zoomOut')}
+                onMouseEnter={handleMouseEnter('zoomOut')}
                 onMouseLeave={handleMouseLeave}
               >
-                {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+                <ZoomOut />
               </Button>
             </Tooltip>
+            <Tooltip
+              title={t(`${translationPrefix}.zoomControls.resetZoom`)}
+              placement="bottom"
+              arrow
+            >
+              <Button
+                variant="text"
+                onClick={handleResetZoom}
+                sx={getButtonStyles('reset')}
+                onMouseEnter={handleMouseEnter('reset')}
+                onMouseLeave={handleMouseLeave}
+              >
+                <Refresh />
+              </Button>
+            </Tooltip>
+            {/* Zoom Level Display */}
+            <Typography
+              variant="body1"
+              sx={{
+                background:
+                  theme === 'dark'
+                    ? 'linear-gradient(135deg, #1e293b, #334155)'
+                    : 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
+                color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+                padding: '8px 12px',
+                borderRadius: '10px',
+                textAlign: 'center',
+                minWidth: '60px',
+                cursor: 'pointer',
+                userSelect: 'none',
+                fontWeight: '600',
+                fontSize: '13px',
+                border: `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background:
+                    theme === 'dark'
+                      ? 'linear-gradient(135deg, #334155, #475569)'
+                      : 'linear-gradient(135deg, #e2e8f0, #cbd5e1)',
+                  transform: 'scale(1.05)',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                      : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                },
+              }}
+              onClick={handlePresetMenuOpen}
+            >
+              {zoomLevel}%
+            </Typography>
+            {/* Zoom Presets Menu */}
+            <Menu
+              anchorEl={presetMenuAnchor}
+              open={Boolean(presetMenuAnchor)}
+              onClose={handlePresetMenuClose}
+              PaperProps={{
+                sx: {
+                  background:
+                    theme === 'dark'
+                      ? 'linear-gradient(135deg, #1e293b, #334155)'
+                      : 'linear-gradient(135deg, #ffffff, #f8fafc)',
+                  color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 12px 40px rgba(0, 0, 0, 0.4)'
+                      : '0 12px 40px rgba(0, 0, 0, 0.15)',
+                  borderRadius: '12px',
+                  border: `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
+                  backdropFilter: 'blur(20px)',
+                  overflow: 'hidden',
+                },
+              }}
+            >
+              {zoomPresets.map(preset => (
+                <MenuItem
+                  key={preset.level}
+                  onClick={() => handlePresetClick(preset)}
+                  sx={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    margin: '4px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      background:
+                        theme === 'dark'
+                          ? 'linear-gradient(135deg, #3b82f6, #6366f1)'
+                          : 'linear-gradient(135deg, #60a5fa, #3b82f6)',
+                      color: '#ffffff',
+                      transform: 'translateX(4px)',
+                    },
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {preset.label} ({Math.round(preset.level * 100)}%)
+                  </Typography>
+                </MenuItem>
+              ))}
+            </Menu>
+            {/* Separator */}
+            <Box
+              sx={{
+                width: '1px',
+                height: '32px',
+                background:
+                  theme === 'dark'
+                    ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                    : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                margin: '0 8px',
+              }}
+            />
+            {/* Edge Type Controls */}
+            <Tooltip
+              title={t(`${translationPrefix}.zoomControls.edgeStyle`)}
+              placement="bottom"
+              arrow
+            >
+              <ToggleButtonGroup
+                value={edgeType}
+                exclusive
+                onChange={handleEdgeTypeChange}
+                size="small"
+                aria-label="Edge Type"
+                sx={{
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  '& .MuiToggleButtonGroup-grouped': {
+                    background:
+                      theme === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+                    border: `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
+                    color: theme === 'dark' ? '#94a3b8' : '#64748b',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&.Mui-selected': {
+                      background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      transform: 'scale(1.05)',
+                      border: 'none',
+                    },
+                    '&:hover': {
+                      background:
+                        theme === 'dark'
+                          ? 'linear-gradient(135deg, #475569, #64748b)'
+                          : 'linear-gradient(135deg, #e2e8f0, #cbd5e1)',
+                      transform: 'scale(1.02)',
+                    },
+                    '&:first-of-type': {
+                      borderRadius: '10px 0 0 10px',
+                    },
+                    '&:last-of-type': {
+                      borderRadius: '0 10px 10px 0',
+                    },
+                  },
+                }}
+              >
+                <ToggleButton
+                  value="step"
+                  aria-label={t(`${translationPrefix}.zoomControls.square`)}
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    minWidth: '44px',
+                    height: '36px',
+                  }}
+                >
+                  <i className="fa fa-project-diagram" style={{ fontSize: '14px' }} />
+                </ToggleButton>
+                <ToggleButton
+                  value="bezier"
+                  aria-label={t(`${translationPrefix}.zoomControls.curvy`)}
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    minWidth: '44px',
+                    height: '36px',
+                  }}
+                >
+                  <i className="fa fa-bezier-curve" style={{ fontSize: '14px' }} />
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Tooltip>
+            {/* Fullscreen Controls - Only show if handler is provided */}
+            {onToggleFullscreen && (
+              <>
+                {/* Separator */}
+                <Box
+                  sx={{
+                    width: '1px',
+                    height: '32px',
+                    background:
+                      theme === 'dark'
+                        ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                        : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                    margin: '0 8px',
+                  }}
+                />
+                <Tooltip
+                  title={
+                    isFullscreen
+                      ? t(`${translationPrefix}.zoomControls.exitFullscreen`)
+                      : t(`${translationPrefix}.zoomControls.fullscreen`)
+                  }
+                  placement="bottom"
+                  arrow
+                >
+                  <Button
+                    variant="text"
+                    onClick={onToggleFullscreen}
+                    sx={getButtonStyles('fullscreen', isFullscreen)}
+                    onMouseEnter={handleMouseEnter('fullscreen')}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+                  </Button>
+                </Tooltip>
+              </>
+            )}
           </>
         )}
+        {/* Button to show or hide the control panel */}
+
+        <Tooltip
+          title={
+            showControls
+              ? t(`${translationPrefix}.hideControls.hide`)
+              : t(`${translationPrefix}.hideControls.show`)
+          }
+          placement="bottom"
+          arrow
+        >
+          <Button
+            variant="text"
+            onClick={toggleControls}
+            sx={getButtonStyles('toggleControls', !showControls)}
+            onMouseEnter={handleMouseEnter('toggleControls')}
+            onMouseLeave={handleMouseLeave}
+          >
+            {showControls ? <ChevronLeft fontSize="medium" /> : <ChevronRight fontSize="medium" />}
+          </Button>
+        </Tooltip>
       </Box>
     );
   }
