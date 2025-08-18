@@ -16,13 +16,12 @@ interface IfeedbackModalProps {
 }
 
 interface IFeedbackFormData {
-  pluginId: number;
   rating: number | null;
   comment: string;
   suggestion: string;
 }
 
-const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) => {
+const FeedbackModel = ({ pluginAPI, onClose, pluginId }: IfeedbackModalProps) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -31,7 +30,6 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
     comment: '',
     suggestion: '',
     rating: null,
-    pluginId: pluginId,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -77,7 +75,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
     try {
       console.log(formData);
 
-      const response = await pluginAPI.submitPluginFeedback(formData);
+      const response = await pluginAPI.submitPluginFeedback(pluginId, formData);
 
       if (response.status == 201) {
         toast.success(response?.data?.message || 'Feedback submitted successfully');

@@ -103,8 +103,8 @@ export class PluginAPI {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async submitPluginFeedback(feedback: any): Promise<any> {
-    const response = await api.post(`${this.baseURL}/feedback`, feedback);
+  async submitPluginFeedback(pluginId: number, feedback: any): Promise<any> {
+    const response = await api.post(`${this.baseURL}/${pluginId}/feedback`, feedback);
     return response;
   }
 

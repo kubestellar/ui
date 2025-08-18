@@ -466,7 +466,6 @@ func GetMarketplacePluginReviewsHandler(c *gin.Context) {
 }
 
 func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
-	// TODO: update the plugin rating average and count for both manager and database
 	var feedback models.PluginFeedback
 	if err := c.ShouldBindJSON(&feedback); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback format"})
@@ -496,69 +495,53 @@ func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
 		return
 	}
 
-	// find the corresponding marketplace_plugin_ID
-	// we need to do this because the plugin_feedback table uses marketplace_plugin_ID
-	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(feedback.PluginID)
+	// check if the plugin is installed from the marketplace
+	exists, err := marketplace.CheckMarketplacePlugin(feedback.PluginID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get marketplace plugin ID"})
-		log.LogError("error getting marketplace plugin ID", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
-		return
-	}
-
-	// add to the database and get the ID
-	err = pluginpkg.AddPluginFeedbackToDB(
-		marketplacePluginID, feedback.UserID, feedback.Rating, feedback.Comment, feedback.Suggestions,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add feedback to database"})
-		log.LogError("error adding feedback to database", zap.String("error", err.Error()))
-		return
-	}
-	// add to the marketplace manager
-	manager := marketplace.GetGlobalMarketplaceManager()
-	if manager == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
-		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
-		return
-	}
-	err = manager.AddFeedback(&feedback, feedback.PluginID)
-
-	// update the plugin rating average and count in the DB
-	ratingAvg, err := manager.GetRatingAverage(feedback.PluginID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get rating average"})
-		log.LogError("error getting rating average", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
-		return
-	}
-
-	ratingCnt, err := manager.GetRatingCount(feedback.PluginID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get rating count"})
-		log.LogError("error getting rating count", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
-		return
-	}
-
-	err = pluginpkg.UpdateRating(feedback.PluginID, ratingAvg, ratingCnt)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update plugin rating in database"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Error checking marketplace plugin: %v", err),
+		})
 		log.LogError(
-			"error updating plugin rating in database",
-			zap.Int("plugin_id", feedback.PluginID),
+			"error checking marketplace plugin exists",
+			zap.Int("pluginID", feedback.PluginID),
 			zap.String("error", err.Error()),
 		)
+		return
+	}
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":    "Plugin not found in marketplace",
+			"pluginId": feedback.PluginID,
+		})
+		log.LogInfo("Plugin not found in marketplace",
+			zap.String("pluginId", strconv.Itoa(feedback.PluginID)))
+		return
+	}
+
+	// add feedback
+	err = marketplace.AddMarketplacePluginFeedback(feedback.PluginID, &feedback)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Error adding feedback to marketplace: %v", err),
+		})
+		log.LogError(
+			"error adding feedback to marketplace",
+			zap.Int("pluginID", feedback.PluginID),
+			zap.String("error", err.Error()),
+		)
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Feedback submitted successfully",
 		"feedback": gin.H{
-			"plugin_id":             feedback.PluginID,
-			"marketplace_plugin_id": marketplacePluginID,
-			"user_id":               feedback.UserID,
-			"rating":                feedback.Rating,
-			"comment":               feedback.Comment,
-			"suggestions":           feedback.Suggestions,
-			"created_at":            feedback.CreatedAt,
-			"updated_at":            feedback.UpdatedAt,
+			"plugin_id":   feedback.PluginID,
+			"user_id":     feedback.UserID,
+			"rating":      feedback.Rating,
+			"comment":     feedback.Comment,
+			"suggestions": feedback.Suggestions,
+			"created_at":  feedback.CreatedAt,
+			"updated_at":  feedback.UpdatedAt,
 		},
 	})
 }

@@ -33,6 +33,6 @@ func setupPluginRoutes(router *gin.Engine) {
 		plugins.PUT("/system/configuration", api.UpdatePluginSystemConfigHandler)
 
 		// Feedback
-		plugins.POST("/feedback", api.SubmitPluginFeedbackHandler)
+		plugins.POST("/:id/feedback", api.SubmitPluginFeedbackHandler)
 	}
 }
