@@ -15,6 +15,11 @@ interface KubeconfigImportTabProps {
   setSelectedFile: (file: File | null) => void;
   handleFileUpload: () => void;
   handleCancel: () => void;
+  setSnackbar: (snackbar: {
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'warning' | 'info';
+  }) => void;
 }
 
 const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
@@ -27,10 +32,38 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
   setSelectedFile,
   handleFileUpload,
   handleCancel,
+  setSnackbar,
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleFileSelect = (file: File | null) => {
+    if (!file) return;
+
+    const allowedExtensions = ['yaml', 'yml', 'kubeconfig'];
+    const fileNameParts = file.name.split('.');
+    const extension = fileNameParts.length > 1 ? fileNameParts.pop()?.toLowerCase() : '';
+
+    if (
+      file.name.toLowerCase() === 'config' ||
+      (extension && allowedExtensions.includes(extension))
+    ) {
+      setSelectedFile(file);
+      setSnackbar({
+        open: true,
+        message: `File ${file.name} uploaded successfully`,
+        severity: 'success',
+      });
+    } else {
+      setSelectedFile(null);
+      setSnackbar({
+        open: true,
+        message: 'Invalid file type. Please upload a .yaml, .yml, or kubeconfig file.',
+        severity: 'error',
+      });
+    }
+  };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -47,7 +80,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
     setIsDragOver(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      setSelectedFile(files[0]);
+      handleFileSelect(files[0]);
     }
   };
 
@@ -220,7 +253,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
                   onClick={e => (e.currentTarget.value = '')}
                   onChange={e => {
                     const file = e.target.files?.[0] || null;
-                    setSelectedFile(file);
+                    handleFileSelect(file);
                   }}
                 />
               </Button>
