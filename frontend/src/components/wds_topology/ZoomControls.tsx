@@ -292,6 +292,39 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 <ViewQuilt />
               </Button>
             </Tooltip>
+
+            <Tooltip
+              title={t(`${translationPrefix}.zoomControls.expandAll`)}
+              placement="bottom"
+              arrow
+            >
+              <Button
+                variant="text"
+                onClick={onExpandAll}
+                sx={getButtonStyles('expand')}
+                onMouseEnter={handleMouseEnter('expand')}
+                onMouseLeave={handleMouseLeave}
+              >
+                <Add />
+              </Button>
+            </Tooltip>
+
+            <Tooltip
+              title={t(`${translationPrefix}.zoomControls.collapseAll`)}
+              placement="bottom"
+              arrow
+            >
+              <Button
+                variant="text"
+                onClick={onCollapseAll}
+                sx={getButtonStyles('collapseAll')}
+                onMouseEnter={handleMouseEnter('collapseAll')}
+                onMouseLeave={handleMouseLeave}
+              >
+                <Remove />
+              </Button>
+            </Tooltip>
+
             {/* Separator */}
             <Box
               sx={{
