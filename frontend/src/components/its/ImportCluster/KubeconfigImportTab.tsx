@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, DragEvent } from 'react';
 import { Box, Button, SxProps, Theme } from '@mui/material';
 import { Colors } from './ImportClusters';
 import CancelButton from '../../common/CancelButton';
@@ -30,6 +30,26 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      setSelectedFile(files[0]);
+    }
+  };
 
   return (
     <Box
@@ -86,15 +106,25 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
         </Box>
 
         <Box
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           sx={{
             border: 1,
             borderStyle: 'dashed',
-            borderColor: 'divider',
+            borderColor: isDragOver ? 'primary.main' : 'divider',
             borderRadius: { xs: 1.5, sm: 2 },
             p: { xs: 2, sm: 3 },
             textAlign: 'center',
             transition: 'all 0.3s ease',
-            backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.01)',
+            backgroundColor:
+              isDragOver
+                ? theme === 'dark'
+                  ? 'rgba(47, 134, 255, 0.05)'
+                  : 'rgba(47, 134, 255, 0.02)'
+                : theme === 'dark'
+                  ? 'rgba(0, 0, 0, 0.2)'
+                  : 'rgba(0, 0, 0, 0.01)',
             '&:hover': {
               borderColor: 'primary.main',
               backgroundColor:
@@ -110,42 +140,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
             maxHeight: { xs: '250px', sm: '300px', md: '350px' },
           }}
         >
-          <Box
-            sx={{
-              mb: 3,
-              p: 2,
-              borderRadius: '50%',
-              backgroundColor:
-                theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span role="img" aria-label="upload" style={{ fontSize: '1.75rem' }}>
-              📤
-            </span>
-          </Box>
-          <Box sx={{ mb: 2, fontWeight: 500, fontSize: '1rem' }}>
-            {t('kubeconfigImport.dragAndDrop')}
-          </Box>
-          <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: '0.85rem' }}>
-            {t('kubeconfigImport.or')}
-          </Box>
-          <Button component="label" variant="contained" sx={primaryButtonStyles}>
-            {t('kubeconfigImport.browseFiles')}
-            <input
-              type="file"
-              hidden
-              accept=".kube/config, .yaml, .yml"
-              onClick={e => (e.currentTarget.value = '')}
-              onChange={e => {
-                const file = e.target.files?.[0] || null;
-                setSelectedFile(file);
-              }}
-            />
-          </Button>
-          {selectedFile && (
+          {selectedFile ? (
             <Box
               sx={{
                 mt: 3,
@@ -155,25 +150,82 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
                   theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
                 border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.2)'}`,
                 display: 'flex',
-                alignItems: 'flex-start',
+                alignItems: 'center',
                 gap: 1.5,
                 animation: 'fadeIn 0.3s ease',
                 '@keyframes fadeIn': {
                   '0%': { opacity: 0, transform: 'translateY(10px)' },
                   '100%': { opacity: 1, transform: 'translateY(0)' },
                 },
+                width: '100%',
+                justifyContent: 'space-between',
               }}
             >
-              <span role="img" aria-label="file" style={{ fontSize: '1.25rem' }}>
-                📄
-              </span>
-              <Box>
-                <Box sx={{ fontWeight: 600 }}>{selectedFile.name}</Box>
-                <Box sx={{ fontSize: '0.75rem', color: colors.textSecondary }}>
-                  {(selectedFile.size / 1024).toFixed(1)} KB
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                <span role="img" aria-label="file" style={{ fontSize: '1.25rem' }}>
+                  📄
+                </span>
+                <Box>
+                  <Box sx={{ fontWeight: 600 }}>{selectedFile.name}</Box>
+                  <Box sx={{ fontSize: '0.75rem', color: colors.textSecondary }}>
+                    {(selectedFile.size / 1024).toFixed(1)} KB
+                  </Box>
                 </Box>
               </Box>
+              <Button
+                size="small"
+                onClick={() => setSelectedFile(null)}
+                sx={{
+                  color: colors.error,
+                  minWidth: 'auto',
+                  p: 0.5,
+                  borderRadius: '50%',
+                  '&:hover': { backgroundColor: 'rgba(255, 107, 107, 0.1)' },
+                }}
+              >
+                <span role="img" aria-label="remove">
+                  ❌
+                </span>
+              </Button>
             </Box>
+          ) : (
+            <>
+              <Box
+                sx={{
+                  mb: 3,
+                  p: 2,
+                  borderRadius: '50%',
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span role="img" aria-label="upload" style={{ fontSize: '1.75rem' }}>
+                  📤
+                </span>
+              </Box>
+              <Box sx={{ mb: 2, fontWeight: 500, fontSize: '1rem' }}>
+                {t('kubeconfigImport.dragAndDrop')}
+              </Box>
+              <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: '0.85rem' }}>
+                {t('kubeconfigImport.or')}
+              </Box>
+              <Button component="label" variant="contained" sx={primaryButtonStyles}>
+                {t('kubeconfigImport.browseFiles')}
+                <input
+                  type="file"
+                  hidden
+                  accept=".kube/config, .yaml, .yml"
+                  onClick={e => (e.currentTarget.value = '')}
+                  onChange={e => {
+                    const file = e.target.files?.[0] || null;
+                    setSelectedFile(file);
+                  }}
+                />
+              </Button>
+            </>
           )}
         </Box>
 
