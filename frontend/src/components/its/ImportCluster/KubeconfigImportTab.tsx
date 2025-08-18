@@ -117,14 +117,13 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
             p: { xs: 2, sm: 3 },
             textAlign: 'center',
             transition: 'all 0.3s ease',
-            backgroundColor:
-              isDragOver
-                ? theme === 'dark'
-                  ? 'rgba(47, 134, 255, 0.05)'
-                  : 'rgba(47, 134, 255, 0.02)'
-                : theme === 'dark'
-                  ? 'rgba(0, 0, 0, 0.2)'
-                  : 'rgba(0, 0, 0, 0.01)',
+            backgroundColor: isDragOver
+              ? theme === 'dark'
+                ? 'rgba(47, 134, 255, 0.05)'
+                : 'rgba(47, 134, 255, 0.02)'
+              : theme === 'dark'
+                ? 'rgba(0, 0, 0, 0.2)'
+                : 'rgba(0, 0, 0, 0.01)',
             '&:hover': {
               borderColor: 'primary.main',
               backgroundColor:
