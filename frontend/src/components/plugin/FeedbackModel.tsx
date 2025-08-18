@@ -18,7 +18,7 @@ interface IfeedbackModalProps {
 interface IFeedbackFormData {
   rating: number | null;
   comment: string;
-  suggestion: string;
+  suggestions: string;
 }
 
 const FeedbackModel = ({ pluginAPI, onClose, pluginId }: IfeedbackModalProps) => {
@@ -28,7 +28,7 @@ const FeedbackModel = ({ pluginAPI, onClose, pluginId }: IfeedbackModalProps) =>
   const themeStyles = getThemeStyles(isDark);
   const [formData, setFormData] = useState<IFeedbackFormData>({
     comment: '',
-    suggestion: '',
+    suggestions: '',
     rating: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -183,9 +183,9 @@ const FeedbackModel = ({ pluginAPI, onClose, pluginId }: IfeedbackModalProps) =>
           <div className="flex flex-col gap-3">
             <div>{t('plugins.feedback.suggestion.title')}</div>
             <textarea
-              name="suggestion"
+              name="suggestions"
               placeholder={t('plugins.feedback.suggestion.placeholder')}
-              value={formData.suggestion}
+              value={formData.suggestions}
               onChange={handleChange}
               required
               disabled={isSubmitting}
