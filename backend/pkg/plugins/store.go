@@ -217,21 +217,18 @@ func CheckPluginWithInfo(pluginName, pluginVersion, pluginDescription string, us
 }
 
 func CheckInstalledPluginWithID(pluginID int) (bool, error) {
-	fmt.Println("pluginID->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", pluginID)
 	query := `
 		SELECT EXISTS (
 			SELECT 1 FROM installed_plugins
-			WHERE id=$1
-		) 
+			WHERE plugin_details_id=$1
+		)
 	`
 
 	var exist bool
 	row := database.DB.QueryRow(query, pluginID)
-	fmt.Println("row->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", row)
 	if err := row.Scan(&exist); err != nil {
 		return false, fmt.Errorf("failed to check plugin existence: %w", err)
 	}
-	fmt.Println("exist->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", exist)
 
 	return exist, nil
 }
@@ -285,7 +282,7 @@ func UpdateInstalledPluginInstalledPath(installedPluginID int, installedPath str
 	query := `
 		UPDATE installed_plugins
 		SET installed_path = $1
-		WHERE id = $2
+		WHERE plugin_details_id = $2
 	`
 
 	_, err := database.DB.Exec(query, installedPath, installedPluginID)
@@ -321,7 +318,7 @@ func UpdatePluginStatusDB(pluginID int, status string, userID int) error {
 	query := `
 		UPDATE installed_plugins
 		SET status = $1
-		WHERE id = $2 AND user_id = $3
+		WHERE plugin_details_id = $2 AND user_id = $3
 	`
 
 	_, err := database.DB.Exec(query, status, pluginID, userID)
@@ -335,7 +332,7 @@ func UpdatePluginStatusDB(pluginID int, status string, userID int) error {
 func GetPluginStatusDB(pluginID int) (string, error) {
 	query := `
 		SELECT status FROM installed_plugins
-		WHERE id = $1
+		WHERE plugin_details_id = $1
 	`
 
 	var status string
@@ -355,7 +352,7 @@ func GetPluginStatusDB(pluginID int) (string, error) {
 func UninstallPluginFromDB(pluginID int, userID int) error {
 	query := `
 		DELETE FROM installed_plugins
-		WHERE id = $1 AND user_id = $2
+		WHERE plugin_details_id = $1 AND user_id = $2
 	`
 
 	_, err := database.DB.Exec(query, pluginID, userID)

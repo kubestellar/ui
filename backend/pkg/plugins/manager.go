@@ -446,7 +446,6 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin, userIDAuth int) {
 		return
 	}
 
-	pluginID := plugin.ID
 	if !exist {
 		// Get userID
 		author, err := models.GetUserByUsername(plugin.Manifest.Metadata.Author)
@@ -460,33 +459,20 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin, userIDAuth int) {
 			return
 		}
 
-		pluginID, err = AddInstalledPluginToDB(pluginID, nil, author.ID, "manual", true, "active", "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(pluginID), 0)
+		_, err = AddInstalledPluginToDB(plugin.ID, nil, author.ID, "manual", true, "active", "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(plugin.ID), 0)
 		if err != nil {
 			log.LogError("Failed to add plugin to installed_plugins  table in database", zap.Error(err))
 		}
-		err = UpdateInstalledPluginInstalledPath(pluginID, "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(pluginID))
+		err = UpdateInstalledPluginInstalledPath(plugin.ID, "/plugins/"+plugin.Manifest.Metadata.Name+"-"+strconv.Itoa(plugin.ID))
 		if err != nil {
 			log.LogError("Failed to update installed plugin installed path in database", zap.Error(err))
 		}
 	} else {
-		exists, err := CheckInstalledPluginWithID(pluginID)
-		if err != nil {
-			log.LogError("Failed to get plugin ID", zap.Error(err))
-			return
-		}
-
-		if !exists {
-			log.LogError("Plugin not found in installed_plugins table", zap.Int("pluginID", pluginID))
-			return
-		}
-
-		err = UpdatePluginStatusDB(pluginID, "active", userIDAuth)
+		err = UpdatePluginStatusDB(plugin.ID, "active", userIDAuth)
 		if err != nil {
 			log.LogError("Failed to update plugin status in database", zap.Error(err))
 		}
 	}
-
-	plugin.ID = pluginID
 
 	// Register the plugin in the manager
 	pm.mu.Lock()
