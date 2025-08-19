@@ -118,6 +118,11 @@ func NewMarketplaceManager(store StorageProvider) (*MarketplaceManager, error) {
 	}, nil
 }
 
+func (m *MarketplaceManager) CheckPluginExists(pluginID int) bool {
+	_, exists := m.plugins[pluginID]
+	return exists
+}
+
 func (m *MarketplaceManager) AddPlugin(plugin *MarketplacePlugin) error {
 	m.plugins[plugin.PluginDetailsID] = plugin
 	return nil

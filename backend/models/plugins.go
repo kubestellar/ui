@@ -84,8 +84,8 @@ type InstalledPlugin struct {
 
 type PluginFeedback struct {
 	ID          int       `json:"id"`
-	PluginID    int       `json:"plugin_id" binding:"required"`
-	UserID      int       `json:"user_id" binding:"required"`
+	PluginID    int       `json:"plugin_id"`
+	UserID      int       `json:"user_id"`
 	Rating      int       `json:"rating" binding:"required,min=1,max=5"`
 	Comment     string    `json:"comment,omitempty"`
 	Suggestions string    `json:"suggestions,omitempty"`
