@@ -1,8 +1,9 @@
 import React, { useState, DragEvent } from 'react';
-import { Box, Button, SxProps, Theme } from '@mui/material';
+import { Box, Button, SxProps, Theme, Typography } from '@mui/material';
 import { Colors } from './ImportClusters';
 import CancelButton from '../../common/CancelButton';
 import { useTranslation } from 'react-i18next';
+import jsYaml from 'js-yaml'; // Assuming js-yaml is installed. If not, please install it.
 
 interface KubeconfigImportTabProps {
   theme: string;
@@ -37,26 +38,63 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [isDragOver, setIsDragOver] = useState(false);
+  const [parsedKubeconfig, setParsedKubeconfig] = useState<any>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   const handleFileSelect = (file: File | null) => {
-    if (!file) return;
+    if (!file) {
+      setSelectedFile(null);
+      setParsedKubeconfig(null);
+      setParseError(null);
+      return;
+    }
 
     const allowedExtensions = ['yaml', 'yml', 'kubeconfig'];
     const fileNameParts = file.name.split('.');
     const extension = fileNameParts.length > 1 ? fileNameParts.pop()?.toLowerCase() : '';
 
-    if (
-      file.name.toLowerCase() === 'config' ||
-      (extension && allowedExtensions.includes(extension))
-    ) {
+    if (file.name.toLowerCase() === 'config' || (extension && allowedExtensions.includes(extension))) {
       setSelectedFile(file);
-      setSnackbar({
-        open: true,
-        message: `File ${file.name} uploaded successfully`,
-        severity: 'success',
-      });
+      setParseError(null); // Clear previous errors
+
+      const reader = new FileReader();
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        try {
+          const content = e.target?.result as string;
+          const parsed = jsYaml.load(content);
+          setParsedKubeconfig(parsed);
+          setSnackbar({
+            open: true,
+            message: `File ${file.name} uploaded and parsed successfully`,
+            severity: 'success',
+          });
+        } catch (error: any) {
+          console.error('Error parsing kubeconfig:', error);
+          setParsedKubeconfig(null);
+          setParseError(`Failed to parse kubeconfig file: ${error.message}`);
+          setSnackbar({
+            open: true,
+            message: `Failed to parse ${file.name}: ${error.message}`,
+            severity: 'error',
+          });
+        }
+      };
+      reader.onerror = () => {
+        const errorMessage = `Failed to read file: ${reader.error?.message}`;
+        console.error(errorMessage);
+        setParsedKubeconfig(null);
+        setParseError(errorMessage);
+        setSnackbar({
+          open: true,
+          message: errorMessage,
+          severity: 'error',
+        });
+      };
+      reader.readAsText(file);
     } else {
       setSelectedFile(null);
+      setParsedKubeconfig(null);
+      setParseError(null);
       setSnackbar({
         open: true,
         message: 'Invalid file type. Please upload a .yaml, .yml, or kubeconfig file.',
@@ -138,128 +176,220 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
           </Box>
         </Box>
 
-        <Box
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          sx={{
-            border: 1,
-            borderStyle: 'dashed',
-            borderColor: isDragOver ? 'primary.main' : 'divider',
-            borderRadius: { xs: 1.5, sm: 2 },
-            p: { xs: 2, sm: 3 },
-            textAlign: 'center',
-            transition: 'all 0.3s ease',
-            backgroundColor: isDragOver
-              ? theme === 'dark'
-                ? 'rgba(47, 134, 255, 0.05)'
-                : 'rgba(47, 134, 255, 0.02)'
-              : theme === 'dark'
-                ? 'rgba(0, 0, 0, 0.2)'
-                : 'rgba(0, 0, 0, 0.01)',
-            '&:hover': {
-              borderColor: 'primary.main',
-              backgroundColor:
-                theme === 'dark' ? 'rgba(47, 134, 255, 0.05)' : 'rgba(47, 134, 255, 0.02)',
-            },
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 1,
-            mb: 2,
-            minHeight: { xs: '200px', sm: '220px' },
-            maxHeight: { xs: '250px', sm: '300px', md: '350px' },
-          }}
-        >
-          {selectedFile ? (
+        {parseError && (
+          <Box sx={{ color: colors.error, mb: 2, fontSize: '0.875rem' }}>
+            {parseError}
+          </Box>
+        )}
+
+        {!selectedFile && (
+          <Box
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            sx={{
+              border: 1,
+              borderStyle: 'dashed',
+              borderColor: isDragOver ? 'primary.main' : 'divider',
+              borderRadius: { xs: 1.5, sm: 2 },
+              p: { xs: 2, sm: 3 },
+              textAlign: 'center',
+              transition: 'all 0.3s ease',
+              backgroundColor: isDragOver
+                ? theme === 'dark'
+                  ? 'rgba(47, 134, 255, 0.05)'
+                  : 'rgba(47, 134, 255, 0.02)'
+                : theme === 'dark'
+                  ? 'rgba(0, 0, 0, 0.2)'
+                  : 'rgba(0, 0, 0, 0.01)',
+              '&:hover': {
+                borderColor: 'primary.main',
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(47, 134, 255, 0.05)' : 'rgba(47, 134, 255, 0.02)',
+              },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              mb: 2,
+              minHeight: { xs: '200px', sm: '220px' },
+              maxHeight: { xs: '250px', sm: '300px', md: '350px' },
+            }}
+          >
             <Box
               sx={{
-                mt: 3,
+                mb: 3,
                 p: 2,
-                borderRadius: 2,
+                borderRadius: '50%',
                 backgroundColor:
                   theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
-                border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.2)'}`,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
-                animation: 'fadeIn 0.3s ease',
-                '@keyframes fadeIn': {
-                  '0%': { opacity: 0, transform: 'translateY(10px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
-                width: '100%',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                <span role="img" aria-label="file" style={{ fontSize: '1.25rem' }}>
-                  📄
-                </span>
-                <Box>
-                  <Box sx={{ fontWeight: 600 }}>{selectedFile.name}</Box>
-                  <Box sx={{ fontSize: '0.75rem', color: colors.textSecondary }}>
-                    {(selectedFile.size / 1024).toFixed(1)} KB
-                  </Box>
-                </Box>
-              </Box>
-              <Button
-                size="small"
-                onClick={() => setSelectedFile(null)}
-                sx={{
-                  color: colors.error,
-                  minWidth: 'auto',
-                  p: 0.5,
-                  borderRadius: '50%',
-                  '&:hover': { backgroundColor: 'rgba(255, 107, 107, 0.1)' },
-                }}
-              >
-                <span role="img" aria-label="remove">
-                  ❌
-                </span>
-              </Button>
+              <span role="img" aria-label="upload" style={{ fontSize: '1.75rem' }}>
+                📤
+              </span>
             </Box>
-          ) : (
-            <>
+            <Box sx={{ mb: 2, fontWeight: 500, fontSize: '1rem' }}>
+              {t('kubeconfigImport.dragAndDrop')}
+            </Box>
+            <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: '0.85rem' }}>
+              {t('kubeconfigImport.or')}
+            </Box>
+            <Button component="label" variant="contained" sx={primaryButtonStyles}>
+              {t('kubeconfigImport.browseFiles')}
+              <input
+                type="file"
+                hidden
+                accept=".kube/config, .yaml, .yml"
+                onClick={e => (e.currentTarget.value = '')}
+                onChange={e => {
+                  const file = e.target.files?.[0] || null;
+                  handleFileSelect(file);
+                }}
+              />
+            </Button>
+          </Box>
+        )}
+
+        {parsedKubeconfig && (
+          <Box
+            sx={{
+              p: { xs: 1.5, sm: 2, md: 2.5 },
+              borderRadius: { xs: 1.5, sm: 2 },
+              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
+              border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+              boxShadow:
+                theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.05)',
+              mt: 2,
+              width: '100%',
+              maxWidth: '100%',
+              maxHeight: '300px', // Limit height for scrollability
+              overflowY: 'auto', // Enable scrolling
+            }}
+          >
+            {selectedFile && (
               <Box
                 sx={{
-                  mb: 3,
+                  mb: 2,
                   p: 2,
-                  borderRadius: '50%',
+                  borderRadius: 2,
                   backgroundColor:
                     theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
+                  border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.2)'}`,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  gap: 1.5,
+                  animation: 'fadeIn 0.3s ease',
+                  '@keyframes fadeIn': {
+                    '0%': { opacity: 0, transform: 'translateY(10px)' },
+                    '100%': { opacity: 1, transform: 'translateY(0)' },
+                  },
+                  width: '100%',
+                  justifyContent: 'space-between',
                 }}
               >
-                <span role="img" aria-label="upload" style={{ fontSize: '1.75rem' }}>
-                  📤
-                </span>
-              </Box>
-              <Box sx={{ mb: 2, fontWeight: 500, fontSize: '1rem' }}>
-                {t('kubeconfigImport.dragAndDrop')}
-              </Box>
-              <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: '0.85rem' }}>
-                {t('kubeconfigImport.or')}
-              </Box>
-              <Button component="label" variant="contained" sx={primaryButtonStyles}>
-                {t('kubeconfigImport.browseFiles')}
-                <input
-                  type="file"
-                  hidden
-                  accept=".kube/config, .yaml, .yml"
-                  onClick={e => (e.currentTarget.value = '')}
-                  onChange={e => {
-                    const file = e.target.files?.[0] || null;
-                    handleFileSelect(file);
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                  <span role="img" aria-label="file" style={{ fontSize: '1.25rem' }}>
+                    📄
+                  </span>
+                  <Box>
+                    <Box sx={{ fontWeight: 600 }}>{selectedFile.name}</Box>
+                    <Box sx={{ fontSize: '0.75rem', color: colors.textSecondary }}>
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </Box>
+                  </Box>
+                </Box>
+                <Button
+                  size="small"
+                  onClick={() => handleFileSelect(null)} // Use handleFileSelect to clear
+                  sx={{
+                    color: colors.error,
+                    minWidth: 'auto',
+                    p: 0.5,
+                    borderRadius: '50%',
+                    '&:hover': { backgroundColor: 'rgba(255, 107, 107, 0.1)' },
                   }}
-                />
-              </Button>
-            </>
-          )}
-        </Box>
+                >
+                  <span role="img" aria-label="remove">
+                    ❌
+                  </span>
+                </Button>
+              </Box>
+            )}
+
+            <Typography variant="h6" sx={{ color: textColor, mb: 1.5, fontWeight: 600 }}>
+              {t('kubeconfigImport.parsedInfoTitle')}
+            </Typography>
+
+            {parsedKubeconfig.clusters && parsedKubeconfig.clusters.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}>
+                  {t('kubeconfigImport.clusters')}
+                </Typography>
+                {parsedKubeconfig.clusters.map((cluster: any, index: number) => (
+                  <Box key={index} sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}>
+                    <Typography sx={{ color: textColor, fontSize: '0.9rem' }}>
+                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.name')}:</Box> {cluster.name}
+                    </Typography>
+                    <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
+                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.server')}:</Box> {cluster.cluster?.server}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {parsedKubeconfig.users && parsedKubeconfig.users.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}>
+                  {t('kubeconfigImport.users')}
+                </Typography>
+                {parsedKubeconfig.users.map((user: any, index: number) => (
+                  <Box key={index} sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}>
+                    <Typography sx={{ color: textColor, fontSize: '0.9rem' }}>
+                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.name')}:</Box> {user.name}
+                    </Typography>
+                    {user.user?.token && (
+                      <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
+                        <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.token')}:</Box> {user.user.token.substring(0, 10)}...
+                      </Typography>
+                    )}
+                    {user.user?.username && (
+                      <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
+                        <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.username')}:</Box> {user.user.username}
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {parsedKubeconfig.contexts && parsedKubeconfig.contexts.length > 0 && (
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}>
+                  {t('kubeconfigImport.contexts')}
+                </Typography>
+                {parsedKubeconfig.contexts.map((context: any, index: number) => (
+                  <Box key={index} sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}>
+                    <Typography sx={{ color: textColor, fontSize: '0.9rem' }}>
+                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.name')}:</Box> {context.name}
+                    </Typography>
+                    <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
+                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.cluster')}:</Box> {context.context?.cluster}
+                    </Typography>
+                    <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
+                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.user')}:</Box> {context.context?.user}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
 
         <Box
           sx={{
@@ -276,7 +406,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
           <Button
             variant="contained"
             onClick={handleFileUpload}
-            disabled={!selectedFile}
+            disabled={!selectedFile || !parsedKubeconfig}
             sx={primaryButtonStyles}
           >
             {t('kubeconfigImport.importCluster')}
