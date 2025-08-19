@@ -53,7 +53,10 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
     const fileNameParts = file.name.split('.');
     const extension = fileNameParts.length > 1 ? fileNameParts.pop()?.toLowerCase() : '';
 
-    if (file.name.toLowerCase() === 'config' || (extension && allowedExtensions.includes(extension))) {
+    if (
+      file.name.toLowerCase() === 'config' ||
+      (extension && allowedExtensions.includes(extension))
+    ) {
       setSelectedFile(file);
       setParseError(null); // Clear previous errors
 
@@ -177,9 +180,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
         </Box>
 
         {parseError && (
-          <Box sx={{ color: colors.error, mb: 2, fontSize: '0.875rem' }}>
-            {parseError}
-          </Box>
+          <Box sx={{ color: colors.error, mb: 2, fontSize: '0.875rem' }}>{parseError}</Box>
         )}
 
         {!selectedFile && (
@@ -263,7 +264,9 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
               backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
               border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               boxShadow:
-                theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.05)',
+                theme === 'dark'
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                  : '0 4px 12px rgba(0, 0, 0, 0.05)',
               mt: 2,
               width: '100%',
               maxWidth: '100%',
@@ -327,16 +330,28 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
 
             {parsedKubeconfig.clusters && parsedKubeconfig.clusters.length > 0 && (
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}
+                >
                   {t('kubeconfigImport.clusters')}
                 </Typography>
                 {parsedKubeconfig.clusters.map((cluster: any, index: number) => (
-                  <Box key={index} sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}>
+                  <Box
+                    key={index}
+                    sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}
+                  >
                     <Typography sx={{ color: textColor, fontSize: '0.9rem' }}>
-                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.name')}:</Box> {cluster.name}
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {t('kubeconfigImport.name')}:
+                      </Box>{' '}
+                      {cluster.name}
                     </Typography>
                     <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
-                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.server')}:</Box> {cluster.cluster?.server}
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {t('kubeconfigImport.server')}:
+                      </Box>{' '}
+                      {cluster.cluster?.server}
                     </Typography>
                   </Box>
                 ))}
@@ -345,22 +360,37 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
 
             {parsedKubeconfig.users && parsedKubeconfig.users.length > 0 && (
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}
+                >
                   {t('kubeconfigImport.users')}
                 </Typography>
                 {parsedKubeconfig.users.map((user: any, index: number) => (
-                  <Box key={index} sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}>
+                  <Box
+                    key={index}
+                    sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}
+                  >
                     <Typography sx={{ color: textColor, fontSize: '0.9rem' }}>
-                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.name')}:</Box> {user.name}
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {t('kubeconfigImport.name')}:
+                      </Box>{' '}
+                      {user.name}
                     </Typography>
                     {user.user?.token && (
                       <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
-                        <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.token')}:</Box> {user.user.token.substring(0, 10)}...
+                        <Box component="span" sx={{ fontWeight: 600 }}>
+                          {t('kubeconfigImport.token')}:
+                        </Box>{' '}
+                        {user.user.token.substring(0, 10)}...
                       </Typography>
                     )}
                     {user.user?.username && (
                       <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
-                        <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.username')}:</Box> {user.user.username}
+                        <Box component="span" sx={{ fontWeight: 600 }}>
+                          {t('kubeconfigImport.username')}:
+                        </Box>{' '}
+                        {user.user.username}
                       </Typography>
                     )}
                   </Box>
@@ -370,19 +400,34 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
 
             {parsedKubeconfig.contexts && parsedKubeconfig.contexts.length > 0 && (
               <Box>
-                <Typography variant="subtitle1" sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ color: colors.primary, fontWeight: 500, mb: 1 }}
+                >
                   {t('kubeconfigImport.contexts')}
                 </Typography>
                 {parsedKubeconfig.contexts.map((context: any, index: number) => (
-                  <Box key={index} sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}>
+                  <Box
+                    key={index}
+                    sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}
+                  >
                     <Typography sx={{ color: textColor, fontSize: '0.9rem' }}>
-                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.name')}:</Box> {context.name}
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {t('kubeconfigImport.name')}:
+                      </Box>{' '}
+                      {context.name}
                     </Typography>
                     <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
-                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.cluster')}:</Box> {context.context?.cluster}
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {t('kubeconfigImport.cluster')}:
+                      </Box>{' '}
+                      {context.context?.cluster}
                     </Typography>
                     <Typography sx={{ color: colors.textSecondary, fontSize: '0.85rem' }}>
-                      <Box component="span" sx={{ fontWeight: 600 }}>{t('kubeconfigImport.user')}:</Box> {context.context?.user}
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {t('kubeconfigImport.user')}:
+                      </Box>{' '}
+                      {context.context?.user}
                     </Typography>
                   </Box>
                 ))}
