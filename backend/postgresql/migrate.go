@@ -1,6 +1,7 @@
 package postgresql
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/kubestellar/ui/backend/log"
@@ -11,11 +12,11 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-func RunMigration() {
+func RunMigration() error {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.LogError("DATABASE_URL environment variable is not set")
-		return
+		return fmt.Errorf("DATABASE_URL is not set")
 	}
 
 	m, err := migrate.New(
@@ -24,18 +25,19 @@ func RunMigration() {
 	)
 	if err != nil {
 		log.LogError("Failed to init migrate", zap.String("error", err.Error()))
-		return
+		return fmt.Errorf("failed to init migrate: %w", err)
 	}
 
 	err = m.Up()
 	if err != nil {
 		if err == migrate.ErrNoChange {
 			log.LogInfo("No migration changes to apply")
-		} else {
-			log.LogError("Failed to apply migrations", zap.String("error", err.Error()))
+			return nil
 		}
-		return
-	} else {
-		log.LogInfo("Migrations applied successfully")
+
+		log.LogError("Failed to apply migrations", zap.String("error", err.Error()))
+		return fmt.Errorf("failed to apply migrations: %w", err)
 	}
+	log.LogInfo("Database migrations applied successfully")
+	return nil
 }

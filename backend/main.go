@@ -62,7 +62,9 @@ func main() {
 
 	// Run database migrations
 	logger.Info("Running database migrations...")
-	postgresql.RunMigration()
+	if err := postgresql.RunMigration(); err != nil {
+		logger.Fatal("Failed to run database migrations", zap.Error(err))
+	}
 
 	// Initialize admin user
 	logger.Info("Initializing admin user...")
