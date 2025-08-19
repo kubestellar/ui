@@ -490,6 +490,38 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
         message: t('importClusters.fileUpload.selected', { filename: selectedFile.name }),
         severity: 'info',
       });
+      try {
+        const formData = new FormData();
+        formData.append('kubeconfig', selectedFile); // 'file' should match the backend's expected field name
+
+        const response = await api.post('/clusters/import', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        console.log('File upload successful:', response.data);
+        setSnackbar({
+          open: true,
+          message: t('importClusters.fileUpload.success', { filename: selectedFile.name }),
+          severity: 'success',
+        });
+        setSelectedFile(null); // Clear the selected file after successful upload
+      } catch (error) {
+        console.error('File upload failed:', error);
+        let errorMessage = t('importClusters.fileUpload.failed');
+        const axiosError = error as AxiosError;
+        if (axiosError.response && axiosError.response.data && axiosError.response.data.error) {
+          errorMessage = `${errorMessage}: ${axiosError.response.data.error}`;
+        } else if (axiosError.message) {
+          errorMessage = `${errorMessage}: ${axiosError.message}`;
+        }
+        setSnackbar({
+          open: true,
+          message: errorMessage,
+          severity: 'error',
+        });
+      }
     }
   };
 
