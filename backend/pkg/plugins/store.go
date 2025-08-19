@@ -90,6 +90,7 @@ func GetPluginDetailsByID(pluginID int) (*models.PluginDetails, error) {
 		&pluginDetails.FileSize,
 		&pluginDetails.CreatedAt,
 		&pluginDetails.UpdatedAt,
+		&pluginDetails.IsMarketPlacePlugin,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("plugin details not found: %w", err)
