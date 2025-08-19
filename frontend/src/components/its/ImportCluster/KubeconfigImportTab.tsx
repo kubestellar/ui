@@ -3,7 +3,7 @@ import { Box, Button, SxProps, Theme, Typography } from '@mui/material';
 import { Colors } from './ImportClusters';
 import CancelButton from '../../common/CancelButton';
 import { useTranslation } from 'react-i18next';
-import jsYaml from 'js-yaml'; // Assuming js-yaml is installed. If not, please install it.
+import jsYaml from 'js-yaml';
 
 interface KubeconfigImportTabProps {
   theme: string;
@@ -23,6 +23,27 @@ interface KubeconfigImportTabProps {
   }) => void;
 }
 
+// Strongly-typed shape for the parts of kubeconfig we read in the UI
+interface KubeCluster {
+  name: string;
+  cluster?: { server?: string };
+}
+interface KubeUser {
+  name: string;
+  user?: { token?: string; username?: string };
+}
+interface KubeContext {
+  name: string;
+  context?: { cluster?: string; user?: string };
+}
+
+interface ParsedKubeconfig {
+  clusters?: KubeCluster[];
+  users?: KubeUser[];
+  contexts?: KubeContext[];
+  [key: string]: unknown;
+}
+
 const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
   theme,
   colors,
@@ -38,7 +59,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [isDragOver, setIsDragOver] = useState(false);
-  const [parsedKubeconfig, setParsedKubeconfig] = useState<any>(null);
+  const [parsedKubeconfig, setParsedKubeconfig] = useState<ParsedKubeconfig | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
 
   const handleFileSelect = (file: File | null) => {
@@ -64,26 +85,28 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
       reader.onload = (e: ProgressEvent<FileReader>) => {
         try {
           const content = e.target?.result as string;
-          const parsed = jsYaml.load(content);
+          // jsYaml.load returns unknown-ish data; cast it to our typed shape
+          const parsed = jsYaml.load(content) as ParsedKubeconfig;
           setParsedKubeconfig(parsed);
           setSnackbar({
             open: true,
             message: `File ${file.name} uploaded and parsed successfully`,
             severity: 'success',
           });
-        } catch (error: any) {
-          console.error('Error parsing kubeconfig:', error);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.error('Error parsing kubeconfig:', message);
           setParsedKubeconfig(null);
-          setParseError(`Failed to parse kubeconfig file: ${error.message}`);
+          setParseError(`Failed to parse kubeconfig file: ${message}`);
           setSnackbar({
             open: true,
-            message: `Failed to parse ${file.name}: ${error.message}`,
+            message: `Failed to parse ${file.name}: ${message}`,
             severity: 'error',
           });
         }
       };
       reader.onerror = () => {
-        const errorMessage = `Failed to read file: ${reader.error?.message}`;
+        const errorMessage = `Failed to read file: ${reader.error?.message ?? 'Unknown error'}`;
         console.error(errorMessage);
         setParsedKubeconfig(null);
         setParseError(errorMessage);
@@ -336,7 +359,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
                 >
                   {t('kubeconfigImport.clusters')}
                 </Typography>
-                {parsedKubeconfig.clusters.map((cluster: any, index: number) => (
+                {parsedKubeconfig.clusters.map((cluster: KubeCluster, index: number) => (
                   <Box
                     key={index}
                     sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}
@@ -366,7 +389,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
                 >
                   {t('kubeconfigImport.users')}
                 </Typography>
-                {parsedKubeconfig.users.map((user: any, index: number) => (
+                {parsedKubeconfig.users.map((user: KubeUser, index: number) => (
                   <Box
                     key={index}
                     sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}
@@ -406,7 +429,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
                 >
                   {t('kubeconfigImport.contexts')}
                 </Typography>
-                {parsedKubeconfig.contexts.map((context: any, index: number) => (
+                {parsedKubeconfig.contexts.map((context: KubeContext, index: number) => (
                   <Box
                     key={index}
                     sx={{ mb: 1, ml: 1, borderLeft: `2px solid ${colors.border}`, pl: 1 }}
