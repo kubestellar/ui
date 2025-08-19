@@ -68,7 +68,7 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 	}
 
 	// 3. If exists
-	existed, err := pluginpkg.CheckPluginDetailsExist(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
+	existed, err := pluginpkg.CheckPluginDetailsExist(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Error checking plugin exists: " + manifest.Metadata.Name,
@@ -100,6 +100,7 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 		[]byte(`[{"dependencies": "not mentioned"}]`),
 		"unknown", // TODO: update this with the pluginID-pluginName.tar.gz
 		int(header.Size),
+		true,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -677,6 +678,23 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get plugin from marketplace manager"})
 		log.LogError("error getting plugin from marketplace manager", zap.Int("plugin_id", pluginID), zap.String("error", err.Error()))
+		return
+	}
+
+	// checks if plugin is installed or not
+	existed, err := pluginpkg.CheckPluginWithInfo(plugin.PluginName, plugin.Version, plugin.Description, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error checking if plugin installed: " + plugin.PluginName,
+		})
+		log.LogError("Error checking if plugin installed:", zap.String("error", err.Error()))
+		return
+	}
+	if existed {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "Plugin already installed: " + plugin.PluginName,
+		})
+		log.LogInfo("plugin already installed", zap.String("plugin", plugin.PluginName))
 		return
 	}
 

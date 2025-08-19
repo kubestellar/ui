@@ -308,6 +308,7 @@ func InstallPluginHandler(c *gin.Context) {
 		return
 	}
 
+	// checks if plugin is installed or not
 	existed, err := pkg.CheckPluginWithInfo(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, userIDInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -348,7 +349,7 @@ func InstallPluginHandler(c *gin.Context) {
 
 	// upload plugin details to plugin_details table for the 1st time
 	// check if plugin details already exist
-	exist, err := pkg.CheckPluginDetailsExist(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
+	exist, err := pkg.CheckPluginDetailsExist(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID, false)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Error checking plugin details existence: " + manifest.Metadata.Name,
@@ -369,6 +370,7 @@ func InstallPluginHandler(c *gin.Context) {
 			[]byte(`[{"dependencies": "not mentioned"}]`),
 			"unknown",
 			int(file.Size),
+			false,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -384,7 +386,7 @@ func InstallPluginHandler(c *gin.Context) {
 			log.LogError("Failed to add plugin to installed_plugins table", zap.Error(err))
 		}
 	} else {
-		pluginDetailsID, err := pkg.GetPluginDetailsID(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
+		pluginDetailsID, err = pkg.GetPluginDetailsID(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Unable to get plugin details ID: " + manifest.Metadata.Name,
