@@ -2101,9 +2101,9 @@
         "title": "Plugin Manager",
         "description": "KubeStellar plugins प्रबंधित और निगरानी करें"
       },
-      "Grafana": {
-        "title": "ग्राफाना डैशबोर्ड",
-        "description": "ग्राफाना डैशबोर्ड खोलें"
+      "clusters": {
+        "title": "Remote Clusters",
+        "description": "Kubernetes क्लस्टर्स प्रबंधित करें"
       },
       "workloads": {
         "title": "वर्कलोड्स",
@@ -2169,7 +2169,7 @@
     },
     "items": {
       "home": "होम",
-      "Grafana": "ग्राफाना डैशबोर्ड",
+      "remoteClusters": "रिमोट क्लस्टर्स",
       "stagedWorkloads": "स्टेज्ड वर्कलोड्स",
       "bindingPolicies": "बाइंडिंग नीतियाँ",
       "deployedWorkloads": "परिनियोजित वर्कलोड्स",
