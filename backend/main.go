@@ -18,6 +18,7 @@ import (
 	"github.com/kubestellar/ui/backend/models"
 	config "github.com/kubestellar/ui/backend/pkg/config"
 	"github.com/kubestellar/ui/backend/pkg/plugins"
+	"github.com/kubestellar/ui/backend/postgresql"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"github.com/kubestellar/ui/backend/routes"
 	_ "github.com/kubestellar/ui/backend/routes"
@@ -58,6 +59,10 @@ func main() {
 	if err := database.InitDatabase(cfg.DatabaseURL); err != nil {
 		logger.Fatal("Failed to initialize database", zap.Error(err))
 	}
+
+	// Run database migrations
+	logger.Info("Running database migrations...")
+	postgresql.RunMigration()
 
 	// Initialize admin user
 	logger.Info("Initializing admin user...")
