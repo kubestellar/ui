@@ -1,4 +1,4 @@
--- add new table isMarketplacePlugin
+-- add new column isMarketplacePlugin
 ALTER TABLE plugin_details
 ADD COLUMN isMarketplacePlugin BOOLEAN NOT NULL DEFAULT FALSE;
 
