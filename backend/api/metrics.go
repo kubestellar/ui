@@ -62,7 +62,7 @@ func GetRawMetrics(c *gin.Context) {
 // GetMetrics returns filtered/parsed metrics in JSON format
 func GetMetrics(c *gin.Context) {
 	logger := getLogger()
-	
+
 	// Optional metric name filter
 	metricsName := c.Query("name")
 	format := c.DefaultQuery("format", "json")
