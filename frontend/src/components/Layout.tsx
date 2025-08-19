@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
+import { Tooltip } from '@mui/material';
 import Header from './Header';
 import useTheme from '../stores/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -137,9 +138,10 @@ export function Layout() {
             initial={false}
           >
             <div className="mb-3 flex justify-end">
-              <div
-                className="tooltip tooltip-right"
-                data-tip={isSidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
+              <Tooltip
+                title={isSidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
+                placement="right"
+                arrow
               >
                 <motion.button
                   onClick={toggleSidebar}
@@ -199,7 +201,7 @@ export function Layout() {
                     </svg>
                   </div>
                 </motion.button>
-              </div>
+              </Tooltip>
             </div>
             <motion.div key={isSidebarCollapsed ? 'collapsed' : 'expanded'}>
               <Suspense fallback={<LoadingPlaceholder />}>
