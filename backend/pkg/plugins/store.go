@@ -16,17 +16,17 @@ import (
 // FOR PLUGIN DETAILS TABLE QUERIES
 ////////////////////////////////////////////////////////////////////////
 
-func CheckPluginDetailsExist(pluginName, pluginVersion, pluginDescription string, authorID int) (bool, error) {
+func CheckPluginDetailsExist(pluginName, pluginVersion, pluginDescription string, authorID int, isMarketplacePlugin bool) (bool, error) {
 	query := `
 		SELECT EXISTS (
 			SELECT 1
 			FROM plugin_details
-			WHERE name = $1 AND version = $2 AND description = $3 AND author_id = $4
+			WHERE name = $1 AND version = $2 AND description = $3 AND author_id = $4 AND isMarketplacePlugin = $5
 		)
 	`
 
 	var exist bool
-	row := database.DB.QueryRow(query, pluginName, pluginVersion, pluginDescription, authorID)
+	row := database.DB.QueryRow(query, pluginName, pluginVersion, pluginDescription, authorID, isMarketplacePlugin)
 	if err := row.Scan(&exist); err != nil {
 		return false, fmt.Errorf("failed to check plugin existence: %w", err)
 	}
@@ -90,6 +90,7 @@ func GetPluginDetailsByID(pluginID int) (*models.PluginDetails, error) {
 		&pluginDetails.FileSize,
 		&pluginDetails.CreatedAt,
 		&pluginDetails.UpdatedAt,
+		&pluginDetails.IsMarketPlacePlugin,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("plugin details not found: %w", err)
@@ -113,6 +114,7 @@ func AddPluginToDB(
 	dependencies []byte, // pass as JSON byte slice
 	s3Key string,
 	fileSize int,
+	isMarketplacePlugin bool,
 ) (int, error) {
 	query := `
 		INSERT INTO plugin_details (
@@ -128,9 +130,10 @@ func AddPluginToDB(
 			max_kubestellar_version,
 			dependencies,
 			plugin_s3_key,
-			file_size
+			file_size, 
+			isMarketplacePlugin
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id
 	`
 
@@ -150,6 +153,7 @@ func AddPluginToDB(
 		dependencies, // []byte as JSONB
 		s3Key,
 		fileSize,
+		isMarketplacePlugin,
 	).Scan(&pluginDetailsID)
 
 	if err != nil {

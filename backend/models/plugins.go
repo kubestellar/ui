@@ -24,6 +24,7 @@ type PluginDetails struct {
 	Dependencies          DependenciesList `json:"dependencies,omitempty"`
 	PluginS3Key           string           `json:"plugin_s3_key" binding:"required"`
 	FileSize              int              `json:"file_size,omitempty"`
+	IsMarketPlacePlugin   bool             `json:"is_marketplace_plugin"`
 	CreatedAt             time.Time        `json:"created_at"`
 	UpdatedAt             time.Time        `json:"updated_at"`
 }
