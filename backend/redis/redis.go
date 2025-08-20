@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/kubestellar/ui/backend/log"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
-	"os"
-	"time"
 )
 
 var ctx = context.Background()
@@ -18,7 +19,7 @@ const filePathKey = "filepath"
 
 // SetNamespaceCache sets a namespace data cache in Redis
 func SetNamespaceCache(key string, value string, expiration time.Duration) error {
-	log.LogInfo("Setting namespace cache",
+	log.LogDebug("Setting namespace cache",
 		zap.String("key", key),
 		zap.Duration("expiration", expiration))
 	if err := rdb.Set(ctx, key, value, expiration).Err(); err != nil {
@@ -32,10 +33,10 @@ func SetNamespaceCache(key string, value string, expiration time.Duration) error
 
 // GetNamespaceCache retrieves cached namespace data from Redis
 func GetNamespaceCache(key string) (string, error) {
-	log.LogInfo("Getting namespace cache", zap.String("key", key))
+	log.LogDebug("Getting namespace cache", zap.String("key", key))
 	val, err := rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
-		log.LogInfo("Namespace cache miss", zap.String("key", key))
+		log.LogDebug("Namespace cache miss", zap.String("key", key))
 		return "", nil // Cache miss
 	} else if err != nil {
 		log.LogError("Failed to get namespace cache",
@@ -181,7 +182,7 @@ func init() {
 // value: Any Go struct or map that can be marshalled to JSON
 // expiration: Time until the key expires (0 for no expiration)
 func SetJSONValue(key string, value interface{}, expiration time.Duration) error {
-	log.LogInfo("Setting JSON value",
+	log.LogDebug("Setting JSON value",
 		zap.String("key", key),
 		zap.Duration("expiration", expiration))
 
@@ -209,11 +210,11 @@ func SetJSONValue(key string, value interface{}, expiration time.Duration) error
 // dest: Pointer to a struct or map where the unmarshaled JSON will be stored
 // Returns true if the key was found, false if it was a cache miss
 func GetJSONValue(key string, dest interface{}) (bool, error) {
-	log.LogInfo("Getting JSON value", zap.String("key", key))
+	log.LogDebug("Getting JSON value", zap.String("key", key))
 
 	val, err := rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
-		log.LogInfo("JSON value cache miss", zap.String("key", key))
+		log.LogDebug("JSON value cache miss", zap.String("key", key))
 		return false, nil
 	} else if err != nil {
 		log.LogError("Failed to get JSON value from Redis",
