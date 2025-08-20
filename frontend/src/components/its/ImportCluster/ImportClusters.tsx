@@ -951,6 +951,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   setSelectedFile={setSelectedFile}
                   handleFileUpload={handleFileUpload}
                   handleCancel={handleRequestAbort}
+                  setSnackbar={setSnackbar}
                 />
               )}
 
