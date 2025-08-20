@@ -257,7 +257,11 @@ const ResourceFilterPage: React.FC = () => {
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6} md={4}>
               <Autocomplete
-                options={resourceKinds as ResourceKind[]}
+                options={
+                  resourceKinds
+                    ? [...resourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
+                    : []
+                }
                 getOptionLabel={option => option.kind}
                 value={selectedKind}
                 onChange={handleKindChange}
