@@ -42,11 +42,34 @@ const CustomDropdown = ({
   style?: React.CSSProperties;
 }) => {
   const [open, setOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Reset highlighted index when dropdown opens
+  useEffect(() => {
+    if (open) {
+      const selectedIndex = options.findIndex(opt => opt.value === value);
+      setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    } else {
+      setHighlightedIndex(-1);
+    }
+  }, [open, options, value]);
+
+  // Focus management
+  useEffect(() => {
+    if (open && highlightedIndex >= 0 && optionRefs.current[highlightedIndex]) {
+      optionRefs.current[highlightedIndex]?.focus();
+    }
+  }, [highlightedIndex, open]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     };
     if (open) document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -54,11 +77,138 @@ const CustomDropdown = ({
 
   const selected = options.find(opt => opt.value === value);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+
+    switch (e.key) {
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (!open) {
+          setOpen(true);
+        } else if (highlightedIndex >= 0) {
+          onChange(options[highlightedIndex].value);
+          setOpen(false);
+          buttonRef.current?.focus();
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setOpen(false);
+        buttonRef.current?.focus();
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        if (!open) {
+          setOpen(true);
+        } else {
+          setHighlightedIndex(prev => (prev < options.length - 1 ? prev + 1 : 0));
+        }
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (!open) {
+          setOpen(true);
+        } else {
+          setHighlightedIndex(prev => (prev > 0 ? prev - 1 : options.length - 1));
+        }
+        break;
+      case 'Home':
+        if (open) {
+          e.preventDefault();
+          setHighlightedIndex(0);
+        }
+        break;
+      case 'End':
+        if (open) {
+          e.preventDefault();
+          setHighlightedIndex(options.length - 1);
+        }
+        break;
+      case 'Tab':
+        if (open) {
+          setOpen(false);
+        }
+        break;
+      default:
+        // Type-ahead functionality
+        if (open && e.key.length === 1) {
+          const char = e.key.toLowerCase();
+          const currentIndex = highlightedIndex;
+          let nextIndex = -1;
+
+          // Search from current position + 1
+          for (let i = currentIndex + 1; i < options.length; i++) {
+            if (options[i].label.toLowerCase().startsWith(char)) {
+              nextIndex = i;
+              break;
+            }
+          }
+
+          // If not found, search from beginning
+          if (nextIndex === -1) {
+            for (let i = 0; i <= currentIndex; i++) {
+              if (options[i].label.toLowerCase().startsWith(char)) {
+                nextIndex = i;
+                break;
+              }
+            }
+          }
+
+          if (nextIndex !== -1) {
+            setHighlightedIndex(nextIndex);
+          }
+        }
+        break;
+    }
+  };
+
+  const handleOptionClick = (optionValue: string) => {
+    onChange(optionValue);
+    setOpen(false);
+    buttonRef.current?.focus();
+  };
+
+  const handleOptionKeyDown = (e: React.KeyboardEvent, optionValue: string, index: number) => {
+    switch (e.key) {
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        handleOptionClick(optionValue);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setOpen(false);
+        buttonRef.current?.focus();
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(index < options.length - 1 ? index + 1 : 0);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(index > 0 ? index - 1 : options.length - 1);
+        break;
+      case 'Home':
+        e.preventDefault();
+        setHighlightedIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setHighlightedIndex(options.length - 1);
+        break;
+      case 'Tab':
+        setOpen(false);
+        break;
+    }
+  };
+
   return (
     <div ref={ref} className="relative" style={style}>
       <button
+        ref={buttonRef}
         type="button"
-        className={`flex w-full items-center rounded-lg border px-3 py-2 text-left transition-all duration-200 focus:outline-none ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        className={`flex w-full items-center rounded-lg border px-3 py-2 text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         style={{
           background: isDark ? 'rgba(17,24,39,0.9)' : 'rgba(255,255,255,0.95)',
           color: isDark ? '#fff' : '#222',
@@ -67,18 +217,38 @@ const CustomDropdown = ({
           ...style,
         }}
         onClick={() => !disabled && setOpen(v => !v)}
+        onKeyDown={handleKeyDown}
         disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-labelledby={`dropdown-label-${Math.random().toString(36).substr(2, 9)}`}
+        aria-describedby={
+          placeholder ? `dropdown-desc-${Math.random().toString(36).substr(2, 9)}` : undefined
+        }
       >
         {selected?.color && (
-          <span className="mr-2 h-2 w-2 rounded-full" style={{ background: selected.color }} />
+          <span
+            className="mr-2 h-2 w-2 rounded-full"
+            style={{ background: selected.color }}
+            aria-hidden="true"
+          />
         )}
         <span className={selected ? 'font-medium' : 'text-gray-400'}>
           {selected ? selected.label : placeholder}
         </span>
-        <FiChevronDown className="ml-auto opacity-60" size={16} />
+        <FiChevronDown
+          className="ml-auto opacity-60"
+          size={16}
+          aria-hidden="true"
+          style={{
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease-in-out',
+          }}
+        />
       </button>
       {open && (
         <motion.div
+          ref={menuRef}
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
@@ -88,12 +258,15 @@ const CustomDropdown = ({
             background: isDark ? '#1e293b' : '#fff',
             border: isDark ? '1px solid #334155' : '1px solid #e5e7eb',
           }}
+          role="listbox"
+          aria-labelledby={`dropdown-label-${Math.random().toString(36).substr(2, 9)}`}
         >
           <div className="py-1">
-            {options.map(opt => (
+            {options.map((opt, index) => (
               <button
                 key={opt.value}
-                className={`flex w-full items-center px-4 py-2 text-left transition-colors hover:bg-blue-500/10 ${value === opt.value ? 'font-bold' : ''}`}
+                ref={el => (optionRefs.current[index] = el)}
+                className={`flex w-full items-center px-4 py-2 text-left transition-colors hover:bg-blue-500/10 focus:outline-none focus:ring-2 focus:ring-inset ${value === opt.value ? 'font-bold' : ''}`}
                 style={{
                   color: isDark
                     ? value === opt.value
@@ -102,16 +275,32 @@ const CustomDropdown = ({
                     : value === opt.value
                       ? '#2563eb'
                       : '#222',
-                  background: value === opt.value ? (isDark ? '#334155' : '#e0e7ff') : undefined,
+                  background:
+                    highlightedIndex === index
+                      ? isDark
+                        ? '#475569'
+                        : '#f1f5f9'
+                      : value === opt.value
+                        ? isDark
+                          ? '#334155'
+                          : '#e0e7ff'
+                        : undefined,
                 }}
-                onClick={() => {
-                  setOpen(false);
-                  onChange(opt.value);
-                }}
+                onClick={() => handleOptionClick(opt.value)}
+                onKeyDown={e => handleOptionKeyDown(e, opt.value, index)}
                 type="button"
+                role="option"
+                aria-selected={value === opt.value}
+                aria-setsize={options.length}
+                aria-posinset={index + 1}
+                tabIndex={highlightedIndex === index ? 0 : -1}
               >
                 {opt.color && (
-                  <span className="mr-2 h-2 w-2 rounded-full" style={{ background: opt.color }} />
+                  <span
+                    className="mr-2 h-2 w-2 rounded-full"
+                    style={{ background: opt.color }}
+                    aria-hidden="true"
+                  />
                 )}
                 {opt.label}
               </button>
