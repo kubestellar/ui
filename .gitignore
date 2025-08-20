@@ -29,3 +29,6 @@ backend/vendor/
 
 # Backend plugins directory
 backend/plugins
+
+# ui-plugins 
+ui-plugins
