@@ -39,14 +39,17 @@ WORKDIR /root/
 
 # Generate JWT secret and set it as an environment variable
 RUN JWT_SECRET=$(openssl rand -base64 32) && \
-     echo "export JWT_SECRET=$JWT_SECRET" > /root/.env && \
-     echo "export PORT=4000" >> /root/.env
+    echo "export JWT_SECRET=$JWT_SECRET" > /root/.env && \
+    echo "export PORT=4000" >> /root/.env
 
 # Create a temp directory for git operations
 RUN mkdir -p /tmp && chmod 777 /tmp
 
 # Copy the compiled binary from the builder stage
 COPY --from=backend-builder /app/backend .
+
+# Copy migration files
+COPY --from=backend-builder /app/postgresql/migrations ./postgresql/migrations
 
 # Allow access to Kubernetes API via a volume mount for kubeconfig
 VOLUME ["/root/.kube"]

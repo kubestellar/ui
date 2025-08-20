@@ -34,6 +34,7 @@ services:
     network_mode: host
     volumes:
       - ~/.kube:/root/.kube:ro
+      - ./backend/postgresql/migrations:/app/postgresql/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,7 +102,7 @@ services:
       - '5400:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/postgresql/migrations:/docker-entrypoint-initdb.d:ro
+      # - ./backend/postgresql/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U authuser -d authdb"]
       interval: 10s

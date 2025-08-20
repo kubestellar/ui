@@ -19,13 +19,15 @@ func RunMigration() error {
 		return fmt.Errorf("DATABASE_URL is not set")
 	}
 
+	migratePath := "file://postgresql/migrations"
+
 	m, err := migrate.New(
-		"file://postgresql/migrations",
+		migratePath,
 		dbURL,
 	)
 	if err != nil {
-		log.LogError("Failed to init migrate", zap.String("error", err.Error()))
-		return fmt.Errorf("failed to init migrate: %w", err)
+		log.LogError("Failed to initialize migrate", zap.String("error", err.Error()))
+		return fmt.Errorf("failed to initialize migrate: %w", err)
 	}
 
 	err = m.Up()
@@ -35,8 +37,27 @@ func RunMigration() error {
 			return nil
 		}
 
-		log.LogError("Failed to apply migrations", zap.String("error", err.Error()))
-		return fmt.Errorf("failed to apply migrations: %w", err)
+		version, dirty, vErr := m.Version()
+		if vErr != nil {
+			log.LogError("Failed to get migration version", zap.String("error", vErr.Error()))
+			return fmt.Errorf("failed to get migration version: %w", vErr)
+		}
+		if dirty {
+			log.LogInfo("Database is dirty, forcing", zap.Uint("version", version))
+			if fErr := m.Force(int(version)); fErr != nil {
+				log.LogError("Failed to force migration", zap.String("error", fErr.Error()))
+				return fmt.Errorf("failed to force migration: %w", fErr)
+			}
+
+			// retry migration up
+			if uErr := m.Up(); uErr != nil && uErr != migrate.ErrNoChange {
+				log.LogError("Failed to apply migrations after forcing", zap.String("error", uErr.Error()))
+				return fmt.Errorf("failed to apply migrations after forcing: %w", uErr)
+			}
+		} else if err != migrate.ErrNoChange {
+			log.LogError("Failed to init migrate", zap.String("error", err.Error()))
+			return fmt.Errorf("failed to init migrate: %w", err)
+		}
 	}
 	log.LogInfo("Database migrations applied successfully")
 	return nil
