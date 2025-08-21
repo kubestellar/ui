@@ -308,4 +308,11 @@ Redesigned the footer to enhance usability and user engagement:
   - Easier updates to UI components
   - Improved collaboration between design and development teams
 
+### 📘 KubeStellar/docs Landing Page Design – Contribute Handbook Page
+
+- Consolidated all contributor guidance into one structured page.  
+- Covers: **Onboarding, Code of Conduct, Guidelines, License, Governance, Testing, Docs Management Overview, Testing Website PRs, Release Process, Release Testing, and Signoff/Signing Contributions.**  
+- Goal: Provide a single source of truth for contribution rules and processes.  
+  
+
 ---
