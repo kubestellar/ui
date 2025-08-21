@@ -21,6 +21,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	// workloadDelimiter is the delimiter used in specificWorkloads annotation
+	// Format: "apiVersion,kind,name,namespace"
+	workloadDelimiter = ","
+
+	// expectedSpecificWorkloadsParts is the expected number of parts when splitting specificWorkloads annotation
+	expectedSpecificWorkloadsParts = 4
+)
+
 type StoredBindingPolicy struct {
 	Name              string              `json:"name"`
 	Namespace         string              `json:"namespace"`
@@ -281,7 +290,31 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 
 			// Try to extract from annotations if there's any workload info
 			if annotations := bpList.Items[i].Annotations; annotations != nil {
-				if specificWorkload, ok := annotations["specific-workload-name"]; ok && specificWorkload != "" {
+				// First try to extract from specificWorkloads annotation
+				if specificWorkloadsStr, ok := annotations["specificWorkloads"]; ok && specificWorkloadsStr != "" {
+					// Parse the specificWorkloads annotation which contains: apiVersion,kind,name,namespace
+					parts := strings.Split(specificWorkloadsStr, workloadDelimiter)
+					if len(parts) >= expectedSpecificWorkloadsParts {
+						// Trim whitespace from each part
+						for i := range parts {
+							parts[i] = strings.TrimSpace(parts[i])
+						}
+						apiVersion := parts[0]
+						kind := parts[1]
+						name := parts[2]
+						namespace := parts[3]
+						// Validate that none of the required parts are empty
+						if apiVersion != "" && kind != "" && name != "" && namespace != "" {
+							workloadDesc := fmt.Sprintf("Specific: %s/%s: %s (ns:%s)", apiVersion, kind, name, namespace)
+							if !contains(workloads, workloadDesc) {
+								workloads = append(workloads, workloadDesc)
+								log.LogDebug("GetAllBp - Added specific workload from specificWorkloads annotation", zap.String("workloadDesc", workloadDesc))
+							}
+						} else {
+							log.LogWarn("GetAllBp - Malformed specificWorkloads annotation, skipping", zap.String("annotation", specificWorkloadsStr))
+						}
+					}
+				} else if specificWorkload, ok := annotations["specific-workload-name"]; ok && specificWorkload != "" {
 					// Try to determine API group and kind from annotations
 					apiVersion := annotations["workload-api-version"]
 					if apiVersion == "" {
@@ -331,6 +364,8 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 		if len(workloads) == 0 {
 			workloads = append(workloads, "No workload specified")
 			log.LogDebug("GetAllBp - No workloads found, adding default")
+		} else {
+			log.LogDebug("GetAllBp - Found workloads", zap.String("policyName", policyName), zap.Any("workloads", workloads))
 		}
 
 		// Ensure we have cluster count consistent with the array
