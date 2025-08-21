@@ -761,6 +761,37 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		return
 	}
 
+	// increase download count in DB
+	err = pluginpkg.IncrementPluginDownloads(pluginID)
+
+	if err != nil {
+		log.LogError(
+			"error incrementing plugin downloads count",
+			zap.Int("plugin_id", pluginID),
+			zap.String("error", err.Error()),
+		)
+	} else {
+		log.LogInfo(
+			"successfully incremented plugin downloads count",
+			zap.Int("plugin_id", pluginID),
+		)
+
+		// increase in memory download count
+		err := marketplaceManager.IncrementDownloads(pluginID)
+		if err != nil {
+			log.LogError(
+				"error incrementing in-memory download count",
+				zap.Int("plugin_id", pluginID),
+				zap.String("error", err.Error()),
+			)
+		} else {
+			log.LogInfo(
+				"successfully incremented in-memory download count",
+				zap.Int("plugin_id", pluginID),
+			)
+		}
+	}
+
 	pluginManager := GetGlobalPluginManager()
 	if pluginManager == nil {
 		log.LogError("Plugin manager not available", zap.String("plugin", pluginKey))

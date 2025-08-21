@@ -545,6 +545,20 @@ func UpdateRating(pluginDetailsID int, ratingAvg float32, ratingCnt int) error {
 	return nil
 }
 
+func IncrementPluginDownloads(pluginDetailsID int) error {
+	query := `
+		UPDATE marketplace_plugins
+		SET downloads = downloads + 1
+		WHERE plugin_details_id = $1
+	`
+	_, err := database.DB.Exec(query, pluginDetailsID)
+	if err != nil {
+		return fmt.Errorf("failed to increment plugin downloads: %w", err)
+	}
+
+	return nil
+}
+
 ////////////////////////////////////////////////////////////////////////
 // FOR PLUGIN FEEDBACK TABLE QUERIES
 ////////////////////////////////////////////////////////////////////////
