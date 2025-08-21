@@ -193,9 +193,7 @@ export const useRoutesConfig = (): RouteObject[] => {
             path: 'resources',
             element: (
               <ProtectedRoute>
-                <Suspense
-                  fallback={<LoadingFallback message="Loading objects..." size="medium" />}
-                >
+                <Suspense fallback={<LoadingFallback message="Loading objects..." size="medium" />}>
                   <ObjectFilterPageLazy />
                 </Suspense>
               </ProtectedRoute>
