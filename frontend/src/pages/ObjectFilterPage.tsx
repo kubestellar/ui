@@ -27,8 +27,8 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../stores/themeStore';
-import { useResourceFilters } from '../hooks/useResourceFilters';
-import ResourceFilters, { ResourceFilter } from '../components/ResourceFilters';
+import { useObjectFilters } from '../hooks/useObjectFilters';
+import ObjectFilters, { ObjectFilter } from '../components/ObjectFilters';
 import { darkTheme, lightTheme } from '../lib/theme-utils';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -61,7 +61,7 @@ function isRenderable(val: unknown): val is string | number {
   return typeof val === 'string' || typeof val === 'number';
 }
 
-const ResourceFilterPage: React.FC = () => {
+const ObjectFilterPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
@@ -73,12 +73,12 @@ const ResourceFilterPage: React.FC = () => {
     isLoading,
     error,
     applyFilters,
-  } = useResourceFilters();
+  } = useObjectFilters();
 
   // State for Autocomplete (object or null)
   const [selectedKind, setSelectedKind] = useState<ResourceKind | null>(null);
   const [selectedNamespace, setSelectedNamespace] = useState<string>('');
-  const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
+  const [resourceFilters, setResourceFilters] = useState<ObjectFilter>({});
   const [showFilters, setShowFilters] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -110,7 +110,7 @@ const ResourceFilterPage: React.FC = () => {
     setSelectedNamespace(event.target.value);
   };
 
-  const handleFiltersChange = useCallback((filters: ResourceFilter) => {
+  const handleFiltersChange = useCallback((filters: ObjectFilter) => {
     setResourceFilters(filters);
   }, []);
 
@@ -400,7 +400,7 @@ const ResourceFilterPage: React.FC = () => {
 
           {selectedKind && selectedNamespace && (
             <Box sx={{ mt: 3 }}>
-              <ResourceFilters
+              <ObjectFilters
                 availableResources={resources}
                 activeFilters={resourceFilters}
                 onFiltersChange={handleFiltersChange}
@@ -727,4 +727,4 @@ const ResourceFilterPage: React.FC = () => {
   );
 };
 
-export default ResourceFilterPage;
+export default ObjectFilterPage;

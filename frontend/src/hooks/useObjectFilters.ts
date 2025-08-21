@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ResourceFilter } from '../components/ResourceFilters';
+import { ObjectFilter } from '../components/ObjectFilters';
 import { fetchResources, getResourceKinds, getNamespaces } from '../services/resourceService';
 
 interface ResourceKind {
@@ -29,16 +29,16 @@ interface Resource {
   status?: Record<string, unknown>;
 }
 
-interface UseResourceFiltersResult {
+interface UseObjectFiltersResult {
   resourceKinds: ResourceKind[];
   namespaces: Namespace[];
   filteredResources: Resource[];
   isLoading: boolean;
   error: string | null;
-  applyFilters: (resourceKind: string, namespace: string, filters: ResourceFilter) => Promise<void>;
+  applyFilters: (resourceKind: string, namespace: string, filters: ObjectFilter) => Promise<void>;
 }
 
-export const useResourceFilters = (): UseResourceFiltersResult => {
+export const useObjectFilters = (): UseObjectFiltersResult => {
   const [resourceKinds, setResourceKinds] = useState<ResourceKind[]>([]);
   const [namespaces, setNamespaces] = useState<Namespace[]>([]);
   const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
@@ -72,7 +72,7 @@ export const useResourceFilters = (): UseResourceFiltersResult => {
 
   // Apply filters to fetch resources
   const applyFilters = useCallback(
-    async (resourceKind: string, namespace: string, filters: ResourceFilter) => {
+    async (resourceKind: string, namespace: string, filters: ObjectFilter) => {
       setIsLoading(true);
       setError(null);
 

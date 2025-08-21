@@ -12,7 +12,7 @@ import TreeViewDeleteDialog from './treeView/TreeViewDeleteDialog';
 import { useTreeViewData } from './treeView/hooks/useTreeViewData';
 import { useTreeViewActions } from './treeView/hooks/useTreeViewActions';
 import { ResourceItem as TreeResourceItem, CustomNode, CustomEdge } from './treeView/types';
-import { ResourceFilter } from './ResourceFilters';
+import { ObjectFilter } from './ObjectFilters';
 import { ResourceItem as ListResourceItem } from './ListViewComponent';
 
 // Re-export types for other components to import
@@ -42,7 +42,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [filteredContext, setFilteredContext] = useState<string>('all');
   const [allResources] = useState<ListResourceItem[]>([]);
-  const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
+  const [resourceFilters, setResourceFilters] = useState<ObjectFilter>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -159,9 +159,9 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     setIsFullscreen(prev => !prev);
   }, []);
 
-  const handleResourceFiltersChange = useCallback((filters: ResourceFilter) => {
+  const handleResourceFiltersChange = useCallback((filters: ObjectFilter) => {
     // Only update if filters actually changed to prevent unnecessary re-renders
-    setResourceFilters(prevFilters => {
+    setResourceFilters((prevFilters: ObjectFilter) => {
       if (JSON.stringify(prevFilters) === JSON.stringify(filters)) {
         return prevFilters; // No change, return same reference
       }

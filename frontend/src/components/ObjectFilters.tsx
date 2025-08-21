@@ -24,17 +24,17 @@ import { ResourceItem } from './ListViewComponent';
 import { darkTheme, lightTheme } from '../lib/theme-utils';
 import { debounce } from 'lodash';
 
-export interface ResourceFilter {
+export interface ObjectFilter {
   kind?: string;
   namespace?: string;
   label?: { key: string; value: string };
   searchQuery?: string;
 }
 
-interface ResourceFiltersProps {
-  onFiltersChange: (filters: ResourceFilter) => void;
+interface ObjectFiltersProps {
+  onFiltersChange: (filters: ObjectFilter) => void;
   availableResources: ResourceItem[];
-  activeFilters: ResourceFilter;
+  activeFilters: ObjectFilter;
 }
 
 // Utility to check if a value is string or number
@@ -42,7 +42,7 @@ function isRenderable(val: unknown): val is string | number {
   return typeof val === 'string' || typeof val === 'number';
 }
 
-const ResourceFilters: React.FC<ResourceFiltersProps> = ({
+const ObjectFilters: React.FC<ObjectFiltersProps> = ({
   onFiltersChange,
   availableResources,
   activeFilters,
@@ -112,7 +112,7 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
     onFiltersChange({});
   };
 
-  const handleRemoveFilter = (filterType: keyof ResourceFilter) => {
+  const handleRemoveFilter = (filterType: keyof ObjectFilter) => {
     const newFilters = { ...activeFilters };
     delete newFilters[filterType];
     onFiltersChange(newFilters);
@@ -556,4 +556,4 @@ const ResourceFilters: React.FC<ResourceFiltersProps> = ({
   );
 };
 
-export default ResourceFilters;
+export default ObjectFilters;
