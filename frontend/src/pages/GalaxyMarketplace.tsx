@@ -356,7 +356,7 @@ const GalaxyMarketplace: React.FC = () => {
 
       {/* Enhanced Header */}
       <motion.div
-        className="relative z-10 flex flex-col gap-4 p-6 pb-0"
+        className="z-1 relative flex flex-col gap-4 p-6 pb-0"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -588,7 +588,7 @@ const GalaxyMarketplace: React.FC = () => {
       </motion.div>
 
       {/* Enhanced Main content */}
-      <div className="flex-grow overflow-y-auto p-6 pt-4">
+      <div className="z-1 relative flex-grow overflow-y-auto p-6 pt-4">
         {loading ? (
           <motion.div
             className="flex h-full min-h-[400px] items-center justify-center"
@@ -748,7 +748,7 @@ const GalaxyMarketplace: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="relative z-10">
+                  <div className="z-1 relative">
                     <motion.div
                       className="mb-6 flex justify-center"
                       animate={{ rotate: [0, 10, -10, 0] }}
