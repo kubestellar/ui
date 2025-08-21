@@ -850,7 +850,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 // Main function for rendering the dashboard
 const K8sInfo = () => {
   const { t } = useTranslation();
-  const { useK8sInfo, usePodHealthQuery, useClusterMetricsQuery } = useK8sQueries();
+  const { useK8sInfo, useClusterMetricsQuery, useAggregatedPodHealthQuery } = useK8sQueries();
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
   const { useBindingPolicies } = useBPQueries();
@@ -873,7 +873,13 @@ const K8sInfo = () => {
     cacheTime: 300000,
   });
 
-  const { data: podHealth } = usePodHealthQuery({
+  const theme = useTheme(state => state.theme);
+  const isDark = theme === 'dark';
+
+  // Get current context early for use in queries
+  const currentContext = k8sData?.currentContext || '';
+
+  const { data: aggregatedPodHealth } = useAggregatedPodHealthQuery({
     staleTime: 120000, // 2 minutes
     cacheTime: 300000,
   });
@@ -882,9 +888,6 @@ const K8sInfo = () => {
     staleTime: 60000,
     cacheTime: 300000,
   });
-
-  const theme = useTheme(state => state.theme);
-  const isDark = theme === 'dark';
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
@@ -1080,8 +1083,6 @@ const K8sInfo = () => {
         </div>
       </div>
     );
-
-  const currentContext = k8sData?.currentContext || '';
 
   // Sort managed clusters by status, ensuring we handle all possible statuses
   const sortedClusters = [...processedClusters].sort((a, b) => {
@@ -1396,9 +1397,9 @@ const K8sInfo = () => {
               delay={0.2}
             />
 
-            {/* Pod Health with OptimizedProgressBar */}
+            {/* KubeStellar Pod Health */}
             <OptimizedProgressBar
-              value={!podHealth ? 0 : Math.round(podHealth.healthPercent)}
+              value={!aggregatedPodHealth ? 0 : Math.round(aggregatedPodHealth.healthPercent)}
               color="bg-gradient-to-br from-emerald-500 to-green-600"
               label={t('clusters.dashboard.pods.health')}
               icon={Layers}
@@ -1414,6 +1415,35 @@ const K8sInfo = () => {
                         {t('clusters.dashboard.pods.formulaDesc')}
                       </code>
                     </div>
+                    {aggregatedPodHealth ? (
+                      <div className="mt-2 rounded-md bg-green-50 p-2 dark:bg-green-900/20">
+                        <div className="flex items-center text-xs text-green-700 dark:text-green-300">
+                          <CheckCircle size={12} className="mr-1" />
+                          KubeStellar Core & KubeFlex Monitoring
+                        </div>
+                        <div className="mt-1 text-xs text-green-700 dark:text-green-300">
+                          {aggregatedPodHealth.contexts.length} KubeStellar contexts
+                        </div>
+                        {aggregatedPodHealth.totalPods > 0 && (
+                          <div className="mt-1 text-xs text-green-700 dark:text-green-300">
+                            Total: {aggregatedPodHealth.totalPods} pods, Healthy:{' '}
+                            {aggregatedPodHealth.healthyPods} ({aggregatedPodHealth.healthPercent}%)
+                          </div>
+                        )}
+                        {aggregatedPodHealth.note && (
+                          <div className="mt-2 text-xs italic text-amber-600 dark:text-amber-400">
+                            {aggregatedPodHealth.note}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-md bg-amber-50 p-2 dark:bg-amber-900/20">
+                        <div className="flex items-center text-xs text-amber-700 dark:text-amber-300">
+                          <AlertTriangle size={12} className="mr-1" />
+                          Loading KubeStellar metrics...
+                        </div>
+                      </div>
+                    )}
                     <p className="text-xs italic">{t('clusters.dashboard.pods.status')}</p>
                   </div>
                   <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
