@@ -12,7 +12,7 @@ import ListViewSkeleton from '../skeleton/ListViewSkeleton';
 import UnifiedSkeleton from '../skeleton/UnifiedSkeleton';
 
 import { CustomNode, CustomEdge, ResourceDataChangeEvent, ResourceItem } from './types';
-import { ResourceFilter } from '../ResourceFilters';
+import { ObjectFilter } from '../ObjectFilters';
 
 // Helper function to adapt resource items
 const adaptResourceItem = (item: ListViewResourceItem): ResourceItem => {
@@ -43,8 +43,8 @@ interface TreeViewCanvasProps {
   onCollapseAll: () => void;
   isCollapsed: boolean;
   containerRef: React.RefObject<HTMLDivElement>;
-  resourceFilters?: ResourceFilter;
-  onResourceFiltersChange?: (filters: ResourceFilter) => void;
+  resourceFilters?: ObjectFilter;
+  onResourceFiltersChange?: (filters: ObjectFilter) => void;
   onToggleFullscreen?: () => void;
   isFullscreen?: boolean;
 }

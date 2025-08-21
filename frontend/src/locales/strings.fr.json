@@ -1965,8 +1965,8 @@
         "description": "Gérer les charges de travail entre clusters"
       },
       "resourceExplorer": {
-        "title": "Explorateur de Ressources",
-        "description": "Rechercher et filtrer les ressources Kubernetes"
+        "title": "Explorateur d'Objets",
+        "description": "Rechercher et filtrer les objets Kubernetes"
       },
       "bindingPolicies": {
         "title": "Politiques d'assignation",

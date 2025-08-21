@@ -2114,8 +2114,8 @@
         "description": "Manage workloads across clusters"
       },
       "resourceExplorer": {
-        "title": "Resource Explorer",
-        "description": "Search and filter Kubernetes resources"
+        "title": "Object Explorer",
+        "description": "Search and filter Kubernetes objects"
       },
       "bindingPolicies": {
         "title": "Binding Policies",
@@ -2173,7 +2173,7 @@
       "stagedWorkloads": "Staged Workloads",
       "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Deployed Workloads",
-      "resourceExplorer": "Resource Explorer",
+      "resourceExplorer": "Object Explorer",
       "pluginManager": "Plugin Manager",
       "userManagement": "User Management",
       "metricsDashboard": "Metrics Dashboard",
@@ -2327,26 +2327,26 @@
     ]
   },
   "resources": {
-    "search": "Search resources...",
+    "search": "Search objects...",
     "kind": "Kind",
     "namespace": "Namespace",
     "status": "Status",
     "labels": "Labels",
-    "filterByKind": "Filter by resource kind",
+    "filterByKind": "Filter by object kind",
     "filterByNamespace": "Filter by namespace",
     "filterByStatus": "Filter by status",
     "filterByLabel": "Filter by label",
     "clearFilters": "Clear Filters",
     "noLabelsFound": "No labels found",
-    "noMatchingFilters": "No resources match the current filters",
-    "title": "Resource Explorer",
+    "noMatchingFilters": "No objects match the current filters",
+    "title": "Object Explorer",
     "selectKind": "Select Kind / Object",
     "selectNamespace": "Select Namespace",
     "applyFilters": "Apply Filters",
     "results": "Results",
     "created": "Created",
-    "noResourcesFound": "No resources found matching the criteria",
-    "selectResourceAndNamespace": "Select a resource kind and namespace to begin",
+    "noResourcesFound": "No objects found matching the criteria",
+    "selectResourceAndNamespace": "Select an object kind and namespace to begin",
     "refresh": "Refresh",
     "toggleFilters": "Toggle filters"
   },
