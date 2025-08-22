@@ -173,7 +173,7 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 	}
 
 	// 5. Compress the plugin file
-	newFileName := manifest.Metadata.Name + "-" + strconv.Itoa(pluginDetailsID) + ".tar.gz"
+	newFileName := manifest.Metadata.Name + "-" + manifest.Metadata.Version + ".tar.gz"
 	newTarPath := filepath.Join(os.TempDir(), newFileName)
 	err = marketplace.CompressTarGz(tempDir, newTarPath)
 	if err != nil {
@@ -698,7 +698,7 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		return
 	}
 
-	pluginKey := fmt.Sprintf("%s-%d", plugin.PluginName, pluginID)
+	pluginKey := fmt.Sprintf("%s-%s", plugin.PluginName, plugin.Version)
 	fileKey := fmt.Sprintf("%s.tar.gz", pluginKey)
 
 	// download the plugin from git repo and extract it to plugins/ folder

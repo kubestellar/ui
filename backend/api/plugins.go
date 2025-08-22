@@ -416,7 +416,7 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// combine the plugin name and the ID to make it readable and unique for plugin's Folder
-	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginDetailsID) // e.g. myplugin-123 // TODO: use pluginDetailsID instead of pluginID
+	pluginKey := fmt.Sprintf("%s-%s", manifest.Metadata.Name, manifest.Metadata.Version) // e.g. myplugin-123 // TODO: use pluginDetailsID instead of pluginID
 
 	// Create plugin directory in plugins folder
 	pluginDir := filepath.Join("./plugins", pluginKey)

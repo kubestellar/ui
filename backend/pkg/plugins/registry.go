@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 
+	"github.com/kubestellar/ui/backend/log"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -107,16 +107,29 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, fmt.Errorf("failed to parse manifest: %v", err)
 	}
 
-	// Get plugin ID from the folder name
-	parts := strings.Split(filepath.Base(dirPath), "-")
-	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid plugin folder name: %s", filepath.Base(dirPath))
-	}
-	pluginIdStr := parts[len(parts)-1]
-	pluginIdFolder, err := strconv.Atoi(pluginIdStr)
+	// get version from the folder name
+	pluginVersion, err := ExtractPluginPathVersion(filepath.Base(dirPath))
 	if err != nil {
-		return nil, fmt.Errorf("invalid plugin ID in folder name: %s", filepath.Base(dirPath))
+		return nil, fmt.Errorf("failed to extract plugin version: %v", err)
 	}
+
+	// get plugin ID from DB with name and version
+	pluginIdFolder, err := GetPluginIDByNameAndVersion(manifest.Metadata.Name, pluginVersion)
+	if err != nil {
+		log.LogError("error getting pluginID", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	// // Get plugin ID from the folder name
+	// parts := strings.Split(filepath.Base(dirPath), "-")
+	// if len(parts) < 2 {
+	// 	return nil, fmt.Errorf("invalid plugin folder name: %s", filepath.Base(dirPath))
+	// }
+	// pluginIdStr := parts[len(parts)-1]
+	// pluginIdFolder, err := strconv.Atoi(pluginIdStr)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("invalid plugin ID in folder name: %s", filepath.Base(dirPath))
+	// }
 
 	exist, err := CheckInstalledPluginWithID(pluginIdFolder)
 	if err != nil {

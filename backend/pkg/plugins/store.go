@@ -197,6 +197,22 @@ func DeletePluginDetailsByID(pluginID int) error {
 	return nil
 }
 
+func GetPluginIDByNameAndVersion(name, version string) (int, error) {
+	query := `
+		SELECT id FROM plugin_details
+		WHERE name = $1 AND version = $2
+	`
+	var id int
+	err := database.DB.QueryRow(query, name, version).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return -1, fmt.Errorf("plugin not found: %w", err)
+		}
+		return -1, fmt.Errorf("failed to get plugin ID: %w", err)
+	}
+	return id, nil
+}
+
 ////////////////////////////////////////////////////////////////////////
 // FOR INSTALLED PLUGINS TABLE QUERIES
 ////////////////////////////////////////////////////////////////////////
