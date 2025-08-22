@@ -322,4 +322,18 @@ Designed a dedicated **Programs** page featuring card-based layouts for showcasi
 - 📌 **ESOC**
 - 📌 **IFoS**
 Each program is represented as a card with a title, description, and quick access link for better visibility and navigation.
+
+### 🌐 KubeStellar/docs – Google Summer of Code (GSoC) Page Design
+
+Created a dedicated **GSoC program page** with structured content sections for clarity and accessibility:
+-  **Program Name with Logo/Image**
+-  **Description** – Brief introduction to GSoC and its purpose
+-  **Overview** – Organizing details and background
+-  **Eligibility Criteria** – Who can apply
+-  **Timeline** – Key application and participation dates
+-  **Program Structure** – Stages and workflow
+-  **How to Apply** – Step-by-step guide
+-  **Benefits** – What contributors and organizations gain
+-  **Resources** – Useful links and reference material
+This structured layout improves readability and makes it easy for newcomers to understand the program and get started.
 ---
