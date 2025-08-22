@@ -3,12 +3,10 @@ import {
   Box,
   Typography,
   TextField,
-  InputAdornment,
   Chip,
   IconButton,
   Menu,
   MenuItem,
-  Divider,
   Button,
   Badge,
   Tooltip,
@@ -20,6 +18,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import LabelIcon from '@mui/icons-material/Label';
 import ClearIcon from '@mui/icons-material/Clear';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import { ResourceItem } from './ListViewComponent';
 import { darkTheme, lightTheme } from '../lib/theme-utils';
 import { debounce } from 'lodash';
@@ -165,33 +164,41 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
   });
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        overflow: 'hidden',
-      }}
-    >
+    <Box sx={{ width: '100%', overflow: 'hidden' }}>
       <Box
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row' },
           alignItems: { xs: 'stretch', md: 'center' },
           gap: 2,
-          p: 2,
-          backgroundColor: isDark ? '#111827' : '#f8fafc',
-          borderRadius: '8px',
-          mb: 2,
-          boxShadow: isDark ? darkTheme.shadow.sm : lightTheme.shadow.sm,
-          minHeight: '72px',
+          p: 3,
+          backgroundColor: isDark
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(17, 24, 39, 0.8) 100%)'
+            : 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%)',
+          borderRadius: '16px',
+          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+          boxShadow: isDark ? darkTheme.shadow.lg : lightTheme.shadow.lg,
+          backdropFilter: 'blur(10px)',
           position: 'relative',
-          transition: 'none',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: isDark
+              ? 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%)'
+              : 'linear-gradient(90deg, #2563eb 0%, #7c3aed 50%, #0891b2 100%)',
+          },
         }}
       >
-        {/* Search field with stable layout */}
+        {/* Enhanced Search field */}
         <Box
           sx={{
-            flex: { xs: '1 1 100%', md: '1 1 300px' },
-            minWidth: { xs: '100%', md: '300px' },
+            flex: { xs: '1 1 100%', md: '1 1 350px' },
+            minWidth: { xs: '100%', md: '350px' },
             maxWidth: { xs: '100%', md: '500px' },
           }}
         >
@@ -199,285 +206,246 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             placeholder={t('resources.search')}
             variant="outlined"
             fullWidth
-            size="small"
+            size="medium"
             value={searchQuery}
             onChange={handleSearchChange}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    sx={{ color: isDark ? darkTheme.text.tertiary : lightTheme.text.tertiary }}
-                  />
-                </InputAdornment>
+                <SearchIcon
+                  sx={{
+                    color: isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary,
+                    mr: 1,
+                    fontSize: '1.2rem',
+                  }}
+                />
               ),
               endAdornment: searchQuery ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setSearchQuery('');
-                      onFiltersChange({ ...activeFilters, searchQuery: '' });
-                    }}
-                    sx={{ color: isDark ? darkTheme.text.tertiary : lightTheme.text.tertiary }}
-                  >
-                    <ClearIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setSearchQuery('');
+                    onFiltersChange({ ...activeFilters, searchQuery: '' });
+                  }}
+                  sx={{
+                    color: isDark ? darkTheme.text.tertiary : lightTheme.text.tertiary,
+                    '&:hover': {
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                    },
+                  }}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
               ) : null,
               sx: {
-                backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
                 color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                borderRadius: '12px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                backdropFilter: 'blur(8px)',
+                border: `1px solid ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(37, 99, 235, 0.2)'}`,
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                  borderColor: 'transparent',
                 },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                '&:hover': {
+                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.95)',
+                  borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(37, 99, 235, 0.3)',
+                  boxShadow: isDark
+                    ? '0 0 20px rgba(59, 130, 246, 0.2)'
+                    : '0 0 20px rgba(37, 99, 235, 0.1)',
                 },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                '&.Mui-focused': {
+                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 1)',
                   borderColor: isDark ? darkTheme.brand.primary : lightTheme.brand.primary,
+                  boxShadow: isDark
+                    ? '0 0 25px rgba(59, 130, 246, 0.3)'
+                    : '0 0 25px rgba(37, 99, 235, 0.15)',
                 },
               },
             }}
           />
         </Box>
 
-        {/* Filter buttons */}
+        {/* Enhanced Filter buttons */}
         <Box
           sx={{
             display: 'flex',
-            gap: 1,
+            gap: 1.5,
             flex: { xs: '1 1 auto', md: '0 0 auto' },
-            justifyContent: { xs: 'space-between', md: 'flex-end' },
+            justifyContent: { xs: 'center', md: 'flex-end' },
             alignItems: 'center',
-            minHeight: '40px', // Consistent height to prevent shifts
+            flexWrap: 'wrap',
           }}
         >
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {/* Kind filter */}
-            <Tooltip title={t('resources.filterByKind')}>
-              <Badge color="primary" variant="dot" invisible={!activeFilters.kind}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={e => setKindMenuAnchor(e.currentTarget)}
-                  startIcon={<FilterListIcon />}
-                  sx={getButtonStyle(!!activeFilters.kind)}
-                >
-                  {t('resources.kind')}
-                </Button>
-              </Badge>
-            </Tooltip>
-            <Menu
-              anchorEl={kindMenuAnchor}
-              open={Boolean(kindMenuAnchor)}
-              onClose={() => setKindMenuAnchor(null)}
-              PaperProps={menuPaperProps}
-            >
-              {uniqueKinds.map(kind => (
-                <MenuItem
-                  key={kind}
-                  onClick={() => handleKindSelect(kind)}
-                  selected={activeFilters.kind === kind}
-                  sx={{
-                    backgroundColor:
-                      activeFilters.kind === kind
-                        ? isDark
-                          ? 'rgba(59, 130, 246, 0.25)'
-                          : 'rgba(59, 130, 246, 0.15)'
-                        : 'transparent',
-                    '&:hover': {
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor: isDark
-                        ? 'rgba(59, 130, 246, 0.25)'
-                        : 'rgba(59, 130, 246, 0.15)',
-                      '&:hover': {
-                        backgroundColor: isDark
-                          ? 'rgba(59, 130, 246, 0.35)'
-                          : 'rgba(59, 130, 246, 0.2)',
-                      },
-                    },
-                  }}
-                >
-                  {kind}
-                </MenuItem>
-              ))}
-            </Menu>
-
-            {/* Namespace filter - not bound to resource kind */}
-            <Tooltip title={t('resources.filterByNamespace')}>
-              <Badge color="primary" variant="dot" invisible={!activeFilters.namespace}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={e => setNamespaceMenuAnchor(e.currentTarget)}
-                  startIcon={<FilterListIcon />}
-                  sx={getButtonStyle(!!activeFilters.namespace)}
-                >
-                  {t('resources.namespace')}
-                </Button>
-              </Badge>
-            </Tooltip>
-            <Menu
-              anchorEl={namespaceMenuAnchor}
-              open={Boolean(namespaceMenuAnchor)}
-              onClose={() => setNamespaceMenuAnchor(null)}
-              PaperProps={menuPaperProps}
-            >
-              {uniqueNamespaces.map(namespace => (
-                <MenuItem
-                  key={namespace}
-                  onClick={() => handleNamespaceSelect(namespace)}
-                  selected={activeFilters.namespace === namespace}
-                  sx={{
-                    backgroundColor:
-                      activeFilters.namespace === namespace
-                        ? isDark
-                          ? 'rgba(59, 130, 246, 0.25)'
-                          : 'rgba(59, 130, 246, 0.15)'
-                        : 'transparent',
-                    '&:hover': {
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor: isDark
-                        ? 'rgba(59, 130, 246, 0.25)'
-                        : 'rgba(59, 130, 246, 0.15)',
-                      '&:hover': {
-                        backgroundColor: isDark
-                          ? 'rgba(59, 130, 246, 0.35)'
-                          : 'rgba(59, 130, 246, 0.2)',
-                      },
-                    },
-                  }}
-                >
-                  {namespace}
-                </MenuItem>
-              ))}
-            </Menu>
-
-            {/* Label filter */}
-            <Tooltip title={t('resources.filterByLabel')}>
-              <Badge color="primary" variant="dot" invisible={!activeFilters.label}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={e => setLabelMenuAnchor(e.currentTarget)}
-                  startIcon={<LabelIcon />}
-                  sx={getButtonStyle(!!activeFilters.label)}
-                >
-                  {t('resources.labels')}
-                </Button>
-              </Badge>
-            </Tooltip>
-            <Menu
-              anchorEl={labelMenuAnchor}
-              open={Boolean(labelMenuAnchor)}
-              onClose={() => setLabelMenuAnchor(null)}
-              PaperProps={{
-                ...menuPaperProps,
-                sx: {
-                  ...menuPaperProps.sx,
-                  width: 250,
-                  zIndex: 1300,
+          {/* Enhanced Kind filter */}
+          <Tooltip title={t('resources.filterByKind')} arrow>
+            <Badge
+              color="primary"
+              variant="dot"
+              invisible={!activeFilters.kind}
+              sx={{
+                '& .MuiBadge-dot': {
+                  backgroundColor: isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary,
+                  boxShadow: isDark
+                    ? '0 0 8px rgba(59, 130, 246, 0.6)'
+                    : '0 0 8px rgba(37, 99, 235, 0.4)',
                 },
               }}
             >
-              {Array.from(uniqueLabels.entries()).map(([key, values]) => (
-                <React.Fragment key={key}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      display: 'block',
-                      fontWeight: 'bold',
-                      color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
-                    }}
-                  >
-                    {key}
-                  </Typography>
-                  {Array.from(values).map(value =>
-                    isRenderable(value) ? (
-                      <MenuItem
-                        key={`${key}-${value}`}
-                        onClick={() => handleLabelSelect(key, value as string)}
-                        selected={
-                          activeFilters.label?.key === key && activeFilters.label?.value === value
-                        }
-                        sx={{
-                          backgroundColor:
-                            activeFilters.label?.key === key && activeFilters.label?.value === value
-                              ? isDark
-                                ? 'rgba(59, 130, 246, 0.25)'
-                                : 'rgba(59, 130, 246, 0.15)'
-                              : 'transparent',
-                          '&:hover': {
-                            backgroundColor: isDark
-                              ? 'rgba(255, 255, 255, 0.1)'
-                              : 'rgba(0, 0, 0, 0.05)',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: isDark
-                              ? 'rgba(59, 130, 246, 0.25)'
-                              : 'rgba(59, 130, 246, 0.15)',
-                            '&:hover': {
-                              backgroundColor: isDark
-                                ? 'rgba(59, 130, 246, 0.35)'
-                                : 'rgba(59, 130, 246, 0.2)',
-                            },
-                          },
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ pl: 2 }}>
-                          {value}
-                        </Typography>
-                      </MenuItem>
-                    ) : null
-                  )}
-                  <Divider
-                    sx={{
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
-                    }}
-                  />
-                </React.Fragment>
-              ))}
-              {uniqueLabels.size === 0 && (
-                <MenuItem disabled>
-                  <Typography
-                    sx={{ color: isDark ? darkTheme.text.tertiary : lightTheme.text.tertiary }}
-                  >
-                    {t('resources.noLabelsFound')}
-                  </Typography>
-                </MenuItem>
-              )}
-            </Menu>
-          </Box>
+              <Button
+                variant="outlined"
+                size="medium"
+                onClick={e => setKindMenuAnchor(e.currentTarget)}
+                startIcon={<FilterListIcon />}
+                sx={{
+                  ...getButtonStyle(!!activeFilters.kind),
+                  borderRadius: '12px',
+                  px: 2.5,
+                  py: 1,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: activeFilters.kind
+                    ? isDark
+                      ? '0 4px 20px rgba(59, 130, 246, 0.3)'
+                      : '0 4px 20px rgba(37, 99, 235, 0.2)'
+                    : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: isDark
+                      ? '0 8px 25px rgba(59, 130, 246, 0.4)'
+                      : '0 8px 25px rgba(37, 99, 235, 0.25)',
+                  },
+                }}
+              >
+                {activeFilters.kind || t('resources.kind')}
+              </Button>
+            </Badge>
+          </Tooltip>
 
-          {/* Clear filters button */}
+          {/* Enhanced Namespace filter */}
+          <Tooltip title={t('resources.filterByNamespace')} arrow>
+            <Badge
+              color="primary"
+              variant="dot"
+              invisible={!activeFilters.namespace}
+              sx={{
+                '& .MuiBadge-dot': {
+                  backgroundColor: isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary,
+                  boxShadow: isDark
+                    ? '0 0 8px rgba(59, 130, 246, 0.6)'
+                    : '0 0 8px rgba(37, 99, 235, 0.4)',
+                },
+              }}
+            >
+              <Button
+                variant="outlined"
+                size="medium"
+                onClick={e => setNamespaceMenuAnchor(e.currentTarget)}
+                startIcon={<FilterListIcon />}
+                sx={{
+                  ...getButtonStyle(!!activeFilters.namespace),
+                  borderRadius: '12px',
+                  px: 2.5,
+                  py: 1,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: activeFilters.namespace
+                    ? isDark
+                      ? '0 4px 20px rgba(59, 130, 246, 0.3)'
+                      : '0 4px 20px rgba(37, 99, 235, 0.2)'
+                    : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: isDark
+                      ? '0 8px 25px rgba(59, 130, 246, 0.4)'
+                      : '0 8px 25px rgba(37, 99, 235, 0.25)',
+                  },
+                }}
+              >
+                {activeFilters.namespace || t('resources.namespace')}
+              </Button>
+            </Badge>
+          </Tooltip>
+
+          {/* Enhanced Label filter */}
+          <Tooltip title={t('resources.filterByLabel')} arrow>
+            <Badge
+              color="primary"
+              variant="dot"
+              invisible={!activeFilters.label}
+              sx={{
+                '& .MuiBadge-dot': {
+                  backgroundColor: isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary,
+                  boxShadow: isDark
+                    ? '0 0 8px rgba(59, 130, 246, 0.6)'
+                    : '0 0 8px rgba(37, 99, 235, 0.4)',
+                },
+              }}
+            >
+              <Button
+                variant="outlined"
+                size="medium"
+                onClick={e => setLabelMenuAnchor(e.currentTarget)}
+                startIcon={<LabelIcon />}
+                sx={{
+                  ...getButtonStyle(!!activeFilters.label),
+                  borderRadius: '12px',
+                  px: 2.5,
+                  py: 1,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  boxShadow: activeFilters.label
+                    ? isDark
+                      ? '0 4px 20px rgba(59, 130, 246, 0.3)'
+                      : '0 4px 20px rgba(37, 99, 235, 0.2)'
+                    : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: isDark
+                      ? '0 8px 25px rgba(59, 130, 246, 0.4)'
+                      : '0 8px 25px rgba(37, 99, 235, 0.25)',
+                  },
+                }}
+              >
+                {activeFilters.label
+                  ? `${activeFilters.label.key}:${activeFilters.label.value}`
+                  : t('resources.labels')}
+              </Button>
+            </Badge>
+          </Tooltip>
+
+          {/* Enhanced Clear filters button */}
           {activeFilterCount > 0 && (
             <Button
-              variant="outlined"
-              size="small"
+              variant="contained"
+              size="medium"
               onClick={handleClearFilters}
               startIcon={<ClearIcon />}
               sx={{
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-                color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                backgroundColor: isDark ? 'rgba(239, 68, 68, 0.8)' : '#ef4444',
+                color: '#ffffff',
+                borderRadius: '12px',
+                px: 2.5,
+                py: 1,
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.3)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                  backgroundColor: isDark ? 'rgba(220, 38, 38, 0.9)' : '#dc2626',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 25px rgba(239, 68, 68, 0.4)',
                 },
               }}
             >
-              {t('resources.clearFilters')}
+              Clear ({activeFilterCount})
             </Button>
           )}
         </Box>
 
-        {/* Active filters - with consistent positioning */}
+        {/* Enhanced Active filters */}
         {activeFilterCount > 0 && (
           <Box
             sx={{
@@ -485,25 +453,39 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
               flexWrap: 'wrap',
               gap: 1,
               width: '100%',
-              minHeight: '32px',
-              mt: { xs: 1, md: 0 },
+              mt: 2,
+              pt: 2,
+              borderTop: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
             }}
           >
+            <Typography
+              variant="caption"
+              sx={{
+                color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                alignSelf: 'center',
+                mr: 1,
+              }}
+            >
+              Active Filters:
+            </Typography>
             {activeFilters.kind && (
               <Chip
-                label={`${t('resources.kind')}: ${activeFilters.kind}`}
+                label={`Kind: ${activeFilters.kind}`}
                 onDelete={() => handleRemoveFilter('kind')}
                 color="primary"
-                variant="outlined"
+                variant="filled"
                 size="small"
                 sx={{
-                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)',
-                  borderColor: isDark ? darkTheme.brand.primary : lightTheme.brand.primary,
-                  color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.8)' : 'rgba(37, 99, 235, 0.9)',
+                  color: '#ffffff',
+                  fontWeight: 600,
                   '& .MuiChip-deleteIcon': {
-                    color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+                    color: 'rgba(255, 255, 255, 0.8)',
                     '&:hover': {
-                      color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                      color: '#ffffff',
                     },
                   },
                 }}
@@ -511,19 +493,19 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             )}
             {activeFilters.namespace && (
               <Chip
-                label={`${t('resources.namespace')}: ${activeFilters.namespace}`}
+                label={`Namespace: ${activeFilters.namespace}`}
                 onDelete={() => handleRemoveFilter('namespace')}
                 color="primary"
-                variant="outlined"
+                variant="filled"
                 size="small"
                 sx={{
-                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)',
-                  borderColor: isDark ? darkTheme.brand.primary : lightTheme.brand.primary,
-                  color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.8)' : 'rgba(37, 99, 235, 0.9)',
+                  color: '#ffffff',
+                  fontWeight: 600,
                   '& .MuiChip-deleteIcon': {
-                    color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+                    color: 'rgba(255, 255, 255, 0.8)',
                     '&:hover': {
-                      color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                      color: '#ffffff',
                     },
                   },
                 }}
@@ -534,16 +516,16 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
                 label={`${activeFilters.label.key}: ${activeFilters.label.value}`}
                 onDelete={() => handleRemoveFilter('label')}
                 color="primary"
-                variant="outlined"
+                variant="filled"
                 size="small"
                 sx={{
-                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)',
-                  borderColor: isDark ? darkTheme.brand.primary : lightTheme.brand.primary,
-                  color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.8)' : 'rgba(37, 99, 235, 0.9)',
+                  color: '#ffffff',
+                  fontWeight: 600,
                   '& .MuiChip-deleteIcon': {
-                    color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+                    color: 'rgba(255, 255, 255, 0.8)',
                     '&:hover': {
-                      color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                      color: '#ffffff',
                     },
                   },
                 }}
@@ -552,6 +534,336 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
           </Box>
         )}
       </Box>
+
+      {/* Enhanced Menus */}
+      <Menu
+        anchorEl={kindMenuAnchor}
+        open={Boolean(kindMenuAnchor)}
+        onClose={() => setKindMenuAnchor(null)}
+        PaperProps={{
+          ...menuPaperProps,
+          sx: {
+            ...menuPaperProps.sx,
+            width: 280,
+            maxHeight: 400,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <FilterListIcon fontSize="small" />
+            Resource Kinds ({uniqueKinds.length})
+          </Typography>
+        </Box>
+        {uniqueKinds.map(kind => (
+          <MenuItem
+            key={kind}
+            onClick={() => handleKindSelect(kind)}
+            selected={activeFilters.kind === kind}
+            sx={{
+              margin: '4px 8px',
+              borderRadius: '8px',
+              backgroundColor:
+                activeFilters.kind === kind
+                  ? isDark
+                    ? 'rgba(59, 130, 246, 0.2)'
+                    : 'rgba(59, 130, 246, 0.1)'
+                  : 'transparent',
+              '&:hover': {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                transform: 'translateX(4px)',
+              },
+              '&.Mui-selected': {
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.15)',
+                '&:hover': {
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0.2)',
+                },
+              },
+              transition: 'all 0.2s ease-in-out',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+              <AccountTreeIcon
+                fontSize="small"
+                sx={{
+                  color:
+                    activeFilters.kind === kind
+                      ? isDark
+                        ? darkTheme.brand.primaryLight
+                        : lightTheme.brand.primary
+                      : isDark
+                        ? darkTheme.text.secondary
+                        : lightTheme.text.secondary,
+                }}
+              />
+              <Typography variant="body2" sx={{ fontWeight: 500, flex: 1 }}>
+                {kind}
+              </Typography>
+              {activeFilters.kind === kind && (
+                <Chip
+                  label="Active"
+                  size="small"
+                  color="primary"
+                  sx={{
+                    height: '20px',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                  }}
+                />
+              )}
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <Menu
+        anchorEl={namespaceMenuAnchor}
+        open={Boolean(namespaceMenuAnchor)}
+        onClose={() => setNamespaceMenuAnchor(null)}
+        PaperProps={{
+          ...menuPaperProps,
+          sx: {
+            ...menuPaperProps.sx,
+            width: 280,
+            maxHeight: 400,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <FilterListIcon fontSize="small" />
+            Namespaces ({uniqueNamespaces.length})
+          </Typography>
+        </Box>
+        {uniqueNamespaces.map(namespace => (
+          <MenuItem
+            key={namespace}
+            onClick={() => handleNamespaceSelect(namespace)}
+            selected={activeFilters.namespace === namespace}
+            sx={{
+              margin: '4px 8px',
+              borderRadius: '8px',
+              backgroundColor:
+                activeFilters.namespace === namespace
+                  ? isDark
+                    ? 'rgba(59, 130, 246, 0.2)'
+                    : 'rgba(59, 130, 246, 0.1)'
+                  : 'transparent',
+              '&:hover': {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                transform: 'translateX(4px)',
+              },
+              '&.Mui-selected': {
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.15)',
+                '&:hover': {
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0.2)',
+                },
+              },
+              transition: 'all 0.2s ease-in-out',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary,
+                  opacity: activeFilters.namespace === namespace ? 1 : 0.5,
+                }}
+              />
+              <Typography variant="body2" sx={{ fontWeight: 500, flex: 1 }}>
+                {namespace}
+              </Typography>
+              {activeFilters.namespace === namespace && (
+                <Chip
+                  label="Active"
+                  size="small"
+                  color="primary"
+                  sx={{
+                    height: '20px',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                  }}
+                />
+              )}
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <Menu
+        anchorEl={labelMenuAnchor}
+        open={Boolean(labelMenuAnchor)}
+        onClose={() => setLabelMenuAnchor(null)}
+        PaperProps={{
+          ...menuPaperProps,
+          sx: {
+            ...menuPaperProps.sx,
+            width: 320,
+            maxHeight: 450,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <LabelIcon fontSize="small" />
+            Labels ({uniqueLabels.size} keys)
+          </Typography>
+        </Box>
+        {Array.from(uniqueLabels.entries()).map(([key, values]) => (
+          <React.Fragment key={key}>
+            <Box
+              sx={{
+                px: 2,
+                py: 1,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 700,
+                  color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <LabelIcon fontSize="small" sx={{ opacity: 0.7 }} />
+                {key} ({values.size} values)
+              </Typography>
+            </Box>
+            {Array.from(values).map(value =>
+              isRenderable(value) ? (
+                <MenuItem
+                  key={`${key}-${value}`}
+                  onClick={() => handleLabelSelect(key, value as string)}
+                  selected={
+                    activeFilters.label?.key === key && activeFilters.label?.value === value
+                  }
+                  sx={{
+                    margin: '2px 8px',
+                    borderRadius: '8px',
+                    backgroundColor:
+                      activeFilters.label?.key === key && activeFilters.label?.value === value
+                        ? isDark
+                          ? 'rgba(59, 130, 246, 0.2)'
+                          : 'rgba(59, 130, 246, 0.1)'
+                        : 'transparent',
+                    '&:hover': {
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                      transform: 'translateX(4px)',
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: isDark
+                        ? 'rgba(59, 130, 246, 0.25)'
+                        : 'rgba(59, 130, 246, 0.15)',
+                      '&:hover': {
+                        backgroundColor: isDark
+                          ? 'rgba(59, 130, 246, 0.35)'
+                          : 'rgba(59, 130, 246, 0.2)',
+                      },
+                    },
+                    transition: 'all 0.2s ease-in-out',
+                  }}
+                >
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pl: 2 }}
+                  >
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: isDark
+                          ? darkTheme.brand.primaryLight
+                          : lightTheme.brand.primary,
+                        opacity:
+                          activeFilters.label?.key === key && activeFilters.label?.value === value
+                            ? 1
+                            : 0.5,
+                      }}
+                    />
+                    <Typography variant="body2" sx={{ fontWeight: 400, flex: 1 }}>
+                      {value}
+                    </Typography>
+                    {activeFilters.label?.key === key && activeFilters.label?.value === value && (
+                      <Chip
+                        label="Active"
+                        size="small"
+                        color="primary"
+                        sx={{
+                          height: '18px',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                        }}
+                      />
+                    )}
+                  </Box>
+                </MenuItem>
+              ) : null
+            )}
+          </React.Fragment>
+        ))}
+        {uniqueLabels.size === 0 && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: isDark ? darkTheme.text.tertiary : lightTheme.text.tertiary,
+                fontStyle: 'italic',
+              }}
+            >
+              No labels found in the current resources
+            </Typography>
+          </Box>
+        )}
+      </Menu>
     </Box>
   );
 };
