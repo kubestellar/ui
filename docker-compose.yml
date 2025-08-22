@@ -35,11 +35,14 @@ services:
     volumes:
       - ~/.kube:/root/.kube:ro
       - ./backend/postgresql/migrations:/app/postgresql/migrations:ro
+      - ./plugins:/app/plugins
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    env_file:
+      - ./backend/.env
     environment:
       # Application Configuration
       - PORT=${BACKEND_PORT:-4000}
@@ -77,6 +80,9 @@ services:
       
       # CORS Configuration
       - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
+      
+      # Plugins Configuration
+      - PLUGINS_DIRECTORY=${PLUGINS_DIRECTORY:-/app/plugins}
     healthcheck:
       # Use the new optimized health endpoint
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]

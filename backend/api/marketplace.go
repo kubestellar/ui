@@ -17,6 +17,8 @@ import (
 	"github.com/kubestellar/ui/backend/models"
 	pluginpkg "github.com/kubestellar/ui/backend/pkg/plugins"
 	"go.uber.org/zap"
+
+	config "github.com/kubestellar/ui/backend/pkg/config"
 )
 
 func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.FileHeader) (string, *os.File, error) {
@@ -702,7 +704,7 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 	fileKey := fmt.Sprintf("%s.tar.gz", pluginKey)
 
 	// download the plugin from git repo and extract it to plugins/ folder
-	pluginFolder := filepath.Join(".", "plugins")
+	pluginFolder := config.GetPluginDirectory()
 
 	err = marketplaceManager.Store.DownloadFile(c.Request.Context(), fileKey, pluginFolder)
 	if err != nil {
