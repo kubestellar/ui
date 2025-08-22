@@ -83,7 +83,9 @@ const GalaxyMarketplace: React.FC = () => {
 
   // Enhanced categories with backend data
   const categories = useMemo(() => {
-    const defaultCategories = [{ id: 'all', name: 'All Plugins', icon: <HiOutlineGlobeAlt /> }];
+    const defaultCategories = [
+      { id: 'all', name: t('marketplace.allPlugins'), icon: <HiOutlineGlobeAlt /> },
+    ];
 
     const backendCategoriesFormatted = backendCategories.map(category => ({
       id: category,
@@ -92,7 +94,7 @@ const GalaxyMarketplace: React.FC = () => {
     }));
 
     return [...defaultCategories, ...backendCategoriesFormatted];
-  }, [backendCategories]);
+  }, [backendCategories, t]);
 
   // Transform marketplace plugins to match existing PluginData interface
   const plugins = useMemo(() => {
@@ -102,10 +104,10 @@ const GalaxyMarketplace: React.FC = () => {
     return pluginsToUse.map(
       (plugin: MarketplacePlugin): PluginData => ({
         id: plugin.id || plugin.plugin_id || 0,
-        name: plugin.name || plugin.plugin_name || 'Unknown Plugin',
+        name: plugin.name || plugin.plugin_name || t('marketplace.common.plugin'),
         version: plugin.version || '1.0.0',
-        description: plugin.description || 'No description available',
-        author: plugin.author || 'Unknown',
+        description: plugin.description || t('marketplace.common.noDescription'),
+        author: plugin.author || t('marketplace.common.unknownAuthor'),
         enabled: plugin.enabled ?? true,
         status: plugin.status,
         loadTime: plugin.loadTime,
@@ -116,7 +118,7 @@ const GalaxyMarketplace: React.FC = () => {
         lastUpdated: plugin.lastUpdated || new Date(),
       })
     );
-  }, [marketplacePlugins, searchResults, searchQuery, selectedCategory]);
+  }, [marketplacePlugins, searchResults, searchQuery, selectedCategory, t]);
 
   // Featured plugins with proper transformation
   const featuredPlugins = useMemo(() => {
@@ -130,10 +132,10 @@ const GalaxyMarketplace: React.FC = () => {
     return pluginsToFeature.map(
       (plugin: MarketplacePlugin): PluginData => ({
         id: plugin.id || plugin.plugin_id || 0,
-        name: plugin.name || plugin.plugin_name || 'Unknown Plugin',
+        name: plugin.name || plugin.plugin_name || t('marketplace.common.plugin'),
         version: plugin.version || '1.0.0',
-        description: plugin.description || 'No description available',
-        author: plugin.author || 'Unknown',
+        description: plugin.description || t('marketplace.common.noDescription'),
+        author: plugin.author || t('marketplace.common.unknownAuthor'),
         enabled: plugin.enabled ?? true,
         status: plugin.status,
         loadTime: plugin.loadTime,
@@ -144,7 +146,7 @@ const GalaxyMarketplace: React.FC = () => {
         lastUpdated: plugin.lastUpdated || new Date(),
       })
     );
-  }, [featuredPluginsData, marketplacePlugins]);
+  }, [featuredPluginsData, marketplacePlugins, t]);
 
   // Loading state
   const loading = pluginsLoading || searchLoading || featuredLoading;
@@ -417,7 +419,7 @@ const GalaxyMarketplace: React.FC = () => {
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
                 {t(
-                  'marketplace.description',
+                  'marketplace.subtitle',
                   'Discover and install plugins to enhance your KubeStellar experience'
                 )}
               </motion.p>
@@ -441,7 +443,7 @@ const GalaxyMarketplace: React.FC = () => {
             }}
           >
             <HiCog6Tooth className="h-4 w-4" />
-            <span className="text-sm font-semibold">Admin Panel</span>
+            <span className="text-sm font-semibold">{t('marketplace.adminPanel')}</span>
           </motion.button>
         </div>
 
@@ -684,7 +686,10 @@ const GalaxyMarketplace: React.FC = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.6 }}
                     >
-                      {filteredPlugins.length} {filteredPlugins.length === 1 ? 'plugin' : 'plugins'}
+                      {filteredPlugins.length}{' '}
+                      {filteredPlugins.length === 1
+                        ? t('marketplace.common.plugin')
+                        : t('marketplace.common.plugins')}
                     </motion.span>
                   </h2>
                 </div>
@@ -766,7 +771,7 @@ const GalaxyMarketplace: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
                     >
-                      No plugins found
+                      {t('marketplace.common.noPluginsFound')}
                     </motion.h3>
                     <motion.p
                       className="mx-auto mb-6 max-w-md text-lg"
@@ -776,8 +781,8 @@ const GalaxyMarketplace: React.FC = () => {
                       transition={{ delay: 0.3 }}
                     >
                       {searchQuery
-                        ? 'Try adjusting your search terms or browse all plugins'
-                        : 'No plugins match your current filters'}
+                        ? t('marketplace.common.tryAdjustingSearch')
+                        : t('marketplace.common.noMatchingFilters')}
                     </motion.p>
                     <motion.button
                       className="rounded-xl px-6 py-3 text-sm font-semibold transition-all"
@@ -864,7 +869,7 @@ const GalaxyMarketplace: React.FC = () => {
                     <HiOutlineArrowPath className="h-5 w-5" />
                     {t('marketplace.loadMore', 'Load More Plugins')}
                     <span className="text-sm opacity-70">
-                      ({filteredPlugins.length - 12} remaining)
+                      ({filteredPlugins.length - 12} {t('marketplace.common.remaining')})
                     </span>
                   </motion.button>
                 </motion.div>
