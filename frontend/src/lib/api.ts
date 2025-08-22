@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 import { setGlobalNetworkError } from '../utils/networkErrorUtils';
+import { isOnLoginPage } from '../utils/routeUtils';
 import {
   getAccessToken,
   clearTokens,
@@ -64,7 +65,12 @@ api.interceptors.response.use(
       } else {
         console.error('Axios Interceptor: Token refresh failed. Redirecting to login.');
         clearTokens();
-        toast.error('Session expired. Please log in again.');
+
+        // Only show toast if user is not already on login page
+        if (!isOnLoginPage()) {
+          toast.error('Session expired. Please log in again.');
+        }
+
         window.location.href = '/login';
         return Promise.reject(error);
       }
