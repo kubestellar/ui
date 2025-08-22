@@ -336,4 +336,9 @@ Created a dedicated **GSoC program page** with structured content sections for c
 -  **Benefits** – What contributors and organizations gain
 -  **Resources** – Useful links and reference material
 This structured layout improves readability and makes it easy for newcomers to understand the program and get started.
+
+### 🛠️ KubeStellar/docs – LFX Page Design
+
+Designed a dedicated LFX program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
+
 ---
