@@ -26,8 +26,6 @@ import {
   ToggleButton,
   Switch,
   FormControlLabel,
-  Breadcrumbs,
-  Link,
   Menu,
   ListItemIcon,
   ListItemText,
@@ -163,23 +161,162 @@ const ObjectFilterPage: React.FC = () => {
             ))
         );
       })
-      .map(resource => ({
-        kind: resource.kind,
-        name: resource.metadata?.name || '',
-        namespace: resource.metadata?.namespace || '',
-        status: (typeof resource.status === 'string'
-          ? resource.status === 'Running' || resource.status === 'Active'
-            ? 'Healthy'
-            : resource.status === 'Pending'
-              ? 'OutOfSync'
-              : resource.status === 'Failed'
-                ? 'Missing'
-                : 'Synced'
-          : undefined) as ResourceItem['status'],
-        createdAt: resource.metadata?.creationTimestamp?.toString() || '',
-        labels: resource.labels || {},
-        metadata: resource.metadata || {},
-      }))
+      .map(resource => {
+        // Helper function to extract status from Kubernetes resource
+        const extractResourceStatus = (resource: Resource): string => {
+          // If status is already a string, use it
+          if (typeof resource.status === 'string') {
+            return resource.status;
+          }
+
+          // Handle different resource types
+          const kind = resource.kind.toLowerCase();
+          const statusObj = resource.status as Record<string, unknown> | undefined;
+
+          if (!statusObj || typeof statusObj !== 'object') {
+            return 'Unknown';
+          }
+
+          switch (kind) {
+            case 'pod': {
+              // For pods, check the phase
+              if (statusObj.phase) {
+                return String(statusObj.phase);
+              }
+              // Fallback to container statuses
+              if (statusObj.containerStatuses && Array.isArray(statusObj.containerStatuses)) {
+                const containerStatus = statusObj.containerStatuses[0];
+                if (containerStatus?.state?.running) return 'Running';
+                if (containerStatus?.state?.waiting) return 'Pending';
+                if (containerStatus?.state?.terminated) return 'Failed';
+              }
+              break;
+            }
+
+            case 'deployment': {
+              // For deployments, check readiness
+              const replicas = Number(statusObj.replicas || 0);
+              const readyReplicas = Number(statusObj.readyReplicas || 0);
+              const availableReplicas = Number(statusObj.availableReplicas || 0);
+
+              if (replicas === readyReplicas && replicas === availableReplicas && replicas > 0) {
+                return 'Running';
+              } else if (readyReplicas > 0) {
+                return 'Progressing';
+              } else {
+                return 'Pending';
+              }
+            }
+
+            case 'service':
+            case 'configmap':
+            case 'secret':
+              // Services, ConfigMaps and Secrets are typically active if they exist
+              return 'Active';
+
+            case 'daemonset': {
+              const dsReplicas = Number(statusObj.desiredNumberScheduled || 0);
+              const dsReady = Number(statusObj.numberReady || 0);
+              if (dsReplicas === dsReady && dsReplicas > 0) {
+                return 'Running';
+              } else if (dsReady > 0) {
+                return 'Progressing';
+              } else {
+                return 'Pending';
+              }
+            }
+
+            case 'statefulset': {
+              const ssReplicas = Number(statusObj.replicas || 0);
+              const ssReady = Number(statusObj.readyReplicas || 0);
+              if (ssReplicas === ssReady && ssReplicas > 0) {
+                return 'Running';
+              } else if (ssReady > 0) {
+                return 'Progressing';
+              } else {
+                return 'Pending';
+              }
+            }
+
+            case 'job': {
+              if (statusObj.succeeded && Number(statusObj.succeeded) > 0) {
+                return 'Succeeded';
+              } else if (statusObj.failed && Number(statusObj.failed) > 0) {
+                return 'Failed';
+              } else if (statusObj.active && Number(statusObj.active) > 0) {
+                return 'Running';
+              } else {
+                return 'Pending';
+              }
+            }
+
+            case 'cronjob': {
+              if (statusObj.lastScheduleTime) {
+                return 'Scheduled';
+              } else {
+                return 'Waiting';
+              }
+            }
+
+            default:
+              // For other resources, try to infer from common status patterns
+              if (statusObj.phase) {
+                return String(statusObj.phase);
+              }
+              if (statusObj.conditions && Array.isArray(statusObj.conditions)) {
+                const readyCondition = statusObj.conditions.find(
+                  (c: Record<string, unknown>) => c.type === 'Ready' || c.type === 'Available'
+                );
+                if (readyCondition) {
+                  return (readyCondition.status as string) === 'True' ? 'Ready' : 'NotReady';
+                }
+              }
+              return 'Active';
+          }
+
+          return 'Unknown';
+        };
+        const resourceStatus = extractResourceStatus(resource);
+
+        // Map extracted status to display status
+        const getDisplayStatus = (status: string): ResourceItem['status'] => {
+          const statusLower = status.toLowerCase();
+
+          if (
+            statusLower === 'running' ||
+            statusLower === 'active' ||
+            statusLower === 'ready' ||
+            statusLower === 'succeeded'
+          ) {
+            return 'Healthy';
+          } else if (
+            statusLower === 'pending' ||
+            statusLower === 'progressing' ||
+            statusLower === 'waiting' ||
+            statusLower === 'scheduled'
+          ) {
+            return 'OutOfSync';
+          } else if (
+            statusLower === 'failed' ||
+            statusLower === 'error' ||
+            statusLower === 'notready'
+          ) {
+            return 'Missing';
+          } else {
+            return 'Synced';
+          }
+        };
+
+        return {
+          kind: resource.kind,
+          name: resource.metadata?.name || '',
+          namespace: resource.metadata?.namespace || '',
+          status: getDisplayStatus(resourceStatus),
+          createdAt: resource.metadata?.creationTimestamp?.toString() || '',
+          labels: resource.labels || {},
+          metadata: resource.metadata || {},
+        };
+      })
       .sort((a, b) => {
         // Optimized sorting with cached values
         const getValue = (resource: ResourceItem, key: string): string => {
@@ -340,38 +477,8 @@ const ObjectFilterPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
-      {/* Enhanced Header with Breadcrumbs and Actions */}
+      {/* Enhanced Header with Actions */}
       <Box sx={{ mb: 3 }}>
-        <Breadcrumbs
-          aria-label="breadcrumb"
-          sx={{
-            mb: 2,
-            '& .MuiBreadcrumbs-separator': {
-              color: isDark ? darkTheme.text.tertiary : lightTheme.text.tertiary,
-            },
-          }}
-        >
-          <Link
-            color="inherit"
-            href="/dashboard"
-            sx={{
-              color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
-              textDecoration: 'none',
-              '&:hover': {
-                color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-              },
-            }}
-          >
-            Dashboard
-          </Link>
-          <Typography
-            color="textPrimary"
-            sx={{ color: isDark ? darkTheme.text.primary : lightTheme.text.primary }}
-          >
-            {t('resources.title')}
-          </Typography>
-        </Breadcrumbs>
-
         <Box
           sx={{
             display: 'flex',
@@ -537,7 +644,7 @@ const ObjectFilterPage: React.FC = () => {
               }}
             >
               <FilterAltIcon />
-              Resource Selection & Filters
+              Object Selection & Filters
             </Typography>
 
             <Grid container spacing={3} alignItems="center">
