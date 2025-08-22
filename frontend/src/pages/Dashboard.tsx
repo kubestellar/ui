@@ -158,7 +158,7 @@ const OptimizedProgressBar = ({
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
-              <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+              <div className="invisible absolute -left-4 -top-40 z-50 max-h-48 w-64 overflow-y-auto whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:-top-36 md:-top-32 lg:-top-28">
                 {tooltip}
               </div>
             </>
