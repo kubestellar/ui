@@ -314,5 +314,12 @@ Redesigned the footer to enhance usability and user engagement:
 - Covers: **Onboarding, Code of Conduct, Guidelines, License, Governance, Testing, Docs Management Overview, Testing Website PRs, Release Process, Release Testing, and Signoff/Signing Contributions.**  
 - Goal: Provide a single source of truth for contribution rules and processes.  
   
+### 🗂️ KubeStellar/docs – Programs Page Design
 
+Designed a dedicated **Programs** page featuring card-based layouts for showcasing key initiatives:
+- 📌 **LFX Mentorship**
+- 📌 **Google Summer of Code (GSoC)**
+- 📌 **ESOC**
+- 📌 **IFoS**
+Each program is represented as a card with a title, description, and quick access link for better visibility and navigation.
 ---
