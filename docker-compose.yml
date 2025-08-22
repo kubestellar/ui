@@ -155,8 +155,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: kubestellar-prometheus
-    ports:
-      - "9090:9090"
+    network_mode: host
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -166,10 +165,7 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
-    # Note: Since backend uses host network, Prometheus will scrape via host IP
     restart: unless-stopped
-    networks:
-      - kubestellar-network
     profiles:
       - monitoring
 
@@ -177,8 +173,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: kubestellar-grafana
-    ports:
-      - "3000:3000"
+    network_mode: host
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
@@ -191,8 +186,6 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
-    networks:
-      - kubestellar-network
     profiles:
       - monitoring
 
@@ -200,8 +193,7 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: kubestellar-node-exporter
-    ports:
-      - "9100:9100"
+    network_mode: host
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -211,8 +203,6 @@ services:
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
     restart: unless-stopped
-    networks:
-      - kubestellar-network
     profiles:
       - monitoring
 
@@ -221,15 +211,12 @@ services:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
     environment:
-      DATA_SOURCE_NAME: "postgresql://authuser:authpass123@postgres:5432/authdb?sslmode=disable"
-    ports:
-      - "9187:9187"
+      DATA_SOURCE_NAME: "postgresql://authuser:authpass123@localhost:5400/authdb?sslmode=disable"
+    network_mode: host
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - kubestellar-network
     profiles:
       - monitoring
 
@@ -238,15 +225,12 @@ services:
     image: oliver006/redis_exporter:latest
     container_name: redis-exporter
     environment:
-      REDIS_ADDR: "redis://redis:6379"
-    ports:
-      - "9121:9121"
+      REDIS_ADDR: "redis://localhost:6379"
+    network_mode: host
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - kubestellar-network
     profiles:
       - monitoring
 
