@@ -2681,8 +2681,8 @@
     "search": "संसाधन खोजें...",
     "kind": "प्रकार",
     "namespace": "नेमस्पेस",
-    "status": "स्थिति",
     "labels": "लेबल्स",
+    "labels_plural": "{{count}} लेबल्स",
     "filterByKind": "संसाधन प्रकार के अनुसार फ़िल्टर करें",
     "filterByNamespace": "नेमस्पेस के अनुसार फ़िल्टर करें",
     "filterByStatus": "स्थिति के अनुसार फ़िल्टर करें",
@@ -2699,6 +2699,86 @@
     "noResourcesFound": "मानदंडों से मेल खाते संसाधन नहीं मिले",
     "selectResourceAndNamespace": "शुरू करने के लिए संसाधन प्रकार और नेमस्पेस चुनें",
     "refresh": "रीफ्रेश करें",
-    "toggleFilters": "फ़िल्टर्स टॉगल करें"
+    "toggleFilters": "फ़िल्टर्स टॉगल करें",
+    "description": "अपने क्लस्टर्स में Kubernetes संसाधनों का अन्वेषण और प्रबंधन करें",
+    "autoRefresh": "स्वचालित रीफ्रेश",
+    "viewMode": {
+      "grid": "ग्रिड व्यू",
+      "list": "सूची व्यू",
+      "table": "टेबल व्यू",
+      "gridLabel": "ग्रिड व्यू",
+      "listLabel": "सूची व्यू",
+      "tableLabel": "टेबल व्यू"
+    },
+    "objectSelection": "ऑब्जेक्ट चयन और फ़िल्टर्स",
+    "searchPlaceholder": "संसाधन प्रकार खोजें...",
+    "quickSearchPlaceholder": "संसाधनों को त्वरित खोजें...",
+    "bulkActions": {
+      "resourcesSelected": "{{count}} संसाधन चयनित",
+      "clearSelection": "चयन साफ़ करें",
+      "viewDetails": "विवरण देखें",
+      "export": "निर्यात करें"
+    },
+    "sorting": {
+      "sortBy": "इसके अनुसार क्रमबद्ध करें",
+      "name": "नाम के अनुसार क्रमबद्ध करें",
+      "kind": "प्रकार के अनुसार क्रमबद्ध करें",
+      "namespace": "नेमस्पेस के अनुसार क्रमबद्ध करें",
+      "createdAt": "निर्माण तिथि के अनुसार क्रमबद्ध करें"
+    },
+    "emptyState": {
+      "readyToExplore": "अन्वेषण के लिए तैयार",
+      "noResourcesFound": "कोई संसाधन नहीं मिला",
+      "noResourcesDescription": "कोई संसाधन आपके वर्तमान फ़िल्टर्स से मेल नहीं खाता। अपने खोज मानदंडों को समायोजित करें या फ़िल्टर्स साफ़ करें।",
+      "getStartedDescription": "अपने Kubernetes ऑब्जेक्ट्स का अन्वेषण शुरू करने के लिए संसाधन प्रकार और नेमस्पेस चुनें।",
+      "getStarted": "शुरू करें",
+      "clearFilters": "फ़िल्टर्स साफ़ करें"
+    },
+    "actions": {
+      "view": "देखें",
+      "viewDetails": "विवरण देखें",
+      "editYaml": "YAML संपादित करें",
+      "delete": "हटाएं",
+      "more": "अधिक"
+    },
+    "filters": {
+      "activeFilters": "सक्रिय फ़िल्टर्स:",
+      "kindFilter": "प्रकार: {{kind}}",
+      "namespaceFilter": "नेमस्पेस: {{namespace}}",
+      "labelFilter": "{{key}}: {{value}}",
+      "clear": "साफ़ करें ({{count}})"
+    },
+    "menus": {
+      "resourceKinds": "संसाधन प्रकार ({{count}})",
+      "namespaces": "नेमस्पेस ({{count}})",
+      "labels": "लेबल्स ({{count}} कुंजियां)",
+      "noLabelsFound": "वर्तमान संसाधनों में कोई लेबल नहीं मिला",
+      "active": "सक्रिय"
+    },
+    "stats": {
+      "resourceOverview": "संसाधन अवलोकन",
+      "topResourceKinds": "शीर्ष संसाधन प्रकार",
+      "topNamespaces": "शीर्ष नेमस्पेस"
+    },
+    "status": {
+      "healthy": "स्वस्थ",
+      "warning": "चेतावनी",
+      "error": "त्रुटि",
+      "active": "सक्रिय",
+      "unknown": "अज्ञात",
+      "running": "चल रहा है",
+      "pending": "लंबित",
+      "failed": "विफल",
+      "progressing": "प्रगति में",
+      "scheduled": "अनुसूचित",
+      "waiting": "प्रतीक्षा में",
+      "ready": "तैयार",
+      "notReady": "तैयार नहीं",
+      "succeeded": "सफल",
+      "outOfSync": "सिंक से बाहर",
+      "missing": "गुम",
+      "synced": "सिंक किया गया"
+    },
+    "unknown": "अज्ञात"
   }
 }

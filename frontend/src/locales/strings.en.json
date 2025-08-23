@@ -2678,8 +2678,8 @@
     "search": "Search objects...",
     "kind": "Kind",
     "namespace": "Namespace",
-    "status": "Status",
     "labels": "Labels",
+    "labels_plural": "{{count}} labels",
     "filterByKind": "Filter by object kind",
     "filterByNamespace": "Filter by namespace",
     "filterByStatus": "Filter by status",
@@ -2696,7 +2696,87 @@
     "noResourcesFound": "No objects found matching the criteria",
     "selectResourceAndNamespace": "Select an object kind and namespace to begin",
     "refresh": "Refresh",
-    "toggleFilters": "Toggle filters"
+    "toggleFilters": "Toggle filters",
+    "description": "Explore and manage Kubernetes resources across your clusters",
+    "autoRefresh": "Auto-refresh",
+    "viewMode": {
+      "grid": "Grid View",
+      "list": "List View",
+      "table": "Table View",
+      "gridLabel": "grid view",
+      "listLabel": "list view",
+      "tableLabel": "table view"
+    },
+    "objectSelection": "Object Selection & Filters",
+    "searchPlaceholder": "Search resource kinds...",
+    "quickSearchPlaceholder": "Quick search resources...",
+    "bulkActions": {
+      "resourcesSelected": "{{count}} resource{{count > 1 ? 's' : ''}} selected",
+      "clearSelection": "Clear Selection",
+      "viewDetails": "View Details",
+      "export": "Export"
+    },
+    "sorting": {
+      "sortBy": "Sort by",
+      "name": "Sort by Name",
+      "kind": "Sort by Kind",
+      "namespace": "Sort by Namespace",
+      "createdAt": "Sort by Created"
+    },
+    "emptyState": {
+      "readyToExplore": "Ready to explore",
+      "noResourcesFound": "No resources found",
+      "noResourcesDescription": "No resources match your current filters. Try adjusting your search criteria or clearing filters.",
+      "getStartedDescription": "Select a resource kind and namespace to begin exploring your Kubernetes objects.",
+      "getStarted": "Get Started",
+      "clearFilters": "Clear Filters"
+    },
+    "actions": {
+      "view": "View",
+      "viewDetails": "View Details",
+      "editYaml": "Edit YAML",
+      "delete": "Delete",
+      "more": "More"
+    },
+    "filters": {
+      "activeFilters": "Active Filters:",
+      "kindFilter": "Kind: {{kind}}",
+      "namespaceFilter": "Namespace: {{namespace}}",
+      "labelFilter": "{{key}}: {{value}}",
+      "clear": "Clear ({{count}})"
+    },
+    "menus": {
+      "resourceKinds": "Resource Kinds ({{count}})",
+      "namespaces": "Namespaces ({{count}})",
+      "labels": "Labels ({{count}} keys)",
+      "noLabelsFound": "No labels found in the current resources",
+      "active": "Active"
+    },
+    "stats": {
+      "resourceOverview": "Resource Overview",
+      "topResourceKinds": "Top Resource Kinds",
+      "topNamespaces": "Top Namespaces"
+    },
+    "status": {
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "error": "Error",
+      "active": "Active",
+      "unknown": "Unknown",
+      "running": "Running",
+      "pending": "Pending",
+      "failed": "Failed",
+      "progressing": "Progressing",
+      "scheduled": "Scheduled",
+      "waiting": "Waiting",
+      "ready": "Ready",
+      "notReady": "Not Ready",
+      "succeeded": "Succeeded",
+      "outOfSync": "Out of Sync",
+      "missing": "Missing",
+      "synced": "Synced"
+    },
+    "unknown": "Unknown"
   },
   "validation": {
     "missingRequiredFields": "Missing required fields"

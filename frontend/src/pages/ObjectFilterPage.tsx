@@ -173,9 +173,9 @@ const ObjectFilterPage: React.FC = () => {
           const kind = resource.kind.toLowerCase();
           const statusObj = resource.status as Record<string, unknown> | undefined;
 
-          if (!statusObj || typeof statusObj !== 'object') {
-            return 'Unknown';
-          }
+                  if (!statusObj || typeof statusObj !== 'object') {
+          return t('resources.status.unknown');
+        }
 
           switch (kind) {
             case 'pod': {
@@ -186,9 +186,9 @@ const ObjectFilterPage: React.FC = () => {
               // Fallback to container statuses
               if (statusObj.containerStatuses && Array.isArray(statusObj.containerStatuses)) {
                 const containerStatus = statusObj.containerStatuses[0];
-                if (containerStatus?.state?.running) return 'Running';
-                if (containerStatus?.state?.waiting) return 'Pending';
-                if (containerStatus?.state?.terminated) return 'Failed';
+                          if (containerStatus?.state?.running) return t('resources.status.running');
+          if (containerStatus?.state?.waiting) return t('resources.status.pending');
+          if (containerStatus?.state?.terminated) return t('resources.status.failed');
               }
               break;
             }
@@ -200,11 +200,11 @@ const ObjectFilterPage: React.FC = () => {
               const availableReplicas = Number(statusObj.availableReplicas || 0);
 
               if (replicas === readyReplicas && replicas === availableReplicas && replicas > 0) {
-                return 'Running';
+                return t('resources.status.running');
               } else if (readyReplicas > 0) {
-                return 'Progressing';
+                return t('resources.status.progressing');
               } else {
-                return 'Pending';
+                return t('resources.status.pending');
               }
             }
 
@@ -212,17 +212,17 @@ const ObjectFilterPage: React.FC = () => {
             case 'configmap':
             case 'secret':
               // Services, ConfigMaps and Secrets are typically active if they exist
-              return 'Active';
+              return t('resources.status.active');
 
             case 'daemonset': {
               const dsReplicas = Number(statusObj.desiredNumberScheduled || 0);
               const dsReady = Number(statusObj.numberReady || 0);
               if (dsReplicas === dsReady && dsReplicas > 0) {
-                return 'Running';
+                return t('resources.status.running');
               } else if (dsReady > 0) {
-                return 'Progressing';
+                return t('resources.status.progressing');
               } else {
-                return 'Pending';
+                return t('resources.status.pending');
               }
             }
 
@@ -230,31 +230,31 @@ const ObjectFilterPage: React.FC = () => {
               const ssReplicas = Number(statusObj.replicas || 0);
               const ssReady = Number(statusObj.readyReplicas || 0);
               if (ssReplicas === ssReady && ssReplicas > 0) {
-                return 'Running';
+                return t('resources.status.running');
               } else if (ssReady > 0) {
-                return 'Progressing';
+                return t('resources.status.progressing');
               } else {
-                return 'Pending';
+                return t('resources.status.pending');
               }
             }
 
             case 'job': {
               if (statusObj.succeeded && Number(statusObj.succeeded) > 0) {
-                return 'Succeeded';
+                return t('resources.status.succeeded');
               } else if (statusObj.failed && Number(statusObj.failed) > 0) {
-                return 'Failed';
+                return t('resources.status.failed');
               } else if (statusObj.active && Number(statusObj.active) > 0) {
-                return 'Running';
+                return t('resources.status.running');
               } else {
-                return 'Pending';
+                return t('resources.status.pending');
               }
             }
 
             case 'cronjob': {
               if (statusObj.lastScheduleTime) {
-                return 'Scheduled';
+                return t('resources.status.scheduled');
               } else {
-                return 'Waiting';
+                return t('resources.status.waiting');
               }
             }
 
@@ -267,14 +267,14 @@ const ObjectFilterPage: React.FC = () => {
                 const readyCondition = statusObj.conditions.find(
                   (c: Record<string, unknown>) => c.type === 'Ready' || c.type === 'Available'
                 );
-                if (readyCondition) {
-                  return (readyCondition.status as string) === 'True' ? 'Ready' : 'NotReady';
-                }
+                              if (readyCondition) {
+                return (readyCondition.status as string) === 'True' ? t('resources.status.ready') : t('resources.status.notReady');
               }
-              return 'Active';
+              }
+              return t('resources.status.active');
           }
 
-          return 'Unknown';
+          return t('resources.status.unknown');
         };
         const resourceStatus = extractResourceStatus(resource);
 
@@ -514,7 +514,7 @@ const ObjectFilterPage: React.FC = () => {
                 mb: 2,
               }}
             >
-              Explore and manage Kubernetes resources across your clusters
+              {t('resources.description')}
             </Typography>
           </Box>
 
@@ -528,7 +528,7 @@ const ObjectFilterPage: React.FC = () => {
                   size="small"
                 />
               }
-              label="Auto-refresh"
+              label={t('resources.autoRefresh')}
               sx={{
                 color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                 '& .MuiFormControlLabel-label': {
@@ -554,13 +554,13 @@ const ObjectFilterPage: React.FC = () => {
                 },
               }}
             >
-              <ToggleButton value="grid" aria-label="grid view">
+              <ToggleButton value="grid" aria-label={t('resources.viewMode.gridLabel')}>
                 <ViewModuleIcon fontSize="small" />
               </ToggleButton>
-              <ToggleButton value="list" aria-label="list view">
+              <ToggleButton value="list" aria-label={t('resources.viewMode.listLabel')}>
                 <ViewListIcon fontSize="small" />
               </ToggleButton>
-              <ToggleButton value="table" aria-label="table view">
+              <ToggleButton value="table" aria-label={t('resources.viewMode.tableLabel')}>
                 <TableViewIcon fontSize="small" />
               </ToggleButton>
             </ToggleButtonGroup>
@@ -644,7 +644,7 @@ const ObjectFilterPage: React.FC = () => {
               }}
             >
               <FilterAltIcon />
-              Object Selection & Filters
+              {t('resources.objectSelection')}
             </Typography>
 
             <Grid container spacing={3} alignItems="center">
@@ -722,7 +722,7 @@ const ObjectFilterPage: React.FC = () => {
                     <TextField
                       {...params}
                       label={t('resources.selectKind')}
-                      placeholder="Search resource kinds..."
+                      placeholder={t('resources.searchPlaceholder')}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           backgroundColor: isDark
@@ -837,7 +837,7 @@ const ObjectFilterPage: React.FC = () => {
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  placeholder="Quick search resources..."
+                  placeholder={t('resources.quickSearchPlaceholder')}
                   value={quickSearchQuery}
                   onChange={handleQuickSearch}
                   InputProps={{
@@ -933,7 +933,7 @@ const ObjectFilterPage: React.FC = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              {selectedResources.length} resource{selectedResources.length > 1 ? 's' : ''} selected
+              {t('resources.bulkActions.resourcesSelected', { count: selectedResources.length })}
             </Typography>
             <Button
               variant="outlined"
@@ -948,7 +948,7 @@ const ObjectFilterPage: React.FC = () => {
                 },
               }}
             >
-              Clear Selection
+              {t('resources.bulkActions.clearSelection')}
             </Button>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -964,7 +964,7 @@ const ObjectFilterPage: React.FC = () => {
                 },
               }}
             >
-              View Details
+              {t('resources.bulkActions.viewDetails')}
             </Button>
             <Button
               variant="contained"
@@ -978,7 +978,7 @@ const ObjectFilterPage: React.FC = () => {
                 },
               }}
             >
-              Export
+              {t('resources.bulkActions.export')}
             </Button>
           </Box>
         </Paper>
@@ -1090,10 +1090,10 @@ const ObjectFilterPage: React.FC = () => {
                     },
                   }}
                 >
-                  <MenuItem value="name">Sort by Name</MenuItem>
-                  <MenuItem value="kind">Sort by Kind</MenuItem>
-                  <MenuItem value="namespace">Sort by Namespace</MenuItem>
-                  <MenuItem value="createdAt">Sort by Created</MenuItem>
+                  <MenuItem value="name">{t('resources.sorting.name')}</MenuItem>
+                  <MenuItem value="kind">{t('resources.sorting.kind')}</MenuItem>
+                  <MenuItem value="namespace">{t('resources.sorting.namespace')}</MenuItem>
+                  <MenuItem value="createdAt">{t('resources.sorting.createdAt')}</MenuItem>
                 </Select>
               </FormControl>
               <IconButton
@@ -1293,7 +1293,7 @@ const ObjectFilterPage: React.FC = () => {
                                   : lightTheme.brand.primary,
                               }}
                             >
-                              View
+                              {t('resources.actions.view')}
                             </Button>
                             <IconButton
                               size="small"
@@ -1607,7 +1607,7 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {selectedKind && selectedNamespace ? 'No resources found' : 'Ready to explore'}
+                {selectedKind && selectedNamespace ? t('resources.emptyState.noResourcesFound') : t('resources.emptyState.readyToExplore')}
               </Typography>
               <Typography
                 variant="body1"
@@ -1619,8 +1619,8 @@ const ObjectFilterPage: React.FC = () => {
                 }}
               >
                 {selectedKind && selectedNamespace
-                  ? 'No resources match your current filters. Try adjusting your search criteria or clearing filters.'
-                  : 'Select a resource kind and namespace to begin exploring your Kubernetes objects.'}
+                  ? t('resources.emptyState.noResourcesDescription')
+                  : t('resources.emptyState.getStartedDescription')}
               </Typography>
               {selectedKind && selectedNamespace ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
@@ -1641,7 +1641,7 @@ const ObjectFilterPage: React.FC = () => {
                       },
                     }}
                   >
-                    Refresh
+                    {t('resources.refresh')}
                   </Button>
                   <Button
                     variant="text"
@@ -1658,7 +1658,7 @@ const ObjectFilterPage: React.FC = () => {
                       },
                     }}
                   >
-                    Clear Filters
+                    {t('resources.emptyState.clearFilters')}
                   </Button>
                 </Box>
               ) : (
@@ -1682,7 +1682,7 @@ const ObjectFilterPage: React.FC = () => {
                     },
                   }}
                 >
-                  Get Started
+                  {t('resources.emptyState.getStarted')}
                 </Button>
               )}
             </Box>
@@ -1720,7 +1720,7 @@ const ObjectFilterPage: React.FC = () => {
               sx={{ color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary }}
             />
           </ListItemIcon>
-          <ListItemText>View Details</ListItemText>
+                            <ListItemText>{t('resources.actions.viewDetails')}</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() =>
@@ -1733,7 +1733,7 @@ const ObjectFilterPage: React.FC = () => {
               sx={{ color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary }}
             />
           </ListItemIcon>
-          <ListItemText>Edit YAML</ListItemText>
+                            <ListItemText>{t('resources.actions.editYaml')}</ListItemText>
         </MenuItem>
         <Divider
           sx={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)' }}
@@ -1747,7 +1747,7 @@ const ObjectFilterPage: React.FC = () => {
           <ListItemIcon>
             <DeleteIcon fontSize="small" sx={{ color: isDark ? '#f87171' : '#dc2626' }} />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+                            <ListItemText>{t('resources.actions.delete')}</ListItemText>
         </MenuItem>
       </Menu>
 
