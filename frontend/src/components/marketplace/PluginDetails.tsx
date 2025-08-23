@@ -194,7 +194,7 @@ export const EnhancedPluginDetails: React.FC<EnhancedPluginDetailsProps> = ({
         });
       }),
       {
-        loading: `Installing ${plugin.name}...`,
+        loading: `${t('marketplace.common.installing')} ${plugin.name}...`,
         success: `${plugin.name} installed successfully!`,
         error: `Failed to install ${plugin.name}`,
       }
@@ -213,7 +213,7 @@ export const EnhancedPluginDetails: React.FC<EnhancedPluginDetailsProps> = ({
         });
       }),
       {
-        loading: `Uninstalling ${plugin.name}...`,
+        loading: `${t('marketplace.common.uninstalling')} ${plugin.name}...`,
         success: `${plugin.name} uninstalled successfully!`,
         error: `Failed to uninstall ${plugin.name}`,
       }
