@@ -1185,7 +1185,7 @@ const InstallationPage = () => {
           isDark ? 'border-slate-800/50 bg-slate-900/90' : 'border-gray-200/50 bg-white/90'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               <div className="flex items-center transition-opacity hover:opacity-90">
