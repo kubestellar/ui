@@ -493,7 +493,9 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             )}
             {activeFilters.namespace && (
               <Chip
-                label={t('resources.filters.namespaceFilter', { namespace: activeFilters.namespace })}
+                label={t('resources.filters.namespaceFilter', {
+                  namespace: activeFilters.namespace,
+                })}
                 onDelete={() => handleRemoveFilter('namespace')}
                 color="primary"
                 variant="filled"
@@ -513,7 +515,10 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             )}
             {activeFilters.label && isRenderable(activeFilters.label.value) && (
               <Chip
-                label={t('resources.filters.labelFilter', { key: activeFilters.label.key, value: activeFilters.label.value })}
+                label={t('resources.filters.labelFilter', {
+                  key: activeFilters.label.key,
+                  value: activeFilters.label.value,
+                })}
                 onDelete={() => handleRemoveFilter('label')}
                 color="primary"
                 variant="filled"
@@ -832,18 +837,18 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
                     <Typography variant="body2" sx={{ fontWeight: 400, flex: 1 }}>
                       {value}
                     </Typography>
-                                  {activeFilters.label?.key === key && activeFilters.label?.value === value && (
-                <Chip
-                  label={t('resources.menus.active')}
-                  size="small"
-                  color="primary"
-                  sx={{
-                    height: '18px',
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                  }}
-                />
-              )}
+                    {activeFilters.label?.key === key && activeFilters.label?.value === value && (
+                      <Chip
+                        label={t('resources.menus.active')}
+                        size="small"
+                        color="primary"
+                        sx={{
+                          height: '18px',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                        }}
+                      />
+                    )}
                   </Box>
                 </MenuItem>
               ) : null

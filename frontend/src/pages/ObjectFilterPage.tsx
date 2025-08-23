@@ -173,9 +173,9 @@ const ObjectFilterPage: React.FC = () => {
           const kind = resource.kind.toLowerCase();
           const statusObj = resource.status as Record<string, unknown> | undefined;
 
-                  if (!statusObj || typeof statusObj !== 'object') {
-          return t('resources.status.unknown');
-        }
+          if (!statusObj || typeof statusObj !== 'object') {
+            return t('resources.status.unknown');
+          }
 
           switch (kind) {
             case 'pod': {
@@ -186,9 +186,9 @@ const ObjectFilterPage: React.FC = () => {
               // Fallback to container statuses
               if (statusObj.containerStatuses && Array.isArray(statusObj.containerStatuses)) {
                 const containerStatus = statusObj.containerStatuses[0];
-                          if (containerStatus?.state?.running) return t('resources.status.running');
-          if (containerStatus?.state?.waiting) return t('resources.status.pending');
-          if (containerStatus?.state?.terminated) return t('resources.status.failed');
+                if (containerStatus?.state?.running) return t('resources.status.running');
+                if (containerStatus?.state?.waiting) return t('resources.status.pending');
+                if (containerStatus?.state?.terminated) return t('resources.status.failed');
               }
               break;
             }
@@ -267,9 +267,11 @@ const ObjectFilterPage: React.FC = () => {
                 const readyCondition = statusObj.conditions.find(
                   (c: Record<string, unknown>) => c.type === 'Ready' || c.type === 'Available'
                 );
-                              if (readyCondition) {
-                return (readyCondition.status as string) === 'True' ? t('resources.status.ready') : t('resources.status.notReady');
-              }
+                if (readyCondition) {
+                  return (readyCondition.status as string) === 'True'
+                    ? t('resources.status.ready')
+                    : t('resources.status.notReady');
+                }
               }
               return t('resources.status.active');
           }
@@ -1607,7 +1609,9 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {selectedKind && selectedNamespace ? t('resources.emptyState.noResourcesFound') : t('resources.emptyState.readyToExplore')}
+                {selectedKind && selectedNamespace
+                  ? t('resources.emptyState.noResourcesFound')
+                  : t('resources.emptyState.readyToExplore')}
               </Typography>
               <Typography
                 variant="body1"
@@ -1720,7 +1724,7 @@ const ObjectFilterPage: React.FC = () => {
               sx={{ color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary }}
             />
           </ListItemIcon>
-                            <ListItemText>{t('resources.actions.viewDetails')}</ListItemText>
+          <ListItemText>{t('resources.actions.viewDetails')}</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() =>
@@ -1733,7 +1737,7 @@ const ObjectFilterPage: React.FC = () => {
               sx={{ color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary }}
             />
           </ListItemIcon>
-                            <ListItemText>{t('resources.actions.editYaml')}</ListItemText>
+          <ListItemText>{t('resources.actions.editYaml')}</ListItemText>
         </MenuItem>
         <Divider
           sx={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)' }}
@@ -1747,7 +1751,7 @@ const ObjectFilterPage: React.FC = () => {
           <ListItemIcon>
             <DeleteIcon fontSize="small" sx={{ color: isDark ? '#f87171' : '#dc2626' }} />
           </ListItemIcon>
-                            <ListItemText>{t('resources.actions.delete')}</ListItemText>
+          <ListItemText>{t('resources.actions.delete')}</ListItemText>
         </MenuItem>
       </Menu>
 
