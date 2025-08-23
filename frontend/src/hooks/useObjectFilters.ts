@@ -29,6 +29,11 @@ interface Resource {
   status?: Record<string, unknown>;
 }
 
+interface FetchResourcesResponse {
+  items?: Resource[];
+  [key: string]: unknown;
+}
+
 interface UseObjectFiltersResult {
   resourceKinds: ResourceKind[];
   namespaces: Namespace[];
@@ -77,7 +82,7 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
       setError(null);
 
       try {
-        const fetchPromises: Promise<any>[] = [];
+        const fetchPromises: Promise<FetchResourcesResponse>[] = [];
         for (const kind of kinds) {
           for (const ns of nsList) {
             fetchPromises.push(fetchResources(kind, ns, filters));

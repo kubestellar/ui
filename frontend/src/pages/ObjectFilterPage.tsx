@@ -205,7 +205,10 @@ const ObjectFilterPage: React.FC = () => {
         return sortOrder === 'asc' ? comparison : -comparison;
       });
   }, [filteredResources, quickSearchQuery, sortBy, sortOrder]); // Enhanced handlers
-  const handleKindsChange = (_event: any, value: ResourceKind[]) => {
+  const handleKindsChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    value: ResourceKind[]
+  ) => {
     setSelectedKinds(value);
     setSelectedResources([]); // Clear selections when changing context
   };
@@ -719,7 +722,7 @@ const ObjectFilterPage: React.FC = () => {
                     onChange={handleNamespacesChange}
                     renderValue={selected => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(selected as string[]).map((ns, idx) => (
+                        {(selected as string[]).map(ns => (
                           <Chip
                             key={ns}
                             label={ns}
