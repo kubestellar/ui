@@ -49,12 +49,15 @@ interface ResourceCardProps {
 
 // Utility function to get status color and icon
 const getStatusInfo = (status: string | undefined, isDark: boolean) => {
-  const statusLower = status?.toLowerCase();
+  // Safely convert status to string and handle undefined/null cases
+  const statusString = status?.toString?.() || status || '';
+  const statusLower = statusString.toLowerCase();
 
   if (
-    statusLower?.includes('running') ||
-    statusLower?.includes('ready') ||
-    statusLower?.includes('active')
+    statusLower.includes('running') ||
+    statusLower.includes('ready') ||
+    statusLower.includes('active') ||
+    statusLower.includes('healthy')
   ) {
     return {
       color: '#10b981',
@@ -65,9 +68,10 @@ const getStatusInfo = (status: string | undefined, isDark: boolean) => {
   }
 
   if (
-    statusLower?.includes('pending') ||
-    statusLower?.includes('progressing') ||
-    statusLower?.includes('updating')
+    statusLower.includes('pending') ||
+    statusLower.includes('progressing') ||
+    statusLower.includes('updating') ||
+    statusLower.includes('outofsync')
   ) {
     return {
       color: '#f59e0b',
@@ -78,9 +82,10 @@ const getStatusInfo = (status: string | undefined, isDark: boolean) => {
   }
 
   if (
-    statusLower?.includes('failed') ||
-    statusLower?.includes('error') ||
-    statusLower?.includes('crashloop')
+    statusLower.includes('failed') ||
+    statusLower.includes('error') ||
+    statusLower.includes('crashloop') ||
+    statusLower.includes('missing')
   ) {
     return {
       color: '#ef4444',
