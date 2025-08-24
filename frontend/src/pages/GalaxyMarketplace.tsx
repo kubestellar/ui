@@ -6,7 +6,6 @@ import {
   HiOutlineAdjustmentsHorizontal,
   HiOutlineArrowPath,
   HiXMark,
-  HiSparkles,
   HiOutlineGlobeAlt,
   HiOutlineStar,
   HiCog6Tooth,
@@ -169,7 +168,8 @@ const GalaxyMarketplace: React.FC = () => {
       canvas.height = rect.height;
     };
 
-    window.addEventListener('resize', resizeCanvas);
+    const handleResize = () => resizeCanvas();
+    window.addEventListener('resize', handleResize);
     resizeCanvas();
 
     // Create optimized star field
@@ -247,8 +247,10 @@ const GalaxyMarketplace: React.FC = () => {
     animationId = requestAnimationFrame(animate);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', handleResize);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
     };
   }, [isDark]);
 
@@ -328,7 +330,7 @@ const GalaxyMarketplace: React.FC = () => {
   }
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
+    <div className="relative flex h-full w-full flex-col">
       {/* Cosmic background */}
       <canvas
         ref={canvasRef}
@@ -337,7 +339,7 @@ const GalaxyMarketplace: React.FC = () => {
       />
 
       {/* Static spaceship in background */}
-      <div className="z-1 pointer-events-none absolute bottom-[15%] right-[10%] opacity-40">
+      <div className="pointer-events-none absolute bottom-[15%] right-[10%] z-0 opacity-40">
         <FaSpaceShuttle
           className="h-48 w-48 text-gray-400"
           style={{
@@ -350,13 +352,13 @@ const GalaxyMarketplace: React.FC = () => {
       </div>
 
       {/* Static decorative elements */}
-      <div className="z-1 pointer-events-none absolute right-10 top-20 opacity-50">
+      <div className="pointer-events-none absolute right-10 top-20 z-0 opacity-50">
         <FaGlobeAsia className="h-12 w-12 text-purple-300" />
       </div>
 
       {/* Enhanced Header */}
       <motion.div
-        className="z-1 relative flex flex-col gap-4 p-6 pb-0"
+        className="relative z-10 flex flex-col gap-6 p-6 pb-0"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -364,53 +366,34 @@ const GalaxyMarketplace: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <motion.div
-              className="relative rounded-2xl p-4"
+              className="relative rounded-lg p-3"
               style={{
-                background: `linear-gradient(135deg, ${
-                  isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'
-                }, ${isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)'})`,
-                border: `1px solid ${isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
-                boxShadow: '0 8px 32px rgba(37, 99, 235, 0.3)',
+                background: themeStyles.card.background,
+                border: `1px solid ${themeStyles.card.borderColor}`,
+                boxShadow: themeStyles.colors.shadow.sm,
               }}
-              whileHover={{ scale: 1.05, rotate: [0, -2, 2, 0] }}
-              transition={{ duration: 0.6 }}
+              whileHover={{ scale: 1.02, y: -1 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
               <FaRocket
-                className="h-8 w-8"
+                className="h-6 w-6"
                 style={{
-                  color: isDark ? '#60a5fa' : '#3b82f6',
-                  filter: 'drop-shadow(0 4px 8px rgba(59, 130, 246, 0.4))',
+                  color: themeStyles.colors.brand.primary,
                 }}
               />
-              <motion.div
-                className="absolute -right-1 -top-1"
-                animate={{
-                  scale: [1, 1.3, 1],
-                  rotate: [0, 180, 360],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              >
-                <HiSparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
             </motion.div>
             <div>
               <motion.h1
-                className="text-3xl font-bold"
+                className="text-2xl font-semibold"
                 style={{ color: themeStyles.colors.text.primary }}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
               >
-                <span className="bg-gradient-to-r from-emerald-500 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {t('marketplace.title', 'KubeStellar Galaxy Marketplace')}
-                </span>
+                {t('marketplace.title', 'Galaxy Marketplace')}
               </motion.h1>
               <motion.p
-                className="mt-1 text-lg"
+                className="mt-1 text-sm"
                 style={{ color: themeStyles.colors.text.secondary }}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -427,21 +410,18 @@ const GalaxyMarketplace: React.FC = () => {
           {/* Enhanced Admin Panel Button */}
           <motion.button
             onClick={() => setShowAdminPanel(true)}
-            className="flex items-center gap-2 rounded-lg px-4 py-2.5 transition-all"
-            whileHover={{ scale: 1.03, y: -1 }}
-            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
             style={{
-              background: `linear-gradient(135deg, ${isDark ? 'rgba(31, 41, 55, 0.9)' : 'rgba(249, 250, 251, 0.95)'}, ${isDark ? 'rgba(17, 24, 39, 0.9)' : 'rgba(243, 244, 246, 0.95)'})`,
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+              background: themeStyles.card.background,
+              border: `1px solid ${themeStyles.card.borderColor}`,
               color: themeStyles.colors.text.primary,
-              boxShadow: isDark
-                ? '0 2px 15px rgba(0, 0, 0, 0.2)'
-                : '0 2px 15px rgba(0, 0, 0, 0.08)',
+              boxShadow: themeStyles.colors.shadow.sm,
             }}
           >
             <HiCog6Tooth className="h-4 w-4" />
-            <span className="text-sm font-semibold">Admin Panel</span>
+            <span>Admin Panel</span>
           </motion.button>
         </div>
 
@@ -453,18 +433,17 @@ const GalaxyMarketplace: React.FC = () => {
           transition={{ delay: 0.4, duration: 0.6 }}
         >
           <div className="relative flex-grow">
-            <motion.div
-              className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
-              animate={{
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 transition-colors duration-300"
+              style={{
                 color: searchFocused
                   ? themeStyles.colors.brand.primary
                   : themeStyles.colors.text.secondary,
               }}
-              transition={{ duration: 0.2 }}
             >
               <HiMagnifyingGlass className="h-4 w-4" />
-            </motion.div>
-            <motion.input
+            </div>
+            <input
               type="text"
               placeholder={t(
                 'marketplace.searchPlaceholder',
@@ -474,24 +453,22 @@ const GalaxyMarketplace: React.FC = () => {
               onChange={handleSearchChange}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className="w-full rounded-lg border py-2.5 pl-10 pr-10 text-base outline-none transition-all duration-300"
+              className="w-full rounded-lg border py-2.5 pl-10 pr-10 text-sm outline-none transition-all duration-300 focus:ring-2"
               style={{
-                background: `${isDark ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)'}`,
-                backdropFilter: 'blur(10px)',
+                background: themeStyles.card.background,
                 border: searchFocused
                   ? `2px solid ${themeStyles.colors.brand.primary}`
                   : `1px solid ${themeStyles.card.borderColor}`,
                 color: themeStyles.colors.text.primary,
                 boxShadow: searchFocused
                   ? `0 0 0 3px ${themeStyles.colors.brand.primary}20`
-                  : 'none',
+                  : themeStyles.colors.shadow.sm,
               }}
-              whileFocus={{ scale: 1.01 }}
             />
             <AnimatePresence>
               {searchQuery && (
                 <motion.button
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-all hover:bg-gray-200 dark:hover:bg-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-all hover:bg-gray-100 dark:hover:bg-gray-700"
                   onClick={handleClearSearch}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -511,65 +488,92 @@ const GalaxyMarketplace: React.FC = () => {
           <div className="flex gap-3">
             <motion.button
               onClick={handleToggleFilters}
-              className="flex items-center gap-2 rounded-lg px-4 py-2.5 transition-all"
-              whileHover={{ scale: 1.03, y: -1 }}
-              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
               style={{
                 background: showFilters
-                  ? `linear-gradient(135deg, ${themeStyles.colors.brand.primary}, ${themeStyles.colors.brand.primaryDark})`
-                  : `${isDark ? 'rgba(31, 41, 55, 0.9)' : 'rgba(249, 250, 251, 0.9)'}`,
-                backdropFilter: 'blur(10px)',
-                border: `1px solid ${showFilters ? 'transparent' : isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                  ? themeStyles.colors.brand.primary
+                  : themeStyles.card.background,
+                border: `1px solid ${showFilters ? 'transparent' : themeStyles.card.borderColor}`,
                 color: showFilters ? '#ffffff' : themeStyles.colors.text.primary,
                 boxShadow: showFilters
                   ? `0 4px 15px ${themeStyles.colors.brand.primary}40`
-                  : isDark
-                    ? '0 2px 10px rgba(0, 0, 0, 0.2)'
-                    : '0 2px 10px rgba(0, 0, 0, 0.08)',
+                  : themeStyles.colors.shadow.sm,
               }}
             >
               <HiOutlineAdjustmentsHorizontal className="h-4 w-4" />
-              <span className="text-sm font-medium">{t('marketplace.filters', 'Filters')}</span>
+              <span>{t('marketplace.filters', 'Filters')}</span>
             </motion.button>
 
-            <div className="relative">
-              <motion.select
+            <div className="relative min-w-[200px]">
+              <select
                 value={sortBy}
                 onChange={handleSortChange}
-                className="cursor-pointer appearance-none rounded-lg px-4 py-2.5 pr-10 text-sm font-medium transition-all"
+                className="z-10 w-full cursor-pointer appearance-none rounded-lg px-4 py-3 pr-12 text-sm font-medium transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
                 style={{
-                  background: `${isDark ? 'rgba(31, 41, 55, 0.9)' : 'rgba(249, 250, 251, 0.9)'}`,
-                  backdropFilter: 'blur(10px)',
-                  border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                  background: themeStyles.card.background,
+                  border: `1px solid ${themeStyles.card.borderColor}`,
                   color: themeStyles.colors.text.primary,
-                  boxShadow: isDark
-                    ? '0 2px 10px rgba(0, 0, 0, 0.2)'
-                    : '0 2px 10px rgba(0, 0, 0, 0.08)',
+                  boxShadow: themeStyles.colors.shadow.sm,
                 }}
-                whileHover={{ scale: 1.03, y: -1 }}
               >
-                <option value="popular">{t('marketplace.sortPopular', 'Most Popular')}</option>
-                <option value="rating">{t('marketplace.sortRating', 'Highest Rated')}</option>
-                <option value="newest">{t('marketplace.sortNewest', 'Recently Added')}</option>
-              </motion.select>
+                <option
+                  value="popular"
+                  style={{
+                    background: themeStyles.card.background,
+                    color: themeStyles.colors.text.primary,
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    fontWeight: '400',
+                  }}
+                >
+                  {t('marketplace.sortPopular', 'Most Popular')}
+                </option>
+                <option
+                  value="rating"
+                  style={{
+                    background: themeStyles.card.background,
+                    color: themeStyles.colors.text.primary,
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    fontWeight: '400',
+                  }}
+                >
+                  {t('marketplace.sortRating', 'Highest Rated')}
+                </option>
+                <option
+                  value="newest"
+                  style={{
+                    background: themeStyles.card.background,
+                    color: themeStyles.colors.text.primary,
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    fontWeight: '400',
+                  }}
+                >
+                  {t('marketplace.sortNewest', 'Recently Added')}
+                </option>
+              </select>
               <div
-                className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"
+                className="pointer-events-none absolute inset-y-0 right-0 z-20 flex items-center pr-4 transition-transform duration-300"
                 style={{ color: themeStyles.colors.text.secondary }}
               >
-                <motion.svg
+                <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
+                  className="h-5 w-5 transform transition-all duration-300 ease-in-out"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  animate={{ rotate: showFilters ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
+                  style={{
+                    filter: `drop-shadow(0 2px 4px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.15)'})`,
+                  }}
                 >
                   <path
                     fillRule="evenodd"
                     d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                     clipRule="evenodd"
                   />
-                </motion.svg>
+                </svg>
               </div>
             </div>
           </div>
@@ -588,7 +592,7 @@ const GalaxyMarketplace: React.FC = () => {
       </motion.div>
 
       {/* Enhanced Main content */}
-      <div className="z-1 relative flex-grow overflow-y-auto p-6 pt-4">
+      <div className="relative z-10 flex-grow overflow-y-auto p-6 pt-4">
         {loading ? (
           <motion.div
             className="flex h-full min-h-[400px] items-center justify-center"
@@ -662,13 +666,13 @@ const GalaxyMarketplace: React.FC = () => {
                       transition={{ type: 'spring', stiffness: 500 }}
                     >
                       <HiOutlineStar
-                        className="h-6 w-6"
+                        className="h-5 w-5"
                         style={{ color: themeStyles.colors.brand.primary }}
                       />
                     </motion.div>
                   )}
                   <h2
-                    className="text-xl font-bold"
+                    className="text-xl font-semibold"
                     style={{ color: themeStyles.colors.text.primary }}
                   >
                     {searchQuery || selectedCategory !== 'all'
@@ -678,7 +682,8 @@ const GalaxyMarketplace: React.FC = () => {
                       className="ml-2 rounded-full px-2 py-0.5 text-sm font-normal"
                       style={{
                         color: themeStyles.colors.text.secondary,
-                        background: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                        background: themeStyles.card.background,
+                        border: `1px solid ${themeStyles.card.borderColor}`,
                       }}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -697,9 +702,10 @@ const GalaxyMarketplace: React.FC = () => {
                     style={{
                       background: themeStyles.colors.brand.primary,
                       color: '#ffffff',
+                      boxShadow: themeStyles.colors.shadow.md,
                     }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
@@ -712,55 +718,29 @@ const GalaxyMarketplace: React.FC = () => {
 
               {filteredPlugins.length === 0 ? (
                 <motion.div
-                  className="relative overflow-hidden rounded-2xl py-16 text-center"
+                  className="relative overflow-hidden rounded-lg py-16 text-center"
                   style={{
-                    background: `linear-gradient(135deg, ${isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(249, 250, 251, 0.9)'}, ${isDark ? 'rgba(17, 24, 39, 0.8)' : 'rgba(243, 244, 246, 0.9)'})`,
-                    backdropFilter: 'blur(10px)',
-                    border: `2px dashed ${isDark ? 'rgba(55, 65, 81, 0.4)' : 'rgba(226, 232, 240, 0.6)'}`,
+                    background: themeStyles.card.background,
+                    border: `1px solid ${themeStyles.card.borderColor}`,
+                    boxShadow: themeStyles.colors.shadow.sm,
                   }}
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.6 }}
                 >
-                  {/* Floating background elements */}
-                  <div className="absolute inset-0 overflow-hidden">
-                    {[...Array(3)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className={`absolute rounded-full ${
-                          i === 0
-                            ? 'left-8 top-8 h-12 w-12 bg-blue-400/10'
-                            : i === 1
-                              ? 'bottom-8 right-8 h-16 w-16 bg-purple-400/10'
-                              : 'right-1/4 top-1/2 h-8 w-8 bg-yellow-400/10'
-                        }`}
-                        animate={{
-                          y: [0, -20, 0],
-                          x: i % 2 ? [0, 10, 0] : [0, -10, 0],
-                        }}
-                        transition={{
-                          duration: 4 + i,
-                          repeat: Infinity,
-                          ease: 'easeInOut',
-                          delay: i * 0.5,
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="z-1 relative">
+                  <div className="relative z-10">
                     <motion.div
                       className="mb-6 flex justify-center"
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                      animate={{ rotate: [0, 5, -5, 0] }}
+                      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
                     >
                       <HiMagnifyingGlass
-                        className="h-16 w-16 opacity-40"
+                        className="h-16 w-16 opacity-30"
                         style={{ color: themeStyles.colors.text.secondary }}
                       />
                     </motion.div>
                     <motion.h3
-                      className="mb-2 text-xl font-bold"
+                      className="mb-2 text-xl font-semibold"
                       style={{ color: themeStyles.colors.text.primary }}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -769,7 +749,7 @@ const GalaxyMarketplace: React.FC = () => {
                       No plugins found
                     </motion.h3>
                     <motion.p
-                      className="mx-auto mb-6 max-w-md text-lg"
+                      className="mx-auto mb-6 max-w-md text-sm"
                       style={{ color: themeStyles.colors.text.secondary }}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -780,14 +760,15 @@ const GalaxyMarketplace: React.FC = () => {
                         : 'No plugins match your current filters'}
                     </motion.p>
                     <motion.button
-                      className="rounded-xl px-6 py-3 text-sm font-semibold transition-all"
+                      className="rounded-lg px-6 py-2.5 text-sm font-medium transition-all"
                       onClick={handleClearFilters}
                       style={{
                         background: themeStyles.colors.brand.primary,
                         color: '#ffffff',
+                        boxShadow: themeStyles.colors.shadow.md,
                       }}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.02, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 }}
@@ -848,22 +829,19 @@ const GalaxyMarketplace: React.FC = () => {
                   transition={{ delay: 0.6 }}
                 >
                   <motion.button
-                    className="flex items-center gap-3 rounded-xl px-8 py-4 text-lg font-medium transition-all"
+                    className="flex items-center gap-3 rounded-lg px-6 py-3 text-sm font-medium transition-all"
                     style={{
-                      background: `linear-gradient(135deg, ${isDark ? 'rgba(31, 41, 55, 0.9)' : 'rgba(249, 250, 251, 0.95)'}, ${isDark ? 'rgba(17, 24, 39, 0.9)' : 'rgba(243, 244, 246, 0.95)'})`,
-                      backdropFilter: 'blur(10px)',
-                      border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                      background: themeStyles.card.background,
+                      border: `1px solid ${themeStyles.card.borderColor}`,
                       color: themeStyles.colors.text.primary,
-                      boxShadow: isDark
-                        ? '0 4px 20px rgba(0, 0, 0, 0.3)'
-                        : '0 4px 20px rgba(0, 0, 0, 0.1)',
+                      boxShadow: themeStyles.colors.shadow.md,
                     }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <HiOutlineArrowPath className="h-5 w-5" />
+                    <HiOutlineArrowPath className="h-4 w-4" />
                     {t('marketplace.loadMore', 'Load More Plugins')}
-                    <span className="text-sm opacity-70">
+                    <span className="text-xs opacity-70">
                       ({filteredPlugins.length - 12} remaining)
                     </span>
                   </motion.button>
