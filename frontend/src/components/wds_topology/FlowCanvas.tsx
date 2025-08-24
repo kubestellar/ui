@@ -16,8 +16,8 @@ interface FlowCanvasProps {
 
 /**
  * Renders a beautiful flow diagram canvas with custom nodes and edges in a ReactFlow container.
- * Features stunning gradients, patterns, and animations for an adorable user experience.
- * Provides smooth zooming, panning, and auto-centering functionality for the Kubernetes resource visualization.
+ * Features dynamic centering, stunning gradients, patterns, and animations for an optimal user experience.
+ * Provides smooth zooming, panning, and intelligent auto-centering functionality for the Kubernetes resource visualization.
  */
 export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const { setViewport, getViewport } = useReactFlow();
@@ -33,59 +33,143 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const { edgeGradients } = useTreeViewEdges({ theme: theme as 'light' | 'dark' });
 
   /**
-   * Calculates the boundaries of all nodes in the flow to determine positioning and scaling.
-   * Returns the minimum and maximum x/y coordinates considering both node positions and dimensions.
+   * Calculates comprehensive node boundaries and dimensions for optimal viewport positioning.
+   * Returns detailed positioning data including center points and content dimensions.
    */
-  const positions = useMemo(() => {
-    if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-    const minX = Math.min(...nodes.map(node => node.position.x));
-    const maxX = Math.max(
-      ...nodes.map(node => {
-        const width =
-          typeof node.style?.width === 'string'
-            ? parseInt(node.style.width)
-            : node.style?.width || 146;
-        return node.position.x + width;
-      })
-    );
-    const minY = Math.min(...nodes.map(node => node.position.y));
-    const maxY = Math.max(
-      ...nodes.map(node => {
-        const height =
-          typeof node.style?.height === 'string'
-            ? parseInt(node.style.height)
-            : node.style?.height || 30;
-        return node.position.y + height;
-      })
-    );
-    return { minX, maxX, minY, maxY };
+  const nodeMetrics = useMemo(() => {
+    if (nodes.length === 0) {
+      return {
+        minX: 0,
+        maxX: 0,
+        minY: 0,
+        maxY: 0,
+        centerX: 0,
+        centerY: 0,
+        contentWidth: 0,
+        contentHeight: 0,
+        totalNodes: 0,
+      };
+    }
+
+    // Calculate node boundaries with proper width/height handling
+    const positions = nodes.map(node => {
+      const width =
+        typeof node.style?.width === 'string'
+          ? parseInt(node.style.width)
+          : node.style?.width || 146;
+      const height =
+        typeof node.style?.height === 'string'
+          ? parseInt(node.style.height)
+          : node.style?.height || 30;
+
+      return {
+        left: node.position.x,
+        right: node.position.x + width,
+        top: node.position.y,
+        bottom: node.position.y + height,
+        centerX: node.position.x + width / 2,
+        centerY: node.position.y + height / 2,
+      };
+    });
+
+    const minX = Math.min(...positions.map(p => p.left));
+    const maxX = Math.max(...positions.map(p => p.right));
+    const minY = Math.min(...positions.map(p => p.top));
+    const maxY = Math.max(...positions.map(p => p.bottom));
+
+    // Calculate true center based on content bounds
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+
+    return {
+      minX,
+      maxX,
+      minY,
+      maxY,
+      centerX,
+      centerY,
+      contentWidth,
+      contentHeight,
+      totalNodes: nodes.length,
+    };
   }, [nodes]);
 
   /**
-   * Initializes the viewport based on node positions or restores a previously saved viewport.
-   * Adjusts the container height based on the content and sets proper zoom level for optimal viewing.
+   * Calculates optimal viewport settings based on container size and content dimensions.
+   * Provides intelligent centering and scaling for the best viewing experience.
+   */
+  const calculateOptimalViewport = useCallback(() => {
+    const container = reactFlowContainerRef.current;
+    if (!container || nodes.length === 0) return null;
+
+    const containerRect = container.getBoundingClientRect();
+    if (!containerRect.width || !containerRect.height) return null;
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    // Dynamic padding based on container size and content
+    const basePadding = Math.min(containerWidth, containerHeight) * 0.05;
+    const minPadding = 40;
+    const maxPadding = 120;
+    const padding = Math.max(minPadding, Math.min(maxPadding, basePadding));
+
+    // Calculate optimal zoom to fit content with padding
+    const availableWidth = containerWidth - padding * 2;
+    const availableHeight = containerHeight - padding * 2;
+
+    const optimalZoomX =
+      nodeMetrics.contentWidth > 0 ? availableWidth / nodeMetrics.contentWidth : 1;
+    const optimalZoomY =
+      nodeMetrics.contentHeight > 0 ? availableHeight / nodeMetrics.contentHeight : 1;
+
+    // Use the more restrictive zoom factor, but respect user's preferred zoom if reasonable
+    let optimalZoom = Math.min(optimalZoomX, optimalZoomY, currentZoom || 1);
+    optimalZoom = Math.max(0.1, Math.min(2, optimalZoom));
+
+    // Calculate center position to perfectly center the content
+    const scaledContentHeight = nodeMetrics.contentHeight * optimalZoom;
+
+    // Position to center the content in the viewport
+    const viewportCenterX = containerWidth / 2;
+    const viewportCenterY = containerHeight / 2;
+
+    const x = viewportCenterX - nodeMetrics.centerX * optimalZoom;
+    const y = viewportCenterY - nodeMetrics.centerY * optimalZoom;
+
+    // Adjust container height to accommodate content if needed
+    const minRequiredHeight = scaledContentHeight + padding * 2;
+    if (containerHeight < minRequiredHeight) {
+      container.style.minHeight = `${minRequiredHeight}px`;
+    }
+
+    return { x, y, zoom: optimalZoom };
+  }, [nodes.length, nodeMetrics, currentZoom]);
+
+  /**
+   * Initializes the viewport with intelligent positioning based on content and container dimensions.
+   * Only runs once per node set to avoid disrupting user interactions.
    */
   useEffect(() => {
     if (nodes.length > 0 && !initializedRef.current) {
-      const { minX, minY, maxY } = positions;
-      const treeHeight = maxY - minY;
-      const reactFlowContainer = reactFlowContainerRef.current;
-      const viewportHeight = reactFlowContainer
-        ? reactFlowContainer.offsetHeight
-        : window.innerHeight;
-      const padding = 20;
-      const topMargin = 100;
-      const initialZoom = currentZoom;
-      const centerX = -minX * initialZoom + 50;
-      const centerY = -minY * initialZoom + topMargin;
-      if (reactFlowContainer) {
-        reactFlowContainer.style.minHeight = `${Math.max(treeHeight * initialZoom + padding * 2 + topMargin, viewportHeight)}px`;
+      const optimalViewport = calculateOptimalViewport();
+
+      if (optimalViewport) {
+        setViewport(optimalViewport);
+        viewportRef.current = optimalViewport;
+        initializedRef.current = true;
       }
-      setViewport({ x: centerX, y: centerY, zoom: initialZoom });
-      viewportRef.current = { x: centerX, y: centerY, zoom: initialZoom };
-      initializedRef.current = true;
     }
-  }, [nodes, positions, setViewport, currentZoom]);
+  }, [nodes, calculateOptimalViewport, setViewport]);
+
+  /**
+   * Resets initialization when nodes change significantly to allow re-centering.
+   */
+  useEffect(() => {
+    // Reset initialization when nodes change significantly
+    initializedRef.current = false;
+  }, [nodeMetrics.totalNodes, nodeMetrics.contentWidth, nodeMetrics.contentHeight]);
 
   /**
    * Saves the current viewport position and zoom level when user stops panning or zooming.
@@ -96,40 +180,73 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     viewportRef.current = currentViewport;
   }, [getViewport]);
 
-  // Pinch-to-zoom for touch devices
+  // Enhanced pinch-to-zoom for touch devices with better sensitivity
   useEffect(() => {
     const reactFlowContainer = reactFlowContainerRef.current;
     if (!reactFlowContainer) return;
+
     function getDistance(touches: TouchList) {
       if (touches.length < 2) return 0;
       const dx = touches[0].clientX - touches[1].clientX;
       const dy = touches[0].clientY - touches[1].clientY;
       return Math.sqrt(dx * dx + dy * dy);
     }
+
+    function getTouchCenter(touches: TouchList) {
+      if (touches.length < 2) return { x: 0, y: 0 };
+      return {
+        x: (touches[0].clientX + touches[1].clientX) / 2,
+        y: (touches[0].clientY + touches[1].clientY) / 2,
+      };
+    }
+
     function handleTouchStart(e: TouchEvent) {
       if (e.touches.length === 2) {
         lastTouchDistance.current = getDistance(e.touches);
       }
     }
+
     function handleTouchMove(e: TouchEvent) {
       if (e.touches.length === 2 && lastTouchDistance.current !== null) {
+        e.preventDefault();
+
         const { zoom, x, y } = getViewport();
         const newDistance = getDistance(e.touches);
+        const touchCenter = getTouchCenter(e.touches);
+
+        // Calculate zoom change
         const delta = newDistance - lastTouchDistance.current;
-        let newZoom = zoom + delta * 0.0025;
+        let newZoom = zoom + delta * 0.003; // More sensitive zoom
         newZoom = Math.max(0.1, Math.min(2, newZoom));
-        setViewport({ x, y, zoom: newZoom });
+
+        // Calculate new position to zoom toward touch center
+        const zoomFactor = newZoom / zoom;
+        if (!reactFlowContainer) return;
+
+        const rect = reactFlowContainer.getBoundingClientRect();
+        if (!rect) return;
+
+        const relativeX = touchCenter.x - rect.left;
+        const relativeY = touchCenter.y - rect.top;
+
+        const newX = relativeX - (relativeX - x) * zoomFactor;
+        const newY = relativeY - (relativeY - y) * zoomFactor;
+
+        setViewport({ x: newX, y: newY, zoom: newZoom });
         lastTouchDistance.current = newDistance;
       }
     }
+
     function handleTouchEnd(e: TouchEvent) {
       if (e.touches.length < 2) {
         lastTouchDistance.current = null;
       }
     }
+
     reactFlowContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
     reactFlowContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     reactFlowContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
+
     return () => {
       reactFlowContainer.removeEventListener('touchstart', handleTouchStart);
       reactFlowContainer.removeEventListener('touchmove', handleTouchMove);
@@ -137,31 +254,47 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     };
   }, [getViewport, setViewport]);
 
-  // Enhanced mouse wheel zoom: zoom with wheel unless Shift (pan horizontally)
+  // Enhanced mouse wheel zoom with improved sensitivity and centering
   const handleWheel = useCallback(
     (event: React.WheelEvent) => {
       const reactFlowContainer = reactFlowContainerRef.current;
       const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
+
       if (isInsideTree) {
         const { zoom, x, y } = getViewport();
-        const scrollSpeed = 0.5;
-        const zoomSpeed = 0.05;
+        const scrollSpeed = 0.8; // Improved scroll speed
+        const zoomSpeed = 0.08; // More responsive zoom
+
         if (event.shiftKey) {
+          // Horizontal panning with Shift key
           const newX = x - event.deltaY * scrollSpeed;
           setViewport({ x: newX, y, zoom });
           viewportRef.current = { x: newX, y, zoom };
         } else {
+          // Zoom toward mouse position
+          const rect = reactFlowContainer.getBoundingClientRect();
+          if (!rect) return;
+
+          const mouseX = event.clientX - rect.left;
+          const mouseY = event.clientY - rect.top;
+
           let newZoom = zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed);
           newZoom = Math.max(0.1, Math.min(2, newZoom));
-          setViewport({ x, y, zoom: newZoom });
-          viewportRef.current = { x, y, zoom: newZoom };
+
+          // Calculate new position to zoom toward mouse
+          const zoomFactor = newZoom / zoom;
+          const newX = mouseX - (mouseX - x) * zoomFactor;
+          const newY = mouseY - (mouseY - y) * zoomFactor;
+
+          setViewport({ x: newX, y: newY, zoom: newZoom });
+          viewportRef.current = { x: newX, y: newY, zoom: newZoom };
         }
       }
     },
     [getViewport, setViewport]
   );
 
-  // Add a separate wheel event handler with passive: false
+  // Prevent default wheel behavior inside the flow container
   useEffect(() => {
     const reactFlowContainer = reactFlowContainerRef.current;
     if (!reactFlowContainer) return;
@@ -182,33 +315,48 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
 
   /**
    * Updates visualization when label highlighting state changes.
-   * Allows nodes with highlighted labels to be visually distinct without resetting the viewport.
+   * Maintains current viewport while refreshing visual states.
    */
-  useEffect(() => {}, [highlightedLabels]);
+  useEffect(() => {
+    // Visual update trigger for highlighting - no viewport changes needed
+  }, [highlightedLabels]);
 
-  // Beautiful background styles based on theme
-  const backgroundStyle =
-    theme === 'dark'
+  // Enhanced gradient background with better visual depth
+  const backgroundStyle = useMemo(() => {
+    const isDark = theme === 'dark';
+
+    return isDark
       ? {
           background: `
-          radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-          radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
-          linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)
-        `,
+        radial-gradient(ellipse at top left, rgba(59, 130, 246, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at top right, rgba(139, 92, 246, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom center, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
+        linear-gradient(135deg, 
+          hsl(222, 84%, 5%) 0%, 
+          hsl(215, 28%, 17%) 30%, 
+          hsl(215, 20%, 25%) 60%,
+          hsl(215, 16%, 32%) 100%
+        )
+      `,
         }
       : {
           background: `
-          radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-          radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
-          linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)
-        `,
+        radial-gradient(ellipse at top left, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at top right, rgba(139, 92, 246, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom center, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+        linear-gradient(135deg, 
+          hsl(210, 40%, 98%) 0%, 
+          hsl(214, 32%, 91%) 30%, 
+          hsl(213, 27%, 84%) 60%,
+          hsl(215, 20%, 77%) 100%
+        )
+      `,
         };
+  }, [theme]);
 
   return (
-    <div className="relative h-full w-full" ref={reactFlowContainerRef}>
-      {/* Animated background overlay */}
+    <div className="relative h-full w-full overflow-hidden" ref={reactFlowContainerRef}>
+      {/* Enhanced animated background overlay */}
       <div
         style={{
           position: 'absolute',
@@ -217,11 +365,11 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           right: 0,
           bottom: 0,
           ...backgroundStyle,
-          zIndex: -1,
+          zIndex: -2,
         }}
       />
 
-      {/* Subtle animated particles for extra adorableness */}
+      {/* Floating particles animation with better distribution */}
       <div
         style={{
           position: 'absolute',
@@ -232,16 +380,18 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           background:
             theme === 'dark'
               ? `
-              radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-              radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-              radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.01) 1px, transparent 1px)
-            `
+            radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.025) 2px, transparent 2px),
+            radial-gradient(circle at 85% 75%, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+            radial-gradient(circle at 45% 15%, rgba(255, 255, 255, 0.02) 1.5px, transparent 1.5px),
+            radial-gradient(circle at 75% 45%, rgba(255, 255, 255, 0.015) 1px, transparent 1px)
+          `
               : `
-              radial-gradient(circle at 10% 20%, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-              radial-gradient(circle at 90% 80%, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-              radial-gradient(circle at 50% 10%, rgba(0, 0, 0, 0.01) 1px, transparent 1px)
-            `,
-          animation: 'float 20s ease-in-out infinite',
+            radial-gradient(circle at 15% 25%, rgba(0, 0, 0, 0.025) 2px, transparent 2px),
+            radial-gradient(circle at 85% 75%, rgba(0, 0, 0, 0.025) 1px, transparent 1px),
+            radial-gradient(circle at 45% 15%, rgba(0, 0, 0, 0.02) 1.5px, transparent 1.5px),
+            radial-gradient(circle at 75% 45%, rgba(0, 0, 0, 0.015) 1px, transparent 1px)
+          `,
+          animation: 'floatParticles 25s ease-in-out infinite',
           zIndex: -1,
         }}
       />
@@ -260,59 +410,77 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           background: 'transparent',
           width: '100%',
           height: '100%',
-          borderRadius: '12px',
+          borderRadius: '16px',
           border:
             theme === 'dark'
-              ? '1px solid rgba(148, 163, 184, 0.1)'
-              : '1px solid rgba(148, 163, 184, 0.2)',
+              ? '1px solid rgba(148, 163, 184, 0.08)'
+              : '1px solid rgba(148, 163, 184, 0.15)',
           boxShadow:
             theme === 'dark'
-              ? 'inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-              : 'inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-          pointerEvents: 'auto', // Ensure events are captured
+              ? `
+              inset 0 1px 0 rgba(255, 255, 255, 0.03),
+              0 4px 24px rgba(0, 0, 0, 0.15),
+              0 2px 8px rgba(0, 0, 0, 0.1)
+            `
+              : `
+              inset 0 1px 0 rgba(255, 255, 255, 0.9),
+              0 4px 24px rgba(0, 0, 0, 0.04),
+              0 2px 8px rgba(0, 0, 0, 0.02)
+            `,
+          pointerEvents: 'auto',
         }}
         onWheel={handleWheel}
         defaultEdgeOptions={{ type: edgeType }}
       >
-        {/* Enhanced edge gradients for beautiful connections */}
+        {/* Enhanced edge gradients */}
         <svg style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0 }}>
           {edgeGradients}
         </svg>
 
         <Background
           variant={BackgroundVariant.Dots}
-          gap={12}
-          size={1}
-          color={theme === 'dark' ? '#334155' : '#cbd5e1'}
-          style={{ opacity: 0.4 }}
+          gap={16}
+          size={1.2}
+          color={theme === 'dark' ? 'rgba(148, 163, 184, 0.15)' : 'rgba(148, 163, 184, 0.25)'}
+          style={{ opacity: 0.6 }}
         />
 
-        {/* Additional decorative background pattern */}
         <Background
           variant={BackgroundVariant.Lines}
-          gap={64}
-          size={0.5}
-          color={theme === 'dark' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.03)'}
-          style={{
-            opacity: 0.3,
-          }}
+          gap={80}
+          size={0.8}
+          color={theme === 'dark' ? 'rgba(59, 130, 246, 0.06)' : 'rgba(59, 130, 246, 0.04)'}
+          style={{ opacity: 0.4 }}
         />
       </ReactFlow>
 
-      {/* Enhanced animations */}
+      {/* Enhanced CSS animations */}
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-          33% { transform: translate3d(0, -10px, 0) rotate(1deg); }
-          66% { transform: translate3d(0, -5px, 0) rotate(-1deg); }
+        @keyframes floatParticles {
+          0%, 100% { 
+            transform: translate3d(0, 0, 0) rotate(0deg) scale(1); 
+            opacity: 0.6;
+          }
+          25% { 
+            transform: translate3d(-8px, -12px, 0) rotate(2deg) scale(1.05); 
+            opacity: 0.8;
+          }
+          50% { 
+            transform: translate3d(12px, -8px, 0) rotate(-1deg) scale(0.95); 
+            opacity: 1;
+          }
+          75% { 
+            transform: translate3d(-6px, 10px, 0) rotate(1.5deg) scale(1.02); 
+            opacity: 0.7;
+          }
         }
         
-        @keyframes edge-pulse {
-          0%, 100% { opacity: 0.7; }
+        @keyframes edgePulse {
+          0%, 100% { opacity: 0.8; }
           50% { opacity: 1; }
         }
 
-        /* Hide connection handles but keep edges */
+        /* Optimized handle hiding */
         .react-flow__handle {
           opacity: 0 !important;
           pointer-events: none !important;
@@ -322,26 +490,45 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           height: 0 !important;
         }
 
-        /* Keep edges visible and interactive */
+        /* Enhanced edge visibility */
         .react-flow__edge {
           pointer-events: all !important;
+          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
         }
 
-        /* Ensure edge paths remain visible */
         .react-flow__edge-path {
-          stroke-width: 2;
+          stroke-width: 2.5;
           stroke-dasharray: none;
+          transition: stroke-width 0.2s ease;
         }
 
-        /* Ensure menu buttons are always clickable */
+        .react-flow__edge:hover .react-flow__edge-path {
+          stroke-width: 3;
+        }
+
+        /* Enhanced interactive elements */
         .react-flow__node button {
           pointer-events: auto !important;
-          z-index: 10 !important;
+          z-index: 15 !important;
+          transition: all 0.2s ease;
         }
 
-        /* Ensure node content is interactive */
+        .react-flow__node button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
         .react-flow__node > div {
           pointer-events: auto !important;
+        }
+
+        /* Smooth transitions */
+        .react-flow__node {
+          transition: transform 0.2s ease;
+        }
+
+        .react-flow__node:hover {
+          transform: translateY(-1px);
         }
       `}</style>
     </div>

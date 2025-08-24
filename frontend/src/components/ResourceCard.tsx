@@ -22,6 +22,7 @@ import {
   Schedule as ScheduleIcon,
   Label as LabelIcon,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { darkTheme, lightTheme } from '../lib/theme-utils';
 
 interface Resource {
@@ -48,45 +49,50 @@ interface ResourceCardProps {
 }
 
 // Utility function to get status color and icon
-const getStatusInfo = (status: string | undefined, isDark: boolean) => {
-  const statusLower = status?.toLowerCase();
+const getStatusInfo = (status: string | undefined, isDark: boolean, t: (key: string) => string) => {
+  // Safely convert status to string and handle undefined/null cases
+  const statusString = status?.toString?.() || status || '';
+  const statusLower = statusString.toLowerCase();
 
   if (
-    statusLower?.includes('running') ||
-    statusLower?.includes('ready') ||
-    statusLower?.includes('active')
+    statusLower.includes('running') ||
+    statusLower.includes('ready') ||
+    statusLower.includes('active') ||
+    statusLower.includes('healthy')
   ) {
     return {
       color: '#10b981',
       bgColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
       icon: <CheckCircleIcon sx={{ fontSize: 16, color: '#10b981' }} />,
-      label: 'Healthy',
+      label: t('resources.status.healthy'),
     };
   }
 
   if (
-    statusLower?.includes('pending') ||
-    statusLower?.includes('progressing') ||
-    statusLower?.includes('updating')
+    statusLower.includes('pending') ||
+    statusLower.includes('progressing') ||
+    statusLower.includes('updating') ||
+    statusLower.includes('outofsync')
   ) {
     return {
       color: '#f59e0b',
       bgColor: isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.1)',
       icon: <WarningIcon sx={{ fontSize: 16, color: '#f59e0b' }} />,
-      label: 'Warning',
+      label: t('resources.status.warning'),
     };
   }
 
   if (
-    statusLower?.includes('failed') ||
-    statusLower?.includes('error') ||
-    statusLower?.includes('crashloop')
+    statusLower.includes('failed') ||
+    statusLower.includes('error') ||
+    statusLower.includes('crashloop') ||
+    statusLower.includes('missing')
   ) {
     return {
       color: '#ef4444',
       bgColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
       icon: <ErrorIcon sx={{ fontSize: 16, color: '#ef4444' }} />,
-      label: 'Error',
+      label: t('resources.status.error'),
     };
   }
 
@@ -94,7 +100,7 @@ const getStatusInfo = (status: string | undefined, isDark: boolean) => {
     color: '#10b981',
     bgColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
     icon: <CheckCircleIcon sx={{ fontSize: 16, color: '#10b981' }} />,
-    label: 'Active',
+    label: t('resources.status.active'),
   };
 };
 
@@ -161,11 +167,12 @@ const getKindInfo = (kind: string, isDark: boolean) => {
 
 const ResourceCard = memo<ResourceCardProps>(
   ({ resource, isSelected, isDark, onSelect, onViewDetails, onActionClick }) => {
-    const statusInfo = getStatusInfo(resource.status, isDark);
+    const { t } = useTranslation();
+    const statusInfo = getStatusInfo(resource.status, isDark, t);
     const kindInfo = getKindInfo(resource.kind, isDark);
 
     const formatDate = (timestamp: string | undefined) => {
-      if (!timestamp) return 'Unknown';
+      if (!timestamp) return t('resources.status.unknown');
       const date = new Date(timestamp);
       const now = new Date();
       const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
@@ -261,7 +268,7 @@ const ResourceCard = memo<ResourceCardProps>(
                   mb: 0.5,
                 }}
               >
-                {resource.metadata?.name || 'Unnamed'}
+                {resource.metadata?.name || t('resources.unknown')}
               </Typography>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -376,7 +383,7 @@ const ResourceCard = memo<ResourceCardProps>(
                     fontWeight: 500,
                   }}
                 >
-                  {labelCount} label{labelCount > 1 ? 's' : ''}
+                  {t('resources.labels_plural', { count: labelCount })}
                 </Typography>
               </Box>
             )}
@@ -414,7 +421,7 @@ const ResourceCard = memo<ResourceCardProps>(
               },
             }}
           >
-            View Details
+            {t('resources.actions.viewDetails')}
           </Button>
         </CardActions>
 

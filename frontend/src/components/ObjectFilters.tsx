@@ -440,7 +440,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
                 },
               }}
             >
-              Clear ({activeFilterCount})
+              {t('resources.filters.clear', { count: activeFilterCount })}
             </Button>
           )}
         </Box>
@@ -469,11 +469,11 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
                 mr: 1,
               }}
             >
-              Active Filters:
+              {t('resources.filters.activeFilters')}
             </Typography>
             {activeFilters.kind && (
               <Chip
-                label={`Kind: ${activeFilters.kind}`}
+                label={t('resources.filters.kindFilter', { kind: activeFilters.kind })}
                 onDelete={() => handleRemoveFilter('kind')}
                 color="primary"
                 variant="filled"
@@ -493,7 +493,9 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             )}
             {activeFilters.namespace && (
               <Chip
-                label={`Namespace: ${activeFilters.namespace}`}
+                label={t('resources.filters.namespaceFilter', {
+                  namespace: activeFilters.namespace,
+                })}
                 onDelete={() => handleRemoveFilter('namespace')}
                 color="primary"
                 variant="filled"
@@ -513,7 +515,10 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             )}
             {activeFilters.label && isRenderable(activeFilters.label.value) && (
               <Chip
-                label={`${activeFilters.label.key}: ${activeFilters.label.value}`}
+                label={t('resources.filters.labelFilter', {
+                  key: activeFilters.label.key,
+                  value: activeFilters.label.value,
+                })}
                 onDelete={() => handleRemoveFilter('label')}
                 color="primary"
                 variant="filled"
@@ -566,7 +571,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             }}
           >
             <FilterListIcon fontSize="small" />
-            Resource Kinds ({uniqueKinds.length})
+            {t('resources.menus.resourceKinds', { count: uniqueKinds.length })}
           </Typography>
         </Box>
         {uniqueKinds.map(kind => (
@@ -615,7 +620,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
               </Typography>
               {activeFilters.kind === kind && (
                 <Chip
-                  label="Active"
+                  label={t('resources.menus.active')}
                   size="small"
                   color="primary"
                   sx={{
@@ -660,7 +665,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             }}
           >
             <FilterListIcon fontSize="small" />
-            Namespaces ({uniqueNamespaces.length})
+            {t('resources.menus.namespaces', { count: uniqueNamespaces.length })}
           </Typography>
         </Box>
         {uniqueNamespaces.map(namespace => (
@@ -705,7 +710,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
               </Typography>
               {activeFilters.namespace === namespace && (
                 <Chip
-                  label="Active"
+                  label={t('resources.menus.active')}
                   size="small"
                   color="primary"
                   sx={{
@@ -750,7 +755,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
             }}
           >
             <LabelIcon fontSize="small" />
-            Labels ({uniqueLabels.size} keys)
+            {t('resources.menus.labels', { count: uniqueLabels.size })}
           </Typography>
         </Box>
         {Array.from(uniqueLabels.entries()).map(([key, values]) => (
@@ -834,7 +839,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
                     </Typography>
                     {activeFilters.label?.key === key && activeFilters.label?.value === value && (
                       <Chip
-                        label="Active"
+                        label={t('resources.menus.active')}
                         size="small"
                         color="primary"
                         sx={{
@@ -859,7 +864,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
                 fontStyle: 'italic',
               }}
             >
-              No labels found in the current resources
+              {t('resources.menus.noLabelsFound')}
             </Typography>
           </Box>
         )}
