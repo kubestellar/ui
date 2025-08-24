@@ -344,4 +344,9 @@ Designed a dedicated LFX program page with sections for program name & image, de
 ### 🚀 KubeStellar/docs – IFoS Page Design  
 
 Designed the IFoS program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
+
+### 🌍 KubeStellar/docs – ESOC Page Design  
+
+Designed the ESOC program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
+
 ---
