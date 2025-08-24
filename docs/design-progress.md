@@ -341,4 +341,7 @@ This structured layout improves readability and makes it easy for newcomers to u
 
 Designed a dedicated LFX program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
 
+### 🚀 KubeStellar/docs – IFoS Page Design  
+
+Designed the IFoS program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
 ---
