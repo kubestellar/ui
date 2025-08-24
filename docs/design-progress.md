@@ -48,7 +48,7 @@ This document tracks the progress of the design system foundation efforts for th
 
 ---
 
-## 📂 Audit Resources
+## 📂 All Resources
 
 1. **Design System – Objective & Timeline**  
    🔗 [Objective & Timeline – Google Docs](https://docs.google.com/document/d/1u06DFqyFBBe8NcgUUhRvDRMVmf57BUUAHBY8VtZbj1g/edit?usp=sharing)
@@ -70,6 +70,9 @@ This document tracks the progress of the design system foundation efforts for th
 
 7. **Landing Page Design**  
    🔗 [Kubestellar Docs – Figma Design](https://www.figma.com/design/YeGMzcwefc2LYWmmx0rVmN/Kubestellar-Docs-Figma-Design?node-id=0-1&t=X5tOTPfk760XFboI-1)
+
+8. **Contribute Handbook & Program Page**  
+   🔗 [Program Page – Figma Design](https://www.figma.com/design/7SyJsOA51BMXkZcg3SXl0u/program-page?node-id=0-1&t=nwiyTVlSDuWrsF1N-1)   
 
 ---
 
