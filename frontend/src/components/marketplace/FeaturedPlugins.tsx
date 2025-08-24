@@ -189,6 +189,7 @@ const FeaturedHeroCard = React.memo(
     };
     isDark: boolean;
   }) => {
+    const { t } = useTranslation();
     const rating = parseFloat(plugin.rating || '0');
     const iconColor = plugin.name ? getIconColorFromName(plugin.name, isDark) : '#3b82f6';
 
@@ -284,7 +285,9 @@ const FeaturedHeroCard = React.memo(
           <div className="rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-3 py-1 shadow-lg">
             <div className="flex items-center gap-1">
               <HiSparkles className="h-3 w-3 text-white" />
-              <span className="text-xs font-bold text-white">FEATURED</span>
+              <span className="text-xs font-bold text-white">
+                {t('marketplace.common.featured')}
+              </span>
             </div>
           </div>
         </div>
@@ -326,7 +329,9 @@ const FeaturedHeroCard = React.memo(
 
                 <div className="flex items-center gap-1">
                   <div className="h-2 w-2 rounded-full bg-green-400" />
-                  <span>Updated {formatLastUpdated(plugin.lastUpdated)}</span>
+                  <span>
+                    {t('marketplace.common.updated')} {formatLastUpdated(plugin.lastUpdated)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -344,9 +349,9 @@ const FeaturedHeroCard = React.memo(
 
               <div className="mb-4 flex items-center gap-3">
                 <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                  by{' '}
+                  {t('marketplace.common.by')}{' '}
                   <span className="font-medium text-blue-500">
-                    {plugin.author || 'Unknown author'}
+                    {plugin.author || t('marketplace.common.unknownAuthor')}
                   </span>
                 </p>
                 <div className="h-4 w-px bg-gray-300/50" />
@@ -357,7 +362,8 @@ const FeaturedHeroCard = React.memo(
                     color: themeStyles.colors.brand.primary,
                   }}
                 >
-                  v{plugin.version}
+                  {t('marketplace.common.versionPrefix')}
+                  {plugin.version}
                 </span>
                 {plugin.license && (
                   <>
@@ -377,7 +383,7 @@ const FeaturedHeroCard = React.memo(
                 className="mb-6 text-lg leading-relaxed"
                 style={{ color: themeStyles.colors.text.secondary }}
               >
-                {plugin.description || 'No description available'}
+                {plugin.description || t('marketplace.common.noDescription')}
               </p>
             </div>
 
@@ -403,7 +409,7 @@ const FeaturedHeroCard = React.memo(
                 whileTap={{ scale: 0.95 }}
               >
                 <HiOutlineInformationCircle className="h-4 w-4" />
-                <span>View Details</span>
+                <span>{t('marketplace.common.viewDetails')}</span>
               </motion.button>
 
               <motion.button
@@ -435,17 +441,17 @@ const FeaturedHeroCard = React.memo(
                 {installMutation.isPending ? (
                   <>
                     <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
-                    <span>Installing...</span>
+                    <span>{t('marketplace.common.installing')}</span>
                   </>
                 ) : plugin.status === 'installed' ? (
                   <>
                     <HiOutlineCheckCircle className="h-4 w-4" />
-                    <span>Installed</span>
+                    <span>{t('marketplace.common.installed')}</span>
                   </>
                 ) : (
                   <>
                     <HiOutlineArrowDownTray className="h-4 w-4" />
-                    <span>Install Now</span>
+                    <span>{t('marketplace.common.installNow')}</span>
                   </>
                 )}
               </motion.button>
@@ -618,7 +624,7 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              Discover Premium Plugins
+              {t('marketplace.common.premiumPlugins')}
             </motion.h3>
 
             <motion.p
@@ -628,8 +634,7 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              Enhance your workflow with powerful plugins designed specifically for Kubernetes and
-              cloud-native environments.
+              {t('marketplace.common.enhanceWorkflow')}
             </motion.p>
 
             {/* Suggested plugin categories */}
@@ -639,7 +644,9 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              {['Monitoring', 'Security', 'Development', 'Deployment', 'Storage'].map(category => (
+              {(
+                t('marketplace.common.suggestedCategories', { returnObjects: true }) as string[]
+              ).map((category: string) => (
                 <motion.div
                   key={category}
                   className="flex items-center gap-2 rounded-full px-4 py-2"
@@ -674,12 +681,12 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
               transition={{ delay: 0.7 }}
             >
               <HiOutlineBolt className="h-4 w-4" />
-              <span>Explore Marketplace</span>
+              <span>{t('marketplace.common.exploreMarketplace')}</span>
             </motion.button>
           </div>
         </motion.div>
       ),
-      [isDark, themeStyles]
+      [isDark, themeStyles, t]
     );
 
     if (!plugins || plugins.length === 0) {
@@ -713,7 +720,7 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
                   </span>
                 </h2>
                 <p className="mt-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
-                  Premium plugins handpicked by our expert team
+                  {t('marketplace.featured.subtitle')}
                 </p>
               </div>
             </div>
@@ -769,7 +776,7 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
                 </span>
               </h2>
               <p className="mt-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
-                Premium plugins handpicked by our expert team
+                {t('marketplace.featured.subtitle')}
               </p>
             </div>
           </div>
