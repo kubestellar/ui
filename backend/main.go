@@ -132,7 +132,11 @@ func main() {
 	// Initialize plugin system
 	logger.Info("Initializing plugin system...")
 	pluginManager := plugins.NewPluginManager(router)
-	pluginRegistry := plugins.NewPluginRegistry("./plugins", pluginManager)
+
+	pluginsDir := config.GetPluginDirectory()
+	logger.Info("Using plugins directory", zap.String("path", pluginsDir))
+
+	pluginRegistry := plugins.NewPluginRegistry(pluginsDir, pluginManager)
 
 	// Set global plugin manager for API access
 	api.SetGlobalPluginManager(pluginManager, pluginRegistry)
