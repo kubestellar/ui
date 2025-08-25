@@ -210,7 +210,7 @@ const ObjectFilterPage: React.FC = () => {
     value: ResourceKind[]
   ) => {
     setSelectedKinds(value);
-    setSelectedResources([]); // Clear selections when changing context
+    setSelectedResources([]); 
   };
 
   const handleNamespacesChange = (event: SelectChangeEvent<string[]>) => {
