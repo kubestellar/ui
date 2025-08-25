@@ -352,4 +352,14 @@ Designed the IFoS program page with sections for program name & image, descripti
 
 Designed the ESOC program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
 
+### 🌐 KubeStellar/docs – Landing Page Web Design  
+
+Developed a functional **landing page** on the web to test design and interactions beyond Figma.  
+Key highlights:  
+- 🎨 Implemented the UI design from Figma into a working web prototype  
+- ⚡ Interactive components and navigation integrated  
+- 📱 Responsive layout for desktop and mobile  
+- 🔍 Allows testing of real user flow, functionality, and performance  
+
+This helps validate the design in a real environment and ensures smooth usability before production.
 ---
