@@ -362,4 +362,17 @@ Key highlights:
 - 🔍 Allows testing of real user flow, functionality, and performance  
 
 This helps validate the design in a real environment and ensures smooth usability before production.
+
+### 📖 KubeStellar/docs – Contribute Handbook & Program Pages (Web Design)
+
+Developed functional **Contribute Handbook** and **Program Pages** as live web versions to validate design and usability.  
+
+Key highlights:  
+- Converted Figma designs into interactive web pages  
+- Implemented navigation, cards, and structured content for each program (LFX, GSoC, ESOC, IFoS)  
+- Added Contribute Handbook with sections for onboarding, guidelines, governance, and license  
+- Fully responsive across devices (desktop, tablet, mobile)  
+- Enabled real-time testing of user flow and functionality  
+
+👥 **Contribution by:** Saumya & Naman
 ---
