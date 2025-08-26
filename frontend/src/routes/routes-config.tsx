@@ -170,16 +170,6 @@ export const useRoutesConfig = (): RouteObject[] => {
             ),
           },
           {
-            path: 'metrics',
-            element: (
-              <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading metrics..." size="medium" />}>
-                  <MetricsDashboardLazy />
-                </Suspense>
-              </ProtectedRoute>
-            ),
-          },
-          {
             path: 'grafana',
             element: (
               <ProtectedRoute>

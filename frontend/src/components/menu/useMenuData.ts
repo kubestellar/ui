@@ -73,12 +73,6 @@ export const useMenuData = (): MenuItemData[] => {
           icon: HiOutlineViewfinderCircle,
           label: t('menu.items.resourceExplorer'),
         },
-        {
-          isLink: true,
-          url: '/metrics',
-          icon: BarChart3,
-          label: t('menu.items.metricsDashboard'),
-        },
       ],
     },
     {
