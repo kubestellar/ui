@@ -9,6 +9,7 @@ import {
 import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
 import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { SiGrafana } from 'react-icons/si';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
 import { usePlugins } from '../../plugins/PluginLoader';
@@ -46,7 +47,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/grafana',
-          icon: HiOutlineCube,
+          icon: SiGrafana,
           label: t('menu.items.Grafana'),
         },
         {
