@@ -7,7 +7,6 @@ import {
   HiOutlineViewfinderCircle,
 } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
-import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
