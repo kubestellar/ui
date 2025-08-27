@@ -57,7 +57,6 @@ func GetRawMetrics(c *gin.Context) {
 	).ServeHTTP(c.Writer, c.Request)
 }
 
-
 // Helper functions
 func getRegistry() prometheus.Gatherer {
 	if defaultConfig != nil && defaultConfig.Registry != nil {
