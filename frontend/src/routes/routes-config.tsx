@@ -21,7 +21,6 @@ const KubeStellarVisualizationLazy = lazy(() => import('../components/login/inde
 const InstallationPageLazy = lazy(() => import('../pages/InstallationPage'));
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Dashboard'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
-const MetricsDashboardLazy = lazy(() => import('../components/MetricsDashboard'));
 const ObjectFilterPageLazy = lazy(() => import('../pages/ObjectFilterPage'));
 const GrafanaDashboardPageLazy = lazy(() => import('../pages/GrafanaDashboardPage'));
 
@@ -166,16 +165,6 @@ export const useRoutesConfig = (): RouteObject[] => {
             element: (
               <ProtectedRoute>
                 <UserManagement />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'metrics',
-            element: (
-              <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback message="Loading metrics..." size="medium" />}>
-                  <MetricsDashboardLazy />
-                </Suspense>
               </ProtectedRoute>
             ),
           },
