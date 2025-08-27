@@ -5,6 +5,9 @@ on:
     - cron: "0 0 * * *" # Runs every 24 hours at midnight UTC
   workflow_dispatch: # Allow manual run
 
+permissions:
+  issues: write
+
 jobs:
   locale-sync-check:
     runs-on: ubuntu-latest
@@ -25,3 +28,11 @@ jobs:
       - name: Run locale sync check
         working-directory: frontend
         run: npm run local-sync-check
+
+      - name: Add native speaker warning to locale-sync issues
+        run: bash scripts/add-locale-warning.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
