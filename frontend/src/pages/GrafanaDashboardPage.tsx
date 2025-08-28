@@ -5,7 +5,7 @@ const GrafanaDashboardPage: React.FC = () => {
     <div className="p-4">
       <h1 className="mb-4 text-2xl font-bold">Grafana Dashboard</h1>
       <iframe
-        src="http://localhost:3000/goto/uDnbbi_NR?orgId=1"
+        src="http://localhost:3000/d/kubestellar-overview/kubestellar-ui-overview?orgId=1&from=now-1h&to=now&timezone=browser&refresh=30s"
         width="100%"
         height="800"
         className="border-0"
