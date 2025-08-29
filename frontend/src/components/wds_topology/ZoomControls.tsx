@@ -70,7 +70,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
     
     const { currentZoom, setZoom } = useZoomStore();
     const { getZoom, setViewport, getViewport } = useReactFlow();
-    const [zoomLevel, setZoomLevel] = useState<number>(currentZoom * 100);
+    const [zoomLevel, setZoomLevel] = useState<number>(() => (currentZoom ?? 1.2) * 100)
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
