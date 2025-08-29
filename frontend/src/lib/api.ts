@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 import { setGlobalNetworkError } from '../utils/networkErrorUtils';
-import { isOnLoginPage } from '../utils/routeUtils';
+import { isOnLoginPage,isOnPublicRoute } from '../utils/routeUtils';
 import {
   getAccessToken,
   clearTokens,
@@ -22,6 +22,9 @@ api.interceptors.request.use(
   async config => {
     let token = getAccessToken();
     // If token is expired, try to refresh
+    if (isOnPublicRoute()) {
+      return config;
+    }
     if (isTokenExpired(token)) {
       token = await refreshAccessToken(api);
     }
@@ -55,25 +58,37 @@ api.interceptors.response.use(
     const isAuthCheck = error.config?.url?.includes('/api/me');
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck) {
-      console.warn('Axios Interceptor: 401 Unauthorized. Attempting token refresh.');
-      originalRequest._retry = true;
-      const newToken = await refreshAccessToken(api);
-      if (newToken) {
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest);
-      } else {
-        console.error('Axios Interceptor: Token refresh failed. Redirecting to login.');
-        clearTokens();
-
-        // Only show toast if user is not already on login page
-        if (!isOnLoginPage()) {
-          toast.error('Session expired. Please log in again.');
-        }
-
-        window.location.href = '/login';
+      // Don't attempt to refresh token on public routes, as it's unnecessary and can cause loops.
+      if (isOnPublicRoute()) {
+        console.log('On a public route, not refreshing token.');
         return Promise.reject(error);
       }
+
+      console.warn('Axios Interceptor: 401 Unauthorized. Attempting token refresh.');
+      originalRequest._retry = true;
+
+      try {
+        const newToken = await refreshAccessToken(api);
+        if (newToken) {
+          console.log('Token refreshed successfully.');
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Axios Interceptor: Failed to refresh token.', refreshError);
+      }
+
+      // If token refresh fails or no new token is provided, redirect to login.
+      console.error('Axios Interceptor: Token refresh failed. Redirecting to login.');
+      clearTokens();
+
+      if (!isOnLoginPage()) {
+        toast.error('Session expired. Please log in again.');
+        window.location.href = '/login';
+      }
+
+      return Promise.reject(error);
     }
 
     if (!error.response) {
