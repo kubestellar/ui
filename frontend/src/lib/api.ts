@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 import { setGlobalNetworkError } from '../utils/networkErrorUtils';
-import { isOnLoginPage,isOnPublicRoute } from '../utils/routeUtils';
+import { isOnLoginPage, isOnPublicRoute } from '../utils/routeUtils';
 import {
   getAccessToken,
   clearTokens,
