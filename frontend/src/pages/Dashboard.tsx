@@ -31,7 +31,10 @@ import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { useTranslation } from 'react-i18next';
-import { useUserActivityQuery } from '../hooks/queries/useUserActivityQuery.ts';
+import {
+  useUserActivityQuery,
+  useDeletedUsersActivityQuery,
+} from '../hooks/queries/useUserActivityQuery.ts';
 
 // Lazy load the ClusterDetailDialog component
 const ClusterDetailDialog = lazy(
@@ -500,6 +503,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
   const { useClusters } = useClusterQueries();
   const { useBindingPolicies } = useBPQueries();
   const { data: userActivities = [], isLoading: userLoading } = useUserActivityQuery();
+  const { data: deletedActivities = [] } = useDeletedUsersActivityQuery();
 
   // Use the existing query hooks to fetch data
   const {
@@ -547,6 +551,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
           });
         }
         items.push(...userActivities.slice(0, 5));
+        items.push(...deletedActivities.slice(0, 5));
 
         // Sort by timestamp (newest first)
         items.sort((a, b) => {
@@ -659,7 +664,8 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
       status === 'Available' ||
       status === 'Synced' ||
       status === 'Created' ||
-      status === 'Updated'
+      status === 'Updated' ||
+      status === 'Deleted'
     ) {
       return <CheckCircle size={12} />;
     } else if (status === 'Warning' || status === 'Pending') {

@@ -132,6 +132,7 @@ func setupAuthRoutes(router *gin.Engine) {
 			admin.POST("/users", CreateUserHandler)
 			admin.PUT("/users/:username", UpdateUserHandler)
 			admin.DELETE("/users/:username", DeleteUserHandler)
+			admin.GET("/users/deleted", ListDeletedUsersHandler)
 			admin.GET("/users/:username/permissions", GetUserPermissionsHandler)
 			admin.PUT("/users/:username/permissions", SetUserPermissionsHandler)
 		}
@@ -714,6 +715,21 @@ func DeleteUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":  "User deleted successfully",
 		"username": username,
+	})
+}
+
+func ListDeletedUsersHandler(c *gin.Context) {
+	deletedUsers, err := models.ListDeletedUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch deleted user logs",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"deleted_users": deletedUsers,
 	})
 }
 
