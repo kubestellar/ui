@@ -3,7 +3,6 @@ import {
   HiOutlineCommandLine,
   HiOutlinePuzzlePiece,
   HiOutlineUsers,
-  HiOutlineRocketLaunch,
   HiOutlineViewfinderCircle,
 } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
@@ -80,12 +79,7 @@ export const useMenuData = (): MenuItemData[] => {
       centered: true,
       marginTop: '1rem',
       listItems: [
-        {
-          isLink: true,
-          url: '/plugins/marketplace',
-          icon: HiOutlineRocketLaunch,
-          label: t('menu.items.galaxyMarketplace', 'Galaxy Marketplace'),
-        },
+        // just removing marketplace menu, marketplace implementation will be done in Design project. Keeping all the code related to marketplace for reference
         {
           isLink: true,
           url: '/plugins/manage',

@@ -16,7 +16,6 @@ const WecsTreeviewLazy = lazy(() => import('../components/WecsTopology'));
 const PluginManagerLazy = lazy(() =>
   import('../pages/PluginManager').then(module => ({ default: module.PluginManager }))
 );
-const GalaxyMarketplaceLazy = lazy(() => import('../pages/GalaxyMarketplace'));
 const KubeStellarVisualizationLazy = lazy(() => import('../components/login/index'));
 const InstallationPageLazy = lazy(() => import('../pages/InstallationPage'));
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Dashboard'));
@@ -146,20 +145,7 @@ export const useRoutesConfig = (): RouteObject[] => {
             ),
           },
           ...pluginRoutes,
-          {
-            path: 'plugins/marketplace',
-            element: (
-              <ProtectedRoute>
-                <Suspense
-                  fallback={
-                    <LoadingFallback message="Loading Galaxy Marketplace..." size="medium" />
-                  }
-                >
-                  <GalaxyMarketplaceLazy />
-                </Suspense>
-              </ProtectedRoute>
-            ),
-          },
+          // just removing marketplace routes, marketplace implementation will be done in Design project. Keeping all the code related to marketplace for reference
           {
             path: 'admin/users',
             element: (

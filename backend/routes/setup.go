@@ -44,6 +44,6 @@ func SetupRoutes(router *gin.Engine) {
 	setupAuthRoutes(router)
 	setupArtifactHubRoutes(router)
 	setupPluginRoutes(router)
-	setupMarketplaceRoutes(router)
+	// setupMarketplaceRoutes(router) // just removing marketplace routes, marketplace implementation will be done in Design project. Keeping all the code related to marketplace for reference
 	setupMetricsRoutes(router)
 }
