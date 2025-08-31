@@ -1627,22 +1627,7 @@ export const EnhancedPluginDetails: React.FC<EnhancedPluginDetailsProps> = ({
                             )}
                           </td>
                         </motion.tr>
-                        <motion.tr
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.5 }}
-                          className="border-b"
-                          style={{
-                            borderColor: isDark
-                              ? 'rgba(55, 65, 81, 0.2)'
-                              : 'rgba(226, 232, 240, 0.8)',
-                          }}
-                        >
-                          <td className="py-3 pr-4 font-medium">
-                            {t('marketplace.platforms', 'Platforms')}:
-                          </td>
-                          <td className="py-3">Linux, macOS, Windows</td>
-                        </motion.tr>
+
                         <motion.tr
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
