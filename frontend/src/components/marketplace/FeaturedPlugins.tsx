@@ -716,7 +716,7 @@ export const EnhancedFeaturedPlugins: React.FC<EnhancedFeaturedPluginsProps> = R
                   style={{ color: themeStyles.colors.text.primary }}
                 >
                   <span className="bg-gradient-to-r from-emerald-500 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    {t('marketplace.featured', 'Featured Plugins')}
+                    {t('marketplace.featured.title', 'Featured Plugins')}
                   </span>
                 </h2>
                 <p className="mt-1 text-xs" style={{ color: themeStyles.colors.text.secondary }}>
