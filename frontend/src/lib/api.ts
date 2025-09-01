@@ -50,8 +50,8 @@ api.interceptors.response.use(
     }
 
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-    const errorMessage =
-      error.response?.data?.message || error.response?.data?.error || error.message;
+    // const errorMessage =
+    //   error.response?.data?.message || error.response?.data?.error || error.message;
     const isAuthCheck = error.config?.url?.includes('/api/me');
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck) {
@@ -84,8 +84,8 @@ api.interceptors.response.use(
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
       // For other errors, show toast but use a consistent ID to prevent duplicates
-      const toastId = `api-error-${error.response?.status || 'unknown'}`;
-      toast.error(errorMessage, { id: toastId });
+      // const toastId = `api-error-${error.response?.status || 'unknown'}`;
+      // toast.error(errorMessage, { id: toastId });
     }
 
     return Promise.reject(error);
