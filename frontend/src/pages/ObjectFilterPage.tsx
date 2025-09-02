@@ -349,7 +349,7 @@ const ObjectFilterPage: React.FC = () => {
     value: ResourceKind[]
   ) => {
     setSelectedKinds(value);
-    setSelectedResources([]); 
+    setSelectedResources([]);
   };
 
   const handleNamespacesChange = (event: SelectChangeEvent<string[]>) => {
@@ -1656,15 +1656,9 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-<<<<<<< HEAD
                 {selectedKinds.length > 0 && selectedNamespaces.length > 0
                   ? 'No resources found'
                   : 'Ready to explore'}
-=======
-                {selectedKind && selectedNamespace
-                  ? t('resources.emptyState.noResourcesFound')
-                  : t('resources.emptyState.readyToExplore')}
->>>>>>> origin/dev
               </Typography>
               <Typography
                 variant="body1"
@@ -1675,15 +1669,9 @@ const ObjectFilterPage: React.FC = () => {
                   margin: '0 auto 24px',
                 }}
               >
-<<<<<<< HEAD
                 {selectedKinds.length > 0 && selectedNamespaces.length > 0
                   ? 'No resources match your current filters. Try adjusting your search criteria or clearing filters.'
                   : 'Select a resource kind and namespace to begin exploring your Kubernetes objects.'}
-=======
-                {selectedKind && selectedNamespace
-                  ? t('resources.emptyState.noResourcesDescription')
-                  : t('resources.emptyState.getStartedDescription')}
->>>>>>> origin/dev
               </Typography>
               {selectedKinds.length > 0 && selectedNamespaces.length > 0 ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
