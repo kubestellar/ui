@@ -67,13 +67,12 @@ export const ZoomControls = memo<ZoomControlsProps>(
     translationPrefix = 'wecsTopology',
   }) => {
     const { t } = useTranslation();
-
-    const { currentZoom, setZoom } = useZoomStore();
     const { getZoom, setViewport, getViewport } = useReactFlow();
-    const [zoomLevel, setZoomLevel] = useState<number>(() => (currentZoom ?? 1.2) * 100);
+    const [zoomLevel, setZoomLevel] = useState<number>(120);
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
+    const { setZoom } = useZoomStore();
     const { edgeType, setEdgeType } = useEdgeTypeStore();
 
     const snapToStep = useCallback((zoom: number) => {
