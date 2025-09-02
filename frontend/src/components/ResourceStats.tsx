@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, Grid, Paper } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import useTheme from '../stores/themeStore';
 import { darkTheme, lightTheme } from '../lib/theme-utils';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -20,6 +21,7 @@ interface ResourceStatsProps {
 }
 
 const ResourceStats: React.FC<ResourceStatsProps> = ({ resources }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
 
@@ -89,7 +91,7 @@ const ResourceStats: React.FC<ResourceStatsProps> = ({ resources }) => {
             fontWeight: 600,
           }}
         >
-          Resource Overview
+          {t('resources.stats.resourceOverview')}
         </Typography>
       </Box>
 
@@ -111,7 +113,7 @@ const ResourceStats: React.FC<ResourceStatsProps> = ({ resources }) => {
                   fontWeight: 600,
                 }}
               >
-                Top Resource Kinds
+                {t('resources.stats.topResourceKinds')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -164,7 +166,7 @@ const ResourceStats: React.FC<ResourceStatsProps> = ({ resources }) => {
                   fontWeight: 600,
                 }}
               >
-                Top Namespaces
+                {t('resources.stats.topNamespaces')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

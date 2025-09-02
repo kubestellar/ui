@@ -35,6 +35,7 @@ services:
     volumes:
       - ~/.kube:/root/.kube:ro
       - ./backend/postgresql/migrations:/app/postgresql/migrations:ro
+      - ./backend/plugins:/app/plugins
     depends_on:
       postgres:
         condition: service_healthy
@@ -77,6 +78,16 @@ services:
       
       # CORS Configuration
       - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
+      
+      # Plugins Configuration
+      - PLUGINS_DIRECTORY=${PLUGINS_DIRECTORY:-/app/plugins}
+
+       # GitHub Configuration
+      - STORAGE_PROVIDER=${STORAGE_PROVIDER:-git}
+      - GIT_REMOTE_URL=${GIT_REMOTE_URL:-https://github.com/username/reponame.git}
+      - GIT_BRANCH=${GIT_BRANCH:-main}
+      - GIT_BASE_URL=${GIT_BASE_URL:-https://raw.githubusercontent.com/username/reponame/main}
+      - GIT_TOKEN=${GIT_TOKEN:-YOUR-ACCESS-TOKEN}
     healthcheck:
       # Use the new optimized health endpoint
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -27,4 +28,15 @@ func GetEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// Get plugin directory
+func GetPluginDirectory() string {
+	pluginsDir := os.Getenv("PLUGINS_DIRECTORY")
+	if pluginsDir == "" {
+		pluginsDir = "./plugins"
+	}
+
+	fmt.Println("pluginsDir->>>>>>>>>>>>>>>>>>>.", pluginsDir)
+	return pluginsDir
 }

@@ -25,6 +25,8 @@ import (
 	// "github.com/kubestellar/ui/backend/plugin/plugins"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
+
+	config "github.com/kubestellar/ui/backend/pkg/config"
 )
 
 // Global plugin manager and registry for dynamic plugin loading
@@ -56,11 +58,13 @@ func GetGlobalPluginRegistry() *pkg.PluginRegistry {
 	return GlobalPluginRegistry
 }
 
+var pluginDirLoad = config.GetPluginDirectory()
+
 // In-memory storage for plugin system state
 var (
 	// Plugin system configuration
 	systemConfig = PluginSystemConfig{
-		PluginsDirectory:   "/plugins",
+		PluginsDirectory:   pluginDirLoad,
 		AutoloadPlugins:    true,
 		PluginTimeout:      30,
 		MaxConcurrentCalls: 10,
@@ -419,7 +423,7 @@ func InstallPluginHandler(c *gin.Context) {
 	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginDetailsID) // e.g. myplugin-123 // TODO: use pluginDetailsID instead of pluginID
 
 	// Create plugin directory in plugins folder
-	pluginDir := filepath.Join("./plugins", pluginKey)
+	pluginDir := filepath.Join(pluginDirLoad, pluginKey)
 	if err := os.MkdirAll(pluginDir, 0755); err != nil {
 		log.LogError("Failed to create plugin directory", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -639,7 +643,7 @@ func UninstallPluginHandler(c *gin.Context) {
 		// get plugin's name
 		pluginName := plugin.Manifest.Metadata.Name
 		pluginFolder := fmt.Sprintf("%s-%d", pluginName, pluginID)
-		pluginDir := filepath.Join("./plugins", pluginFolder)
+		pluginDir := filepath.Join(pluginDirLoad, pluginFolder)
 
 		if _, err := os.Stat(pluginDir); err == nil {
 			log.LogInfo("Removing plugin directory", zap.String("path", pluginDir))
@@ -1182,7 +1186,7 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	}
 
 	// Get the plugin directory
-	pluginsDir := "./plugins"
+	pluginsDir := pluginDirLoad
 	var pluginDir string
 	entries, err := os.ReadDir(pluginsDir)
 	if err != nil {
