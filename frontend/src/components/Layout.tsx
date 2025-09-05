@@ -134,7 +134,7 @@ export function Layout() {
             animate={{
               width: isSidebarCollapsed ? '80px' : '280px',
               transition: { 
-                duration: 0.15, 
+                duration: 0.4, 
                 ease: [0.4, 0.0, 0.2, 1],
                 type: 'tween'
               },
