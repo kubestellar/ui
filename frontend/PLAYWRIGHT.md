@@ -347,24 +347,25 @@ PLAYWRIGHT_TRACE=on-first-retry
 
 ### Environment Variable Descriptions
 
-| Variable | Options | Description |
-|----------|---------|-------------|
-| `VITE_BASE_URL` | URL string | Frontend application URL for testing |
-| `VITE_BACKEND_URL` | URL string | Backend API URL for integration tests |
-| `TEST_USER_NAME` | String | Test username for authentication flows |
-| `TEST_USER_PASSWORD` | String | Test password for authentication flows |
-| `PLAYWRIGHT_HEADED` | `true`/`false` | Show browser windows during tests |
-| `PLAYWRIGHT_VIDEO` | `true`/`false` | Record videos of all test runs |
-| `PLAYWRIGHT_TIMEOUT` | Number (ms) | Global timeout for test operations |
-| `PLAYWRIGHT_EXPECT_TIMEOUT` | Number (ms) | Timeout for assertions |
-| `PLAYWRIGHT_BROWSER` | `chromium`/`firefox`/`webkit`/`all` | Browser(s) to use for local testing |
-| `PLAYWRIGHT_SLOW_MO` | `true`/`false` | Slow down test execution for debugging |
-| `PLAYWRIGHT_SCREENSHOT` | `on`/`off`/`only-on-failure` | When to capture screenshots |
-| `PLAYWRIGHT_TRACE` | `on`/`off`/`retain-on-failure`/`on-first-retry` | When to capture traces |
+| Variable                    | Options                                         | Description                            |
+| --------------------------- | ----------------------------------------------- | -------------------------------------- |
+| `VITE_BASE_URL`             | URL string                                      | Frontend application URL for testing   |
+| `VITE_BACKEND_URL`          | URL string                                      | Backend API URL for integration tests  |
+| `TEST_USER_NAME`            | String                                          | Test username for authentication flows |
+| `TEST_USER_PASSWORD`        | String                                          | Test password for authentication flows |
+| `PLAYWRIGHT_HEADED`         | `true`/`false`                                  | Show browser windows during tests      |
+| `PLAYWRIGHT_VIDEO`          | `true`/`false`                                  | Record videos of all test runs         |
+| `PLAYWRIGHT_TIMEOUT`        | Number (ms)                                     | Global timeout for test operations     |
+| `PLAYWRIGHT_EXPECT_TIMEOUT` | Number (ms)                                     | Timeout for assertions                 |
+| `PLAYWRIGHT_BROWSER`        | `chromium`/`firefox`/`webkit`/`all`             | Browser(s) to use for local testing    |
+| `PLAYWRIGHT_SLOW_MO`        | `true`/`false`                                  | Slow down test execution for debugging |
+| `PLAYWRIGHT_SCREENSHOT`     | `on`/`off`/`only-on-failure`                    | When to capture screenshots            |
+| `PLAYWRIGHT_TRACE`          | `on`/`off`/`retain-on-failure`/`on-first-retry` | When to capture traces                 |
 
 ### Common Configuration Examples
 
 #### For Development/Debugging
+
 ```bash
 # Edit .env.local for debugging
 PLAYWRIGHT_HEADED=true
@@ -376,6 +377,7 @@ PLAYWRIGHT_BROWSER=chromium
 ```
 
 #### For Fast Local Testing
+
 ```bash
 # Edit .env.local for speed
 PLAYWRIGHT_HEADED=false
@@ -387,6 +389,7 @@ PLAYWRIGHT_BROWSER=chromium
 ```
 
 #### For Comprehensive Testing
+
 ```bash
 # Edit .env.local for full coverage
 PLAYWRIGHT_BROWSER=all
@@ -396,6 +399,7 @@ PLAYWRIGHT_TRACE=on-first-retry
 ```
 
 #### Quick Environment Setup Commands
+
 ```bash
 # Set up for debugging (headed mode with slow motion)
 echo "PLAYWRIGHT_HEADED=true" >> .env.local
