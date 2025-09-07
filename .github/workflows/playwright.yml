@@ -1,0 +1,78 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'frontend/**'
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        # Run tests on multiple browsers
+        browser: [chromium, firefox, webkit]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Run TypeScript check
+      working-directory: ./frontend
+      run: npx tsc --noEmit
+    
+    - name: Run linting
+      working-directory: ./frontend
+      run: npm run lint
+    
+    - name: Install Playwright Browsers
+      working-directory: ./frontend
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+    
+    - name: Verify Playwright installation
+      working-directory: ./frontend
+      run: npx playwright --version
+    
+    - name: List available tests
+      working-directory: ./frontend
+      run: npx playwright test --list --project=${{ matrix.browser }} | head -5
+    
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
+    
+    - name: Run Playwright tests
+      working-directory: ./frontend
+      run: npx playwright test --project=${{ matrix.browser }}
+      env:
+        CI: true
+    
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report-${{ matrix.browser }}
+        path: frontend/playwright-report/
+        retention-days: 30
+    
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.browser }}
+        path: frontend/test-results/
+        retention-days: 30
