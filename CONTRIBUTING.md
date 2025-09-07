@@ -546,3 +546,72 @@ You can also request labels to be automatically added to issues using the follow
 These commands help maintainers manage community contributions effectively and allow newcomers to find suitable issues to work on.
 
 ---
+
+## 🎭 End-to-End Testing with Playwright
+
+We use **Playwright** for comprehensive end-to-end testing of the KubeStellar UI. All contributors should ensure their changes don't break existing functionality by running tests locally.
+
+### Quick Start
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install Playwright browsers (one-time setup)
+npx playwright install
+
+# Run all E2E tests
+npm run test:e2e
+
+# Run tests with visual UI
+npm run test:e2e:ui
+```
+
+### Testing Guidelines for Contributors
+
+1. **Run tests before submitting PRs**: Always execute the full test suite locally
+2. **Add tests for new features**: Include E2E tests for new UI components or workflows
+3. **Update tests for changes**: Modify existing tests when changing UI behavior
+4. **Use Page Object Model**: Follow the established pattern for maintainable tests
+
+### Common Test Commands
+
+```bash
+# Debug mode (step through tests)
+npm run test:e2e:debug
+
+# Test specific browsers
+npx playwright test --project=chromium
+npx playwright test --project=firefox
+
+# Run specific test file
+npx playwright test e2e/auth.spec.ts
+
+# Generate test code from interactions
+npm run test:e2e:codegen
+```
+
+### Test Structure
+
+- **`e2e/basic-navigation.spec.ts`** - Core app navigation
+- **`e2e/auth.spec.ts`** - Authentication flows
+- **`e2e/performance.spec.ts`** - Performance & accessibility
+- **`e2e/page-object-tests.spec.ts`** - Page Object Model examples
+
+### Best Practices
+
+- Use `data-testid` attributes for reliable element selection
+- Follow the Page Object Model pattern for reusable components
+- Mock API responses for consistent test data
+- Include both positive and negative test scenarios
+
+### CI/CD Integration
+
+Tests run automatically on:
+- Push to `dev` branches
+- Pull requests to `dev`
+- Changes in `frontend/` directory
+
+For detailed documentation, see: **[frontend/PLAYWRIGHT.md](frontend/PLAYWRIGHT.md)**
+
+---
