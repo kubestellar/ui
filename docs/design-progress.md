@@ -363,7 +363,7 @@ Key highlights:
 
 This helps validate the design in a real environment and ensures smooth usability before production.
 
-### 📖 KubeStellar/docs – Contribute Handbook & Program Pages (Web Design) - Contribution by: Saumya & Naman
+### 📖 KubeStellar/docs – Contribute Handbook & Program Pages (Web Design) 
 
 Developed functional **Contribute Handbook** and **Program Pages** as live web versions to validate design and usability.  
 
@@ -374,4 +374,8 @@ Key highlights:
 - Fully responsive across devices (desktop, tablet, mobile)  
 - Enabled real-time testing of user flow and functionality  
 
+Contributers: 
+- [Saumya Kumar](https://github.com/oksaumya)
+- [Mahi Monga](https://github.com/mahimonga)
+- [Naman](https://github.com/naman9271)
 ---
