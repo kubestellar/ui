@@ -9,18 +9,18 @@ async function globalSetup(config: FullConfig) {
   // Optional: Warm up the application
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  
+
   try {
     console.log('🔥 Warming up application...');
     await page.goto(baseURL, {
       waitUntil: 'networkidle',
-      timeout: 30000
+      timeout: 30000,
     });
     console.log('✅ Application is ready');
   } catch (error) {
     console.log('⚠️ Warning: Could not warm up application:', error);
   }
-  
+
   await browser.close();
   console.log('🎭 Playwright Global Setup Completed');
 }

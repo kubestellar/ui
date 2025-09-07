@@ -23,5 +23,12 @@
     /* Include Jest and testing-library types */
     "types": ["jest", "node", "@testing-library/jest-dom", "@playwright/test"]
   },
-  "include": ["src", "**/*.test.ts", "**/*.test.tsx", "e2e", "playwright.config.ts", "playwright.global-setup.ts"]
+  "include": [
+    "src",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "e2e",
+    "playwright.config.ts",
+    "playwright.global-setup.ts"
+  ]
 }

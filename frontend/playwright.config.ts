@@ -24,7 +24,7 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'playwright-results.json' }],
     ['junit', { outputFile: 'playwright-results.xml' }],
-    isCI ? ['github'] : ['list']
+    isCI ? ['github'] : ['list'],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -42,7 +42,7 @@ export default defineConfig({
 
     /* Browser context options */
     viewport: { width: 1280, height: 720 },
-    
+
     /* Ignore HTTPS errors */
     ignoreHTTPSErrors: true,
 
@@ -70,12 +70,14 @@ export default defineConfig({
     },
 
     // Only include branded browsers in local development (not CI)
-    ...(isCI ? [] : [
-      {
-        name: 'Google Chrome',
-        use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-      },
-    ]),
+    ...(isCI
+      ? []
+      : [
+          {
+            name: 'Google Chrome',
+            use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+          },
+        ]),
   ],
 
   /* Run your local dev server before starting the tests */

@@ -11,9 +11,5 @@
     "skipLibCheck": true,
     "strict": true
   },
-  "include": [
-    "e2e/**/*",
-    "playwright.config.ts",
-    "playwright.global-setup.ts"
-  ]
+  "include": ["e2e/**/*", "playwright.config.ts", "playwright.global-setup.ts"]
 }
