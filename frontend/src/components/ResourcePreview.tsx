@@ -98,11 +98,11 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource, children })
             color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
           }}
         >
-          Resource Details
+          Object Details
         </Typography>
       </Box>
 
-      {/* Resource Name */}
+      {/* Object Name */}
       <Typography
         variant="h6"
         sx={{
