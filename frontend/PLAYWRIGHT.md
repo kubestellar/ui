@@ -40,7 +40,12 @@ npx playwright install
 
 # 4. Install system dependencies (Linux/macOS)
 npx playwright install-deps
+
+# 5. Set up environment configuration
+cp .env.playwright.example .env.local
 ```
+
+> **💡 Pro tip:** Edit `.env.local` to customize your testing preferences (headed mode, video recording, browser selection, etc.)
 
 ### First Test Run
 
@@ -290,23 +295,118 @@ export default defineConfig({
 
 ### Environment Configuration
 
-Create `.env.local` for custom settings:
+Copy the example file and customize your settings:
+
+```bash
+# 1. Copy the example environment file
+cp .env.playwright.example .env.local
+
+# 2. Edit the file to match your preferences
+nano .env.local  # or use your preferred editor
+```
+
+Available environment variables (from `.env.playwright.example`):
 
 ```env
-# Base URL for testing
+# Base URL for testing (default: http://localhost:5173)
 VITE_BASE_URL=http://localhost:5173
 
 # Backend URL for API testing
 VITE_BACKEND_URL=http://localhost:4000
 
-# Test credentials (testing only)
-TEST_USER_EMAIL=admin@example.com
-TEST_USER_PASSWORD=password123
+# Test credentials (for testing only - never use real credentials)
+TEST_USER_NAME=testuser
+TEST_USER_PASSWORD=testpassword123
 
-# Playwright settings
+# Playwright configuration
+# Set to 'true' to run tests in headed mode
 PLAYWRIGHT_HEADED=false
+
+# Set to 'true' to record video for all tests
 PLAYWRIGHT_VIDEO=false
+
+# Timeout settings (in milliseconds)
 PLAYWRIGHT_TIMEOUT=30000
+PLAYWRIGHT_EXPECT_TIMEOUT=5000
+
+# Browser selection for local testing
+# Options: chromium, firefox, webkit, all
+PLAYWRIGHT_BROWSER=chromium
+
+# Set to 'true' to enable slow motion (useful for debugging)
+PLAYWRIGHT_SLOW_MO=false
+
+# Screenshot settings
+# Options: on, off, only-on-failure
+PLAYWRIGHT_SCREENSHOT=only-on-failure
+
+# Trace settings
+# Options: on, off, retain-on-failure, on-first-retry
+PLAYWRIGHT_TRACE=on-first-retry
+```
+
+### Environment Variable Descriptions
+
+| Variable | Options | Description |
+|----------|---------|-------------|
+| `VITE_BASE_URL` | URL string | Frontend application URL for testing |
+| `VITE_BACKEND_URL` | URL string | Backend API URL for integration tests |
+| `TEST_USER_NAME` | String | Test username for authentication flows |
+| `TEST_USER_PASSWORD` | String | Test password for authentication flows |
+| `PLAYWRIGHT_HEADED` | `true`/`false` | Show browser windows during tests |
+| `PLAYWRIGHT_VIDEO` | `true`/`false` | Record videos of all test runs |
+| `PLAYWRIGHT_TIMEOUT` | Number (ms) | Global timeout for test operations |
+| `PLAYWRIGHT_EXPECT_TIMEOUT` | Number (ms) | Timeout for assertions |
+| `PLAYWRIGHT_BROWSER` | `chromium`/`firefox`/`webkit`/`all` | Browser(s) to use for local testing |
+| `PLAYWRIGHT_SLOW_MO` | `true`/`false` | Slow down test execution for debugging |
+| `PLAYWRIGHT_SCREENSHOT` | `on`/`off`/`only-on-failure` | When to capture screenshots |
+| `PLAYWRIGHT_TRACE` | `on`/`off`/`retain-on-failure`/`on-first-retry` | When to capture traces |
+
+### Common Configuration Examples
+
+#### For Development/Debugging
+```bash
+# Edit .env.local for debugging
+PLAYWRIGHT_HEADED=true
+PLAYWRIGHT_SLOW_MO=true
+PLAYWRIGHT_VIDEO=true
+PLAYWRIGHT_SCREENSHOT=on
+PLAYWRIGHT_TRACE=on
+PLAYWRIGHT_BROWSER=chromium
+```
+
+#### For Fast Local Testing
+```bash
+# Edit .env.local for speed
+PLAYWRIGHT_HEADED=false
+PLAYWRIGHT_SLOW_MO=false
+PLAYWRIGHT_VIDEO=false
+PLAYWRIGHT_SCREENSHOT=only-on-failure
+PLAYWRIGHT_TRACE=on-first-retry
+PLAYWRIGHT_BROWSER=chromium
+```
+
+#### For Comprehensive Testing
+```bash
+# Edit .env.local for full coverage
+PLAYWRIGHT_BROWSER=all
+PLAYWRIGHT_VIDEO=retain-on-failure
+PLAYWRIGHT_SCREENSHOT=only-on-failure
+PLAYWRIGHT_TRACE=on-first-retry
+```
+
+#### Quick Environment Setup Commands
+```bash
+# Set up for debugging (headed mode with slow motion)
+echo "PLAYWRIGHT_HEADED=true" >> .env.local
+echo "PLAYWRIGHT_SLOW_MO=true" >> .env.local
+
+# Set up for fast testing (headless mode)
+echo "PLAYWRIGHT_HEADED=false" >> .env.local
+echo "PLAYWRIGHT_SLOW_MO=false" >> .env.local
+
+# Test specific browser
+echo "PLAYWRIGHT_BROWSER=firefox" >> .env.local
 ```
 
 ## 📊 Test Reports & Artifacts

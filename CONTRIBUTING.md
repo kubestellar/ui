@@ -560,12 +560,33 @@ cd frontend
 # Install Playwright browsers (one-time setup)
 npx playwright install
 
+# Set up environment configuration
+cp .env.playwright.example .env.local
+
 # Run all E2E tests
 npm run test:e2e
 
 # Run tests with visual UI
 npm run test:e2e:ui
 ```
+
+### Environment Configuration
+
+Before running tests, customize your environment settings:
+
+```bash
+# Edit .env.local to configure:
+# - PLAYWRIGHT_HEADED=true    # Show browsers while testing
+# - PLAYWRIGHT_VIDEO=true     # Record test videos
+# - PLAYWRIGHT_BROWSER=all    # Test all browsers locally
+# - PLAYWRIGHT_SLOW_MO=true   # Slow motion for debugging
+```
+
+**Key environment variables:**
+- `PLAYWRIGHT_HEADED` - Show browser windows (great for debugging)
+- `PLAYWRIGHT_BROWSER` - Choose browsers: `chromium`, `firefox`, `webkit`, or `all`
+- `PLAYWRIGHT_VIDEO` - Record videos of test runs
+- `PLAYWRIGHT_SLOW_MO` - Slow down execution for easier observation
 
 ### Testing Guidelines for Contributors
 
