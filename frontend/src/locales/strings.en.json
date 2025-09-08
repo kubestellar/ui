@@ -2697,7 +2697,7 @@
     "selectResourceAndNamespace": "Select an object kind and namespace to begin",
     "refresh": "Refresh",
     "toggleFilters": "Toggle filters",
-    "description": "Explore and manage Kubernetes resources across your clusters",
+    "description": "Explore and manage Kubernetes objects across your clusters",
     "autoRefresh": "Auto-refresh",
     "viewMode": {
       "grid": "Grid View",
@@ -2708,10 +2708,10 @@
       "tableLabel": "table view"
     },
     "objectSelection": "Object Selection & Filters",
-    "searchPlaceholder": "Search resource kinds...",
-    "quickSearchPlaceholder": "Quick search resources...",
+    "searchPlaceholder": "Search object kinds...",
+    "quickSearchPlaceholder": "Quick search objects...",
     "bulkActions": {
-      "resourcesSelected": "{{count}} resource{{count > 1 ? 's' : ''}} selected",
+      "resourcesSelected": "{{count}} object{{count > 1 ? 's' : ''}} selected",
       "clearSelection": "Clear Selection",
       "viewDetails": "View Details",
       "export": "Export"
@@ -2725,9 +2725,9 @@
     },
     "emptyState": {
       "readyToExplore": "Ready to explore",
-      "noResourcesFound": "No resources found",
-      "noResourcesDescription": "No resources match your current filters. Try adjusting your search criteria or clearing filters.",
-      "getStartedDescription": "Select a resource kind and namespace to begin exploring your Kubernetes objects.",
+      "noResourcesFound": "No objects found",
+      "noResourcesDescription": "No objects match your current filters. Try adjusting your search criteria or clearing filters.",
+      "getStartedDescription": "Select an object kind and namespace to begin exploring your Kubernetes objects.",
       "getStarted": "Get Started",
       "clearFilters": "Clear Filters"
     },
@@ -2746,15 +2746,15 @@
       "clear": "Clear ({{count}})"
     },
     "menus": {
-      "resourceKinds": "Resource Kinds ({{count}})",
+      "resourceKinds": "Object Kinds ({{count}})",
       "namespaces": "Namespaces ({{count}})",
       "labels": "Labels ({{count}} keys)",
-      "noLabelsFound": "No labels found in the current resources",
+      "noLabelsFound": "No labels found in the current objects",
       "active": "Active"
     },
     "stats": {
-      "resourceOverview": "Resource Overview",
-      "topResourceKinds": "Top Resource Kinds",
+      "resourceOverview": "Object Overview",
+      "topResourceKinds": "Top Object Kinds",
       "topNamespaces": "Top Namespaces"
     },
     "status": {
