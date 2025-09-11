@@ -207,134 +207,140 @@ const LanguageSwitcher = () => {
                   WebkitBackdropFilter: 'blur(8px)',
                   pointerEvents: 'auto',
                 }}
-              />, document.body)}
+              />,
+              document.body
+            )}
 
             {/* Language dropdown rendered in portal so it sits above blur */}
             {createPortal(
-            <motion.div
-              className="fixed inset-0 z-[110] flex justify-end"
-              style={{ pointerEvents: 'none' }}
-              initial={{ opacity: 0, y: -10, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -5, scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
-            >
-              <div className="pointer-events-auto pt-[96px] pr-4 sm:pr-6 md:pr-8">
-                <div
-                  className={
-                    isLoginPage
-                      ? 'w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
-                      : `w-48 overflow-hidden rounded-lg border shadow-xl ${
-                          isDark
-                            ? 'border-gray-700 bg-gray-800 text-gray-200'
-                            : 'border-gray-200 bg-white text-gray-800'
-                        }`
-                  }
-                  role="listbox"
-                >
-              {!isLoginPage && (
-                <div
-                  className={`flex items-center justify-between border-b px-3 py-2 ${
-                    isDark ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'
-                  }`}
-                >
-                  <p className="text-xs font-medium uppercase tracking-wider">
-                    {t('header.selectLanguage')}
-                  </p>
-                  <kbd
-                    className="hidden items-center rounded px-1.5 py-0.5 text-xs font-semibold sm:inline-flex"
-                    style={{
-                      background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
-                      color: isDark ? 'rgba(156, 163, 175, 1)' : 'rgba(107, 114, 128, 1)',
-                    }}
-                  >
-                    ESC
-                  </kbd>
-                </div>
-              )}
-              <div className="max-h-60 overflow-auto py-1">
-                {languages.map((lang, idx) => (
-                  <button
-                    key={lang.code}
-                    ref={el => (itemRefs.current[idx] = el)}
-                    tabIndex={0}
-                    onClick={() => changeLanguage(lang.code)}
+              <motion.div
+                className="fixed inset-0 z-[110] flex justify-end"
+                style={{ pointerEvents: 'none' }}
+                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -5, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
+              >
+                <div className="pointer-events-auto pr-4 pt-[96px] sm:pr-6 md:pr-8">
+                  <div
                     className={
                       isLoginPage
-                        ? `flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-blue-700/30 ${
-                            i18n.language === lang.code
-                              ? 'bg-blue-600/40 text-blue-100'
-                              : 'bg-transparent text-blue-200 hover:bg-blue-700/30'
-                          }`
-                        : `flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
+                        ? 'w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
+                        : `w-48 overflow-hidden rounded-lg border shadow-xl ${
                             isDark
-                              ? i18n.language === lang.code
-                                ? 'bg-blue-900/60 text-blue-200'
-                                : 'bg-gray-800 text-gray-300 hover:bg-gray-700/80'
-                              : i18n.language === lang.code
-                                ? 'bg-indigo-50 font-medium text-indigo-700'
-                                : 'bg-white text-gray-800 hover:bg-gray-100'
+                              ? 'border-gray-700 bg-gray-800 text-gray-200'
+                              : 'border-gray-200 bg-white text-gray-800'
                           }`
                     }
-                    role="option"
-                    aria-selected={i18n.language === lang.code}
+                    role="listbox"
                   >
-                    <div className="flex items-center">
-                      <span
-                        className={`mr-2.5 text-sm font-medium uppercase ${
-                          isLoginPage
-                            ? ''
-                            : isDark
-                              ? 'text-gray-500'
-                              : i18n.language === lang.code
-                                ? 'text-indigo-600'
-                                : 'text-gray-400'
+                    {!isLoginPage && (
+                      <div
+                        className={`flex items-center justify-between border-b px-3 py-2 ${
+                          isDark ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'
                         }`}
                       >
-                        {lang.code.substring(0, 2)}
-                      </span>
-                      <span>{lang.name}</span>
-                    </div>
-                    {i18n.language === lang.code && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className={`flex h-5 w-5 items-center justify-center rounded-full ${
-                          isLoginPage
-                            ? 'bg-blue-600/30'
-                            : isDark
-                              ? 'bg-indigo-800/50'
-                              : 'bg-indigo-100'
-                        }`}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        <p className="text-xs font-medium uppercase tracking-wider">
+                          {t('header.selectLanguage')}
+                        </p>
+                        <kbd
+                          className="hidden items-center rounded px-1.5 py-0.5 text-xs font-semibold sm:inline-flex"
+                          style={{
+                            background: isDark
+                              ? 'rgba(55, 65, 81, 0.5)'
+                              : 'rgba(229, 231, 235, 0.5)',
+                            color: isDark ? 'rgba(156, 163, 175, 1)' : 'rgba(107, 114, 128, 1)',
+                          }}
+                        >
+                          ESC
+                        </kbd>
+                      </div>
+                    )}
+                    <div className="max-h-60 overflow-auto py-1">
+                      {languages.map((lang, idx) => (
+                        <button
+                          key={lang.code}
+                          ref={el => (itemRefs.current[idx] = el)}
+                          tabIndex={0}
+                          onClick={() => changeLanguage(lang.code)}
                           className={
                             isLoginPage
-                              ? 'text-blue-300'
-                              : isDark
-                                ? 'text-indigo-300'
-                                : 'text-indigo-600'
+                              ? `flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-blue-700/30 ${
+                                  i18n.language === lang.code
+                                    ? 'bg-blue-600/40 text-blue-100'
+                                    : 'bg-transparent text-blue-200 hover:bg-blue-700/30'
+                                }`
+                              : `flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
+                                  isDark
+                                    ? i18n.language === lang.code
+                                      ? 'bg-blue-900/60 text-blue-200'
+                                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700/80'
+                                    : i18n.language === lang.code
+                                      ? 'bg-indigo-50 font-medium text-indigo-700'
+                                      : 'bg-white text-gray-800 hover:bg-gray-100'
+                                }`
                           }
+                          role="option"
+                          aria-selected={i18n.language === lang.code}
                         >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </motion.div>
-                    )}
-                  </button>
-                ))}
-              </div>
+                          <div className="flex items-center">
+                            <span
+                              className={`mr-2.5 text-sm font-medium uppercase ${
+                                isLoginPage
+                                  ? ''
+                                  : isDark
+                                    ? 'text-gray-500'
+                                    : i18n.language === lang.code
+                                      ? 'text-indigo-600'
+                                      : 'text-gray-400'
+                              }`}
+                            >
+                              {lang.code.substring(0, 2)}
+                            </span>
+                            <span>{lang.name}</span>
+                          </div>
+                          {i18n.language === lang.code && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                                isLoginPage
+                                  ? 'bg-blue-600/30'
+                                  : isDark
+                                    ? 'bg-indigo-800/50'
+                                    : 'bg-indigo-100'
+                              }`}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className={
+                                  isLoginPage
+                                    ? 'text-blue-300'
+                                    : isDark
+                                      ? 'text-indigo-300'
+                                      : 'text-indigo-600'
+                                }
+                              >
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            </motion.div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>, document.body)}
+              </motion.div>,
+              document.body
+            )}
           </>
         )}
       </AnimatePresence>

@@ -577,10 +577,15 @@ const ProfileSection = () => {
                 transition: 'opacity 0.2s ease',
                 opacity: 1,
               }}
-            />, document.body)}
+            />,
+            document.body
+          )}
           {createPortal(
-            <div className="fixed inset-0 z-[110] flex justify-end" style={{ pointerEvents: 'none' }}>
-              <div className="pointer-events-auto pt-[96px] pr-4 sm:pr-6 md:pr-8">
+            <div
+              className="fixed inset-0 z-[110] flex justify-end"
+              style={{ pointerEvents: 'none' }}
+            >
+              <div className="pointer-events-auto pr-4 pt-[96px] sm:pr-6 md:pr-8">
                 <div
                   ref={userMenuRef}
                   className="animate-in fade-in slide-in-from-top-5 w-64 origin-top-right overflow-hidden rounded-xl duration-300 ease-out"
@@ -614,13 +619,12 @@ const ProfileSection = () => {
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             borderWidth: '2px',
                             borderStyle: 'solid',
-                            borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
+                            borderColor: isDark
+                              ? 'rgba(59, 130, 246, 0.3)'
+                              : 'rgba(59, 130, 246, 0.2)',
                           }}
                         >
-                          <ProfileIcon
-                            className="text-4xl"
-                            style={{ color: '#3b82f6' }}
-                          />
+                          <ProfileIcon className="text-4xl" style={{ color: '#3b82f6' }} />
                         </div>
                         <div
                           className="text-xs font-medium uppercase tracking-wider"
@@ -639,14 +643,22 @@ const ProfileSection = () => {
                   </div>
 
                   {/* Menu Items */}
-                  <div className="p-2" style={{ backgroundColor: styles.menuSection.backgroundColor }}>
+                  <div
+                    className="p-2"
+                    style={{ backgroundColor: styles.menuSection.backgroundColor }}
+                  >
                     <div className="grid grid-cols-1 gap-1">
                       <button
                         onClick={() => setShowChangePasswordModal(true)}
                         className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
-                        style={{ color: styles.helpButton.color, backgroundColor: styles.helpButton.backgroundColor }}
+                        style={{
+                          color: styles.helpButton.color,
+                          backgroundColor: styles.helpButton.backgroundColor,
+                        }}
                         onMouseOver={e => {
-                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff';
+                          e.currentTarget.style.backgroundColor = isDark
+                            ? 'rgba(124, 58, 237, 0.1)'
+                            : '#f5f3ff';
                         }}
                         onMouseOut={e => {
                           e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
@@ -656,9 +668,18 @@ const ProfileSection = () => {
                         <div className="flex w-full items-center gap-3">
                           <div
                             className="rounded-full p-2 transition-colors duration-200"
-                            style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#e0e7ff' }}
+                            style={{
+                              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#e0e7ff',
+                            }}
                           >
-                            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <svg
+                              width="16"
+                              height="16"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                            >
                               <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7V7a6 6 0 1 0-12 0v3m12 0H6m12 0v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8" />
                             </svg>
                           </div>
@@ -668,9 +689,14 @@ const ProfileSection = () => {
                       <button
                         onClick={openRaiseIssue}
                         className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
-                        style={{ color: styles.helpButton.color, backgroundColor: styles.helpButton.backgroundColor }}
+                        style={{
+                          color: styles.helpButton.color,
+                          backgroundColor: styles.helpButton.backgroundColor,
+                        }}
                         onMouseOver={e => {
-                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff';
+                          e.currentTarget.style.backgroundColor = isDark
+                            ? 'rgba(124, 58, 237, 0.1)'
+                            : '#f5f3ff';
                         }}
                         onMouseOut={e => {
                           e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
@@ -678,8 +704,16 @@ const ProfileSection = () => {
                         role="menuitem"
                       >
                         <div className="flex w-full items-center gap-3">
-                          <div className="rounded-full p-2 transition-colors duration-200" style={{ backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff' }}>
-                            <FiExternalLink style={{ color: isDark ? '#38bdf8' : '#2563eb' }} size={16} />
+                          <div
+                            className="rounded-full p-2 transition-colors duration-200"
+                            style={{
+                              backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff',
+                            }}
+                          >
+                            <FiExternalLink
+                              style={{ color: isDark ? '#38bdf8' : '#2563eb' }}
+                              size={16}
+                            />
                           </div>
                           <span>{t('profileSection.raiseIssue')}</span>
                         </div>
@@ -687,9 +721,14 @@ const ProfileSection = () => {
                       <button
                         onClick={openDocs}
                         className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
-                        style={{ color: styles.helpButton.color, backgroundColor: styles.helpButton.backgroundColor }}
+                        style={{
+                          color: styles.helpButton.color,
+                          backgroundColor: styles.helpButton.backgroundColor,
+                        }}
                         onMouseOver={e => {
-                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff';
+                          e.currentTarget.style.backgroundColor = isDark
+                            ? 'rgba(124, 58, 237, 0.1)'
+                            : '#f5f3ff';
                         }}
                         onMouseOut={e => {
                           e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
@@ -697,8 +736,16 @@ const ProfileSection = () => {
                         role="menuitem"
                       >
                         <div className="flex w-full items-center gap-3">
-                          <div className="rounded-full p-2 transition-colors duration-200" style={{ backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff' }}>
-                            <FiHelpCircle style={{ color: isDark ? '#a78bfa' : '#8b5cf6' }} size={16} />
+                          <div
+                            className="rounded-full p-2 transition-colors duration-200"
+                            style={{
+                              backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff',
+                            }}
+                          >
+                            <FiHelpCircle
+                              style={{ color: isDark ? '#a78bfa' : '#8b5cf6' }}
+                              size={16}
+                            />
                           </div>
                           <span>{t('profileSection.helpSupport')}</span>
                         </div>
@@ -707,13 +754,24 @@ const ProfileSection = () => {
                   </div>
 
                   {/* Sign Out Button */}
-                  <div className="border-t p-2" style={{ backgroundColor: styles.menuSection.backgroundColor, borderColor: isDark ? '#374151' : '#e5e7eb' }}>
+                  <div
+                    className="border-t p-2"
+                    style={{
+                      backgroundColor: styles.menuSection.backgroundColor,
+                      borderColor: isDark ? '#374151' : '#e5e7eb',
+                    }}
+                  >
                     <button
                       onClick={handleLogout}
                       className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-all duration-200"
-                      style={{ color: styles.logoutButton.color, backgroundColor: styles.logoutButton.backgroundColor }}
+                      style={{
+                        color: styles.logoutButton.color,
+                        backgroundColor: styles.logoutButton.backgroundColor,
+                      }}
                       onMouseOver={e => {
-                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.1)' : '#fee2e2';
+                        e.currentTarget.style.backgroundColor = isDark
+                          ? 'rgba(239, 68, 68, 0.1)'
+                          : '#fee2e2';
                       }}
                       onMouseOut={e => {
                         e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
@@ -721,16 +779,23 @@ const ProfileSection = () => {
                       role="menuitem"
                     >
                       <div className="flex w-full items-center gap-3">
-                        <div className="rounded-full p-2 transition-colors duration-200" style={{ backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fee2e2' }}>
+                        <div
+                          className="rounded-full p-2 transition-colors duration-200"
+                          style={{ backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fee2e2' }}
+                        >
                           <FiLogOut style={{ color: isDark ? '#f87171' : '#ef4444' }} size={16} />
                         </div>
-                        <span className="transition-transform duration-300 group-hover:translate-x-0.5">{t('profileSection.signOut')}</span>
+                        <span className="transition-transform duration-300 group-hover:translate-x-0.5">
+                          {t('profileSection.signOut')}
+                        </span>
                       </div>
                     </button>
                   </div>
                 </div>
               </div>
-            </div>, document.body)}
+            </div>,
+            document.body
+          )}
         </>
       )}
       {/* Change Password Modal */}
