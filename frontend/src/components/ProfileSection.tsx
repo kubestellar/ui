@@ -562,232 +562,176 @@ const ProfileSection = () => {
         </button>
       </div>
 
-      {/* User dropdown menu */}
+      {/* User dropdown menu and backdrop */}
       {showUserMenu && (
-        <div
-          ref={userMenuRef}
-          className="animate-in fade-in slide-in-from-top-5 \ absolute right-0 top-full z-50 mt-2
-            w-64 origin-top-right overflow-hidden rounded-xl duration-300 ease-out"
-          style={{
-            backgroundColor: styles.profileMenu.backgroundColor,
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: styles.profileMenu.borderColor,
-            boxShadow: styles.profileMenu.boxShadow,
-          }}
-          role="menu"
-          aria-orientation="vertical"
-          tabIndex={-1}
-        >
-          {/* User Info Section */}
-          <div
-            style={{
-              backgroundColor: styles.profileHeader.backgroundColor,
-              borderBottomWidth: '1px',
-              borderBottomStyle: 'solid',
-              borderBottomColor: styles.profileHeader.borderBottomColor,
-              background: styles.profileHeader.background,
-            }}
-            className="p-5"
-          >
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <div
-                  className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full shadow-inner"
-                  style={{
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: '2px',
-                    borderStyle: 'solid',
-                    borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
-                  }}
-                >
-                  <ProfileIcon
-                    className="text-4xl"
-                    style={{ color: '#3b82f6' }} // Primary blue color
-                  />
-                </div>
-                <div
-                  className="text-xs font-medium uppercase tracking-wider"
-                  style={{
-                    color: isDark ? '#9ca3af' : '#6b7280',
-                  }}
-                >
-                  {t('profileSection.account')}
-                </div>
-                <div
-                  className="mt-1 text-lg font-semibold"
-                  style={{
-                    color: isDark ? '#f9fafb' : '#1f2937',
-                  }}
-                >
-                  {username || 'Admin'}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Menu Items */}
-          <div className="p-2" style={{ backgroundColor: styles.menuSection.backgroundColor }}>
-            <div className="grid grid-cols-1 gap-1">
-              <button
-                onClick={() => setShowChangePasswordModal(true)}
-                className="py-3\ group flex w-full items-center rounded-lg px-4
-                  text-sm font-medium transition-colors duration-150"
-                style={{
-                  color: styles.helpButton.color,
-                  backgroundColor: styles.helpButton.backgroundColor,
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.backgroundColor = isDark
-                    ? 'rgba(124, 58, 237, 0.1)'
-                    : '#f5f3ff';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
-                }}
-                role="menuitem"
-              >
-                <div className="flex w-full items-center gap-3">
-                  <div
-                    className="rounded-full p-2 transition-colors duration-200"
-                    style={{
-                      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#e0e7ff',
-                    }}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7V7a6 6 0 1 0-12 0v3m12 0H6m12 0v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8" />
-                    </svg>
-                  </div>
-                  <span>{t('profileSection.changePassword')}</span>
-                </div>
-              </button>
-              <button
-                onClick={openRaiseIssue}
-                className="py-3\ group flex w-full items-center rounded-lg px-4
-                  text-sm font-medium transition-colors duration-150"
-                style={{
-                  color: styles.helpButton.color,
-                  backgroundColor: styles.helpButton.backgroundColor,
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.backgroundColor = isDark
-                    ? 'rgba(124, 58, 237, 0.1)'
-                    : '#f5f3ff';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
-                }}
-                role="menuitem"
-              >
-                <div className="flex w-full items-center gap-3">
-                  <div
-                    className="rounded-full p-2 transition-colors duration-200"
-                    style={{
-                      backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff',
-                    }}
-                  >
-                    <FiExternalLink
-                      style={{
-                        color: isDark ? '#38bdf8' : '#2563eb',
-                      }}
-                      size={16}
-                    />
-                  </div>
-                  <span>{t('profileSection.raiseIssue')}</span>
-                </div>
-              </button>
-              <button
-                onClick={openDocs}
-                className="py-3\ group flex w-full items-center rounded-lg px-4
-                  text-sm font-medium transition-colors duration-150"
-                style={{
-                  color: styles.helpButton.color,
-                  backgroundColor: styles.helpButton.backgroundColor,
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.backgroundColor = isDark
-                    ? 'rgba(124, 58, 237, 0.1)'
-                    : '#f5f3ff';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
-                }}
-                role="menuitem"
-              >
-                <div className="flex w-full items-center gap-3">
-                  <div
-                    className="rounded-full p-2 transition-colors duration-200"
-                    style={{
-                      backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff',
-                    }}
-                  >
-                    <FiHelpCircle
-                      style={{
-                        color: isDark ? '#a78bfa' : '#8b5cf6',
-                      }}
-                      size={16}
-                    />
-                  </div>
-                  <span>{t('profileSection.helpSupport')}</span>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Sign Out Button */}
-          <div
-            className="border-t p-2"
-            style={{
-              backgroundColor: styles.menuSection.backgroundColor,
-              borderColor: isDark ? '#374151' : '#e5e7eb',
-            }}
-          >
-            <button
-              onClick={handleLogout}
-              className="py-3\ group flex w-full items-center rounded-lg px-4
-                text-sm font-medium transition-all duration-200"
+        <>
+          {/* Backdrop to blur background */}
+          {createPortal(
+            <div
+              className="fixed inset-0 z-[100]"
+              onClick={() => setShowUserMenu(false)}
               style={{
-                color: styles.logoutButton.color,
-                backgroundColor: styles.logoutButton.backgroundColor,
+                backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                transition: 'opacity 0.2s ease',
+                opacity: 1,
               }}
-              onMouseOver={e => {
-                e.currentTarget.style.backgroundColor = isDark
-                  ? 'rgba(239, 68, 68, 0.1)'
-                  : '#fee2e2';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
-              }}
-              role="menuitem"
-            >
-              <div className="flex w-full items-center gap-3">
+            />, document.body)}
+          {createPortal(
+            <div className="fixed inset-0 z-[110] flex justify-end" style={{ pointerEvents: 'none' }}>
+              <div className="pointer-events-auto pt-[96px] pr-4 sm:pr-6 md:pr-8">
                 <div
-                  className="rounded-full p-2 transition-colors duration-200"
+                  ref={userMenuRef}
+                  className="animate-in fade-in slide-in-from-top-5 w-64 origin-top-right overflow-hidden rounded-xl duration-300 ease-out"
                   style={{
-                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fee2e2',
+                    backgroundColor: styles.profileMenu.backgroundColor,
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: styles.profileMenu.borderColor,
+                    boxShadow: styles.profileMenu.boxShadow,
                   }}
+                  role="menu"
+                  aria-orientation="vertical"
+                  tabIndex={-1}
                 >
-                  <FiLogOut
+                  {/* User Info Section */}
+                  <div
                     style={{
-                      color: isDark ? '#f87171' : '#ef4444',
+                      backgroundColor: styles.profileHeader.backgroundColor,
+                      borderBottomWidth: '1px',
+                      borderBottomStyle: 'solid',
+                      borderBottomColor: styles.profileHeader.borderBottomColor,
+                      background: styles.profileHeader.background,
                     }}
-                    size={16}
-                  />
+                    className="p-5"
+                  >
+                    <div className="flex items-center justify-center">
+                      <div className="text-center">
+                        <div
+                          className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full shadow-inner"
+                          style={{
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: '2px',
+                            borderStyle: 'solid',
+                            borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
+                          }}
+                        >
+                          <ProfileIcon
+                            className="text-4xl"
+                            style={{ color: '#3b82f6' }}
+                          />
+                        </div>
+                        <div
+                          className="text-xs font-medium uppercase tracking-wider"
+                          style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+                        >
+                          {t('profileSection.account')}
+                        </div>
+                        <div
+                          className="mt-1 text-lg font-semibold"
+                          style={{ color: isDark ? '#f9fafb' : '#1f2937' }}
+                        >
+                          {username || 'Admin'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="p-2" style={{ backgroundColor: styles.menuSection.backgroundColor }}>
+                    <div className="grid grid-cols-1 gap-1">
+                      <button
+                        onClick={() => setShowChangePasswordModal(true)}
+                        className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
+                        style={{ color: styles.helpButton.color, backgroundColor: styles.helpButton.backgroundColor }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
+                        }}
+                        role="menuitem"
+                      >
+                        <div className="flex w-full items-center gap-3">
+                          <div
+                            className="rounded-full p-2 transition-colors duration-200"
+                            style={{ backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#e0e7ff' }}
+                          >
+                            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7V7a6 6 0 1 0-12 0v3m12 0H6m12 0v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8" />
+                            </svg>
+                          </div>
+                          <span>{t('profileSection.changePassword')}</span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={openRaiseIssue}
+                        className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
+                        style={{ color: styles.helpButton.color, backgroundColor: styles.helpButton.backgroundColor }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
+                        }}
+                        role="menuitem"
+                      >
+                        <div className="flex w-full items-center gap-3">
+                          <div className="rounded-full p-2 transition-colors duration-200" style={{ backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff' }}>
+                            <FiExternalLink style={{ color: isDark ? '#38bdf8' : '#2563eb' }} size={16} />
+                          </div>
+                          <span>{t('profileSection.raiseIssue')}</span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={openDocs}
+                        className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
+                        style={{ color: styles.helpButton.color, backgroundColor: styles.helpButton.backgroundColor }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
+                        }}
+                        role="menuitem"
+                      >
+                        <div className="flex w-full items-center gap-3">
+                          <div className="rounded-full p-2 transition-colors duration-200" style={{ backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff' }}>
+                            <FiHelpCircle style={{ color: isDark ? '#a78bfa' : '#8b5cf6' }} size={16} />
+                          </div>
+                          <span>{t('profileSection.helpSupport')}</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Sign Out Button */}
+                  <div className="border-t p-2" style={{ backgroundColor: styles.menuSection.backgroundColor, borderColor: isDark ? '#374151' : '#e5e7eb' }}>
+                    <button
+                      onClick={handleLogout}
+                      className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-all duration-200"
+                      style={{ color: styles.logoutButton.color, backgroundColor: styles.logoutButton.backgroundColor }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.1)' : '#fee2e2';
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
+                      }}
+                      role="menuitem"
+                    >
+                      <div className="flex w-full items-center gap-3">
+                        <div className="rounded-full p-2 transition-colors duration-200" style={{ backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fee2e2' }}>
+                          <FiLogOut style={{ color: isDark ? '#f87171' : '#ef4444' }} size={16} />
+                        </div>
+                        <span className="transition-transform duration-300 group-hover:translate-x-0.5">{t('profileSection.signOut')}</span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
-                <span className="transition-transform duration-300 group-hover:translate-x-0.5">
-                  {t('profileSection.signOut')}
-                </span>
               </div>
-            </button>
-          </div>
-        </div>
+            </div>, document.body)}
+        </>
       )}
       {/* Change Password Modal */}
       {renderChangePasswordModal()}

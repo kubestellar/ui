@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import useTheme from '../stores/themeStore';
@@ -532,50 +533,48 @@ const CommandPalette: React.FC = () => {
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop - subtle for header dropdown style */}
-            <motion.div
-              className="fixed inset-0 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
-                pointerEvents: 'auto',
-              }}
-            />
-
-            {/* Command palette dropdown */}
-            <motion.div
-              className="absolute right-4 z-50 mt-2 w-80 origin-top-right sm:w-96 md:right-8 md:w-[30rem]"
-              style={{
-                top: '100%',
-                filter: 'drop-shadow(0 10px 15px rgba(0, 0, 0, 0.15))',
-                transformOrigin: 'top right',
-              }}
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -5, scale: 0.95 }}
-              transition={{
-                type: 'spring',
-                stiffness: 500,
-                damping: 30,
-                mass: 0.8,
-              }}
-            >
-              <div
-                className="flex max-h-[calc(100vh-120px)] flex-col rounded-lg border"
+            {createPortal(
+              <motion.div
+                className="fixed inset-0 z-[100]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, delay: 0.08 }}
+                onClick={() => setIsOpen(false)}
                 style={{
-                  background: isDark ? 'rgba(17, 24, 39, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.45)',
                   backdropFilter: 'blur(8px)',
-                  borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
-                  boxShadow: isDark
-                    ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
-                    : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  pointerEvents: 'auto',
+                }}
+              />, document.body)}
+
+            {createPortal(
+              <motion.div
+                className="fixed inset-0 z-[110] flex justify-center md:justify-end"
+                style={{ pointerEvents: 'none' }}
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 30,
+                  mass: 0.8,
                 }}
               >
+                <div className="pointer-events-auto mt-[96px] w-80 sm:w-96 md:mr-8 md:w-[30rem]">
+                  <div
+                    className="flex max-h-[calc(100vh-160px)] flex-col rounded-lg border"
+                    style={{
+                      background: isDark ? 'rgba(17, 24, 39, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+                      backdropFilter: 'blur(8px)',
+                      borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
+                      boxShadow: isDark
+                        ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
+                        : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                    }}
+                  >
                 {/* Search input */}
                 <div
                   className="shrink-0 border-b p-3"
@@ -745,8 +744,9 @@ const CommandPalette: React.FC = () => {
                     </kbd>
                   </div>
                 </div>
-              </div>
-            </motion.div>
+                  </div>
+                </div>
+              </motion.div>, document.body)}
           </>
         )}
       </AnimatePresence>

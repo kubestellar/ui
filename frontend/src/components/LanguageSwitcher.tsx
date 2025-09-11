@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import useTheme from '../stores/themeStore';
 import { HiLanguage } from 'react-icons/hi2';
@@ -191,43 +192,46 @@ const LanguageSwitcher = () => {
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop - subtle for header dropdown style */}
-            <motion.div
-              className="fixed inset-0 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
-                pointerEvents: 'auto',
-              }}
-            />
+            {/* Backdrop - strong blur so page content blurs */}
+            {createPortal(
+              <motion.div
+                className="fixed inset-0 z-[100]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, delay: 0.08 }}
+                onClick={() => setIsOpen(false)}
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  pointerEvents: 'auto',
+                }}
+              />, document.body)}
 
-            {/* Language dropdown */}
+            {/* Language dropdown rendered in portal so it sits above blur */}
+            {createPortal(
             <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="fixed inset-0 z-[110] flex justify-end"
+              style={{ pointerEvents: 'none' }}
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -5, scale: 0.95 }}
-              transition={{
-                type: 'spring',
-                stiffness: 500,
-                damping: 30,
-                mass: 0.8,
-              }}
-              className={
-                isLoginPage
-                  ? 'absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
-                  : `absolute right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg border shadow-xl ${
-                      isDark
-                        ? 'border-gray-700 bg-gray-800 text-gray-200'
-                        : 'border-gray-200 bg-white text-gray-800'
-                    }`
-              }
-              role="listbox"
+              exit={{ opacity: 0, y: -5, scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
             >
+              <div className="pointer-events-auto pt-[96px] pr-4 sm:pr-6 md:pr-8">
+                <div
+                  className={
+                    isLoginPage
+                      ? 'w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
+                      : `w-48 overflow-hidden rounded-lg border shadow-xl ${
+                          isDark
+                            ? 'border-gray-700 bg-gray-800 text-gray-200'
+                            : 'border-gray-200 bg-white text-gray-800'
+                        }`
+                  }
+                  role="listbox"
+                >
               {!isLoginPage && (
                 <div
                   className={`flex items-center justify-between border-b px-3 py-2 ${
@@ -328,7 +332,9 @@ const LanguageSwitcher = () => {
                   </button>
                 ))}
               </div>
-            </motion.div>
+                </div>
+              </div>
+            </motion.div>, document.body)}
           </>
         )}
       </AnimatePresence>
