@@ -36,6 +36,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Checkbox,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../stores/themeStore';
@@ -117,8 +118,8 @@ const ObjectFilterPage: React.FC = () => {
   } = useObjectFilters();
 
   // Enhanced state management
-  const [selectedKind, setSelectedKind] = useState<ResourceKind | null>(null);
-  const [selectedNamespace, setSelectedNamespace] = useState<string>('');
+  const [selectedKinds, setSelectedKinds] = useState<ResourceKind[]>([]);
+  const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>([]);
   const [resourceFilters, setResourceFilters] = useState<ObjectFilter>({});
   const [showFilters, setShowFilters] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -343,14 +344,18 @@ const ObjectFilterPage: React.FC = () => {
         return sortOrder === 'asc' ? comparison : -comparison;
       });
   }, [filteredResources, quickSearchQuery, sortBy, sortOrder]); // Enhanced handlers
-  const handleKindChange = (_event: React.SyntheticEvent, value: ResourceKind | null) => {
-    setSelectedKind(value);
-    setSelectedResources([]); // Clear selections when changing context
+  const handleKindsChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    value: ResourceKind[]
+  ) => {
+    setSelectedKinds(value);
+    setSelectedResources([]);
   };
 
-  const handleNamespaceChange = (event: SelectChangeEvent) => {
-    setSelectedNamespace(event.target.value);
-    setSelectedResources([]); // Clear selections when changing context
+  const handleNamespacesChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value as string[];
+    setSelectedNamespaces(value);
+    setSelectedResources([]);
   };
 
   const handleFiltersChange = useCallback((filters: ObjectFilter) => {
@@ -358,18 +363,26 @@ const ObjectFilterPage: React.FC = () => {
   }, []);
 
   const handleApplyFilters = useCallback(async () => {
-    if (selectedKind && selectedNamespace) {
-      await applyFilters(selectedKind.name, selectedNamespace, resourceFilters);
+    if (selectedKinds.length > 0 && selectedNamespaces.length > 0) {
+      await applyFilters(
+        selectedKinds.map(k => k.name),
+        selectedNamespaces,
+        resourceFilters
+      );
     }
-  }, [selectedKind, selectedNamespace, resourceFilters, applyFilters]);
+  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   const handleRefresh = useCallback(async () => {
-    if (selectedKind && selectedNamespace) {
+    if (selectedKinds.length > 0 && selectedNamespaces.length > 0) {
       setIsRefreshing(true);
-      await applyFilters(selectedKind.name, selectedNamespace, resourceFilters);
+      await applyFilters(
+        selectedKinds.map(k => k.name),
+        selectedNamespaces,
+        resourceFilters
+      );
       setIsRefreshing(false);
     }
-  }, [selectedKind, selectedNamespace, resourceFilters, applyFilters]);
+  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   // New handlers for enhanced functionality
   const handleViewModeChange = (_event: React.MouseEvent<HTMLElement>, newViewMode: ViewMode) => {
@@ -438,11 +451,11 @@ const ObjectFilterPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Auto-apply filters when both kind and namespace are selected
-    if (selectedKind && selectedNamespace) {
+    // Auto-apply filters when both kinds and namespaces are selected
+    if (selectedKinds.length > 0 && selectedNamespaces.length > 0) {
       handleApplyFilters();
     }
-  }, [selectedKind, selectedNamespace, handleApplyFilters]);
+  }, [selectedKinds, selectedNamespaces, handleApplyFilters]);
 
   // Helper function to determine status color
   const getStatusColor = (status: string | undefined) => {
@@ -597,7 +610,9 @@ const ObjectFilterPage: React.FC = () => {
             <Tooltip title={t('resources.refresh')}>
               <IconButton
                 onClick={handleRefresh}
-                disabled={isRefreshing || !selectedKind || !selectedNamespace}
+                disabled={
+                  isRefreshing || selectedKinds.length === 0 || selectedNamespaces.length === 0
+                }
                 sx={{
                   color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                   '&:hover': {
@@ -652,15 +667,43 @@ const ObjectFilterPage: React.FC = () => {
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} sm={6} md={4}>
                 <Autocomplete
+                  multiple
                   options={
                     resourceKinds
                       ? [...resourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
                       : []
                   }
                   getOptionLabel={option => option.kind}
-                  value={selectedKind}
-                  onChange={handleKindChange}
+                  onChange={handleKindsChange}
                   isOptionEqualToValue={(option, value) => option.name === value.name}
+                  ChipProps={{
+                    sx: {
+                      color: '#fff', // White text
+                      backgroundColor: 'rgba(255,255,255,0.3)', // White background with 0.3 opacity
+                      fontWeight: 600,
+                      '& .MuiChip-deleteIcon': {
+                        color: '#fff',
+                      },
+                    },
+                    deleteIcon: <CloseIcon />,
+                  }}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        label={option.kind}
+                        {...getTagProps({ index })}
+                        sx={{
+                          color: '#fff',
+                          backgroundColor: 'rgba(255,255,255,0.3)', // White background with 0.3 opacity
+                          fontWeight: 600,
+                          '& .MuiChip-deleteIcon': {
+                            color: '#fff',
+                          },
+                        }}
+                        deleteIcon={<CloseIcon />}
+                      />
+                    ))
+                  }
                   PaperComponent={props => (
                     <Paper
                       elevation={8}
@@ -782,9 +825,34 @@ const ObjectFilterPage: React.FC = () => {
                   <InputLabel id="namespace-label">{t('resources.selectNamespace')}</InputLabel>
                   <Select
                     labelId="namespace-label"
-                    value={selectedNamespace}
+                    multiple
+                    value={selectedNamespaces}
                     label={t('resources.selectNamespace')}
-                    onChange={handleNamespaceChange}
+                    onChange={handleNamespacesChange}
+                    renderValue={selected => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(selected as string[]).map(ns => (
+                          <Chip
+                            key={ns}
+                            label={ns}
+                            size="small"
+                            sx={{
+                              color: '#fff',
+                              backgroundColor: 'rgba(255,255,255,0.3)', // White background with 0.3 opacity
+                              fontWeight: 600,
+                              '& .MuiChip-deleteIcon': {
+                                color: '#fff',
+                              },
+                            }}
+                            onDelete={e => {
+                              e.stopPropagation();
+                              setSelectedNamespaces(selectedNamespaces.filter(n => n !== ns));
+                            }}
+                            deleteIcon={<CloseIcon />}
+                          />
+                        ))}
+                      </Box>
+                    )}
                     MenuProps={{
                       PaperProps: {
                         component: Paper,
@@ -806,30 +874,9 @@ const ObjectFilterPage: React.FC = () => {
                     }}
                   >
                     {filteredNamespaces.map((ns: { name: string }) => (
-                      <MenuItem
-                        key={ns.name}
-                        value={ns.name}
-                        sx={{
-                          margin: '4px 8px',
-                          borderRadius: '8px',
-                          '&:hover': {
-                            backgroundColor: isDark
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : 'rgba(0, 0, 0, 0.04)',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: isDark
-                              ? 'rgba(59, 130, 246, 0.2)'
-                              : 'rgba(59, 130, 246, 0.1)',
-                            '&:hover': {
-                              backgroundColor: isDark
-                                ? 'rgba(59, 130, 246, 0.3)'
-                                : 'rgba(59, 130, 246, 0.15)',
-                            },
-                          },
-                        }}
-                      >
-                        {ns.name}
+                      <MenuItem key={ns.name} value={ns.name}>
+                        <Checkbox checked={selectedNamespaces.indexOf(ns.name) > -1} />
+                        <ListItemText primary={ns.name} />
                       </MenuItem>
                     ))}
                   </Select>
@@ -883,7 +930,7 @@ const ObjectFilterPage: React.FC = () => {
             </Grid>
           </Box>
 
-          {selectedKind && selectedNamespace && (
+          {selectedKinds.length > 0 && selectedNamespaces.length > 0 && (
             <Box
               sx={{
                 mt: 3,
@@ -1609,9 +1656,9 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {selectedKind && selectedNamespace
-                  ? t('resources.emptyState.noResourcesFound')
-                  : t('resources.emptyState.readyToExplore')}
+                {selectedKinds.length > 0 && selectedNamespaces.length > 0
+                  ? 'No resources found'
+                  : 'Ready to explore'}
               </Typography>
               <Typography
                 variant="body1"
@@ -1622,11 +1669,11 @@ const ObjectFilterPage: React.FC = () => {
                   margin: '0 auto 24px',
                 }}
               >
-                {selectedKind && selectedNamespace
-                  ? t('resources.emptyState.noResourcesDescription')
-                  : t('resources.emptyState.getStartedDescription')}
+                {selectedKinds.length > 0 && selectedNamespaces.length > 0
+                  ? 'No resources match your current filters. Try adjusting your search criteria or clearing filters.'
+                  : 'Select a resource kind and namespace to begin exploring your Kubernetes objects.'}
               </Typography>
-              {selectedKind && selectedNamespace ? (
+              {selectedKinds.length > 0 && selectedNamespaces.length > 0 ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"
