@@ -41,7 +41,7 @@
     "@tanstack/react-query-devtools": "^5.67.1",
     "@types/js-yaml": "^4.0.9",
     "@xyflow/react": "^12.4.4",
-    "axios": "^1.8.2",
+    "axios": "^1.12.0",
     "dagre": "^0.8.5",
     "date-fns": "^4.1.0",
     "elkjs": "^0.10.0",
