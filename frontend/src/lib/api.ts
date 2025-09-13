@@ -83,8 +83,13 @@ api.interceptors.response.use(
       setGlobalNetworkError(true);
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
-      // Don't show error toast for 401 responses from auth checks (/api/me)
-      if (!(error.response.status === 401 && isAuthCheck)) {
+      // Don't show error toast for 401 responses from auth checks (/api/me) when on login page
+      const shouldSuppressToast =
+        error.response.status === 401 &&
+        isAuthCheck &&
+        isOnLoginPage();
+
+      if (!shouldSuppressToast) {
         // For other errors, show toast but use a consistent ID to prevent duplicates
         const toastId = `api-error-${error.response?.status || 'unknown'}`;
         toast.error(errorMessage, { id: toastId });
