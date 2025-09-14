@@ -46,6 +46,7 @@ func setupClusterRoutes(router *gin.Engine) {
 
 	// Import cluster
 	router.POST("/clusters/import", handlers.ImportClusterHandler)
+	router.POST("/clusters/import-by-url", handlers.ImportClusterByURLHandler)
 
 	// Remote Tree View Cluster details
 	router.GET("/api/cluster/details/:name", handlers.GetClusterDetailsHandler)

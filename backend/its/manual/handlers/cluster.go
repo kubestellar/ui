@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -23,6 +26,12 @@ import (
 // ---------------------------
 // Data Structures
 // ---------------------------
+
+// Request only takes api_url and optional token
+type ImportByURLRequest struct {
+	APIURL string `json:"api_url" binding:"required,url"`
+	Token  string `json:"token"`
+}
 
 // ManagedClusterInfo holds details about a managed (imported) cluster.
 type ManagedClusterInfo struct {
@@ -404,6 +413,150 @@ func ImportClusterHandler(c *gin.Context) {
 		"release":     releaseName,
 		"helm_output": string(output),
 	})
+}
+
+func ImportClusterByURLHandler(c *gin.Context) {
+	startTime := time.Now()
+
+	var req ImportByURLRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import-by-url", "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request: api_url required and must be a valid URL"})
+		return
+	}
+
+	// Optional: block private/internal hosts to avoid SSRF
+	// if hostIsPrivate(req.APIURL) {
+	// 	telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import-by-url", "400").Inc()
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "api_url resolves to internal/private IP"})
+	// 	return
+	// }
+
+	// derive context name
+	ctxName := deriveSafeNameFromURL(req.APIURL)
+
+	// build minimal kubeconfig
+	cfg := clientcmdapi.NewConfig()
+	cluster := clientcmdapi.NewCluster()
+	cluster.Server = req.APIURL
+
+	authInfo := clientcmdapi.NewAuthInfo()
+	if req.Token != "" {
+		authInfo.Token = req.Token
+	}
+
+	cfg.Clusters[ctxName] = cluster
+	cfg.AuthInfos[ctxName] = authInfo
+	cfg.Contexts[ctxName] = &clientcmdapi.Context{
+		Cluster:  ctxName,
+		AuthInfo: ctxName,
+	}
+	cfg.CurrentContext = ctxName
+
+	// write temp kubeconfig
+	tmpPath, err := writeTempKubeconfig(cfg)
+	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import-by-url", "500").Inc()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write temp kubeconfig"})
+		return
+	}
+	defer os.Remove(tmpPath)
+
+	// validate cluster reachable with provided creds
+	if out, err := exec.Command("kubectl", "--kubeconfig", tmpPath, "get", "--raw", "/healthz").CombinedOutput(); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import-by-url", "400").Inc()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":  "failed to reach cluster with provided credentials",
+			"detail": string(out),
+		})
+		return
+	}
+
+	// helm install (same flow as your kubeconfig-based handler)
+	releaseName := fmt.Sprintf("klusterlet-%s", sanitizeName(ctxName))
+	exec.Command("helm", "repo", "add", "ocm", "https://open-cluster-management.io/helm-charts").Run()
+	exec.Command("helm", "repo", "update").Run()
+
+	cmd := exec.Command("helm", "upgrade", "--install",
+		releaseName, "ocm/klusterlet",
+		"--kubeconfig", tmpPath,
+		"--namespace", "open-cluster-management",
+		"--create-namespace",
+		"--set", fmt.Sprintf("hubKubeconfig=%s", os.Getenv("HUB_BOOTSTRAP_KUBECONFIG")),
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/import-by-url", "500").Inc()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("helm install failed: %s", string(output))})
+		return
+	}
+
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/clusters/import-by-url", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("POST", "/clusters/import-by-url").Observe(time.Since(startTime).Seconds())
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":     "Cluster import initiated",
+		"release":     releaseName,
+		"helm_output": string(output),
+	})
+}
+
+// helpers (same as earlier, kept minimal)
+func writeTempKubeconfig(cfg *clientcmdapi.Config) (string, error) {
+	outData, err := clientcmd.Write(*cfg)
+	if err != nil {
+		return "", err
+	}
+	tmpPath := filepath.Join(os.TempDir(), fmt.Sprintf("import-%d.kubeconfig", time.Now().UnixNano()))
+	if err := os.WriteFile(tmpPath, outData, 0600); err != nil {
+		return "", err
+	}
+	return tmpPath, nil
+}
+
+func sanitizeName(s string) string {
+	re := regexp.MustCompile(`[^a-zA-Z0-9\-]`)
+	out := re.ReplaceAllString(s, "-")
+	out = strings.Trim(out, "-")
+	if out == "" {
+		out = "cluster"
+	}
+	if len(out) > 40 {
+		out = out[:40]
+	}
+	return strings.ToLower(out)
+}
+
+func deriveSafeNameFromURL(urlStr string) string {
+	s := strings.TrimPrefix(urlStr, "https://")
+	s = strings.TrimPrefix(s, "http://")
+	s = strings.SplitN(s, "/", 2)[0]
+	return sanitizeName(s)
+}
+
+// very small SSRF mitigation: resolve host and reject private IPs
+func hostIsPrivate(rawURL string) bool {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return true
+	}
+	host := parsed.Host
+	// strip possible port
+	h, _, err := net.SplitHostPort(host)
+	if err == nil {
+		host = h
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		// if we can't resolve, play safe and reject
+		return true
+	}
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return true
+		}
+	}
+	return false
 }
 
 func adjustClusterServerEndpoints(config *clientcmdapi.Config) {
