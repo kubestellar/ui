@@ -32,20 +32,36 @@ const EditTab: React.FC<EditTabProps> = ({
   // Ensure manifest is in the correct format on mount and when editFormat/editedManifest changes
   useEffect(() => {
     if (!editedManifest || editedManifest.trim() === '') return;
+
+    if (validationError) return;
+
     try {
       if (editFormat === 'yaml') {
-        const asJson = yamlToJson(editedManifest);
-        const asYaml = jsonToYaml(asJson);
-        if (editedManifest.trim() !== asYaml.trim()) {
-          handleEditorChange(asYaml);
+        const trimmed = editedManifest.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          try {
+            JSON.parse(editedManifest);
+            const asYaml = jsonToYaml(editedManifest);
+            if (editedManifest.trim() !== asYaml.trim()) {
+              handleEditorChange(asYaml);
+            }
+          } catch {
+          }
         }
       } else if (editFormat === 'json') {
         try {
-          JSON.parse(editedManifest);
+          // Try to parse as JSON first
+          const parsed = JSON.parse(editedManifest);
+          const prettyJson = JSON.stringify(parsed, null, 2);
+          if (editedManifest !== prettyJson) {
+            handleEditorChange(prettyJson);
+          }
         } catch {
+          // If not valid JSON, try to parse as YAML and convert
           try {
             const asJson = yamlToJson(editedManifest);
-            const prettyJson = JSON.stringify(JSON.parse(asJson), null, 2);
+            const parsed = JSON.parse(asJson);
+            const prettyJson = JSON.stringify(parsed, null, 2);
             handleEditorChange(prettyJson);
           } catch {
             // Ignore, will be caught by validation
@@ -55,7 +71,7 @@ const EditTab: React.FC<EditTabProps> = ({
     } catch {
       // Ignore, will be caught by validation
     }
-  }, [editFormat, editedManifest, handleEditorChange, jsonToYaml, yamlToJson]);
+  }, [editFormat, handleEditorChange, jsonToYaml, yamlToJson, validationError]);
 
   // Validate JSON/YAML content
   const validateContent = (content: string, format: 'yaml' | 'json'): boolean => {
@@ -99,15 +115,28 @@ const EditTab: React.FC<EditTabProps> = ({
 
       if (newFormat === 'yaml') {
         // Convert from JSON to YAML
-        convertedContent = jsonToYaml(editedManifest);
+        if (editFormat === 'json') {
+          // First validate that current content is valid JSON
+          JSON.parse(editedManifest);
+          convertedContent = jsonToYaml(editedManifest);
+        } else {
+          convertedContent = editedManifest;
+        }
       } else {
         // Convert from YAML to JSON
-        convertedContent = yamlToJson(editedManifest);
+        if (editFormat === 'yaml') {
+          convertedContent = yamlToJson(editedManifest);
+          // Ensure it's properly formatted JSON
+          const parsed = JSON.parse(convertedContent);
+          convertedContent = JSON.stringify(parsed, null, 2);
+        } else {
+          convertedContent = editedManifest;
+        }
       }
 
       // Update the editor content with converted format
-      handleEditorChange(convertedContent);
       setEditFormat(newFormat);
+      handleEditorChange(convertedContent);
       setValidationError(null);
     } catch (error) {
       console.error('Error converting format:', error);
