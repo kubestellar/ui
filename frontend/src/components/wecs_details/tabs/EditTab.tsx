@@ -45,7 +45,9 @@ const EditTab: React.FC<EditTabProps> = ({
             if (editedManifest.trim() !== asYaml.trim()) {
               handleEditorChange(asYaml);
             }
-          } catch {}
+          } catch {
+            // Ignore, will be caught by validation
+          }
         }
       } else if (editFormat === 'json') {
         try {
