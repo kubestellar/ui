@@ -81,6 +81,7 @@ const ProfileSection = () => {
         !buttonRef.current.contains(event.target as Node)
       ) {
         setShowUserMenu(false);
+        setTimeout(() => buttonRef.current?.blur(), 0);
       }
     }
 
@@ -95,6 +96,13 @@ const ProfileSection = () => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setShowUserMenu(false);
+        setShowChangePasswordModal(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setFormError('');
+        setConfirmPasswordError('');
+        setTimeout(() => buttonRef.current?.blur(), 0);
       }
     };
 
@@ -103,6 +111,18 @@ const ProfileSection = () => {
       window.removeEventListener('keydown', handleEsc);
     };
   }, []);
+
+  // Lock body scroll when any portal overlay is open (menu or change-password modal)
+  useEffect(() => {
+    const anyOpen = showUserMenu || showChangePasswordModal;
+    if (anyOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [showUserMenu, showChangePasswordModal]);
 
   const openDocs = () => {
     window.open('https://docs.kubestellar.io/latest/', '_blank', 'noopener,noreferrer');
@@ -569,11 +589,12 @@ const ProfileSection = () => {
           {createPortal(
             <div
               className="fixed inset-0 z-[100]"
-              onClick={() => setShowUserMenu(false)}
+              onClick={() => {
+                setShowUserMenu(false);
+                setTimeout(() => buttonRef.current?.blur(), 0);
+              }}
               style={{
                 backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
                 transition: 'opacity 0.2s ease',
                 opacity: 1,
               }}

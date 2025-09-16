@@ -12,6 +12,7 @@ const LanguageSwitcher = () => {
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
@@ -29,9 +30,15 @@ const LanguageSwitcher = () => {
     { code: 'pt', name: 'Português' },
   ];
 
+  const closeDropdown = () => {
+    setIsOpen(false);
+    // Blur the trigger to remove lingering focus outline
+    setTimeout(() => triggerRef.current?.blur(), 0);
+  };
+
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
-    setIsOpen(false);
+    closeDropdown();
   };
 
   const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
@@ -75,13 +82,24 @@ const LanguageSwitcher = () => {
         e.preventDefault();
         changeLanguage(languages[focusedIndex].code);
       } else if (e.key === 'Escape') {
-        setIsOpen(false);
+        closeDropdown();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, focusedIndex]);
+
+  // Lock body scroll while dropdown portal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   // 🧠 Attach mousedown listener only when dropdown is open
   useEffect(() => {
@@ -112,6 +130,7 @@ const LanguageSwitcher = () => {
           className="flex items-center gap-2 rounded-full bg-blue-900/30 px-3 py-1.5 text-sm text-blue-300 transition-colors duration-200 hover:bg-blue-800/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
+          ref={triggerRef}
         >
           <span>{currentLang.name}</span>
           <svg
@@ -138,7 +157,7 @@ const LanguageSwitcher = () => {
           data-tip={currentLang.name}
         >
           <motion.button
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => (isOpen ? closeDropdown() : setIsOpen(true))}
             className="btn btn-circle relative transition-all duration-300"
             style={{
               color: themeStyles.colors.text.primary,
@@ -147,6 +166,7 @@ const LanguageSwitcher = () => {
               overflow: 'hidden',
             }}
             aria-label={t('header.switchLanguage')}
+            ref={triggerRef as unknown as React.Ref<HTMLButtonElement>}
           >
             <motion.div
               className="absolute inset-0 rounded-full"
@@ -200,11 +220,9 @@ const LanguageSwitcher = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2, delay: 0.08 }}
-                onClick={() => setIsOpen(false)}
+                onClick={closeDropdown}
                 style={{
                   backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
                   pointerEvents: 'auto',
                 }}
               />,

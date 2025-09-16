@@ -485,10 +485,13 @@ const CommandPalette: React.FC = () => {
           style={{
             color: themeStyles.colors.text.primary,
             background: themeStyles.button.secondary.background,
-            boxShadow: themeStyles.colors.shadow.sm,
+            boxShadow: isOpen
+              ? `${themeStyles.colors.shadow.sm}, 0 0 0 3px ${themeStyles.colors.brand.primary}`
+              : themeStyles.colors.shadow.sm,
             overflow: 'hidden',
           }}
           aria-label={t('commandPalette.ariaLabel')}
+          aria-expanded={isOpen}
         >
           <motion.div
             className="absolute inset-0 rounded-full"
@@ -543,8 +546,6 @@ const CommandPalette: React.FC = () => {
                 onClick={() => setIsOpen(false)}
                 style={{
                   backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
                   pointerEvents: 'auto',
                 }}
               />,
@@ -569,8 +570,7 @@ const CommandPalette: React.FC = () => {
                   <div
                     className="flex max-h-[calc(100vh-160px)] flex-col rounded-lg border"
                     style={{
-                      background: isDark ? 'rgba(17, 24, 39, 0.85)' : 'rgba(255, 255, 255, 0.9)',
-                      backdropFilter: 'blur(8px)',
+                      background: isDark ? 'rgba(17, 24, 39, 1)' : 'rgba(255, 255, 255, 1)',
                       borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
                       boxShadow: isDark
                         ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
@@ -582,7 +582,7 @@ const CommandPalette: React.FC = () => {
                       className="shrink-0 border-b p-3"
                       style={{
                         borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
-                        background: isDark ? 'rgba(31, 41, 55, 0.7)' : 'rgba(249, 250, 251, 0.7)',
+                        background: isDark ? 'rgba(31, 41, 55, 1)' : 'rgba(249, 250, 251, 1)',
                       }}
                     >
                       <div className="flex items-center gap-2">
@@ -667,9 +667,8 @@ const CommandPalette: React.FC = () => {
                                     style={{
                                       color: themeStyles.colors.text.tertiary,
                                       background: isDark
-                                        ? 'rgba(17, 24, 39, 0.95)'
-                                        : 'rgba(249, 250, 251, 0.95)',
-                                      backdropFilter: 'blur(8px)',
+                                        ? 'rgba(17, 24, 39, 1)'
+                                        : 'rgba(249, 250, 251, 1)',
                                     }}
                                   >
                                     {section}
