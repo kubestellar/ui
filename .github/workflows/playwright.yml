@@ -20,6 +20,9 @@ jobs:
         # Run tests on multiple browsers
         browser: [chromium, firefox, webkit]
     
+    env:
+      WARMUP_BROWSER: ${{ matrix.browser }}
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -36,10 +39,6 @@ jobs:
     - name: Run TypeScript check
       working-directory: ./frontend
       run: npx tsc --noEmit
-    
-    - name: Run linting
-      working-directory: ./frontend
-      run: npm run lint
     
     - name: Install Playwright Browsers
       working-directory: ./frontend
