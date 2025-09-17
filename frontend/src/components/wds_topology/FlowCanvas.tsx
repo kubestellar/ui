@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import ReactFlow, { Background, BackgroundVariant, useReactFlow } from 'reactflow';
+import ReactFlow, { Background, BackgroundVariant, useReactFlow, MarkerType } from 'reactflow';
 import 'reactflow/dist/style.css';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import useZoomStore from '../../stores/zoomStore';
@@ -181,7 +181,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
 
     const processedEdges: CustomEdge[] = [];
 
-    edgeGroups.forEach((groupEdges, key) => {
+    edgeGroups.forEach(groupEdges => {
       if (groupEdges.length === 1) {
         // Single edge with aggressive zoom-responsive styling and zoom-proportional arrows
         processedEdges.push({
@@ -192,7 +192,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
             opacity: Math.min(1, 0.6 + actualZoom * 0.4), // More visible at higher zoom
           },
           markerEnd: {
-            type: 'arrowclosed' as any,
+            type: MarkerType.ArrowClosed,
             width: Math.max(3, 8 * actualZoom), // Arrows get smaller when zoom decreases
             height: Math.max(3, 8 * actualZoom),
             color: groupEdges[0].style?.stroke || '#666',
@@ -212,7 +212,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
               opacity: Math.min(1, 0.5 + actualZoom * 0.5),
             },
             markerEnd: {
-              type: 'arrowclosed' as any,
+              type: MarkerType.ArrowClosed,
               width: Math.max(2, 6 * actualZoom), // Even smaller arrows for multiple edges that decrease with zoom
               height: Math.max(2, 6 * actualZoom),
               color: edge.style?.stroke || '#666',
