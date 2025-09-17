@@ -339,7 +339,7 @@ const GalaxyMarketplace: React.FC = () => {
       />
 
       {/* Static spaceship in background */}
-      <div className="pointer-events-none absolute bottom-[15%] right-[10%] z-[1] opacity-40">
+      <div className="pointer-events-none absolute bottom-[15%] right-[10%] z-[-1] opacity-40">
         <FaSpaceShuttle
           className="h-48 w-48 text-gray-400"
           style={{
@@ -352,14 +352,14 @@ const GalaxyMarketplace: React.FC = () => {
       </div>
 
       {/* Static decorative elements */}
-      <div className="pointer-events-none absolute right-10 top-20 z-[1] opacity-50">
+      <div className="pointer-events-none absolute right-10 top-20 z-[-1] opacity-50">
         <FaGlobeAsia className="h-12 w-12 text-purple-300" />
       </div>
 
       {/* Enhanced Header */}
       {/* Header Section */}
       <motion.div
-        className="sticky top-[72px] z-10 flex flex-col gap-4 bg-opacity-95 p-6 pb-0 backdrop-blur-md xl:top-[76px] 2xl:top-[88px]"
+        className="sticky top-[72px] z-30 flex flex-col gap-4 bg-opacity-95 p-6 pb-0 backdrop-blur-md xl:top-[76px] 2xl:top-[88px]"
         style={{
           background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         }}
@@ -594,7 +594,7 @@ const GalaxyMarketplace: React.FC = () => {
       </motion.div>
 
       {/* Enhanced Main content */}
-      <div className="relative z-[1] flex-grow overflow-y-auto p-6 pt-4">
+      <div className="relative z-10 flex-grow overflow-y-auto p-6 pt-28 md:pt-28">
         {loading ? (
           <motion.div
             className="flex h-full min-h-[400px] items-center justify-center"

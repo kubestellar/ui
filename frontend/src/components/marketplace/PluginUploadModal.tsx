@@ -47,6 +47,26 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
     }
   }, [isOpen]);
 
+  // Close on Escape and lock body scroll while open
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && uploadStep !== 'uploading') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, uploadStep, onClose]);
+
   const handleFile = useCallback(
     (file: File) => {
       // Validate file inline to avoid dependency issues
