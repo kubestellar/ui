@@ -22,7 +22,7 @@ interface FlowCanvasProps {
 export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const { setViewport, getViewport } = useReactFlow();
   const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
-  const { currentZoom } = useZoomStore();
+  const { currentZoom, getScaledNodeStyle, setZoom } = useZoomStore();
   const viewportRef = useRef({ x: 0, y: 0, zoom: currentZoom });
   const initializedRef = useRef(false);
   const lastTouchDistance = useRef<number | null>(null);
@@ -33,14 +33,213 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const { edgeGradients } = useTreeViewEdges({ theme: theme as 'light' | 'dark' });
 
   /**
+   * Calculates global spacing for all nodes based on zoom level and node density.
+   * Ensures proper spacing that scales with zoom and prevents all overlaps.
+   */
+  const calculateGlobalSpacing = useCallback(
+    (allNodes: CustomNode[], allEdges: CustomEdge[], zoomLevel: number) => {
+      // Aggressive base spacing that significantly increases when zoom decreases
+      const BASE_MIN_DISTANCE = Math.max(100, 200 / Math.max(zoomLevel, 0.2)); // Much more distance at lower zoom
+      const EDGE_FACTOR = 2.0; // Increased additional spacing for connected nodes
+
+      // Create connection map for edge-aware spacing
+      const connectionMap = new Map<string, Set<string>>();
+      allEdges.forEach(edge => {
+        if (!connectionMap.has(edge.source)) connectionMap.set(edge.source, new Set());
+        if (!connectionMap.has(edge.target)) connectionMap.set(edge.target, new Set());
+        connectionMap.get(edge.source)!.add(edge.target);
+        connectionMap.get(edge.target)!.add(edge.source);
+      });
+
+      return { BASE_MIN_DISTANCE, EDGE_FACTOR, connectionMap };
+    },
+    []
+  );
+
+  /**
+   * Enhanced global node positioning system that prevents all overlaps.
+   * Uses force-based layout with aggressive zoom-responsive spacing.
+   */
+  const repositionAllNodes = useCallback(
+    (processedNodes: CustomNode[], zoomLevel: number) => {
+      const { BASE_MIN_DISTANCE, EDGE_FACTOR, connectionMap } = calculateGlobalSpacing(
+        processedNodes,
+        edges,
+        zoomLevel
+      );
+      const adjustedNodes = [...processedNodes];
+      const MAX_ITERATIONS = 75; // Increased iterations for better positioning
+      const DAMPING = 0.9; // Increased damping for stronger force application
+
+      // Force-based positioning to prevent all overlaps
+      for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+        const forces = new Map<string, { x: number; y: number }>();
+        let hasMovement = false;
+
+        // Initialize forces
+        adjustedNodes.forEach(node => {
+          forces.set(node.id, { x: 0, y: 0 });
+        });
+
+        // Calculate repulsive forces between all node pairs
+        for (let i = 0; i < adjustedNodes.length; i++) {
+          for (let j = i + 1; j < adjustedNodes.length; j++) {
+            const nodeA = adjustedNodes[i];
+            const nodeB = adjustedNodes[j];
+
+            const dx = nodeA.position.x - nodeB.position.x;
+            const dy = nodeA.position.y - nodeB.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Determine required minimum distance with aggressive scaling
+            const areConnected =
+              connectionMap.get(nodeA.id)?.has(nodeB.id) ||
+              connectionMap.get(nodeB.id)?.has(nodeA.id);
+            const minDistance = areConnected ? BASE_MIN_DISTANCE * EDGE_FACTOR : BASE_MIN_DISTANCE;
+
+            if (distance < minDistance && distance > 0) {
+              hasMovement = true;
+              const force = ((minDistance - distance) / distance) * 1.2; // Increased force multiplier
+              const forceX = (dx / distance) * force * 0.6; // Increased force application
+              const forceY = (dy / distance) * force * 0.6;
+
+              // Apply repulsive force
+              const forceA = forces.get(nodeA.id)!;
+              const forceB = forces.get(nodeB.id)!;
+              forceA.x += forceX;
+              forceA.y += forceY;
+              forceB.x -= forceX;
+              forceB.y -= forceY;
+            }
+          }
+        }
+
+        // Apply forces with damping
+        adjustedNodes.forEach((node, index) => {
+          const force = forces.get(node.id)!;
+          if (Math.abs(force.x) > 0.05 || Math.abs(force.y) > 0.05) {
+            // Lower threshold for more movement
+            adjustedNodes[index] = {
+              ...node,
+              position: {
+                x: node.position.x + force.x * DAMPING,
+                y: node.position.y + force.y * DAMPING,
+              },
+            };
+          }
+        });
+
+        // Early termination if no significant movement
+        if (!hasMovement) break;
+      }
+
+      return adjustedNodes;
+    },
+    [calculateGlobalSpacing, edges]
+  );
+
+  // Scale nodes based on current zoom level and apply global spacing
+  const scaledNodes = useMemo(() => {
+    const { zoom } = getViewport();
+    const actualZoom = zoom || currentZoom;
+
+    // First, apply scaling to all nodes
+    const scaledNodesWithStyle = nodes.map(node => ({
+      ...node,
+      style: {
+        ...node.style,
+        ...getScaledNodeStyle(actualZoom),
+      },
+    }));
+
+    // Then apply global positioning to prevent all overlaps
+    return repositionAllNodes(scaledNodesWithStyle, actualZoom);
+  }, [nodes, currentZoom, getViewport, getScaledNodeStyle, repositionAllNodes]);
+
+  /**
+   * Enhanced edge processing with zoom-responsive spacing and routing.
+   * Increases edge separation when zoom decreases for better visibility.
+   */
+  const processedEdges = useMemo(() => {
+    const { zoom } = getViewport();
+    const actualZoom = zoom || currentZoom;
+
+    // Aggressive edge spacing that dramatically increases when zoom decreases
+    const edgeSpacing = Math.max(30, 80 / Math.max(actualZoom, 0.2)); // Much more spacing at low zoom
+    const strokeWidth = Math.max(1, 3 / Math.max(actualZoom, 0.3)); // Thinner edges - reduced from 2 and 6
+
+    // Group edges by source-target pairs to handle multiple edges between same nodes
+    const edgeGroups = new Map<string, CustomEdge[]>();
+
+    edges.forEach(edge => {
+      const key = `${edge.source}-${edge.target}`;
+      if (!edgeGroups.has(key)) {
+        edgeGroups.set(key, []);
+      }
+      edgeGroups.get(key)!.push(edge);
+    });
+
+    const processedEdges: CustomEdge[] = [];
+
+    edgeGroups.forEach((groupEdges, key) => {
+      if (groupEdges.length === 1) {
+        // Single edge with aggressive zoom-responsive styling and zoom-proportional arrows
+        processedEdges.push({
+          ...groupEdges[0],
+          style: {
+            ...groupEdges[0].style,
+            strokeWidth: strokeWidth,
+            opacity: Math.min(1, 0.6 + actualZoom * 0.4), // More visible at higher zoom
+          },
+          markerEnd: {
+            type: 'arrowclosed' as any,
+            width: Math.max(3, 8 * actualZoom), // Arrows get smaller when zoom decreases
+            height: Math.max(3, 8 * actualZoom),
+            color: groupEdges[0].style?.stroke || '#666',
+          },
+        });
+      } else {
+        // Multiple edges between same nodes with aggressive dynamic spacing and smaller arrows
+        groupEdges.forEach((edge, index) => {
+          const offset = (index - (groupEdges.length - 1) / 2) * edgeSpacing;
+
+          processedEdges.push({
+            ...edge,
+            id: `${edge.id}-${index}`, // Ensure unique IDs
+            style: {
+              ...edge.style,
+              strokeWidth: strokeWidth * 0.8, // Even thinner for multiple edges
+              opacity: Math.min(1, 0.5 + actualZoom * 0.5),
+            },
+            markerEnd: {
+              type: 'arrowclosed' as any,
+              width: Math.max(2, 6 * actualZoom), // Even smaller arrows for multiple edges that decrease with zoom
+              height: Math.max(2, 6 * actualZoom),
+              color: edge.style?.stroke || '#666',
+            },
+            // Add path offset for ReactFlow
+            data: {
+              ...edge.data,
+              pathOffset: offset,
+              isMultiple: true,
+            },
+          });
+        });
+      }
+    });
+
+    return processedEdges;
+  }, [edges, getViewport, currentZoom]);
+
+  /**
    * Calculates the boundaries of all nodes in the flow to determine positioning and scaling.
    * Returns the minimum and maximum x/y coordinates considering both node positions and dimensions.
    */
   const positions = useMemo(() => {
-    if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-    const minX = Math.min(...nodes.map(node => node.position.x));
+    if (scaledNodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    const minX = Math.min(...scaledNodes.map(node => node.position.x));
     const maxX = Math.max(
-      ...nodes.map(node => {
+      ...scaledNodes.map(node => {
         const width =
           typeof node.style?.width === 'string'
             ? parseInt(node.style.width)
@@ -48,9 +247,9 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         return node.position.x + width;
       })
     );
-    const minY = Math.min(...nodes.map(node => node.position.y));
+    const minY = Math.min(...scaledNodes.map(node => node.position.y));
     const maxY = Math.max(
-      ...nodes.map(node => {
+      ...scaledNodes.map(node => {
         const height =
           typeof node.style?.height === 'string'
             ? parseInt(node.style.height)
@@ -59,14 +258,25 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       })
     );
     return { minX, maxX, minY, maxY };
-  }, [nodes]);
+  }, [scaledNodes]);
+
+  // Update the viewport and handle zoom changes
+  useEffect(() => {
+    const { zoom } = getViewport();
+    const actualZoom = zoom || currentZoom;
+
+    // Update CSS custom property for zoom-responsive styling
+    if (reactFlowContainerRef.current) {
+      reactFlowContainerRef.current.style.setProperty('--zoom-level', actualZoom.toString());
+    }
+  }, [getViewport, currentZoom]);
 
   /**
    * Initializes the viewport based on node positions or restores a previously saved viewport.
    * Adjusts the container height based on the content and sets proper zoom level for optimal viewing.
    */
   useEffect(() => {
-    if (nodes.length > 0 && !initializedRef.current) {
+    if (scaledNodes.length > 0 && !initializedRef.current) {
       const { minX, minY, maxY } = positions;
       const treeHeight = maxY - minY;
       const reactFlowContainer = reactFlowContainerRef.current;
@@ -85,7 +295,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       viewportRef.current = { x: centerX, y: centerY, zoom: initialZoom };
       initializedRef.current = true;
     }
-  }, [nodes, positions, setViewport, currentZoom]);
+  }, [scaledNodes, positions, setViewport, currentZoom]);
 
   /**
    * Saves the current viewport position and zoom level when user stops panning or zooming.
@@ -119,6 +329,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         let newZoom = zoom + delta * 0.0025;
         newZoom = Math.max(0.1, Math.min(2, newZoom));
         setViewport({ x, y, zoom: newZoom });
+        setZoom(newZoom); // Update zoom store
         lastTouchDistance.current = newDistance;
       }
     }
@@ -135,7 +346,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       reactFlowContainer.removeEventListener('touchmove', handleTouchMove);
       reactFlowContainer.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [getViewport, setViewport]);
+  }, [getViewport, setViewport, setZoom]);
 
   // Enhanced mouse wheel zoom: zoom with wheel unless Shift (pan horizontally)
   const handleWheel = useCallback(
@@ -154,11 +365,12 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           let newZoom = zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed);
           newZoom = Math.max(0.1, Math.min(2, newZoom));
           setViewport({ x, y, zoom: newZoom });
+          setZoom(newZoom); // Update zoom store
           viewportRef.current = { x, y, zoom: newZoom };
         }
       }
     },
-    [getViewport, setViewport]
+    [getViewport, setViewport, setZoom]
   );
 
   // Add a separate wheel event handler with passive: false
@@ -247,8 +459,8 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       />
 
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={scaledNodes}
+        edges={processedEdges}
         fitView={false}
         panOnDrag={true}
         zoomOnScroll={false}
@@ -327,10 +539,69 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           pointer-events: all !important;
         }
 
-        /* Ensure edge paths remain visible */
+        /* Enhanced zoom-responsive edge styling with thinner edges */
         .react-flow__edge-path {
-          stroke-width: 2;
+          stroke-width: var(--edge-width, 1.5);
           stroke-dasharray: none;
+          transition: stroke-width 0.2s ease, opacity 0.2s ease;
+        }
+
+        /* Smaller arrow markers for edges */
+        .react-flow__arrowhead {
+          width: 8px !important;
+          height: 8px !important;
+        }
+
+        /* Even smaller arrows for multiple edges */
+        .react-flow__edge[data-multiple="true"] .react-flow__arrowhead {
+          width: 6px !important;
+          height: 6px !important;
+        }
+
+        /* Zoom-responsive sizing with thinner edges */
+        .react-flow__edge {
+          --edge-width: max(1px, min(4px, calc(3px / var(--zoom-level, 1)))); /* Reduced from max 8px */
+          --arrow-size: max(3px, calc(8px * var(--zoom-level, 1))); /* Arrows scale with zoom, not inverse */
+        }
+
+        .react-flow__arrowhead {
+          width: var(--arrow-size) !important;
+          height: var(--arrow-size) !important;
+        }
+
+        /* Enhanced styling for multiple edges with thinner lines */
+        .react-flow__edge:hover .react-flow__edge-path {
+          stroke-width: calc(var(--edge-width, 1.5) * 1.5); /* Reduced hover multiplier */
+          opacity: 1;
+        }
+
+        /* Smooth curves and animations for multiple edges */
+        .react-flow__edge-path[data-multiple="true"] {
+          stroke-dasharray: 5,5;
+          animation: edge-flow 2s linear infinite;
+        }
+
+        @keyframes edge-flow {
+          0% { stroke-dashoffset: 0; }
+          100% { stroke-dashoffset: 10; }
+        }
+
+        /* Better node spacing visualization at different zoom levels */
+        .react-flow__node {
+          transition: transform 0.3s ease;
+        }
+
+        /* Enhanced visual feedback for dense areas with thicker edges at low zoom */
+        .react-flow__edge-path[stroke-width="1.6"] {
+          stroke-dasharray: 3,3;
+          opacity: 0.8;
+        }
+
+        /* Additional spacing for very low zoom levels */
+        @media (max-width: 1px) { /* This will be controlled by zoom level */
+          .react-flow__edge {
+            --edge-width: 10px;
+          }
         }
 
         /* Ensure menu buttons are always clickable */
