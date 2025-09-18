@@ -158,15 +158,20 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
 
   /**
    * Enhanced edge processing with zoom-responsive spacing and routing.
-   * Increases edge separation when zoom decreases for better visibility.
+   * Ensures edges remain visible at all zoom levels with proper minimum thickness.
    */
   const processedEdges = useMemo(() => {
     const { zoom } = getViewport();
     const actualZoom = zoom || currentZoom;
 
-    // Aggressive edge spacing that dramatically increases when zoom decreases
-    const edgeSpacing = Math.max(30, 80 / Math.max(actualZoom, 0.2)); // Much more spacing at low zoom
-    const strokeWidth = Math.max(1, 3 / Math.max(actualZoom, 0.3)); // Thinner edges - reduced from 2 and 6
+    // Enhanced edge spacing that increases when zoom decreases
+    const edgeSpacing = Math.max(30, 80 / Math.max(actualZoom, 0.2));
+
+    // FIXED: Ensure minimum edge thickness while still being zoom-responsive
+    // At very low zoom (0.1), stroke will be 3px minimum
+    // At normal zoom (1.0), stroke will be 2px
+    // At high zoom (2.0), stroke will be 1.5px minimum
+    const strokeWidth = Math.max(1.5, Math.min(4, 2 / Math.max(actualZoom, 0.5)));
 
     // Group edges by source-target pairs to handle multiple edges between same nodes
     const edgeGroups = new Map<string, CustomEdge[]>();
@@ -183,23 +188,23 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
 
     edgeGroups.forEach(groupEdges => {
       if (groupEdges.length === 1) {
-        // Single edge with aggressive zoom-responsive styling and zoom-proportional arrows
+        // Single edge with guaranteed visibility at all zoom levels
         processedEdges.push({
           ...groupEdges[0],
           style: {
             ...groupEdges[0].style,
             strokeWidth: strokeWidth,
-            opacity: Math.min(1, 0.6 + actualZoom * 0.4), // More visible at higher zoom
+            opacity: Math.max(0.7, Math.min(1, 0.6 + actualZoom * 0.4)), // Never too faint
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            width: Math.max(3, 8 * actualZoom), // Arrows get smaller when zoom decreases
-            height: Math.max(3, 8 * actualZoom),
+            width: Math.max(4, Math.min(12, 8 * actualZoom)), // Bounded arrow size
+            height: Math.max(4, Math.min(12, 8 * actualZoom)),
             color: groupEdges[0].style?.stroke || '#666',
           },
         });
       } else {
-        // Multiple edges between same nodes with aggressive dynamic spacing and smaller arrows
+        // Multiple edges between same nodes with guaranteed visibility
         groupEdges.forEach((edge, index) => {
           const offset = (index - (groupEdges.length - 1) / 2) * edgeSpacing;
 
@@ -208,13 +213,13 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
             id: `${edge.id}-${index}`, // Ensure unique IDs
             style: {
               ...edge.style,
-              strokeWidth: strokeWidth * 0.8, // Even thinner for multiple edges
-              opacity: Math.min(1, 0.5 + actualZoom * 0.5),
+              strokeWidth: strokeWidth * 0.8, // Slightly thinner but still visible
+              opacity: Math.max(0.6, Math.min(1, 0.5 + actualZoom * 0.5)), // Never too faint
             },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              width: Math.max(2, 6 * actualZoom), // Even smaller arrows for multiple edges that decrease with zoom
-              height: Math.max(2, 6 * actualZoom),
+              width: Math.max(3, Math.min(10, 6 * actualZoom)), // Bounded smaller arrows
+              height: Math.max(3, Math.min(10, 6 * actualZoom)),
               color: edge.style?.stroke || '#666',
             },
             // Add path offset for ReactFlow
@@ -511,7 +516,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         />
       </ReactFlow>
 
-      {/* Enhanced animations */}
+      {/* Enhanced animations with improved edge visibility */}
       <style>{`
         @keyframes float {
           0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
@@ -539,29 +544,35 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           pointer-events: all !important;
         }
 
-        /* Enhanced zoom-responsive edge styling with thinner edges */
+        /* FIXED: Enhanced zoom-responsive edge styling with guaranteed minimum visibility */
         .react-flow__edge-path {
-          stroke-width: var(--edge-width, 1.5);
+          stroke-width: var(--edge-width, 2);
           stroke-dasharray: none;
           transition: stroke-width 0.2s ease, opacity 0.2s ease;
+          /* Ensure minimum visibility at all zoom levels */
+          min-stroke-width: 1.5px !important;
         }
 
-        /* Smaller arrow markers for edges */
+        /* Properly sized arrow markers for edges */
         .react-flow__arrowhead {
           width: 8px !important;
           height: 8px !important;
+          min-width: 4px !important;
+          min-height: 4px !important;
         }
 
-        /* Even smaller arrows for multiple edges */
+        /* Smaller but still visible arrows for multiple edges */
         .react-flow__edge[data-multiple="true"] .react-flow__arrowhead {
           width: 6px !important;
           height: 6px !important;
+          min-width: 3px !important;
+          min-height: 3px !important;
         }
 
-        /* Zoom-responsive sizing with thinner edges */
+        /* FIXED: Zoom-responsive sizing with guaranteed minimum visibility */
         .react-flow__edge {
-          --edge-width: max(1px, min(4px, calc(3px / var(--zoom-level, 1)))); /* Reduced from max 8px */
-          --arrow-size: max(3px, calc(8px * var(--zoom-level, 1))); /* Arrows scale with zoom, not inverse */
+          --edge-width: max(1.5px, min(4px, calc(2px / max(var(--zoom-level, 1), 0.5))));
+          --arrow-size: max(4px, min(12px, calc(8px * var(--zoom-level, 1))));
         }
 
         .react-flow__arrowhead {
@@ -569,10 +580,10 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           height: var(--arrow-size) !important;
         }
 
-        /* Enhanced styling for multiple edges with thinner lines */
+        /* Enhanced hover effects with better visibility */
         .react-flow__edge:hover .react-flow__edge-path {
-          stroke-width: calc(var(--edge-width, 1.5) * 1.5); /* Reduced hover multiplier */
-          opacity: 1;
+          stroke-width: calc(var(--edge-width, 2) * 1.3);
+          opacity: 1 !important;
         }
 
         /* Smooth curves and animations for multiple edges */
@@ -591,17 +602,16 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           transition: transform 0.3s ease;
         }
 
-        /* Enhanced visual feedback for dense areas with thicker edges at low zoom */
-        .react-flow__edge-path[stroke-width="1.6"] {
-          stroke-dasharray: 3,3;
-          opacity: 0.8;
+        /* FIXED: Enhanced visual feedback maintaining minimum visibility */
+        .react-flow__edge-path[stroke-width] {
+          min-stroke-width: 1.5px !important;
+          opacity: 0.8 !important;
         }
 
-        /* Additional spacing for very low zoom levels */
-        @media (max-width: 1px) { /* This will be controlled by zoom level */
-          .react-flow__edge {
-            --edge-width: 10px;
-          }
+        /* FIXED: Ensure edges are never invisible at any zoom level */
+        .react-flow__edge-path {
+          stroke-width: max(1.5px, var(--edge-width, 2px)) !important;
+          opacity: max(0.6, var(--edge-opacity, 0.8)) !important;
         }
 
         /* Ensure menu buttons are always clickable */
