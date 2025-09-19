@@ -11,7 +11,6 @@ export default defineConfig({
   testDir: './e2e',
   /* Global setup for all tests */
   globalSetup: './playwright.global-setup.ts',
-  globalTeardown: './playwright.global-teardown.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
