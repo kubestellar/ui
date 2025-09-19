@@ -1,5 +1,4 @@
 import { FullConfig, chromium, firefox, webkit } from '@playwright/test';
-import { server } from './mocks/server';
 
 function normalizeBrowserName(raw?: string) {
   if (!raw) return 'chromium';
@@ -25,10 +24,6 @@ function projectFromArgv(): string | undefined {
 
 export default async function globalSetup(config: FullConfig) {
   console.log('🎭 Playwright Global Setup Started');
-
-  // Start MSW Node Server
-  server.listen({ onUnhandledRequest: 'warn' });
-  console.log('✅ MSW Node server started');
 
   // 1) Highest priority: explicit env var (set this in CI or in npm scripts)
   const envProject = process.env.WARMUP_BROWSER || process.env.WARMUP_PROJECT;

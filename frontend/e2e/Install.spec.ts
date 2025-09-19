@@ -1,4 +1,10 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript({
+    path: '../src/mocks/browser.ts',
+  });
+});
 
 test('install', async ({ page }) => {
   await page.goto('http://localhost:5173/install');
