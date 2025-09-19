@@ -13,6 +13,12 @@ import useBackendHealthCheck from './hooks/useBackendHealthCheck';
 import * as React from 'react';
 window.React = React;
 
+if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+  import('./mocks/browser').then(({ worker }) => {
+    worker.start({ onUnhandledRequest: 'bypass' });
+  });
+}
+
 const AppWrapper = () => {
   useBackendHealthCheck();
   return (
