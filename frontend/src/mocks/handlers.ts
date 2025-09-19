@@ -5,7 +5,7 @@ export const handlers = [
     return HttpResponse.json({ allReady: false });
   }),
   http.get('http://localhost:4000/health', () => {
-    return HttpResponse.json({ status: 'ok' })
+    return HttpResponse.json({ status: 'ok' });
   }),
   http.get('http://localhost:4000/api/prerequisites', () => {
     return HttpResponse.json({
