@@ -953,17 +953,6 @@
     "fullscreen": {
       "toggle": "पूर्ण स्क्रीन view टॉगल करें"
     },
-    "contextMenu": {
-      "details": "विवरण",
-      "delete": "हटाएं",
-      "edit": "संपादित करें",
-      "logs": "लॉग्स"
-    },
-    "deleteDialog": {
-      "title": "संसाधन हटाने की पुष्टि करें",
-      "message": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
-      "confirm": "हाँ, हटाएं"
-    },
     "zoomControls": {
       "groupByResource": "Resource/Kind द्वारा समूहीकृत करें",
       "expandAll": "सभी parent nodes के सभी child nodes को विस्तृत करें",
@@ -976,6 +965,21 @@
       "square": "वर्गाकार",
       "fullscreen": "पूर्ण स्क्रीन में जाएं",
       "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
+    },
+    "hideControls": {
+      "show": "नियंत्रण दिखाएं",
+      "hide": "नियंत्रण छुपाएं"
+    },
+    "contextMenu": {
+      "details": "विवरण",
+      "delete": "हटाएं",
+      "edit": "संपादित करें",
+      "logs": "लॉग्स"
+    },
+    "deleteDialog": {
+      "title": "संसाधन हटाने की पुष्टि करें",
+      "message": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
+      "confirm": "हाँ, हटाएं"
     }
   },
   "quickConnect": {

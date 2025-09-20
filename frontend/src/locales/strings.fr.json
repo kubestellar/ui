@@ -730,7 +730,13 @@
       "expandAll": "Développer tous les nœuds enfants de tous les nœuds parents",
       "collapseAll": "Réduire tous les nœuds enfants de tous les nœuds parents",
       "zoomIn": "Agrandir",
-      "zoomOut": "Rétrécir"
+      "zoomOut": "Rétrécir",
+      "resetZoom": "Réinitialiser le Zoom",
+      "edgeStyle": "Style de Bordure",
+      "curvy": "Courbe",
+      "square": "Carré",
+      "fullscreen": "Plein Écran",
+      "exitFullscreen": "Quitter le Plein Écran"
     },
     "nodeLabel": {
       "labels": "Étiquettes :",
@@ -814,6 +820,23 @@
     },
     "fullscreen": {
       "toggle": "Basculer en mode plein écran"
+    },
+    "zoomControls": {
+      "groupByResource": "Grouper par ressource/type",
+      "expandAll": "Développer tous les nœuds enfants de tous les nœuds parents",
+      "collapseAll": "Réduire tous les nœuds enfants de tous les nœuds parents",
+      "zoomIn": "Agrandir",
+      "zoomOut": "Rétrécir",
+      "resetZoom": "Réinitialiser le Zoom",
+      "edgeStyle": "Style de Bordure",
+      "curvy": "Courbe",
+      "square": "Carré",
+      "fullscreen": "Plein Écran",
+      "exitFullscreen": "Quitter le Plein Écran"
+    },
+    "hideControls": {
+      "show": "Afficher les Contrôles",
+      "hide": "Masquer les Contrôles"
     },
     "contextMenu": {
       "details": "Détails",

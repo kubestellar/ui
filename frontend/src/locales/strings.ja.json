@@ -826,7 +826,13 @@
       "expandAll": "すべての親ノードの子ノードを展開",
       "collapseAll": "すべての親ノードの子ノードを折りたたむ",
       "zoomIn": "ズームイン",
-      "zoomOut": "ズームアウト"
+      "zoomOut": "ズームアウト",
+      "resetZoom": "ズームリセット",
+      "edgeStyle": "エッジスタイル",
+      "curvy": "曲線",
+      "square": "四角",
+      "fullscreen": "フルスクリーン",
+      "exitFullscreen": "フルスクリーン終了"
     },
     "nodeLabel": {
       "labels": "ラベル：",
@@ -910,6 +916,23 @@
     },
     "fullscreen": {
       "toggle": "全画面表示の切り替え"
+    },
+    "zoomControls": {
+      "groupByResource": "リソース／種類ごとにグループ化",
+      "expandAll": "すべての親ノードの子ノードを展開",
+      "collapseAll": "すべての親ノードの子ノードを折りたたむ",
+      "zoomIn": "ズームイン",
+      "zoomOut": "ズームアウト",
+      "resetZoom": "ズームリセット",
+      "edgeStyle": "エッジスタイル",
+      "curvy": "曲線",
+      "square": "四角",
+      "fullscreen": "フルスクリーン",
+      "exitFullscreen": "フルスクリーン終了"
+    },
+    "hideControls": {
+      "show": "コントロール表示",
+      "hide": "コントロール非表示"
     },
     "contextMenu": {
       "details": "詳細",

@@ -966,6 +966,10 @@
       "fullscreen": "Enter Fullscreen",
       "exitFullscreen": "Exit Fullscreen"
     },
+    "hideControls": {
+      "show": "Show Controls",
+      "hide": "Hide Controls"
+    },
     "contextMenu": {
       "details": "Details",
       "delete": "Delete",

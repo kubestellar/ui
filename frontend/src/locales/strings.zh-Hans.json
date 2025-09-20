@@ -897,7 +897,13 @@
       "expandAll": "展开所有父节点的子节点",
       "collapseAll": "折叠所有父节点的子节点",
       "zoomIn": "放大",
-      "zoomOut": "缩小"
+      "zoomOut": "缩小",
+      "resetZoom": "重置缩放",
+      "edgeStyle": "边样式",
+      "curvy": "曲线",
+      "square": "方形",
+      "fullscreen": "全屏",
+      "exitFullscreen": "退出全屏"
     },
     "nodeLabel": {
       "labels": "标签：",
@@ -981,6 +987,23 @@
     },
     "fullscreen": {
       "toggle": "切换全屏视图"
+    },
+    "zoomControls": {
+      "groupByResource": "按资源/类型分组",
+      "expandAll": "展开所有父节点的子节点",
+      "collapseAll": "折叠所有父节点的子节点",
+      "zoomIn": "放大",
+      "zoomOut": "缩小",
+      "resetZoom": "重置缩放",
+      "edgeStyle": "边样式",
+      "curvy": "曲线",
+      "square": "方形",
+      "fullscreen": "全屏",
+      "exitFullscreen": "退出全屏"
+    },
+    "hideControls": {
+      "show": "显示控制",
+      "hide": "隐藏控制"
     },
     "contextMenu": {
       "details": "详情",

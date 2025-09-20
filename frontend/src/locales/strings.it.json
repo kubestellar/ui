@@ -826,7 +826,13 @@
       "expandAll": "Espandi tutti i nodi figli",
       "collapseAll": "Comprimi tutti i nodi figli",
       "zoomIn": "Ingrandisci",
-      "zoomOut": "Rimpicciolisci"
+      "zoomOut": "Rimpicciolisci",
+      "resetZoom": "Reimposta Zoom",
+      "edgeStyle": "Stile Bordo",
+      "curvy": "Curvato",
+      "square": "Quadrato",
+      "fullscreen": "Schermo Intero",
+      "exitFullscreen": "Esci da Schermo Intero"
     },
     "nodeLabel": {
       "labels": "Etichette:",
@@ -916,6 +922,23 @@
     },
     "fullscreen": {
       "toggle": "Attiva/disattiva vista a schermo intero"
+    },
+    "zoomControls": {
+      "groupByResource": "Raggruppa per risorsa/tipo",
+      "expandAll": "Espandi tutti i nodi figli",
+      "collapseAll": "Comprimi tutti i nodi figli",
+      "zoomIn": "Ingrandisci",
+      "zoomOut": "Rimpicciolisci",
+      "resetZoom": "Reimposta Zoom",
+      "edgeStyle": "Stile Bordo",
+      "curvy": "Curvato",
+      "square": "Quadrato",
+      "fullscreen": "Schermo Intero",
+      "exitFullscreen": "Esci da Schermo Intero"
+    },
+    "hideControls": {
+      "show": "Mostra Controlli",
+      "hide": "Nascondi Controlli"
     },
     "contextMenu": {
       "details": "Dettagli",
