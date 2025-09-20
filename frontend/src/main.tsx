@@ -1,3 +1,10 @@
+if (import.meta.env.VITE_USE_MSW === 'true') {
+  // dynamic import so msw/browser is only included when needed
+  const { worker } = await import('./mocks/browser');
+  await worker.start({ onUnhandledRequest: 'warn' });
+  console.log('[MSW] worker started');
+}
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
@@ -12,12 +19,6 @@ import NetworkErrorToastManager from './components/NetworkErrorToastManager';
 import useBackendHealthCheck from './hooks/useBackendHealthCheck';
 import * as React from 'react';
 window.React = React;
-
-if (process.env.VITE_USE_MSW === 'true') {
-  import('./mocks/browser').then(({ worker }) => {
-    worker.start({ onUnhandledRequest: 'bypass' });
-  });
-}
 
 const AppWrapper = () => {
   useBackendHealthCheck();
