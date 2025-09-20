@@ -820,6 +820,19 @@
     "fullscreen": {
       "toggle": "Alternar vista de pantalla completa"
     },
+    "zoomControls": {
+      "groupByResource": "Agrupar por Recurso/Tipo",
+      "expandAll": "Expandir todos los nodos hijos de todos los nodos padre",
+      "collapseAll": "Colapsar todos los nodos hijos de todos los nodos padre",
+      "zoomIn": "Acercar",
+      "zoomOut": "Alejar",
+      "resetZoom": "Restablecer Zoom",
+      "edgeStyle": "Estilo de Borde",
+      "curvy": "Curvado",
+      "square": "Cuadrado",
+      "fullscreen": "Pantalla Completa",
+      "exitFullscreen": "Salir de Pantalla Completa"
+    },
     "hideControls": {
       "show": "Mostrar Controles",
       "hide": "Ocultar Controles"
