@@ -69,7 +69,7 @@ const LogsTab: React.FC<LogsTabProps> = ({
     if (terminalInstance.current) {
       // Update existing terminal with latest logs instead of re-creating it
       const term = terminalInstance.current;
-      const lastLogIndex = term.buffer.active.length - 1; // Approximate last written log
+      const lastLogIndex = term.buffer.active.length - 1; 
       const newLogs = actualLogs.slice(lastLogIndex > 0 ? lastLogIndex : 0);
       newLogs.forEach(log => {
         term.writeln(log);
