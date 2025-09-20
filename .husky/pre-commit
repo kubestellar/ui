@@ -1,3 +1,4 @@
+#!/bin/sh
 echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
 if [ -d "frontend" ]; then
   cd frontend && npx prettier --write --ignore-path .prettierignore . && cd ..
@@ -12,14 +13,12 @@ else
   echo "⚠️ frontend directory not found, skipping lint"
 fi
 
-cd ..
-
 echo "🧹 Running gofmt on Go files (excluding vendor)..."
-find . -type f -name '*.go' -not -path "./vendor/*" -print0 | xargs -0 -r gofmt -w
+find . -type f -name '*.go' -not -path "./vendor/*" -exec gofmt -w {} +
 
 echo "🧪 Running golint on Go files (excluding vendor)..."
 if command -v golint >/dev/null 2>&1; then
-  find . -type f -name '*.go' -not -path "./vendor/*" -print0 | xargs -0 -r golint || echo "ℹ️ golint produced warnings (non-blocking)."
+  find . -type f -name '*.go' -not -path "./vendor/*" -exec golint {} + || echo "ℹ️ golint produced warnings (non-blocking)."
 else
   echo "⚠️ golint not installed. Run: go install golang.org/x/lint/golint@latest"
 fi
