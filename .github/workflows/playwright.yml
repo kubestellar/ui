@@ -38,7 +38,7 @@ jobs:
 
     - name: Init MSW worker
       working-directory: ./frontend
-      run: msw init public/ --save
+      run: npx msw init public/ --save
     
     - name: Run TypeScript check
       working-directory: ./frontend
