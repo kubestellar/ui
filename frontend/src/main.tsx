@@ -13,7 +13,7 @@ import useBackendHealthCheck from './hooks/useBackendHealthCheck';
 import * as React from 'react';
 window.React = React;
 
-if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+if (process.env.VITE_USE_MSW === 'true') {
   import('./mocks/browser').then(({ worker }) => {
     worker.start({ onUnhandledRequest: 'bypass' });
   });

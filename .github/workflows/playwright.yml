@@ -35,6 +35,10 @@ jobs:
     - name: Install frontend dependencies
       working-directory: ./frontend
       run: npm ci
+
+    - name: Init MSW worker
+      working-directory: ./frontend
+      run: msw init public/ --save
     
     - name: Run TypeScript check
       working-directory: ./frontend
@@ -61,6 +65,7 @@ jobs:
       run: npx playwright test --project=${{ matrix.browser }}
       env:
         CI: true
+        VITE_USE_MSW: 'true'
     
     - uses: actions/upload-artifact@v4
       if: always()
