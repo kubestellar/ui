@@ -13,24 +13,37 @@ import useBackendHealthCheck from './hooks/useBackendHealthCheck';
 import * as React from 'react';
 window.React = React;
 
-const AppWrapper = () => {
-  useBackendHealthCheck();
-  return (
-    <StrictMode>
-      <QueryProvider>
-        <WebSocketProvider>
-          <PluginProvider>
-            <ClientThemeWrapper>
-              <ToastProvider>
-                <NetworkErrorToastManager />
-                <App />
-              </ToastProvider>
-            </ClientThemeWrapper>
-          </PluginProvider>
-        </WebSocketProvider>
-      </QueryProvider>
-    </StrictMode>
-  );
-};
+(async () => {
+  if (import.meta.env.VITE_USE_MSW === 'true') {
+    try {
+      const { worker } = await import('./mocks/browser');
+      await worker.start({ onUnhandledRequest: 'warn' });
+      console.log('[MSW] worker started');
+    } catch (err) {
+      console.warn('[MSW] failed to start', err);
+    }
+  }
 
-createRoot(document.getElementById('root')!).render(<AppWrapper />);
+  // Mount the app after worker is started (or skipped)
+  const AppWrapper = () => {
+    useBackendHealthCheck();
+    return (
+      <StrictMode>
+        <QueryProvider>
+          <WebSocketProvider>
+            <PluginProvider>
+              <ClientThemeWrapper>
+                <ToastProvider>
+                  <NetworkErrorToastManager />
+                  <App />
+                </ToastProvider>
+              </ClientThemeWrapper>
+            </PluginProvider>
+          </WebSocketProvider>
+        </QueryProvider>
+      </StrictMode>
+    );
+  };
+
+  createRoot(document.getElementById('root')!).render(<AppWrapper />);
+})();
