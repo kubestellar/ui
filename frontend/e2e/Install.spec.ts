@@ -101,9 +101,9 @@ test.describe('InstallationPage', () => {
     const prereqCards = page
       .locator('.cursor-pointer')
       .filter({ hasText: /KubeFlex|OCM CLI|Helm|kubectl|kind|Docker/ });
-    
+
     await expect(prereqCards.first()).toBeVisible();
-    
+
     const cardCount = await prereqCards.count();
 
     if (cardCount > 0) {
@@ -130,11 +130,11 @@ test.describe('InstallationPage', () => {
     const copyButton = page
       .locator('button[aria-label="Copy code"], button:has-text("Copy")')
       .first();
-    
+
     if (await copyButton.isVisible()) {
       await copyButton.click();
-      await expect(page
-        .locator('.text-emerald-300, .text-green-700, [data-testid="copy-success"]')
+      await expect(
+        page.locator('.text-emerald-300, .text-green-700, [data-testid="copy-success"]')
       ).toBeVisible();
     }
   });
@@ -325,7 +325,6 @@ test.describe('InstallationPage', () => {
   });
 
   test('should test prerequisite status badges', async ({ page }) => {
-
     const statusBadges = page.locator('[data-testid="status-badge"], .rounded-full, .inline-flex');
     const badgeCount = await statusBadges.count();
 
@@ -363,7 +362,7 @@ test.describe('InstallationPage', () => {
 
     if (await refreshButton.isVisible()) {
       await refreshButton.click();
-      
+
       // Use more specific selector for the refresh button's loading spinner
       const loadingSpinner = refreshButton.locator('svg.animate-spin');
       const hasLoadingSpinner = await loadingSpinner.isVisible();
@@ -380,7 +379,9 @@ test.describe('InstallationPage', () => {
 
   test('should test installation button states', async ({ page }) => {
     await page.getByRole('button', { name: 'Installation' }).first().click();
-    await expect(page.getByRole('button', { name: 'Installation' }).first()).toHaveClass(/bg-blue-600/);
+    await expect(page.getByRole('button', { name: 'Installation' }).first()).toHaveClass(
+      /bg-blue-600/
+    );
 
     const installButton = page.getByRole('button', { name: 'Start Installation' });
     await expect(installButton).toBeVisible();
@@ -394,15 +395,15 @@ test.describe('InstallationPage', () => {
       await expect(loadingSpinner).not.toBeVisible({ timeout: 5000 });
     }
 
-    await expect(page
-      .getByText(/Follow the CLI installation|Installation complete|Preparing instructions/)
+    await expect(
+      page.getByText(/Follow the CLI installation|Installation complete|Preparing instructions/)
     ).toBeVisible();
   });
 
   test('should test all tab navigation functionality', async ({ page }) => {
     const prerequisitesTab = page.getByRole('button', { name: 'Prerequisites' }).first();
     const installationTab = page.getByRole('button', { name: 'Installation' }).first();
-    
+
     await expect(prerequisitesTab).toBeVisible();
     await expect(installationTab).toBeVisible();
     await expect(prerequisitesTab).toHaveClass(/bg-blue-600/);
