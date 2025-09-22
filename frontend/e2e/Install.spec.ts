@@ -28,8 +28,6 @@ test.describe('InstallationPage', () => {
   });
 
   test('should display quick stats cards', async ({ page }) => {
-    await page.waitForTimeout(500);
-
     await expect(
       page
         .locator('.text-sm')
@@ -55,8 +53,7 @@ test.describe('InstallationPage', () => {
   });
 
   test('should test prerequisites tab functionality', async ({ page }) => {
-    await page.waitForTimeout(1000);
-
+    await expect(page.locator('button:has-text("Prerequisites")').first()).toBeVisible();
     await expect(page.locator('button:has-text("Prerequisites")').first()).toHaveClass(
       /bg-blue-600/
     );
@@ -101,19 +98,17 @@ test.describe('InstallationPage', () => {
   });
 
   test('should expand prerequisite cards and show details with links', async ({ page }) => {
-    await page.waitForTimeout(1000);
-
     const prereqCards = page
       .locator('.cursor-pointer')
       .filter({ hasText: /KubeFlex|OCM CLI|Helm|kubectl|kind|Docker/ });
+    
+    await expect(prereqCards.first()).toBeVisible();
+    
     const cardCount = await prereqCards.count();
 
     if (cardCount > 0) {
       await prereqCards.first().click();
-      await page.waitForTimeout(300);
-
-      const detailsVisible = await page.locator('.border-t.p-4.pt-0').isVisible();
-      expect(detailsVisible).toBeTruthy();
+      await expect(page.locator('.border-t.p-4.pt-0')).toBeVisible();
 
       const viewGuideLinks = page
         .locator('a')
@@ -132,19 +127,15 @@ test.describe('InstallationPage', () => {
   });
 
   test('should test copy functionality in code blocks', async ({ page }) => {
-    await page.waitForTimeout(1000);
-
     const copyButton = page
       .locator('button[aria-label="Copy code"], button:has-text("Copy")')
       .first();
+    
     if (await copyButton.isVisible()) {
       await copyButton.click();
-      await page.waitForTimeout(300);
-
-      const feedbackVisible = await page
+      await expect(page
         .locator('.text-emerald-300, .text-green-700, [data-testid="copy-success"]')
-        .isVisible();
-      expect(feedbackVisible).toBeTruthy();
+      ).toBeVisible();
     }
   });
 
@@ -172,24 +163,20 @@ test.describe('InstallationPage', () => {
 
   test('should test platform selection', async ({ page }) => {
     await page.getByRole('button', { name: 'Installation' }).first().click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByRole('button', { name: 'kind' })).toHaveClass(/bg-blue-600/);
 
     await page.getByRole('button', { name: 'k3d' }).click();
-    await page.waitForTimeout(200);
     await expect(page.getByRole('button', { name: 'k3d' })).toHaveClass(/bg-blue-600/);
     await expect(page.getByRole('button', { name: 'kind' })).not.toHaveClass(/bg-blue-600/);
 
     await page.getByRole('button', { name: 'kind' }).click();
-    await page.waitForTimeout(200);
     await expect(page.getByRole('button', { name: 'kind' })).toHaveClass(/bg-blue-600/);
     await expect(page.getByRole('button', { name: 'k3d' })).not.toHaveClass(/bg-blue-600/);
   });
 
   test('should display installation script with correct platform', async ({ page }) => {
     await page.getByRole('button', { name: 'Installation' }).first().click();
-    await page.waitForTimeout(300);
 
     await expect(page.locator('pre.whitespace-pre-wrap.break-all.font-mono')).toBeVisible();
 
@@ -199,31 +186,26 @@ test.describe('InstallationPage', () => {
     expect(scriptText).toContain('--platform kind');
 
     await page.getByRole('button', { name: 'k3d' }).click();
-    await page.waitForTimeout(300);
 
     const updatedScriptText = await scriptElement.textContent();
     expect(updatedScriptText).toContain('--platform k3d');
   });
 
   test('should test complete installation flow', async ({ page }) => {
-    await page.waitForTimeout(1000);
-
+    await expect(page.getByRole('button', { name: 'Prerequisites' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Prerequisites' })).toHaveClass(/bg-blue-600/);
 
     const nextButton = page.getByRole('button', { name: 'Next: Installation' });
     if (await nextButton.isEnabled()) {
       await nextButton.click();
-      await page.waitForTimeout(300);
 
       await expect(page.getByRole('button', { name: 'Installation' }).first()).toHaveClass(
         /bg-blue-600/
       );
 
       await page.getByRole('button', { name: 'k3d' }).click();
-      await page.waitForTimeout(200);
 
       await page.getByRole('button', { name: 'Start Installation' }).click();
-      await page.waitForTimeout(300);
 
       const messageVisible = await page
         .getByText(/Follow the CLI installation|Preparing instructions|Installing/)
@@ -234,10 +216,8 @@ test.describe('InstallationPage', () => {
 
   test('should test back navigation from installation to prerequisites', async ({ page }) => {
     await page.getByRole('button', { name: 'Installation' }).first().click();
-    await page.waitForTimeout(300);
 
     await page.getByRole('button', { name: 'Back: Prerequisites' }).click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByRole('button', { name: 'Prerequisites' }).first()).toHaveClass(
       /bg-blue-600/
@@ -275,9 +255,7 @@ test.describe('InstallationPage', () => {
       .first();
     if (await themeButton.isVisible()) {
       await themeButton.click();
-      await page.waitForTimeout(200);
       await themeButton.click();
-      await page.waitForTimeout(200);
     }
 
     const languageButton = page.getByRole('button', { name: 'Switch language' });
@@ -296,10 +274,7 @@ test.describe('InstallationPage', () => {
   });
 
   test('should test installation tab links and buttons', async ({ page }) => {
-    await page.waitForTimeout(1000);
-
     await page.getByRole('button', { name: 'Installation' }).first().click();
-    await page.waitForTimeout(300);
 
     const viewPrereqsButton = page.getByRole('link', { name: 'View Install Prerequisites' });
     await expect(viewPrereqsButton).toBeVisible();
@@ -325,18 +300,15 @@ test.describe('InstallationPage', () => {
 
   test('should test responsive design elements', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.waitForTimeout(200);
 
     await expect(page.getByRole('heading', { name: 'Welcome to KubeStellar' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Prerequisites' }).first()).toBeVisible();
 
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForTimeout(200);
 
     await expect(page.getByRole('heading', { name: 'Welcome to KubeStellar' })).toBeVisible();
 
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.waitForTimeout(200);
 
     await expect(page.getByRole('heading', { name: 'Welcome to KubeStellar' })).toBeVisible();
   });
@@ -353,7 +325,6 @@ test.describe('InstallationPage', () => {
   });
 
   test('should test prerequisite status badges', async ({ page }) => {
-    await page.waitForTimeout(1000);
 
     const statusBadges = page.locator('[data-testid="status-badge"], .rounded-full, .inline-flex');
     const badgeCount = await statusBadges.count();
@@ -380,7 +351,6 @@ test.describe('InstallationPage', () => {
 
   test('should test installation process information boxes', async ({ page }) => {
     await page.getByRole('button', { name: 'Installation' }).first().click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('Installation Process:')).toBeVisible();
     await expect(page.getByText('Important Notes:')).toBeVisible();
@@ -388,20 +358,18 @@ test.describe('InstallationPage', () => {
   });
 
   test('should test refresh prerequisites functionality', async ({ page }) => {
-    await page.waitForTimeout(1000);
-
     const refreshButton = page.getByRole('button').filter({ hasText: /Refresh|refresh/ });
+    await expect(refreshButton).toBeVisible();
 
     if (await refreshButton.isVisible()) {
       await refreshButton.click();
-      await page.waitForTimeout(500);
-
-      const loadingSpinner = page.locator('svg.animate-spin');
-      const hasLoadingSpinner = await loadingSpinner.isVisible().catch(() => false);
+      
+      // Use more specific selector for the refresh button's loading spinner
+      const loadingSpinner = refreshButton.locator('svg.animate-spin');
+      const hasLoadingSpinner = await loadingSpinner.isVisible();
 
       if (hasLoadingSpinner) {
-        await page.waitForTimeout(3000);
-        await expect(loadingSpinner).not.toBeVisible();
+        await expect(loadingSpinner).not.toBeVisible({ timeout: 5000 });
       } else {
         await expect(refreshButton).toBeVisible();
       }
@@ -412,48 +380,41 @@ test.describe('InstallationPage', () => {
 
   test('should test installation button states', async ({ page }) => {
     await page.getByRole('button', { name: 'Installation' }).first().click();
-    await page.waitForTimeout(300);
+    await expect(page.getByRole('button', { name: 'Installation' }).first()).toHaveClass(/bg-blue-600/);
 
     const installButton = page.getByRole('button', { name: 'Start Installation' });
     await expect(installButton).toBeVisible();
 
     await installButton.click();
-    await page.waitForTimeout(500);
 
-    const loadingSpinner = page.locator('.animate-spin');
-    const hasLoadingSpinner = await loadingSpinner.isVisible().catch(() => false);
+    const loadingSpinner = installButton.locator('.animate-spin');
+    const hasLoadingSpinner = await loadingSpinner.isVisible();
 
     if (hasLoadingSpinner) {
-      await page.waitForTimeout(2000);
-      await expect(loadingSpinner).not.toBeVisible();
+      await expect(loadingSpinner).not.toBeVisible({ timeout: 5000 });
     }
 
-    const messageVisible = await page
+    await expect(page
       .getByText(/Follow the CLI installation|Installation complete|Preparing instructions/)
-      .isVisible();
-    expect(messageVisible).toBeTruthy();
+    ).toBeVisible();
   });
 
   test('should test all tab navigation functionality', async ({ page }) => {
-    await page.waitForTimeout(1000);
-
     const prerequisitesTab = page.getByRole('button', { name: 'Prerequisites' }).first();
     const installationTab = page.getByRole('button', { name: 'Installation' }).first();
-
+    
+    await expect(prerequisitesTab).toBeVisible();
+    await expect(installationTab).toBeVisible();
     await expect(prerequisitesTab).toHaveClass(/bg-blue-600/);
     await expect(installationTab).not.toHaveClass(/bg-blue-600/);
 
     await installationTab.click();
-    await page.waitForTimeout(300);
-
     await expect(installationTab).toHaveClass(/bg-blue-600/);
     await expect(prerequisitesTab).not.toHaveClass(/bg-blue-600/);
 
     await expect(page.locator('h2').filter({ hasText: 'Install KubeStellar' })).toBeVisible();
 
     await prerequisitesTab.click();
-    await page.waitForTimeout(300);
-
     await expect(prerequisitesTab).toHaveClass(/bg-blue-600/);
     await expect(installationTab).not.toHaveClass(/bg-blue-600/);
 
