@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     container_name: auth_postgres
     environment:
-      POSTGRES_DB: authdbui
+      POSTGRES_DB: authdb
       POSTGRES_USER: authuser
       POSTGRES_PASSWORD: authpass123
     ports:
@@ -19,7 +19,7 @@ services:
       - kubestellar-network
 
   redis:
-    image: '${REDIS_IMAGE:-ghcr.io/kubestellar/ui/redis:latest}'
+    image: '${REDIS_IMAGE:-redis:7-alpine}'
     container_name: '${REDIS_CONTAINER_NAME:-kubestellar-redis}'
     ports:
       - '${REDIS_PORT:-6379}:6379'
