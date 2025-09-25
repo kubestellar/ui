@@ -1,4 +1,6 @@
+
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import useTheme from '../stores/themeStore';
@@ -15,6 +17,7 @@ import {
   FiUsers,
   FiBarChart2,
 } from 'react-icons/fi';
+import { SiGrafana } from 'react-icons/si';
 import { useAuthActions, useAdminCheck } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { HiOutlinePuzzlePiece } from 'react-icons/hi2';
@@ -230,6 +233,26 @@ const CommandPalette: React.FC = () => {
         'cache',
         'runtime',
         'cluster',
+      ],
+      section: t('commandPalette.sections.navigation'),
+    },
+    {
+      id: 'grafana-dashboard',
+      type: 'navigation',
+      icon: SiGrafana,
+      title: t('commandPalette.commands.Grafana.title'),
+      description: t('commandPalette.commands.Grafana.description'),
+      action: () => navigate('/grafana'),
+      keywords: [
+        'grafana',
+        'dashboard',
+        'monitoring',
+        'visualization',
+        'charts',
+        'metrics',
+        'analytics',
+        'observability',
+        'grafana dashboard',
       ],
       section: t('commandPalette.sections.navigation'),
     },
@@ -484,10 +507,13 @@ const CommandPalette: React.FC = () => {
           style={{
             color: themeStyles.colors.text.primary,
             background: themeStyles.button.secondary.background,
-            boxShadow: themeStyles.colors.shadow.sm,
+            boxShadow: isOpen
+              ? `${themeStyles.colors.shadow.sm}, 0 0 0 3px ${themeStyles.colors.brand.primary}`
+              : themeStyles.colors.shadow.sm,
             overflow: 'hidden',
           }}
           aria-label={t('commandPalette.ariaLabel')}
+          aria-expanded={isOpen}
         >
           <motion.div
             className="absolute inset-0 rounded-full"
@@ -532,221 +558,228 @@ const CommandPalette: React.FC = () => {
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop - subtle for header dropdown style */}
-            <motion.div
-              className="fixed inset-0 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
-                pointerEvents: 'auto',
-              }}
-            />
-
-            {/* Command palette dropdown */}
-            <motion.div
-              className="absolute right-4 z-50 mt-2 w-80 origin-top-right sm:w-96 md:right-8 md:w-[30rem]"
-              style={{
-                top: '100%',
-                filter: 'drop-shadow(0 10px 15px rgba(0, 0, 0, 0.15))',
-                transformOrigin: 'top right',
-              }}
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -5, scale: 0.95 }}
-              transition={{
-                type: 'spring',
-                stiffness: 500,
-                damping: 30,
-                mass: 0.8,
-              }}
-            >
-              <div
-                className="flex max-h-[calc(100vh-120px)] flex-col rounded-lg border"
+            {createPortal(
+              <motion.div
+                className="fixed inset-0 z-[100]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, delay: 0.08 }}
+                onClick={() => setIsOpen(false)}
                 style={{
-                  background: isDark ? 'rgba(17, 24, 39, 0.85)' : 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(8px)',
-                  borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
-                  boxShadow: isDark
-                    ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
-                    : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                  pointerEvents: 'auto',
+                }}
+              />,
+              document.body
+            )}
+
+            {createPortal(
+              <motion.div
+                className="fixed inset-0 z-[110] flex justify-center md:justify-end"
+                style={{ pointerEvents: 'none' }}
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 30,
+                  mass: 0.8,
                 }}
               >
-                {/* Search input */}
-                <div
-                  className="shrink-0 border-b p-3"
-                  style={{
-                    borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
-                    background: isDark ? 'rgba(31, 41, 55, 0.7)' : 'rgba(249, 250, 251, 0.7)',
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <FiSearch
-                      className="text-lg"
-                      style={{ color: themeStyles.colors.text.tertiary }}
-                    />
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={searchQuery}
-                      onChange={e => {
-                        setSearchQuery(e.target.value);
-                        setSelectedIndex(0);
-                      }}
-                      onKeyDown={handleKeyDown}
-                      placeholder={t('commandPalette.searchPlaceholder')}
-                      className="w-full bg-transparent text-base focus:outline-none"
-                      style={{
-                        color: themeStyles.colors.text.primary,
-                      }}
-                      autoComplete="off"
-                    />
-                    <kbd
-                      className="hidden items-center rounded px-1.5 py-0.5 text-xs font-semibold sm:inline-flex"
-                      style={{
-                        background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
-                        color: themeStyles.colors.text.secondary,
-                      }}
-                    >
-                      {t('commandPalette.kbd.esc')}
-                    </kbd>
-                  </div>
-                </div>
-
-                {/* Command list - completely revised scrolling area */}
-                <div
-                  className="flex-1 overflow-y-auto overflow-x-hidden"
-                  style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: `${themeStyles.colors.brand.primary} transparent`,
-                    WebkitOverflowScrolling: 'touch',
-                    msOverflowStyle: 'auto',
-                  }}
-                  ref={commandListRef}
-                >
-                  {filteredCommands.length === 0 ? (
+                <div className="pointer-events-auto mt-[96px] w-80 sm:w-96 md:mr-8 md:w-[30rem]">
+                  <div
+                    className="flex max-h-[calc(100vh-160px)] flex-col rounded-lg border"
+                    style={{
+                      background: isDark ? 'rgba(17, 24, 39, 1)' : 'rgba(255, 255, 255, 1)',
+                      borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
+                      boxShadow: isDark
+                        ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
+                        : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                    }}
+                  >
+                    {/* Search input */}
                     <div
-                      className="px-3 py-8 text-center"
-                      style={{ color: themeStyles.colors.text.tertiary }}
+                      className="shrink-0 border-b p-3"
+                      style={{
+                        borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
+                        background: isDark ? 'rgba(31, 41, 55, 1)' : 'rgba(249, 250, 251, 1)',
+                      }}
                     >
-                      {t('commandPalette.noCommandsFound')}
+                      <div className="flex items-center gap-2">
+                        <FiSearch
+                          className="text-lg"
+                          style={{ color: themeStyles.colors.text.tertiary }}
+                        />
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          value={searchQuery}
+                          onChange={e => {
+                            setSearchQuery(e.target.value);
+                            setSelectedIndex(0);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          placeholder={t('commandPalette.searchPlaceholder')}
+                          className="w-full bg-transparent text-base focus:outline-none"
+                          style={{
+                            color: themeStyles.colors.text.primary,
+                          }}
+                          autoComplete="off"
+                        />
+                        <kbd
+                          className="hidden items-center rounded px-1.5 py-0.5 text-xs font-semibold sm:inline-flex"
+                          style={{
+                            background: isDark
+                              ? 'rgba(55, 65, 81, 0.5)'
+                              : 'rgba(229, 231, 235, 0.5)',
+                            color: themeStyles.colors.text.secondary,
+                          }}
+                        >
+                          {t('commandPalette.kbd.esc')}
+                        </kbd>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="py-1">
-                      {searchQuery ? (
-                        // Show flat list when searching
-                        <div>
-                          {filteredCommands.map((command, index) => (
-                            <CommandListItem
-                              key={command.id}
-                              command={command}
-                              index={index}
-                              selectedIndex={selectedIndex}
-                              executeCommand={executeCommand}
-                              setSelectedIndex={setSelectedIndex}
-                              isDark={isDark}
-                              themeStyles={themeStyles}
-                              compact
-                            />
-                          ))}
+
+                    {/* Command list - completely revised scrolling area */}
+                    <div
+                      className="flex-1 overflow-y-auto overflow-x-hidden"
+                      style={{
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: `${themeStyles.colors.brand.primary} transparent`,
+                        WebkitOverflowScrolling: 'touch',
+                        msOverflowStyle: 'auto',
+                      }}
+                      ref={commandListRef}
+                    >
+                      {filteredCommands.length === 0 ? (
+                        <div
+                          className="px-3 py-8 text-center"
+                          style={{ color: themeStyles.colors.text.tertiary }}
+                        >
+                          {t('commandPalette.noCommandsFound')}
                         </div>
                       ) : (
-                        // Show grouped list when not searching
-                        <div>
-                          {groupedCommands.map(([section, items]: [string, CommandItem[]]) => (
-                            <div key={section} className="relative mb-2">
-                              <div
-                                className="sticky top-0 z-10 px-3 py-1 text-xs font-semibold uppercase"
-                                style={{
-                                  color: themeStyles.colors.text.tertiary,
-                                  background: isDark
-                                    ? 'rgba(17, 24, 39, 0.95)'
-                                    : 'rgba(249, 250, 251, 0.95)',
-                                  backdropFilter: 'blur(8px)',
-                                }}
-                              >
-                                {section}
-                              </div>
-                              <div className="pb-1">
-                                {items.map((command: CommandItem) => {
-                                  const globalIdx = filteredCommands.findIndex(
-                                    c => c.id === command.id
-                                  );
-                                  return (
-                                    <CommandListItem
-                                      key={command.id}
-                                      command={command}
-                                      index={globalIdx}
-                                      selectedIndex={selectedIndex}
-                                      executeCommand={executeCommand}
-                                      setSelectedIndex={setSelectedIndex}
-                                      isDark={isDark}
-                                      themeStyles={themeStyles}
-                                      compact
-                                    />
-                                  );
-                                })}
-                              </div>
+                        <div className="py-1">
+                          {searchQuery ? (
+                            // Show flat list when searching
+                            <div>
+                              {filteredCommands.map((command, index) => (
+                                <CommandListItem
+                                  key={command.id}
+                                  command={command}
+                                  index={index}
+                                  selectedIndex={selectedIndex}
+                                  executeCommand={executeCommand}
+                                  setSelectedIndex={setSelectedIndex}
+                                  isDark={isDark}
+                                  themeStyles={themeStyles}
+                                  compact
+                                />
+                              ))}
                             </div>
-                          ))}
+                          ) : (
+                            // Show grouped list when not searching
+                            <div>
+                              {groupedCommands.map(([section, items]: [string, CommandItem[]]) => (
+                                <div key={section} className="relative mb-2">
+                                  <div
+                                    className="sticky top-0 z-10 px-3 py-1 text-xs font-semibold uppercase"
+                                    style={{
+                                      color: themeStyles.colors.text.tertiary,
+                                      background: isDark
+                                        ? 'rgba(17, 24, 39, 1)'
+                                        : 'rgba(249, 250, 251, 1)',
+                                    }}
+                                  >
+                                    {section}
+                                  </div>
+                                  <div className="pb-1">
+                                    {items.map((command: CommandItem) => {
+                                      const globalIdx = filteredCommands.findIndex(
+                                        c => c.id === command.id
+                                      );
+                                      return (
+                                        <CommandListItem
+                                          key={command.id}
+                                          command={command}
+                                          index={globalIdx}
+                                          selectedIndex={selectedIndex}
+                                          executeCommand={executeCommand}
+                                          setSelectedIndex={setSelectedIndex}
+                                          isDark={isDark}
+                                          themeStyles={themeStyles}
+                                          compact
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
 
-                {/* Footer with hints - more compact */}
-                <div
-                  className="flex shrink-0 items-center justify-between border-t px-3 py-1.5 text-xs"
-                  style={{
-                    borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
-                    color: themeStyles.colors.text.tertiary,
-                    background: isDark ? 'rgba(31, 41, 55, 0.7)' : 'rgba(249, 250, 251, 0.7)',
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      <kbd
-                        className="inline-flex min-w-4 items-center justify-center rounded px-1 py-0.5 text-xs font-semibold"
-                        style={{
-                          background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
-                        }}
-                      >
-                        {t('commandPalette.kbd.arrows')}
-                      </kbd>
-                      <span className="ml-0.5">{t('commandPalette.footer.navigate')}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <kbd
-                        className="inline-flex min-w-4 items-center justify-center rounded px-1 py-0.5 text-xs font-semibold"
-                        style={{
-                          background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
-                        }}
-                      >
-                        {t('commandPalette.kbd.enter')}
-                      </kbd>
-                      <span className="ml-0.5">{t('commandPalette.footer.select')}</span>
-                    </div>
-                  </div>
-
-                  <div className="hidden sm:block">
-                    <kbd
-                      className="mx-1 inline-flex min-w-4 items-center justify-center rounded px-1 py-0.5 text-xs font-semibold"
+                    {/* Footer with hints - more compact */}
+                    <div
+                      className="flex shrink-0 items-center justify-between border-t px-3 py-1.5 text-xs"
                       style={{
-                        background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
+                        borderColor: isDark ? 'rgba(75, 85, 99, 0.4)' : 'rgba(226, 232, 240, 0.8)',
+                        color: themeStyles.colors.text.tertiary,
+                        background: isDark ? 'rgba(31, 41, 55, 0.7)' : 'rgba(249, 250, 251, 0.7)',
                       }}
                     >
-                      {t('commandPalette.footer.shortcut')}
-                    </kbd>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <kbd
+                            className="inline-flex min-w-4 items-center justify-center rounded px-1 py-0.5 text-xs font-semibold"
+                            style={{
+                              background: isDark
+                                ? 'rgba(55, 65, 81, 0.5)'
+                                : 'rgba(229, 231, 235, 0.5)',
+                            }}
+                          >
+                            {t('commandPalette.kbd.arrows')}
+                          </kbd>
+                          <span className="ml-0.5">{t('commandPalette.footer.navigate')}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <kbd
+                            className="inline-flex min-w-4 items-center justify-center rounded px-1 py-0.5 text-xs font-semibold"
+                            style={{
+                              background: isDark
+                                ? 'rgba(55, 65, 81, 0.5)'
+                                : 'rgba(229, 231, 235, 0.5)',
+                            }}
+                          >
+                            {t('commandPalette.kbd.enter')}
+                          </kbd>
+                          <span className="ml-0.5">{t('commandPalette.footer.select')}</span>
+                        </div>
+                      </div>
+
+                      <div className="hidden sm:block">
+                        <kbd
+                          className="mx-1 inline-flex min-w-4 items-center justify-center rounded px-1 py-0.5 text-xs font-semibold"
+                          style={{
+                            background: isDark
+                              ? 'rgba(55, 65, 81, 0.5)'
+                              : 'rgba(229, 231, 235, 0.5)',
+                          }}
+                        >
+                          {t('commandPalette.footer.shortcut')}
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>,
+              document.body
+            )}
           </>
         )}
       </AnimatePresence>
