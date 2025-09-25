@@ -271,41 +271,59 @@ export const PluginManager: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             {
               label: t('plugins.list.total'),
               value: availablePlugins.length,
               color: themeStyles.colors.text.primary,
+              iconBg: themeStyles.colors.text.secondary + '15',
+              iconColor: themeStyles.colors.text.primary,
+              Icon: HiOutlinePuzzlePiece,
             },
             {
               label: t('plugins.list.active'),
               value: availablePlugins.filter(p => p.enabled).length,
               color: themeStyles.colors.status.success,
+              iconBg: themeStyles.colors.status.success + '20',
+              iconColor: themeStyles.colors.status.success,
+              Icon: HiOutlineCheckCircle,
             },
             {
               label: t('plugins.list.inactive'),
               value: availablePlugins.filter(p => !p.enabled).length,
               color: themeStyles.colors.text.secondary,
+              iconBg: themeStyles.colors.text.secondary + '20',
+              iconColor: themeStyles.colors.text.secondary,
+              Icon: HiOutlinePause,
             },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
-              className="flex flex-col gap-1 rounded-xl p-4"
+              className="flex items-center gap-4 rounded-xl p-4 transition-all hover:shadow-md"
               style={{
                 background: themeStyles.effects.glassMorphism.background,
                 border: `1px solid ${themeStyles.card.borderColor}`,
               }}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: index * 0.05 }}
+              whileHover={{ y: -2 }}
             >
-              <span className="text-2xl font-bold" style={{ color: stat.color }}>
-                {stat.value}
-              </span>
-              <span className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                {stat.label}
-              </span>
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-lg"
+                style={{ background: (stat as any).iconBg }}
+              >
+                <stat.Icon className="h-5 w-5" style={{ color: (stat as any).iconColor }} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold" style={{ color: stat.color }}>
+                  {stat.value}
+                </span>
+                <span className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+                  {stat.label}
+                </span>
+              </div>
             </motion.div>
           ))}
         </div>
