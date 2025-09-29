@@ -489,7 +489,7 @@ const WecsDetailsPanel = ({
                   context: clusterData.itsManagedClusters?.[0]?.context,
                 },
               };
-              setEditedManifest(JSON.stringify(formattedCluster, null, 2));
+              setEditedManifest(YAML.stringify(formattedCluster, { indent: 2 }));
             } else {
               setEditedManifest('');
             }
@@ -500,12 +500,12 @@ const WecsDetailsPanel = ({
             }
             const response = await api.get(`/api/${type.toLowerCase()}/${namespace}/${name}`);
 
-            // The API returns the resource directly, convert it to JSON string
+            // The API returns the resource directly, convert it to YAML string
             if (response.data) {
-              setEditedManifest(JSON.stringify(response.data, null, 2));
+              setEditedManifest(YAML.stringify(response.data, { indent: 2 }));
             } else {
               // If no data available, create a basic one from resourceData
-              const basicManifest = resourceData ? JSON.stringify(resourceData, null, 2) : '';
+              const basicManifest = resourceData ? YAML.stringify(resourceData, { indent: 2 }) : '';
               setEditedManifest(basicManifest);
             }
           }
@@ -516,10 +516,10 @@ const WecsDetailsPanel = ({
           let basicManifest = '';
 
           if (resourceData) {
-            basicManifest = JSON.stringify(resourceData, null, 2);
+            basicManifest = YAML.stringify(resourceData, { indent: 2 });
           } else if (type.toLowerCase() === 'cluster' && clusterDetails) {
             // For clusters, create a basic manifest from cluster details
-            basicManifest = JSON.stringify(
+            basicManifest = YAML.stringify(
               {
                 apiVersion: 'v1',
                 kind: 'Cluster',
@@ -532,12 +532,11 @@ const WecsDetailsPanel = ({
                   context: clusterDetails.itsManagedClusters?.[0]?.context,
                 },
               },
-              null,
-              2
+              { indent: 2 }
             );
           } else {
             // Create a minimal manifest structure
-            basicManifest = JSON.stringify(
+            basicManifest = YAML.stringify(
               {
                 apiVersion: 'v1',
                 kind: type,
@@ -548,8 +547,7 @@ const WecsDetailsPanel = ({
                 spec: {},
                 status: {},
               },
-              null,
-              2
+              { indent: 2 }
             );
           }
 
@@ -569,7 +567,6 @@ const WecsDetailsPanel = ({
         }
       }
     };
-
     fetchResourceManifest();
   }, [tabValue, isOpen, name, namespace, type, cluster, resourceData, clusterDetails, t]);
 
