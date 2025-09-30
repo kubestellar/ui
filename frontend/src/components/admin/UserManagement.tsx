@@ -150,6 +150,8 @@ const UserManagement = () => {
     sortDirection: 'asc',
   });
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [isFilterHovered, setIsFilterHovered] = useState(false);
+  const [isRefreshHovered, setIsRefreshHovered] = useState(false);
 
   // Form states
   const [username, setUsername] = useState('');
@@ -585,39 +587,48 @@ const UserManagement = () => {
 
           {/* Filter Button */}
           <motion.button
-          whileHover={{
-          scale: 1.05,
-          backgroundColor: isDark
-      ? 'rgba(59, 130, 246, 0.2)'
-      : 'rgba(59, 130, 246, 0.1)',
-         color: isDark ? '#60a5fa' : '#3b82f6',
-         borderColor: isDark
-      ? 'rgba(59, 130, 246, 0.4)'
-      : 'rgba(59, 130, 246, 0.2)',
-       }}
-         whileTap={{ scale: 0.95 }}
-         className="flex items-center gap-2 rounded-lg px-4 py-2 transition-colors duration-200"
-         style={{
-         background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(243, 244, 246, 0.8)',
-         color: themeStyles.colors.text.secondary,
-         border: `1px solid transparent`,
-      }}
-          onClick={toggleFilters}
->
-         <FiFilter className="h-5 w-5" />
-         <span>{t('admin.users.filters.title')}</span>
-         {activeFiltersCount > 0 && (
-         <span
-         className="flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold"
-          style={{
-        background: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
-        color: isDark ? '#60a5fa' : '#3b82f6',
-        }}
-    >
-          {activeFiltersCount}
-          </span>
-         )}
-       </motion.button>
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 rounded-lg px-4 py-2 transition-colors duration-200"
+            style={{
+              background: showFilters
+                ? isDark
+                  ? 'rgba(59, 130, 246, 0.2)'
+                  : 'rgba(59, 130, 246, 0.1)'
+                : isDark
+                  ? 'rgba(31, 41, 55, 0.6)'
+                  : 'rgba(243, 244, 246, 0.8)',
+              color: showFilters
+                ? isDark
+                  ? '#60a5fa'
+                  : '#3b82f6'
+                : themeStyles.colors.text.secondary,
+              border: `1px solid ${
+                (showFilters || isFilterHovered)
+                  ? isDark
+                    ? 'rgba(59, 130, 246, 0.4)'
+                    : 'rgba(59, 130, 246, 0.2)'
+                  : 'transparent'
+              }`,
+            }}
+            onHoverStart={() => setIsFilterHovered(true)}
+            onHoverEnd={() => setIsFilterHovered(false)}
+            onClick={toggleFilters}
+          >
+            <FiFilter className="h-5 w-5" />
+            <span>{t('admin.users.filters.title')}</span>
+            {activeFiltersCount > 0 && (
+              <span
+                className="flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold"
+                style={{
+                  background: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
+                  color: isDark ? '#60a5fa' : '#3b82f6',
+                }}
+              >
+                {activeFiltersCount}
+              </span>
+            )}
+          </motion.button>
 
           {/* Refresh Button */}
           <motion.button
@@ -627,14 +638,19 @@ const UserManagement = () => {
             style={{
               background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(243, 244, 246, 0.8)',
               color: themeStyles.colors.text.secondary,
+              border: `1px solid ${
+                isRefreshHovered
+                  ? (isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0.2)')
+                  : 'transparent'
+              }`,
             }}
             onClick={refreshUsers}
             disabled={isRefreshing}
+            onHoverStart={() => setIsRefreshHovered(true)}
+            onHoverEnd={() => setIsRefreshHovered(false)}
           >
             <FiRefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-           
-         <span>{t('admin.users.refresh')}</span>
-
+            <span>{t('admin.users.refresh')}</span>
           </motion.button>
 
           {/* Add User Button */}
