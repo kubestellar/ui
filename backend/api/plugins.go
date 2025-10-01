@@ -1166,15 +1166,24 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	parts := strings.Split(pluginKey, "~")
 	if len(parts) != 3 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID format"})
+		log.LogError("Invalid plugin ID format", zap.String("pluginKey", pluginKey))
 		return
 	}
 	pluginName := parts[0]
 	authorName := parts[1]
 	version := parts[2]
 
+	// Validate that none of the components contain "~", "/" or "\"
+	if strings.ContainsAny(pluginName, "~/\\") || strings.ContainsAny(authorName, "~/\\") || strings.ContainsAny(version, "~/\\") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Plugin name, author, and version must not contain '~', '/' or '\\'"})
+		log.LogError("Invalid plugin ID format", zap.String("pluginKey", pluginKey))
+		return
+	}
+
 	author, err := models.GetUserByUsername(authorName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Author not found"})
+		log.LogError("Author not found", zap.String("authorName", authorName), zap.String("pluginKey", pluginKey))
 		return
 	}
 
@@ -1182,6 +1191,7 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	pluginID, err := pkg.GetPluginIDByNameAuthorVersion(pluginName, author.ID, version)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID format"})
+		log.LogError("Invalid plugin ID format", zap.String("pluginName", pluginName), zap.String("authorID", strconv.Itoa(author.ID)), zap.String("version", version))
 		return
 	}
 
@@ -1191,6 +1201,7 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	pluginManager := GetGlobalPluginManager()
 	if pluginManager == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Plugin manager not available"})
+		log.LogError("Plugin manager not available")
 		return
 	}
 
@@ -1198,6 +1209,7 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	plugin := findPluginByID(pluginID)
 	if plugin == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
+		log.LogError("Plugin not found", zap.Int("pluginID", pluginID))
 		return
 	}
 
@@ -1207,6 +1219,7 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	entries, err := os.ReadDir(pluginsDir)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read plugins directory"})
+		log.LogError("Failed to read plugins directory", zap.String("path", pluginsDir), zap.Error(err))
 		return
 	}
 
@@ -1219,6 +1232,7 @@ func ServePluginFrontendAssets(c *gin.Context) {
 
 	if pluginDir == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin directory not found"})
+		log.LogError("Plugin directory not found", zap.String("pluginName", pluginName), zap.Int("pluginID", pluginID))
 		return
 	}
 
@@ -1228,24 +1242,28 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	absPluginDir, err := filepath.Abs(pluginDir)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve plugin directory"})
+		log.LogError("Failed to resolve plugin directory", zap.String("pluginDir", pluginDir), zap.Error(err))
 		return
 	}
 
 	absFrontendPath, err := filepath.Abs(frontendPath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resolve frontend path"})
+		log.LogError("Failed to resolve frontend path", zap.String("frontendPath", frontendPath), zap.Error(err))
 		return
 	}
 
 	// Check if the requested file is within the plugin directory
 	if !strings.HasPrefix(absFrontendPath, absPluginDir) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		log.LogError("Access denied to frontend path", zap.String("frontendPath", absFrontendPath), zap.String("pluginDir", absPluginDir))
 		return
 	}
 
 	// Check if file exists
 	if _, err := os.Stat(absFrontendPath); os.IsNotExist(err) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		log.LogError("Frontend file not found", zap.String("path", absFrontendPath))
 		return
 	}
 

@@ -128,7 +128,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 		return nil, fmt.Errorf("author not found: %s", authorName)
 	}
 
-	exist, err := CheckInstalledPluginWithInfo(pluginName, pluginVersion, author.ID)
+	exist, err := CheckPluginDetailsExistByNameAuthorVersion(pluginName, author.ID, pluginVersion)
 	if err != nil {
 		return nil, err
 	}
