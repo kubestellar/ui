@@ -851,6 +851,10 @@
       "fullscreen": "Enter Fullscreen",
       "exitFullscreen": "Exit Fullscreen"
     },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
+    },
     "nodeLabel": {
       "labels": "Labels:",
       "noLabels": "No labels"
@@ -965,6 +969,10 @@
       "square": "Square",
       "fullscreen": "Enter Fullscreen",
       "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "contextMenu": {
       "details": "Details",
