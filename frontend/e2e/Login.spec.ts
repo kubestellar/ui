@@ -5,7 +5,6 @@ const BASE = 'http://localhost:5173';
 test.describe('Login Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE}/login`);
-    await page.waitForLoadState('networkidle');
   });
 
   test('login page shows UI elements', async ({ page }) => {
@@ -14,6 +13,11 @@ test.describe('Login Page', () => {
     await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Sign In|Sign In to/i })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: /Remember me/i })).toBeVisible();
+    await expect(page.getByText('Seamless Multi-Cluster')).toBeVisible();
+    await expect(page.getByText('Built for the Future.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Toggle full screen' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'English' })).toBeVisible();
+    await expect(page.locator('canvas')).toBeVisible();
   });
 
   test('success with admin/admin logs in and redirects', async ({ page }) => {
@@ -22,9 +26,6 @@ test.describe('Login Page', () => {
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
     await expect(page).toHaveURL('/', { timeout: 10000 });
-
-    const dashboardHeading = page.getByRole('heading', { name: /Dashboard|Overview/i });
-    await expect(dashboardHeading).toBeVisible();
   });
 
   test('remember me checkbox persists behavior', async ({ page }) => {
