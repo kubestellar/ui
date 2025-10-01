@@ -367,7 +367,8 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
                         className="text-xs"
                         style={{ color: themeStyles.colors.text.secondary }}
                       >
-                        {plugin.downloads?.toLocaleString() || 0} {t('marketplace.common.downloads')}
+                        {plugin.downloads?.toLocaleString() || 0}{' '}
+                        {t('marketplace.common.downloads')}
                       </span>
                     </div>
                   </div>
