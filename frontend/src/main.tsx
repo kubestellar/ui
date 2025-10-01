@@ -13,6 +13,12 @@ import useBackendHealthCheck from './hooks/useBackendHealthCheck';
 import * as React from 'react';
 window.React = React;
 
+declare global {
+  interface Window {
+    __MSW_SCENARIO?: string;
+  }
+}
+
 (async () => {
   if (import.meta.env.VITE_USE_MSW === 'true') {
     try {
@@ -21,13 +27,13 @@ window.React = React;
 
       await worker.start({ onUnhandledRequest: 'warn' });
 
-      const scenarioName = (window as any).__MSW_SCENARIO as string | undefined;
-      if (scenarioName && (scenarios as any)[scenarioName]) {
+      const scenarioName = window.__MSW_SCENARIO;
+      if (scenarioName && scenarioName in scenarios) {
         applyScenarioByName(scenarioName);
         console.log('[MSW] applied scenario:', scenarioName);
       }
 
-      (window as any).__msw = {
+      window.__msw = {
         applyScenarioByName,
         scenarios,
         worker,

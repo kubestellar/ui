@@ -1,9 +1,11 @@
 import { setupWorker } from 'msw/browser';
 import * as h from './handlers';
 
+import type { HttpHandler } from 'msw';
+
 export const worker = setupWorker(...h.defaultHandlers);
 
-export const scenarios: Record<string, any[]> = {
+export const scenarios: Record<string, HttpHandler[]> = {
   default: h.defaultHandlers,
   statusReady: [h.statusReady],
   statusNotReady: [h.statusNotReady],
@@ -11,9 +13,8 @@ export const scenarios: Record<string, any[]> = {
 };
 
 export function applyScenarioByName(name: string) {
-  const s = (scenarios as any)[name];
+  const s = scenarios[name];
   if (Array.isArray(s) && s.length) {
-    // @ts-ignore - msw/browser worker accepts handler functions
     worker.use(...s);
     // eslint-disable-next-line no-console
     console.log('[MSW] applied scenario:', name);
@@ -23,8 +24,18 @@ export function applyScenarioByName(name: string) {
   }
 }
 
+declare global {
+  interface Window {
+    __msw?: {
+      applyScenarioByName: typeof applyScenarioByName;
+      scenarios: typeof scenarios;
+      worker: typeof worker;
+    };
+  }
+}
+
 if (typeof window !== 'undefined') {
-  (window as any).__msw = {
+  window.__msw = {
     worker,
     scenarios,
     applyScenarioByName,
