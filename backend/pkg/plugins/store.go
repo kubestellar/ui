@@ -182,6 +182,22 @@ func GetPluginIdDB(pluginName, pluginVersion, pluginDescription string) (int, er
 	return pluginID, nil
 }
 
+func GetPluginIDByNameAuthorVersion(pluginName string, authorID int, pluginVersion string) (int, error) {
+	query := `
+		SELECT id FROM plugin_details
+		WHERE name=$1 AND author_id=$2 AND version=$3
+	`
+	var pluginID int
+	err := database.DB.QueryRow(query, pluginName, authorID, pluginVersion).Scan(&pluginID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return -1, fmt.Errorf("plugin not found: %w", err)
+		}
+		return -1, fmt.Errorf("failed to get plugin ID: %w", err)
+	}
+	return pluginID, nil
+}
+
 func DeletePluginDetailsByID(pluginID int) error {
 	query := `
 		DELETE FROM plugin_details
@@ -201,18 +217,18 @@ func DeletePluginDetailsByID(pluginID int) error {
 // FOR INSTALLED PLUGINS TABLE QUERIES
 ////////////////////////////////////////////////////////////////////////
 
-func CheckPluginWithInfo(pluginName, pluginVersion, pluginDescription string, userID int) (bool, error) {
+func CheckInstalledPluginWithInfo(pluginName, pluginVersion string, userID int) (bool, error) {
 	query := `
 		SELECT EXISTS (
 			SELECT 1
 			FROM plugin_details pd
 			JOIN installed_plugins ip ON ip.plugin_details_id = pd.id
-			WHERE pd.name = $1 AND pd.version = $2 AND pd.description = $3 AND ip.user_id = $4
+			WHERE pd.name = $1 AND pd.version = $2 AND ip.user_id = $3
 		)
 	`
 
 	var exist bool
-	row := database.DB.QueryRow(query, pluginName, pluginVersion, pluginDescription, userID)
+	row := database.DB.QueryRow(query, pluginName, pluginVersion, userID)
 	if err := row.Scan(&exist); err != nil {
 		return false, fmt.Errorf("failed to check plugin existence: %w", err)
 	}

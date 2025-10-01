@@ -313,7 +313,7 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// checks if plugin is installed or not
-	existed, err := pkg.CheckPluginWithInfo(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, userIDInt)
+	existed, err := pkg.CheckInstalledPluginWithInfo(manifest.Metadata.Name, manifest.Metadata.Version, userIDInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Error checking plugin exists: " + manifest.Metadata.Name,
@@ -419,8 +419,8 @@ func InstallPluginHandler(c *gin.Context) {
 		return
 	}
 
-	// combine the plugin name and the ID to make it readable and unique for plugin's Folder
-	pluginKey := fmt.Sprintf("%s-%d", manifest.Metadata.Name, pluginDetailsID) // e.g. myplugin-123 // TODO: use pluginDetailsID instead of pluginID
+	// combine the plugin name, author name, and version to make it readable and unique for plugin's Folder
+	pluginKey := fmt.Sprintf("%s~%s~%s", manifest.Metadata.Name, manifest.Metadata.Author, manifest.Metadata.Version)
 
 	// Create plugin directory in plugins folder
 	pluginDir := filepath.Join(pluginDirLoad, pluginKey)
@@ -1161,11 +1161,27 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 
 // ServePluginFrontendAssets serves static files from plugin frontend folder
 func ServePluginFrontendAssets(c *gin.Context) {
-	pluginName := c.Param("id") // its actually pluginname-id like cluster-monitor-13
+	pluginKey := c.Param("id") // its actually pluginname~authorname~version like cluster-monitor~john~1.0.0
 
-	pluginID, err := pkg.ExtractPluginPathID(pluginName)
+	parts := strings.Split(pluginKey, "~")
+	if len(parts) != 3 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID format"})
+		return
+	}
+	pluginName := parts[0]
+	authorName := parts[1]
+	version := parts[2]
+
+	author, err := models.GetUserByUsername(authorName)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Author not found"})
+		return
+	}
+
+	// Get the plugin ID by plugin name, plugin author and version
+	pluginID, err := pkg.GetPluginIDByNameAuthorVersion(pluginName, author.ID, version)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID format"})
 		return
 	}
 

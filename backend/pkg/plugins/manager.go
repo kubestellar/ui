@@ -189,11 +189,37 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		return err
 	}
 
-	pluginID, err := ExtractPluginPathID(pluginPath)
+	pluginName := manifest.Metadata.Name
+	if pluginName == "" {
+		return errors.New("plugin name is required in manifest")
+	}
+	authorName := manifest.Metadata.Author
+	if authorName == "" {
+		return errors.New("author name is required in manifest")
+	}
+	pluginVersion := manifest.Metadata.Version
+	if pluginVersion == "" {
+		return errors.New("plugin version is required in manifest")
+	}
+
+	author, err := models.GetUserByUsername(authorName)
+	if err != nil {
+		log.LogError("error get authorID", zap.String("error", err.Error()))
+		return err
+	}
+
+	// Get pluginDetailsID from database
+	pluginID, err := GetPluginIDByNameAuthorVersion(pluginName, author.ID, pluginVersion)
 	if err != nil {
 		log.LogError("error getting pluginID", zap.String("error", err.Error()))
 		return err
 	}
+
+	// pluginID, err := ExtractPluginPathID(pluginPath)
+	// if err != nil {
+	// 	log.LogError("error getting pluginID", zap.String("error", err.Error()))
+	// 	return err
+	// }
 	pluginStatus, err := GetPluginStatusDB(pluginID)
 	if err != nil {
 		log.LogError("error getting plugin status", zap.String("error", err.Error()))
@@ -440,7 +466,7 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin, userIDAuth int) {
 	// check if the plugin is in database
 	// if not, add to database with status "active"
 	// if yes, update the status to "active"
-	exist, err := CheckPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description, userIDAuth)
+	exist, err := CheckInstalledPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, userIDAuth)
 	if err != nil {
 		log.LogError("Failed to check plugin existence", zap.Error(err))
 		return
