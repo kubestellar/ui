@@ -57,10 +57,10 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
   // Convert MarketplacePlugin to PluginData format
   const convertedPlugins: PluginData[] = plugins.map(plugin => ({
     id: plugin.id || plugin.plugin_id || 0,
-    name: plugin.name || plugin.plugin_name || 'Unknown Plugin',
-    description: plugin.description || 'No description available',
+    name: plugin.name || plugin.plugin_name || t('marketplace.common.unnamedPlugin'),
+    description: plugin.description || t('marketplace.common.noDescription'),
     version: plugin.version || '1.0.0',
-    author: plugin.author || 'Unknown',
+    author: plugin.author || t('marketplace.common.unknownAuthor'),
     downloads: plugin.downloads || 0,
     rating: plugin.ratingAverage || plugin.rating_average || 0,
   }));
@@ -94,10 +94,10 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
   });
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: HiChartBar },
-    { id: 'plugins', label: 'Plugins', icon: HiCog6Tooth },
-    { id: 'users', label: 'Users', icon: HiUsers },
-    { id: 'settings', label: 'Settings', icon: HiShieldCheck },
+    { id: 'overview', label: t('marketplace.admin.overview'), icon: HiChartBar },
+    { id: 'plugins', label: t('marketplace.admin.plugins'), icon: HiCog6Tooth },
+    { id: 'users', label: t('marketplace.admin.users'), icon: HiUsers },
+    { id: 'settings', label: t('marketplace.admin.settings'), icon: HiShieldCheck },
   ];
 
   const renderOverview = () => (
@@ -110,25 +110,25 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           {
-            label: 'Total Plugins',
+            label: t('marketplace.admin.stats.totalPlugins'),
             value: adminStats.totalPlugins,
             icon: HiCog6Tooth,
             color: 'blue',
           },
           {
-            label: 'Pending Reviews',
+            label: t('marketplace.admin.stats.pendingReviews'),
             value: adminStats.pendingReviews,
             icon: HiDocumentText,
             color: 'orange',
           },
           {
-            label: 'Total Downloads',
+            label: t('marketplace.admin.stats.totalDownloads'),
             value: adminStats.totalDownloads.toLocaleString(),
             icon: HiCloudArrowUp,
             color: 'green',
           },
           {
-            label: 'Active Users',
+            label: t('marketplace.admin.stats.activeUsers'),
             value: adminStats.activeUsers.toLocaleString(),
             icon: HiUsers,
             color: 'purple',
@@ -344,10 +344,10 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
                         className="truncate font-semibold"
                         style={{ color: themeStyles.colors.text.primary }}
                       >
-                        {plugin.name || 'Unnamed Plugin'}
+                        {plugin.name || t('marketplace.common.unnamedPlugin')}
                       </h3>
                       <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                        active
+                        {t('marketplace.admin.active')}
                       </span>
                     </div>
                     <p
@@ -361,13 +361,13 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
                         className="text-xs"
                         style={{ color: themeStyles.colors.text.secondary }}
                       >
-                        v{plugin.version} • {plugin.author || 'Unknown'}
+                        v{plugin.version} • {plugin.author || t('marketplace.common.unknownAuthor')}
                       </span>
                       <span
                         className="text-xs"
                         style={{ color: themeStyles.colors.text.secondary }}
                       >
-                        {plugin.downloads?.toLocaleString() || 0} downloads
+                        {plugin.downloads?.toLocaleString() || 0} {t('marketplace.common.downloads')}
                       </span>
                     </div>
                   </div>
@@ -494,7 +494,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
                     className="text-xl font-bold"
                     style={{ color: themeStyles.colors.text.primary }}
                   >
-                    Admin Panel
+                    {t('marketplace.admin.adminPanel')}
                   </h2>
                   <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
                     {t('marketplace.admin.marketplaceManagement')}
