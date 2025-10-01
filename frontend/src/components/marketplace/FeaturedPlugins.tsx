@@ -300,9 +300,9 @@ const FeaturedHeroCard = React.memo(
             </div>
 
             <div className="flex w-full flex-wrap justify-center gap-2">
-              {plugin.tags?.slice(0, 3).map(tag => (
-                <PluginTag key={tag} tag={tag} color={getTagColor(tag)} />
-              ))}
+              {plugin.tags
+                ?.slice(0, 3)
+                .map(tag => <PluginTag key={tag} tag={tag} color={getTagColor(tag)} />)}
             </div>
 
             <div className="mt-2 flex flex-col items-center gap-2">
