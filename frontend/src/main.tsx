@@ -16,10 +16,26 @@ window.React = React;
 (async () => {
   if (import.meta.env.VITE_USE_MSW === 'true') {
     try {
-      const { worker } = await import('./mocks/browser');
+      const mod = await import('./mocks/browser');
+      const { worker, scenarios, applyScenarioByName } = mod;
+
       await worker.start({ onUnhandledRequest: 'warn' });
+
+      const scenarioName = (window as any).__MSW_SCENARIO as string | undefined;
+      if (scenarioName && (scenarios as any)[scenarioName]) {
+        applyScenarioByName(scenarioName);
+        console.log('[MSW] applied scenario:', scenarioName);
+      }
+
+      (window as any).__msw = {
+        applyScenarioByName,
+        scenarios,
+        worker,
+      };
+
       console.log('[MSW] worker started');
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.warn('[MSW] failed to start', err);
     }
   }
