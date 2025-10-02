@@ -189,11 +189,25 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		return err
 	}
 
-	pluginID, err := ExtractPluginPathID(pluginPath)
+	// pluginPath changed from pluginName-pluginId to pluginName-pluginVersion
+	pluginVersion, err := ExtractPluginPathVersion(pluginPath)
+	if err != nil {
+		log.LogError("error getting pluginVersion", zap.String("error", err.Error()))
+		return err
+	}
+
+	// find the plugin ID from the database with pluginName and pluginVersion
+	pluginID, err := GetPluginIDByNameAndVersion(manifest.Metadata.Name, pluginVersion)
 	if err != nil {
 		log.LogError("error getting pluginID", zap.String("error", err.Error()))
 		return err
 	}
+
+	// pluginID, err := ExtractPluginPathID(pluginPath)
+	// if err != nil {
+	// 	log.LogError("error getting pluginID", zap.String("error", err.Error()))
+	// 	return err
+	// }
 	pluginStatus, err := GetPluginStatusDB(pluginID)
 	if err != nil {
 		log.LogError("error getting plugin status", zap.String("error", err.Error()))
@@ -616,6 +630,14 @@ func ExtractPluginPathID(s string) (int, error) {
 		return 0, fmt.Errorf("not a number: %w", err)
 	}
 	return num, nil
+}
+
+func ExtractPluginPathVersion(s string) (string, error) {
+	parts := strings.Split(s, "-")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("invalid format")
+	}
+	return parts[len(parts)-1], nil
 }
 
 // IsPluginDisabled checks if a plugin is disabled
