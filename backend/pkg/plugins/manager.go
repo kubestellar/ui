@@ -144,6 +144,11 @@ type PluginConfigItem struct {
 	Description string      `yaml:"description" json:"description"` // Description of the configuration
 }
 
+var (
+	// sanitize input to allow only alphanumeric, underscore, hyphen
+	safePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+)
+
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
 func NewPluginManager(router *gin.Engine) *PluginManager {
 	ctx := context.Background()
@@ -191,16 +196,11 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 	}
 
 	pluginName := manifest.Metadata.Name
-	if pluginName == "" {
-		return errors.New("plugin name is required in manifest")
-	}
 	authorName := manifest.Metadata.Author
-	if authorName == "" {
-		return errors.New("author name is required in manifest")
-	}
 	pluginVersion := manifest.Metadata.Version
-	if pluginVersion == "" {
-		return errors.New("plugin version is required in manifest")
+
+	if pluginName == "" || authorName == "" || pluginVersion == "" {
+		return errors.New("plugin name, author name and version are required in manifest")
 	}
 
 	author, err := models.GetUserByUsername(authorName)
@@ -653,9 +653,6 @@ func (pm *PluginManager) IsPluginDisabled(id int) bool {
 	}
 	return plugin.Status == "inactive"
 }
-
-// santinize input to allow only alphanumeric, underscore, hyphen
-var safePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
 func santinize(input string) (string, error) {
 	if safePattern.MatchString(input) {

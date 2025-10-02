@@ -108,16 +108,11 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 
 	// Get plugin ID from the folder name
 	pluginName := manifest.Metadata.Name
-	if pluginName == "" {
-		return nil, fmt.Errorf("plugin name missing in manifest")
-	}
 	authorName := manifest.Metadata.Author
-	if authorName == "" {
-		return nil, fmt.Errorf("author name missing in manifest")
-	}
 	pluginVersion := manifest.Metadata.Version
-	if pluginVersion == "" {
-		return nil, fmt.Errorf("plugin version missing in manifest")
+
+	if pluginName == "" || authorName == "" || pluginVersion == "" {
+		return nil, fmt.Errorf("plugin name, author name and version are required in manifest")
 	}
 
 	author, err := models.GetUserByUsername(authorName)
