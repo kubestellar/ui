@@ -84,7 +84,10 @@ api.interceptors.response.use(
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
       // Don't show error toast for 401 responses from auth checks (/api/me) when on login page
-      const shouldSuppressToast = error.response.status === 401 && isAuthCheck && isOnLoginPage();
+      // Suppress toast if:
+      // - user is already on login page (we don't want "Invalid Token" there)
+      // - OR it's an auth check endpoint
+      const shouldSuppressToast = isOnLoginPage() || (error.response.status === 401 && isAuthCheck);
 
       if (!shouldSuppressToast) {
         // For other errors, show toast but use a consistent ID to prevent duplicates
