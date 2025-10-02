@@ -1420,7 +1420,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Name
+                          {t('resources.table.name')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1428,7 +1428,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Kind
+                          {t('resources.table.kind')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1436,7 +1436,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Namespace
+                          {t('resources.table.namespace')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1444,7 +1444,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Status
+                          {t('resources.table.status')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1452,7 +1452,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Created
+                          {t('resources.table.created')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1460,7 +1460,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Actions
+                          {t('resources.table.actions')}
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -1657,8 +1657,8 @@ const ObjectFilterPage: React.FC = () => {
                 }}
               >
                 {selectedKinds.length > 0 && selectedNamespaces.length > 0
-                  ? 'No resources found'
-                  : 'Ready to explore'}
+                  ? t('resources.emptyState.noResourcesFound')
+                  : t('resources.emptyState.readyToExplore')}
               </Typography>
               <Typography
                 variant="body1"
@@ -1670,8 +1670,8 @@ const ObjectFilterPage: React.FC = () => {
                 }}
               >
                 {selectedKinds.length > 0 && selectedNamespaces.length > 0
-                  ? 'No resources match your current filters. Try adjusting your search criteria or clearing filters.'
-                  : 'Select a resource kind and namespace to begin exploring your Kubernetes objects.'}
+                  ? t('resources.emptyState.noResourcesDescription')
+                  : t('resources.emptyState.getStartedDescription')}
               </Typography>
               {selectedKinds.length > 0 && selectedNamespaces.length > 0 ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
