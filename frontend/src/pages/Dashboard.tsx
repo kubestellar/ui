@@ -43,7 +43,6 @@ const ClusterDetailDialog = lazy(
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
-
   // Memoize the color calculation to avoid recalculating on every render
   const { color, bgGradient } = useMemo(() => {
     if (value >= 90) {
