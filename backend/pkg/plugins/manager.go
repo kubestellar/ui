@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -651,4 +652,33 @@ func (pm *PluginManager) IsPluginDisabled(id int) bool {
 		return false
 	}
 	return plugin.Status == "inactive"
+}
+
+// santinize input to allow only alphanumeric, underscore, hyphen
+var safePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
+func santinize(input string) (string, error) {
+	if safePattern.MatchString(input) {
+		return input, nil
+	}
+	return "", fmt.Errorf("input contains unsafe characters: %s", input)
+}
+
+func BuildPluginKey(pluginName, author, version string) (string, error) {
+	safePluginName, err := santinize(pluginName)
+	if err != nil {
+		return "", err
+	}
+
+	safeAuthor, err := santinize(author)
+	if err != nil {
+		return "", err
+	}
+
+	safeVersion, err := santinize(version)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s~%s~%s", safePluginName, safeAuthor, safeVersion), nil
 }

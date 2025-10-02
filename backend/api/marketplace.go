@@ -177,7 +177,17 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 	// 5. Compress the plugin file
 	// the file name should be in the format of <pluginName>~<authorName>~<pluginVersion>.tar.gz
 	// e.g. cluster-monitor~admin~1.0.0.tar.gz
-	newFileName := manifest.Metadata.Name + "~" + manifest.Metadata.Author + "~" + manifest.Metadata.Version + ".tar.gz"
+	// ensure the pluginKey is safe to use
+	pluginKey, err := pluginpkg.BuildPluginKey(manifest.Metadata.Name, manifest.Metadata.Author, manifest.Metadata.Version)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid characters in plugin name or author or version",
+		})
+		log.LogError("invalid characters in plugin name or author or version", zap.String("error", err.Error()))
+		return "", nil, err
+	}
+	newFileName := pluginKey + ".tar.gz"
+
 	newTarPath := filepath.Join(os.TempDir(), newFileName)
 	err = marketplace.CompressTarGz(tempDir, newTarPath)
 	if err != nil {
@@ -703,7 +713,16 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 	}
 
 	// create the plugin key - e.g. cluster-monitor~admin~1.0.0.tar.gz
-	pluginKey := fmt.Sprintf("%s~%s~%s", plugin.PluginName, plugin.Author, plugin.Version)
+	pluginKey, err := pluginpkg.BuildPluginKey(plugin.PluginName, plugin.Author, plugin.Version)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid characters in plugin name or author or version",
+		})
+		log.LogError("invalid characters in plugin name or author or version", zap.String("error", err.Error()))
+		return
+	}
+	// the file key is <pluginName>~<author>~<version>.tar.gz
+	// e.g. cluster-monitor~admin~1.0.0.tar.gz
 	fileKey := fmt.Sprintf("%s.tar.gz", pluginKey)
 
 	// download the plugin from git repo and extract it to plugins/ folder

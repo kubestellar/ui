@@ -420,7 +420,14 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	// combine the plugin name, author name, and version to make it readable and unique for plugin's Folder
-	pluginKey := fmt.Sprintf("%s~%s~%s", manifest.Metadata.Name, manifest.Metadata.Author, manifest.Metadata.Version)
+	pluginKey, err := pkg.BuildPluginKey(manifest.Metadata.Name, manifest.Metadata.Author, manifest.Metadata.Version)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid characters in plugin name, author, or version",
+		})
+		log.LogError("invalid characters in plugin name, author, or version", zap.String("error", err.Error()))
+		return
+	}
 
 	// Create plugin directory in plugins folder
 	pluginDir := filepath.Join(pluginDirLoad, pluginKey)
@@ -1182,7 +1189,7 @@ func ServePluginFrontendAssets(c *gin.Context) {
 
 	author, err := models.GetUserByUsername(authorName)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Author not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Author not found"})
 		log.LogError("Author not found", zap.String("authorName", authorName), zap.String("pluginKey", pluginKey))
 		return
 	}
@@ -1190,8 +1197,8 @@ func ServePluginFrontendAssets(c *gin.Context) {
 	// Get the plugin ID by plugin name, plugin author and version
 	pluginID, err := pkg.GetPluginIDByNameAuthorVersion(pluginName, author.ID, version)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plugin ID format"})
-		log.LogError("Invalid plugin ID format", zap.String("pluginName", pluginName), zap.String("authorID", strconv.Itoa(author.ID)), zap.String("version", version))
+		c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
+		log.LogError("Plugin not found", zap.String("pluginName", pluginName), zap.String("authorName", authorName), zap.String("version", version), zap.String("pluginKey", pluginKey))
 		return
 	}
 
