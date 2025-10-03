@@ -18,7 +18,6 @@ redis:
   architecture: standalone
   auth:
     enabled: false
-  # Override to use official Redis image instead of Bitnami
   image:
     registry: ghcr.io
     repository: kubestellar/ui/redis
