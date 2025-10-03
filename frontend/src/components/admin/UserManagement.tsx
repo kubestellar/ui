@@ -150,6 +150,8 @@ const UserManagement = () => {
     sortDirection: 'asc',
   });
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [isFilterHovered, setIsFilterHovered] = useState(false);
+  const [isRefreshHovered, setIsRefreshHovered] = useState(false);
 
   // Form states
   const [username, setUsername] = useState('');
@@ -602,13 +604,15 @@ const UserManagement = () => {
                   : '#3b82f6'
                 : themeStyles.colors.text.secondary,
               border: `1px solid ${
-                showFilters
+                (showFilters || isFilterHovered)
                   ? isDark
                     ? 'rgba(59, 130, 246, 0.4)'
                     : 'rgba(59, 130, 246, 0.2)'
                   : 'transparent'
               }`,
             }}
+            onHoverStart={() => setIsFilterHovered(true)}
+            onHoverEnd={() => setIsFilterHovered(false)}
             onClick={toggleFilters}
           >
             <FiFilter className="h-5 w-5" />
@@ -634,9 +638,16 @@ const UserManagement = () => {
             style={{
               background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(243, 244, 246, 0.8)',
               color: themeStyles.colors.text.secondary,
+              border: `1px solid ${
+                isRefreshHovered
+                  ? (isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0.2)')
+                  : 'transparent'
+              }`,
             }}
             onClick={refreshUsers}
             disabled={isRefreshing}
+            onHoverStart={() => setIsRefreshHovered(true)}
+            onHoverEnd={() => setIsRefreshHovered(false)}
           >
             <FiRefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{t('admin.users.refresh')}</span>
