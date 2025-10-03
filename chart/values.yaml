@@ -18,7 +18,15 @@ redis:
   architecture: standalone
   auth:
     enabled: false
-  # Add more overrides as needed for the Bitnami subchart
+  # Override to use official Redis image instead of Bitnami 
+  image:
+    registry: docker.io
+    repository: redis
+    tag: 7-alpine
+    pullPolicy: IfNotPresent
+  master:
+    persistence:
+      enabled: false
 
 postgresql:
   enabled: true
