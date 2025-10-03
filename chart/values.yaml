@@ -19,8 +19,8 @@ redis:
   auth:
     enabled: false
   image:
-    repository: docker.io/bitnami/redis
-    tag: "8.0.8-debian-12-r0"
+    repository: docker.io/bitnamisecure/redis
+    tag: "latest"
 
 postgresql:
   enabled: true
