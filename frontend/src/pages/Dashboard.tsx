@@ -43,27 +43,6 @@ const ClusterDetailDialog = lazy(
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
-  // Check for command palette by detecting body overflow hidden
-  useEffect(() => {
-    const checkCommandPalette = () => {
-      setIsCommandPaletteOpen(document.body.style.overflow === 'hidden');
-    };
-
-    // Initial check
-    checkCommandPalette();
-
-    // Watch for body style changes
-    const observer = new MutationObserver(checkCommandPalette);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['style'],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   // Memoize the color calculation to avoid recalculating on every render
   const { color, bgGradient } = useMemo(() => {
     if (value >= 90) {
@@ -97,10 +76,6 @@ const HealthIndicator = ({ value }: { value: number }) => {
   return (
     <div
       className={`inline-flex items-center rounded-full px-2 py-1 ${color} relative overflow-hidden shadow-sm transition-all duration-200`}
-      style={{
-        filter: isCommandPaletteOpen ? 'blur(5px)' : 'none',
-        pointerEvents: isCommandPaletteOpen ? 'none' : 'auto',
-      }}
     >
       {/* Pulse effect without animation loop */}
       <span
