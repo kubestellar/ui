@@ -18,56 +18,15 @@ redis:
   architecture: standalone
   auth:
     enabled: false
-  # Override to use official Redis image instead of Bitnami 
+  # Override to use official Redis image instead of Bitnami
   image:
-    registry: docker.io
-    repository: redis
-    tag: 7.4-alpine
+    registry: ghcr.io
+    repository: kubestellar/ui/redis
+    tag: latest
     pullPolicy: IfNotPresent
-  master:
-    persistence:
-      enabled: false
-    # Disable default Bitnami container configurations
-    containerSecurityContext:
-      enabled: false
-    podSecurityContext:
-      enabled: false
-    # Override command and args to use standard Redis
-    command:
-      - redis-server
-    args:
-      - --appendonly
-      - "no"
-    customLivenessProbe:
-      exec:
-        command:
-          - sh
-          - -c
-          - redis-cli ping | grep PONG
-      initialDelaySeconds: 20
-      periodSeconds: 5
-      timeoutSeconds: 5
-      failureThreshold: 5
-    customReadinessProbe:
-      exec:
-        command:
-          - sh
-          - -c
-          - redis-cli ping | grep PONG
-      initialDelaySeconds: 20
-      periodSeconds: 5
-      timeoutSeconds: 1
-      failureThreshold: 5
-    customStartupProbe:
-      exec:
-        command:
-          - sh
-          - -c
-          - redis-cli ping | grep PONG
-      initialDelaySeconds: 5
-      periodSeconds: 5
-      timeoutSeconds: 1
-      failureThreshold: 30
+  global:
+    security:
+      allowInsecureImages: true
 
 postgresql:
   enabled: true
