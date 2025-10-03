@@ -225,9 +225,9 @@ func sanitizeHeader(headers http.Header) map[string][]string {
 				} else {
 					safeHeaders[k] = []string{"[masked]"}
 				}
-			} else {
-				safeHeaders[k] = v
 			}
+		} else if len(v) > 0 {
+			safeHeaders[k] = v
 		}
 	}
 	return safeHeaders
