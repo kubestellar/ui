@@ -17,7 +17,17 @@ test.describe('Login Page', () => {
     await expect(page.getByText('Built for the Future.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Toggle full screen' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'English' })).toBeVisible();
-    await expect(page.locator('canvas')).toBeVisible();
+
+    const browserName = page.context().browser()?.browserType().name();
+    const isFirefox = browserName === 'firefox';
+
+    if (isFirefox) {
+      await expect(page.getByTestId('canvas-disabled-placeholder')).toBeVisible();
+      await expect(page.getByTestId('canvas-disabled-title')).toBeVisible();
+      await expect(page.getByTestId('canvas-disabled-subtitle')).toBeVisible();
+    } else {
+      await expect(page.locator('canvas')).toBeVisible();
+    }
   });
 
   test('success with admin/admin logs in and redirects', async ({ page }) => {
