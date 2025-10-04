@@ -604,7 +604,7 @@ const UserManagement = () => {
                   : '#3b82f6'
                 : themeStyles.colors.text.secondary,
               border: `1px solid ${
-                (showFilters || isFilterHovered)
+                showFilters || isFilterHovered
                   ? isDark
                     ? 'rgba(59, 130, 246, 0.4)'
                     : 'rgba(59, 130, 246, 0.2)'
@@ -640,7 +640,9 @@ const UserManagement = () => {
               color: themeStyles.colors.text.secondary,
               border: `1px solid ${
                 isRefreshHovered
-                  ? (isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0.2)')
+                  ? isDark
+                    ? 'rgba(59, 130, 246, 0.35)'
+                    : 'rgba(59, 130, 246, 0.2)'
                   : 'transparent'
               }`,
             }}
