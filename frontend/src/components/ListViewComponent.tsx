@@ -69,15 +69,16 @@ const ListViewComponent = ({
 }: ListViewComponentProps) => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
-  
+
   // React Query hook for data fetching
   const { useListViewData } = useListViewQueries();
-  const { 
-    data: queryData, 
+  const {
+    data: queryData,
     error: queryError,
-    refetch: refetchQuery 
+    refetch: refetchQuery,
   } = useListViewData({
     staleTime: 30000, // 30 seconds
+    gcTime: 300000, // 5 minutes
     refetchInterval: 60000, // 1 minute background refresh
   });
 

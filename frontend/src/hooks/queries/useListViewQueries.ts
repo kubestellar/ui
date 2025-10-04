@@ -60,7 +60,7 @@ const processCompleteData = (data: CompleteEventData): ResourceItem[] => {
 
 interface QueryOptions {
   staleTime?: number;
-  cacheTime?: number;
+  gcTime?: number;
   refetchInterval?: number;
   retry?: number | boolean;
   enabled?: boolean;
@@ -72,7 +72,7 @@ export const useListViewQueries = () => {
       queryKey: ['list-view-data'],
       queryFn: async (): Promise<ResourceItem[]> => {
         const response = await api.get('/wds/list', { timeout: 15000 });
-        
+
         if (!response.data?.data) {
           throw new Error('Invalid response format');
         }
@@ -80,7 +80,7 @@ export const useListViewQueries = () => {
         return processCompleteData(response.data.data as CompleteEventData);
       },
       staleTime: options?.staleTime || 30000, // 30 seconds
-      gcTime: options?.cacheTime || 300000, // 5 minutes
+      gcTime: options?.gcTime || 300000, // 5 minutes
       refetchInterval: options?.refetchInterval || 60000, // 1 minute
       retry: options?.retry !== undefined ? options?.retry : 2,
       retryDelay: 5000, // Wait 5 seconds between retries
