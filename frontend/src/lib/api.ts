@@ -56,8 +56,13 @@ api.interceptors.response.use(
 
     // Don't try to refresh token for login endpoint - 401 means wrong credentials
     const isLoginEndpoint = error.config?.url?.includes('/login');
-    
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck && !isLoginEndpoint) {
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthCheck &&
+      !isLoginEndpoint
+    ) {
       console.warn('Axios Interceptor: 401 Unauthorized. Attempting token refresh.');
       originalRequest._retry = true;
       const newToken = await refreshAccessToken(api);
