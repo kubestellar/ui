@@ -737,9 +737,11 @@ const ObjectFilterPage: React.FC = () => {
               <Grid item xs={12} sm={6} md={4}>
                 <Autocomplete<ResourceKind, true, false, false>
                   multiple
-                  options={availableResourceKinds
-                    ? [...availableResourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
-                    : []}
+                  options={
+                    availableResourceKinds
+                      ? [...availableResourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
+                      : []
+                  }
                   getOptionLabel={option => option.kind}
                   onChange={handleKindsChange}
                   isOptionEqualToValue={(option, value) => option.name === value.name}
