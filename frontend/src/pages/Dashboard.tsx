@@ -870,7 +870,6 @@ const K8sInfo = () => {
     cacheTime: 300000,
   });
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -1010,20 +1009,6 @@ const K8sInfo = () => {
       setIsInitialLoad(false);
     }
   }, [k8sData, clusterData, workloadsData, processedClusters, bindingPoliciesData, clusterMetrics]);
-
-  // Handle refresh
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetchK8s();
-      toast.success('Data refreshed successfully!');
-    } catch (err) {
-      toast.error('Failed to refresh data');
-      console.error('Refresh error:', err);
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 700);
-    }
-  };
 
   // Format date for better display
   const formatDate = (dateString: string): string => {
@@ -1192,20 +1177,21 @@ const K8sInfo = () => {
           </p>
         </div>
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
-          <button
-            className="dark:hover:bg-gray-750 flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCcw size={16} className={`${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{t('common.refresh')}</span>
-          </button>
           <Link
             to="/its"
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            className="group flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-2 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-500 hover:to-blue-400 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 dark:from-blue-500 dark:to-blue-400 dark:hover:from-blue-400 dark:hover:to-blue-300 dark:focus-visible:ring-offset-gray-900"
           >
-            <Plus size={16} />
-            <span>{t('clusters.dashboard.addCluster')}</span>
+            <span className="rounded-full bg-white/15 p-1 transition-colors duration-200 group-hover:bg-white/25">
+              <Layers size={16} className="transition-transform duration-200 group-hover:scale-110" />
+            </span>
+            <span className="font-medium tracking-wide">{t('clusters.title')}</span>
+          </Link>
+          <Link
+            to="/resources"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <ClipboardList size={16} />
+            <span>{t('menu.items.resourceExplorer')}</span>
           </Link>
         </div>
       </div>
