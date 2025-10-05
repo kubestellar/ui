@@ -364,7 +364,9 @@ const ObjectFilterPage: React.FC = () => {
           }
         };
 
-        const displayNamespace = resource.metadata?.namespace || (resource.kind.toLowerCase() === 'namespace' ? resource.metadata?.name || '' : '');
+        const displayNamespace =
+          resource.metadata?.namespace ||
+          (resource.kind.toLowerCase() === 'namespace' ? resource.metadata?.name || '' : '');
 
         return {
           ...resource,
