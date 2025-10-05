@@ -23,6 +23,7 @@ import { getPanelStyles, getContentBoxStyles } from './WecsDetailsStyles';
 import { api, getWebSocketUrl } from '../../lib/api';
 import * as YAML from 'yaml';
 import { useClusterQueries } from '../../hooks/queries/useClusterQueries';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Import the ResourceInfo interface from SummaryTab
 interface ResourceInfo {
@@ -96,6 +97,7 @@ const WecsDetailsPanel = ({
   const theme = useTheme(state => state.theme);
   const { useUpdateClusterLabels } = useClusterQueries();
   const updateClusterLabelsMutation = useUpdateClusterLabels();
+  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(initialTab ?? 0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -142,6 +144,83 @@ const WecsDetailsPanel = ({
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => setTabValue(newValue);
   const handleSnackbarClose = () => setSnackbarOpen(false);
+
+  // React Query: Fetch manifest when Edit tab is open
+  const isEditOpen = tabValue === 1 && isOpen && !!name && !!type;
+  const resourceKey = [
+    'wecs-manifest',
+    type?.toLowerCase(),
+    name,
+    type?.toLowerCase() === 'cluster' ? '' : namespace,
+    cluster || '',
+  ];
+
+  const {
+    data: manifestQueryData,
+    isLoading: manifestQueryLoading,
+    error: manifestQueryError,
+    refetch: refetchManifest,
+  } = useQuery<string, Error>({
+    queryKey: resourceKey,
+    enabled: isEditOpen,
+    staleTime: 30000,
+    gcTime: 300000,
+    queryFn: async () => {
+      if (type.toLowerCase() === 'cluster') {
+        const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
+        const clusterData = response.data;
+        const formattedCluster = {
+          apiVersion: 'v1',
+          kind: 'Cluster',
+          metadata: {
+            name: clusterData.clusterName,
+            creationTimestamp: clusterData.itsManagedClusters?.[0]?.creationTime,
+            labels: clusterData.itsManagedClusters?.[0]?.labels || {},
+          },
+          spec: {
+            context: clusterData.itsManagedClusters?.[0]?.context,
+          },
+        };
+        return YAML.stringify(formattedCluster, { indent: 2 });
+      }
+
+      if (!namespace) {
+        throw new Error('Namespace is required for non-cluster resources');
+      }
+
+      const response = await api.get(
+        `/api/${type.toLowerCase()}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
+        { params: cluster ? { cluster } : {} }
+      );
+
+      if (response.data) {
+        return YAML.stringify(response.data, { indent: 2 });
+      }
+
+      return resourceData ? YAML.stringify(resourceData, { indent: 2 }) : '';
+    },
+  });
+
+  // Sync query state with local manifest loading state
+  useEffect(() => {
+    if (isEditOpen) {
+      setLoadingManifest(manifestQueryLoading);
+    }
+  }, [isEditOpen, manifestQueryLoading]);
+
+  useEffect(() => {
+    if (manifestQueryData && isEditOpen) {
+      setEditedManifest(manifestQueryData);
+    }
+  }, [manifestQueryData, isEditOpen]);
+
+  useEffect(() => {
+    if (manifestQueryError && isEditOpen) {
+      setSnackbarMessage(t('wecsDetailsPanel.errors.failedLoadDetails', { type }));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }, [manifestQueryError, isEditOpen, t, type]);
 
   // Add a new effect to reset tab if logs tab is selected but unavailable
   useEffect(() => {
@@ -465,110 +544,31 @@ const WecsDetailsPanel = ({
     }
   }, [type, name, namespace, cluster, isOpen]);
 
-  // Fetch resource manifest when Edit tab is selected
+  // Keep effect as a safety net but prefer React Query data
   useEffect(() => {
-    const fetchResourceManifest = async () => {
-      if (tabValue === 1 && isOpen && name && type) {
-        setLoadingManifest(true);
-        try {
-          // For clusters, use the cluster details endpoint
-          if (type.toLowerCase() === 'cluster') {
-            const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
-            if (response.data) {
-              // Format cluster data as a proper Kubernetes resource
-              const clusterData = response.data;
-              const formattedCluster = {
-                apiVersion: 'v1',
-                kind: 'Cluster',
-                metadata: {
-                  name: clusterData.clusterName,
-                  creationTimestamp: clusterData.itsManagedClusters?.[0]?.creationTime,
-                  labels: clusterData.itsManagedClusters?.[0]?.labels || {},
-                },
-                spec: {
-                  context: clusterData.itsManagedClusters?.[0]?.context,
-                },
-              };
-              setEditedManifest(YAML.stringify(formattedCluster, { indent: 2 }));
-            } else {
-              setEditedManifest('');
-            }
-          } else {
-            // For other resources, use the resource endpoint with namespace
-            if (!namespace) {
-              throw new Error('Namespace is required for non-cluster resources');
-            }
-            const response = await api.get(`/api/${type.toLowerCase()}/${namespace}/${name}`);
-
-            // The API returns the resource directly, convert it to YAML string
-            if (response.data) {
-              setEditedManifest(YAML.stringify(response.data, { indent: 2 }));
-            } else {
-              // If no data available, create a basic one from resourceData
-              const basicManifest = resourceData ? YAML.stringify(resourceData, { indent: 2 }) : '';
-              setEditedManifest(basicManifest);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch resource manifest:', error);
-
-          // Create a basic manifest from available data
-          let basicManifest = '';
-
-          if (resourceData) {
-            basicManifest = YAML.stringify(resourceData, { indent: 2 });
-          } else if (type.toLowerCase() === 'cluster' && clusterDetails) {
-            // For clusters, create a basic manifest from cluster details
-            basicManifest = YAML.stringify(
-              {
-                apiVersion: 'v1',
-                kind: 'Cluster',
-                metadata: {
-                  name: clusterDetails.clusterName,
-                  creationTimestamp: clusterDetails.itsManagedClusters?.[0]?.creationTime,
-                  labels: clusterDetails.itsManagedClusters?.[0]?.labels || {},
-                },
-                spec: {
-                  context: clusterDetails.itsManagedClusters?.[0]?.context,
-                },
+    if (tabValue !== 1 || !isOpen || !name || !type) return;
+    // If React Query already provided data, skip manual fetching
+    if (manifestQueryData || manifestQueryLoading) return;
+    // Otherwise, retain existing fallback minimal manifest behavior
+    if (!editedManifest) {
+      const fallback = resourceData
+        ? YAML.stringify(resourceData, { indent: 2 })
+        : YAML.stringify(
+            {
+              apiVersion: 'v1',
+              kind: type,
+              metadata: {
+                name: name,
+                namespace: namespace || 'default',
               },
-              { indent: 2 }
-            );
-          } else {
-            // Create a minimal manifest structure
-            basicManifest = YAML.stringify(
-              {
-                apiVersion: 'v1',
-                kind: type,
-                metadata: {
-                  name: name,
-                  namespace: namespace || 'default',
-                },
-                spec: {},
-                status: {},
-              },
-              { indent: 2 }
-            );
-          }
-
-          setEditedManifest(basicManifest);
-
-          // Show appropriate error message based on the error
-          const axiosError = error as { response?: { status?: number } };
-          if (axiosError.response?.status === 404) {
-            setSnackbarMessage(`Resource ${name} not found in ${namespace || 'cluster'}`);
-          } else {
-            setSnackbarMessage(t('wecsDetailsPanel.errors.failedLoadDetails', { type }));
-          }
-          setSnackbarSeverity('error');
-          setSnackbarOpen(true);
-        } finally {
-          setLoadingManifest(false);
-        }
-      }
-    };
-    fetchResourceManifest();
-  }, [tabValue, isOpen, name, namespace, type, cluster, resourceData, clusterDetails, t]);
+              spec: {},
+              status: {},
+            },
+            { indent: 2 }
+          );
+      setEditedManifest(fallback);
+    }
+  }, [tabValue, isOpen, name, namespace, type, manifestQueryData, manifestQueryLoading, editedManifest, resourceData]);
 
   // JSON to YAML conversion function
   const jsonToYaml = useCallback((jsonString: string): string => {
@@ -599,6 +599,24 @@ const WecsDetailsPanel = ({
   const handleEditorChange = useCallback((value: string | undefined) => {
     setEditedManifest(value || '');
   }, []);
+
+  // React Query mutation for manifest update
+  const updateManifestMutation = useMutation({
+    mutationFn: async ({ endpoint, method, manifestData, params }: { endpoint: string; method: 'PUT' | 'PATCH'; manifestData: unknown; params: Record<string, string> }) => {
+      return api.request({ method, url: endpoint, data: manifestData, params, headers: { 'Content-Type': 'application/json' } });
+    },
+    onSuccess: () => {
+      setSnackbarMessage(t('wecsDetailsPanel.success.manifestUpdated'));
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      queryClient.invalidateQueries({ queryKey: resourceKey });
+      // Trigger the legacy event for listeners
+      const event = new Event('manifest-updated');
+      window.dispatchEvent(event);
+      // Also refetch via hook
+      refetchManifest();
+    },
+  });
 
   // Handle update
   const handleUpdate = useCallback(async () => {
@@ -692,33 +710,10 @@ const WecsDetailsPanel = ({
       }
 
       // Add cluster context if available
-      const params = cluster ? { cluster } : {};
+      const params: Record<string, string> = cluster ? { cluster } : {};
 
-      // Make the API call
-      const response = await api.request({
-        method,
-        url: endpoint,
-        data: manifestData,
-        params,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.status >= 200 && response.status < 300) {
-        setSnackbarMessage(t('wecsDetailsPanel.success.manifestUpdated'));
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
-
-        // Refresh the manifest data
-        if (tabValue === 1) {
-          // Trigger a re-fetch of the manifest
-          const event = new Event('manifest-updated');
-          window.dispatchEvent(event);
-        }
-      } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+      // Execute mutation (preserves behavior, adds caching benefits)
+      await updateManifestMutation.mutateAsync({ endpoint, method, manifestData, params });
     } catch (error: unknown) {
       console.error('Failed to update manifest:', error);
 
@@ -747,9 +742,9 @@ const WecsDetailsPanel = ({
     name,
     namespace,
     cluster,
-    tabValue,
     t,
     updateClusterLabelsMutation,
+    updateManifestMutation,
   ]);
 
   // Convert to useCallback to memoize it
