@@ -177,26 +177,26 @@ interface ActivityItem {
 // Add a type for the cluster object in determineClusterStatus
 interface ClusterStatusObject {
   status?:
-  | string
-  | {
-    conditions?: Array<{
-      lastTransitionTime?: string;
-      message?: string;
-      reason?: string;
-      status?: string;
-      type?: string;
-    }>;
-    version?: {
-      kubernetes?: string;
-    };
-    capacity?: {
-      cpu?: string;
-      memory?: string;
-      pods?: string;
-      [key: string]: string | undefined;
-    };
-    [key: string]: unknown;
-  };
+    | string
+    | {
+        conditions?: Array<{
+          lastTransitionTime?: string;
+          message?: string;
+          reason?: string;
+          status?: string;
+          type?: string;
+        }>;
+        version?: {
+          kubernetes?: string;
+        };
+        capacity?: {
+          cpu?: string;
+          memory?: string;
+          pods?: string;
+          [key: string]: string | undefined;
+        };
+        [key: string]: unknown;
+      };
   available?: boolean;
   name?: string;
 }
@@ -730,21 +730,21 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                 // Determine the color scheme for the item based on type
                 const typeColors = isPolicy
                   ? {
-                    bg: isDark ? 'bg-purple-900/30' : 'bg-purple-100',
-                    text: isDark ? 'text-purple-400' : 'text-purple-600',
-                    icon: <FileText size={16} />,
-                  }
+                      bg: isDark ? 'bg-purple-900/30' : 'bg-purple-100',
+                      text: isDark ? 'text-purple-400' : 'text-purple-600',
+                      icon: <FileText size={16} />,
+                    }
                   : item.type === 'cluster'
                     ? {
-                      bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
-                      text: isDark ? 'text-blue-400' : 'text-blue-600',
-                      icon: <Server size={16} />,
-                    }
+                        bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
+                        text: isDark ? 'text-blue-400' : 'text-blue-600',
+                        icon: <Server size={16} />,
+                      }
                     : {
-                      bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
-                      text: isDark ? 'text-teal-400' : 'text-teal-600',
-                      icon: <User size={16} />,
-                    };
+                        bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
+                        text: isDark ? 'text-teal-400' : 'text-teal-600',
+                        icon: <User size={16} />,
+                      };
 
                 return (
                   <Link
@@ -1064,8 +1064,8 @@ const K8sInfo = () => {
   const systemHealth = (() => {
     const healthScore = Math.round(
       (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
-      (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
-      (100 - stats.cpuUsage) / 4
+        (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
+        (100 - stats.cpuUsage) / 4
     );
 
     if (healthScore >= 90)
