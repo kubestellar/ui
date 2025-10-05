@@ -1,10 +1,13 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	jwtconfig "github.com/kubestellar/ui/backend/jwt"
 	"github.com/kubestellar/ui/backend/middleware"
 	"github.com/kubestellar/ui/backend/models"
 	database "github.com/kubestellar/ui/backend/postgresql/Database"
@@ -112,6 +115,7 @@ func setupAuthRoutes(router *gin.Engine) {
 	setupdebug(router) // Add debug routes for testing
 	// Public routes (no authentication required)
 	router.POST("/login", LoginHandler)
+	router.POST("/api/refresh", RefreshTokenHandler)
 
 	// API group - ALL endpoints require authentication
 	api := router.Group("/api")
@@ -239,23 +243,13 @@ func LoginHandler(c *gin.Context) {
 				},
 			}
 
-			// Generate JWT token
-			token, err := utils.GenerateToken(user.Username, user.IsAdmin, user.Permissions, user.ID)
+			accessToken, refreshToken, err := issueTokens(user.ID, user.Username, user.IsAdmin, user.Permissions)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
 				return
 			}
 
-			// Return success response
-			c.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"token":   token,
-				"user": gin.H{
-					"username":    user.Username,
-					"is_admin":    user.IsAdmin,
-					"permissions": user.Permissions,
-				},
-			})
+			sendLoginResponse(c, accessToken, refreshToken, user.Username, user.IsAdmin, user.Permissions)
 			return
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{
@@ -313,22 +307,112 @@ func LoginHandler(c *gin.Context) {
 		}
 	}
 
-	// Generate JWT token
-	token, err := utils.GenerateToken(username, isAdmin, permissions, id)
+	accessToken, refreshToken, err := issueTokens(id, username, isAdmin, permissions)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
 		return
 	}
 
-	// Return success response
+	sendLoginResponse(c, accessToken, refreshToken, username, isAdmin, permissions)
+}
+
+func issueTokens(userID int, username string, isAdmin bool, permissions map[string]string) (string, string, error) {
+	accessToken, err := utils.GenerateToken(username, isAdmin, permissions, userID)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := utils.GenerateRefreshToken(username, userID)
+	if err != nil {
+		return "", "", err
+	}
+
+	expiryDuration := jwtconfig.GetRefreshTokenExpiration()
+	var expiryPtr *time.Time
+	if expiryDuration > 0 {
+		expiresAt := time.Now().Add(expiryDuration)
+		expiryPtr = &expiresAt
+	}
+
+	if err := models.ReplaceRefreshToken(userID, refreshToken, expiryPtr); err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
+}
+
+func sendLoginResponse(c *gin.Context, accessToken, refreshToken, username string, isAdmin bool, permissions map[string]string) {
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"token":   token,
+		"success":      true,
+		"token":        accessToken,
+		"refreshToken": refreshToken,
 		"user": gin.H{
 			"username":    username,
 			"is_admin":    isAdmin,
 			"permissions": permissions,
 		},
+	})
+}
+
+// RefreshTokenHandler exchanges a valid refresh token for a new access token
+func RefreshTokenHandler(c *gin.Context) {
+	var payload struct {
+		RefreshToken string `json:"refreshToken" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	payload.RefreshToken = strings.TrimSpace(payload.RefreshToken)
+	if payload.RefreshToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh token is required"})
+		return
+	}
+
+	claims, err := utils.ValidateRefreshToken(payload.RefreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+		return
+	}
+
+	storedToken, err := models.GetRefreshTokenByToken(payload.RefreshToken)
+	if err != nil {
+		if errors.Is(err, models.ErrRefreshTokenNotFound) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token not recognized"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify refresh token"})
+		return
+	}
+
+	if storedToken.UserID != claims.UserID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token does not match user"})
+		return
+	}
+
+	if storedToken.ExpiresAt.Valid && storedToken.ExpiresAt.Time.Before(time.Now()) {
+		_ = models.DeleteRefreshTokenByID(storedToken.ID)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token expired"})
+		return
+	}
+
+	user, err := models.GetUserByID(claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	accessToken, refreshToken, err := issueTokens(user.ID, user.Username, user.IsAdmin, user.Permissions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token":        accessToken,
+		"refreshToken": refreshToken,
 	})
 }
 
