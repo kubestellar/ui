@@ -54,7 +54,6 @@ api.interceptors.response.use(
       error.response?.data?.message || error.response?.data?.error || error.message;
     const isAuthCheck = error.config?.url?.includes('/api/me');
 
-    // Don't try to refresh token for login endpoint - 401 means wrong credentials
     const isLoginEndpoint = error.config?.url?.includes('/login');
 
     if (
@@ -73,8 +72,6 @@ api.interceptors.response.use(
       } else {
         console.error('Axios Interceptor: Token refresh failed. Redirecting to login.');
         clearTokens();
-
-        // Only show toast if user is not already on login page
         if (!isOnLoginPage()) {
           toast.error('Session expired. Please log in again.');
         }
@@ -91,9 +88,6 @@ api.interceptors.response.use(
       setGlobalNetworkError(true);
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
-      // Don't show error toast for:
-      // - 401 responses from auth checks (/api/me) when on login page (we don't want "Invalid Token" there)
-      // - Login endpoint errors (handled by useLogin hook)
       const isLoginEndpoint = error.config?.url?.includes('/login');
       const shouldSuppressToast = (error.response.status === 401 && isAuthCheck) || isLoginEndpoint;
 
