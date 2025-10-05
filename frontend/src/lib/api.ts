@@ -54,7 +54,10 @@ api.interceptors.response.use(
       error.response?.data?.message || error.response?.data?.error || error.message;
     const isAuthCheck = error.config?.url?.includes('/api/me');
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck) {
+    // Don't try to refresh token for login endpoint - 401 means wrong credentials
+    const isLoginEndpoint = error.config?.url?.includes('/login');
+    
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck && !isLoginEndpoint) {
       console.warn('Axios Interceptor: 401 Unauthorized. Attempting token refresh.');
       originalRequest._retry = true;
       const newToken = await refreshAccessToken(api);
@@ -83,11 +86,11 @@ api.interceptors.response.use(
       setGlobalNetworkError(true);
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
-      // Don't show error toast for 401 responses from auth checks (/api/me) when on login page
-      // Suppress toast if:
-      // - user is already on login page (we don't want "Invalid Token" there)
-      // - OR it's an auth check endpoint
-      const shouldSuppressToast = isOnLoginPage() || (error.response.status === 401 && isAuthCheck);
+      // Don't show error toast for:
+      // - 401 responses from auth checks (/api/me) when on login page (we don't want "Invalid Token" there)
+      // - Login endpoint errors (handled by useLogin hook)
+      const isLoginEndpoint = error.config?.url?.includes('/login');
+      const shouldSuppressToast = (error.response.status === 401 && isAuthCheck) || isLoginEndpoint;
 
       if (!shouldSuppressToast) {
         // For other errors, show toast but use a consistent ID to prevent duplicates

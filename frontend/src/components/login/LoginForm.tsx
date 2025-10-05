@@ -163,7 +163,7 @@ const LoginForm = () => {
     console.log(
       `[LoginForm] Form submission started at ${performance.now() - renderStartTime.current}ms`
     );
-    toast.dismiss();
+    toast.dismiss('login-error'); // Only dismiss previous login errors
     toast.loading(t('login.form.signingIn'), { id: 'auth-loading' });
 
     login({ username, password, rememberMe });
