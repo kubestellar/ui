@@ -80,6 +80,14 @@ interface WecsDetailsProps {
   isDeploymentOrJobPod?: boolean;
 }
 
+// Improve readability for mutation args
+interface UpdateManifestArgs {
+  endpoint: string;
+  method: 'PUT' | 'PATCH';
+  manifestData: unknown;
+  params: Record<string, string>;
+}
+
 const WecsDetailsPanel = ({
   namespace,
   name,
@@ -166,7 +174,7 @@ const WecsDetailsPanel = ({
     staleTime: 30000,
     gcTime: 300000,
     queryFn: async () => {
-      if (type.toLowerCase() === 'cluster') {
+      if (type?.toLowerCase() === 'cluster') {
         const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
         const clusterData = response.data;
         const formattedCluster = {
@@ -189,7 +197,7 @@ const WecsDetailsPanel = ({
       }
 
       const response = await api.get(
-        `/api/${type.toLowerCase()}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
+        `/api/${type?.toLowerCase() || ''}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
         { params: cluster ? { cluster } : {} }
       );
 
@@ -568,7 +576,17 @@ const WecsDetailsPanel = ({
           );
       setEditedManifest(fallback);
     }
-  }, [tabValue, isOpen, name, namespace, type, manifestQueryData, manifestQueryLoading, editedManifest, resourceData]);
+  }, [
+    tabValue,
+    isOpen,
+    name,
+    namespace,
+    type,
+    manifestQueryData,
+    manifestQueryLoading,
+    editedManifest,
+    resourceData,
+  ]);
 
   // JSON to YAML conversion function
   const jsonToYaml = useCallback((jsonString: string): string => {
@@ -602,8 +620,14 @@ const WecsDetailsPanel = ({
 
   // React Query mutation for manifest update
   const updateManifestMutation = useMutation({
-    mutationFn: async ({ endpoint, method, manifestData, params }: { endpoint: string; method: 'PUT' | 'PATCH'; manifestData: unknown; params: Record<string, string> }) => {
-      return api.request({ method, url: endpoint, data: manifestData, params, headers: { 'Content-Type': 'application/json' } });
+    mutationFn: async ({ endpoint, method, manifestData, params }: UpdateManifestArgs) => {
+      return api.request({
+        method,
+        url: endpoint,
+        data: manifestData,
+        params,
+        headers: { 'Content-Type': 'application/json' },
+      });
     },
     onSuccess: () => {
       setSnackbarMessage(t('wecsDetailsPanel.success.manifestUpdated'));
@@ -654,7 +678,7 @@ const WecsDetailsPanel = ({
       }
 
       // Special handling for cluster resources
-      if (type.toLowerCase() === 'cluster') {
+      if (type?.toLowerCase() === 'cluster') {
         let labels = {};
         try {
           // Extract all labels from the manifest
@@ -697,7 +721,7 @@ const WecsDetailsPanel = ({
       let endpoint: string;
       const method: 'PUT' | 'PATCH' = 'PUT';
 
-      if (type.toLowerCase() === 'cluster') {
+      if (type?.toLowerCase() === 'cluster') {
         endpoint = `/api/cluster/${encodeURIComponent(name)}`;
       } else {
         if (!namespace) {
@@ -706,7 +730,7 @@ const WecsDetailsPanel = ({
           setSnackbarOpen(true);
           return;
         }
-        endpoint = `/api/${type.toLowerCase()}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+        endpoint = `/api/${type?.toLowerCase() || ''}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
       }
 
       // Add cluster context if available
