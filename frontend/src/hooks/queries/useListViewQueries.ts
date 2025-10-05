@@ -58,7 +58,7 @@ const processCompleteData = (data: CompleteEventData): ResourceItem[] => {
   return processedResources;
 };
 
-interface QueryOptions {
+export interface ListViewQueryOptions {
   staleTime?: number;
   gcTime?: number;
   refetchInterval?: number;
@@ -66,29 +66,23 @@ interface QueryOptions {
   enabled?: boolean;
 }
 
-export const useListViewQueries = () => {
-  const useListViewData = (options?: QueryOptions) => {
-    return useQuery<ResourceItem[], Error>({
-      queryKey: ['list-view-data'],
-      queryFn: async (): Promise<ResourceItem[]> => {
-        const response = await api.get('/wds/list', { timeout: 15000 });
+export const useListViewData = (options?: ListViewQueryOptions) => {
+  return useQuery<ResourceItem[], Error>({
+    queryKey: ['list-view-data'],
+    queryFn: async (): Promise<ResourceItem[]> => {
+      const response = await api.get('/wds/list', { timeout: 15000 });
 
-        if (!response.data?.data) {
-          throw new Error('Invalid response format');
-        }
+      if (!response.data?.data) {
+        throw new Error('Invalid response format');
+      }
 
-        return processCompleteData(response.data.data as CompleteEventData);
-      },
-      staleTime: options?.staleTime || 30000, // 30 seconds
-      gcTime: options?.gcTime || 300000, // 5 minutes
-      refetchInterval: options?.refetchInterval || 60000, // 1 minute
-      retry: options?.retry !== undefined ? options?.retry : 2,
-      retryDelay: 5000, // Wait 5 seconds between retries
-      enabled: options?.enabled !== undefined ? options.enabled : true,
-    });
-  };
-
-  return {
-    useListViewData,
-  };
+      return processCompleteData(response.data.data as CompleteEventData);
+    },
+    staleTime: options?.staleTime || 30000, // 30 seconds
+    gcTime: options?.gcTime || 300000, // 5 minutes
+    refetchInterval: options?.refetchInterval || 60000, // 1 minute
+    retry: options?.retry !== undefined ? options?.retry : 2,
+    retryDelay: 5000, // Wait 5 seconds between retries
+    enabled: options?.enabled !== undefined ? options.enabled : true,
+  });
 };

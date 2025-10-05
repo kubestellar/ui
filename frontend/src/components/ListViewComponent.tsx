@@ -6,7 +6,7 @@ import { api } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';
 import ObjectFilters, { ObjectFilter } from './ObjectFilters';
-import { useListViewQueries } from '../hooks/queries/useListViewQueries';
+import { useListViewData } from '../hooks/queries/useListViewQueries';
 
 // Define the response interfaces
 export interface ResourceItem {
@@ -70,8 +70,7 @@ const ListViewComponent = ({
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
 
-  // React Query hook for data fetching
-  const { useListViewData } = useListViewQueries();
+  // React Query hook for data fetching (single hook pattern)
   const {
     data: queryData,
     error: queryError,
