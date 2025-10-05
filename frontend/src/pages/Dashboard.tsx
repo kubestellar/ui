@@ -177,26 +177,26 @@ interface ActivityItem {
 // Add a type for the cluster object in determineClusterStatus
 interface ClusterStatusObject {
   status?:
-    | string
-    | {
-        conditions?: Array<{
-          lastTransitionTime?: string;
-          message?: string;
-          reason?: string;
-          status?: string;
-          type?: string;
-        }>;
-        version?: {
-          kubernetes?: string;
-        };
-        capacity?: {
-          cpu?: string;
-          memory?: string;
-          pods?: string;
-          [key: string]: string | undefined;
-        };
-        [key: string]: unknown;
-      };
+  | string
+  | {
+    conditions?: Array<{
+      lastTransitionTime?: string;
+      message?: string;
+      reason?: string;
+      status?: string;
+      type?: string;
+    }>;
+    version?: {
+      kubernetes?: string;
+    };
+    capacity?: {
+      cpu?: string;
+      memory?: string;
+      pods?: string;
+      [key: string]: string | undefined;
+    };
+    [key: string]: unknown;
+  };
   available?: boolean;
   name?: string;
 }
@@ -730,21 +730,21 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                 // Determine the color scheme for the item based on type
                 const typeColors = isPolicy
                   ? {
-                      bg: isDark ? 'bg-purple-900/30' : 'bg-purple-100',
-                      text: isDark ? 'text-purple-400' : 'text-purple-600',
-                      icon: <FileText size={16} />,
-                    }
+                    bg: isDark ? 'bg-purple-900/30' : 'bg-purple-100',
+                    text: isDark ? 'text-purple-400' : 'text-purple-600',
+                    icon: <FileText size={16} />,
+                  }
                   : item.type === 'cluster'
                     ? {
-                        bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
-                        text: isDark ? 'text-blue-400' : 'text-blue-600',
-                        icon: <Server size={16} />,
-                      }
+                      bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
+                      text: isDark ? 'text-blue-400' : 'text-blue-600',
+                      icon: <Server size={16} />,
+                    }
                     : {
-                        bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
-                        text: isDark ? 'text-teal-400' : 'text-teal-600',
-                        icon: <User size={16} />,
-                      };
+                      bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
+                      text: isDark ? 'text-teal-400' : 'text-teal-600',
+                      icon: <User size={16} />,
+                    };
 
                 return (
                   <Link
@@ -1064,8 +1064,8 @@ const K8sInfo = () => {
   const systemHealth = (() => {
     const healthScore = Math.round(
       (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
-        (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
-        (100 - stats.cpuUsage) / 4
+      (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
+      (100 - stats.cpuUsage) / 4
     );
 
     if (healthScore >= 90)
@@ -1179,12 +1179,10 @@ const K8sInfo = () => {
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
           <Link
             to="/its"
-            className="group flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-2 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-500 hover:to-blue-400 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 dark:from-blue-500 dark:to-blue-400 dark:hover:from-blue-400 dark:hover:to-blue-300 dark:focus-visible:ring-offset-gray-900"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
           >
-            <span className="rounded-full bg-white/15 p-1 transition-colors duration-200 group-hover:bg-white/25">
-              <Layers size={16} className="transition-transform duration-200 group-hover:scale-110" />
-            </span>
-            <span className="font-medium tracking-wide">{t('clusters.title')}</span>
+            <Layers size={16} />
+            <span>{t('clusters.title')}</span>
           </Link>
           <Link
             to="/resources"
