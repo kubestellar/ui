@@ -141,6 +141,11 @@ const ObjectFilterPage: React.FC = () => {
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
 
+  const availableResourceKinds = useMemo(
+    () => resourceKinds.filter(kind => kind.kind.toLowerCase() !== 'binding'),
+    [resourceKinds]
+  );
+
   // Optimized resources processing with memoization and performance improvements
   const filteredNamespaces = useMemo(
     () =>
@@ -415,7 +420,8 @@ const ObjectFilterPage: React.FC = () => {
     _event: React.SyntheticEvent<Element, Event>,
     value: ResourceKind[]
   ) => {
-    setSelectedKinds(value);
+    const filteredKinds = value.filter(kind => kind.kind.toLowerCase() !== 'binding');
+    setSelectedKinds(filteredKinds);
     setSelectedResources([]);
   };
 
@@ -727,32 +733,18 @@ const ObjectFilterPage: React.FC = () => {
               <FilterAltIcon />
               {t('resources.objectSelection')}
             </Typography>
-
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
+                <Autocomplete<ResourceKind, true, false, false>
                   multiple
-                  options={
-                    resourceKinds
-                      ? [...resourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
-                      : []
-                  }
+                  options={availableResourceKinds
+                    ? [...availableResourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
+                    : []}
                   getOptionLabel={option => option.kind}
                   onChange={handleKindsChange}
                   isOptionEqualToValue={(option, value) => option.name === value.name}
-                  ChipProps={{
-                    sx: {
-                      color: '#fff', // White text
-                      backgroundColor: 'rgba(255,255,255,0.3)', // White background with 0.3 opacity
-                      fontWeight: 600,
-                      '& .MuiChip-deleteIcon': {
-                        color: '#fff',
-                      },
-                    },
-                    deleteIcon: <CloseIcon />,
-                  }}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
+                  renderTags={(value: ResourceKind[], getTagProps) =>
+                    value.map((option: ResourceKind, index: number) => (
                       <Chip
                         label={option.kind}
                         {...getTagProps({ index })}
