@@ -61,7 +61,7 @@ test.describe('Login Page', () => {
 
     // Check that HTML5 validation is working by checking if fields are invalid
     const usernameField = page.getByRole('textbox', { name: 'Username' });
-    const passwordField = page.locator('input[type="password"]');
+    const passwordField = page.getByRole('textbox', { name: 'Password' });
 
     await expect(usernameField).toHaveAttribute('required');
     await expect(passwordField).toHaveAttribute('required');
@@ -85,7 +85,8 @@ test.describe('Login Page', () => {
 
   // Password Visibility Toggle Tests
   test('password visibility toggle works', async ({ page }) => {
-    const passwordField = page.locator('input[type="password"]');
+    // Use a more flexible locator that can find the password field by name attribute
+    const passwordField = page.getByRole('textbox', { name: 'Password' });
     const toggleButton = page.getByRole('button', { name: /Show password|Hide password/i });
 
     await passwordField.fill('testpassword');
@@ -172,7 +173,7 @@ test.describe('Login Page', () => {
 
     await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
-    await expect(page.locator('input[type="password"]')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
   });
 
   // Security Features Tests
