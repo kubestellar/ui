@@ -17,8 +17,6 @@ scrape_configs:
       # Both services use host networking, so localhost works
       - targets: ['localhost:4000']
     metrics_path: /api/v1/metrics
-    params:
-      format: ['raw']
 
 
   # Node Exporter for system metrics
