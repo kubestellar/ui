@@ -86,6 +86,12 @@ func SetupMetricsRoutes(router *gin.Engine, logger *zap.Logger) {
 
 	// Raw Prometheus metrics endpoint (for Prometheus scraping)
 	router.GET("/metrics", GetRawMetrics)
+	
+	// API v1 metrics endpoint for Prometheus compatibility
+	v1 := router.Group("/api/v1")
+	{
+		v1.GET("/metrics", GetRawMetrics)
+	}
 
 }
 
