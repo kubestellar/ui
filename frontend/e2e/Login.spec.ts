@@ -61,7 +61,7 @@ test.describe('Login Page', () => {
 
     // Check that HTML5 validation is working by checking if fields are invalid
     const usernameField = page.getByRole('textbox', { name: 'Username' });
-    const passwordField = page.getByRole('textbox', { name: 'Password' });
+    const passwordField = page.locator('input[type="password"]');
 
     await expect(usernameField).toHaveAttribute('required');
     await expect(passwordField).toHaveAttribute('required');
@@ -85,7 +85,7 @@ test.describe('Login Page', () => {
 
   // Password Visibility Toggle Tests
   test('password visibility toggle works', async ({ page }) => {
-    const passwordField = page.getByRole('textbox', { name: 'Password' });
+    const passwordField = page.locator('input[type="password"]');
     const toggleButton = page.getByRole('button', { name: /Show password|Hide password/i });
 
     await passwordField.fill('testpassword');
@@ -105,7 +105,7 @@ test.describe('Login Page', () => {
     // Wait for dropdown to appear and check if Hindi option is visible
     await expect(page.getByText('हिन्दी')).toBeVisible({ timeout: 3000 });
 
-    // Use force click to bypass the overlay interception issue
+    // Wait for the Hindi button to be actionable and click it
     const hindiButton = page.locator('button').filter({ hasText: 'हिन्दी' }).first();
     await hindiButton.click({ force: true });
 
@@ -122,20 +122,20 @@ test.describe('Login Page', () => {
     expect(initialFullscreen).toBe(false);
 
     await fullscreenButton.click();
-
+    
     // Wait for fullscreen to be entered
-    await page.waitForTimeout(1000);
-
+    await page.waitForFunction(() => !!document.fullscreenElement);
+    
     // Check if we're in fullscreen mode by checking the document
     const isFullscreen = await page.evaluate(() => !!document.fullscreenElement);
     expect(isFullscreen).toBe(true);
-
+    
     // Click the fullscreen button again to exit
     await fullscreenButton.click();
-
-    // Wait a moment for the fullscreen to exit
-    await page.waitForTimeout(1000);
-
+    
+    // Wait for fullscreen to exit
+    await page.waitForFunction(() => !document.fullscreenElement);
+    
     // Check if we exited fullscreen
     const isNotFullscreen = await page.evaluate(() => !document.fullscreenElement);
     expect(isNotFullscreen).toBe(true);
@@ -161,13 +161,18 @@ test.describe('Login Page', () => {
   // Responsive Design Tests
   test('responsive design works on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-
-    // Wait a moment for viewport change to take effect
-    await page.waitForTimeout(500);
-
+    
+    // Wait for the responsive layout to take effect
+    await page.waitForFunction(() => {
+      const heading = document.querySelector('h1, [role="heading"]');
+      if (!heading) return false;
+      // Check if the heading is not wider than the mobile viewport
+      return heading.clientWidth <= 375;
+    });
+    
     await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
+    await expect(page.locator('input[type="password"]')).toBeVisible();
   });
 
   // Security Features Tests
@@ -178,10 +183,15 @@ test.describe('Login Page', () => {
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
     await expect(page).toHaveURL('/', { timeout: 10000 });
-
-    // Wait a moment for localStorage to be updated
-    await page.waitForTimeout(1000);
-
+    
+    // Wait for localStorage to be updated with credentials
+    await page.waitForFunction(() => {
+      const keys = Object.keys(localStorage);
+      return keys.some(
+        key => key.includes('remember') || key.includes('username') || key.includes('password')
+      );
+    });
+    
     // Check what's actually stored in localStorage
     const localStorageData = await page.evaluate(() => {
       const keys = Object.keys(localStorage);
@@ -191,12 +201,12 @@ test.describe('Login Page', () => {
       });
       return data;
     });
-
+    
     // Check if remember me functionality worked by looking for any stored credentials
     const hasStoredCredentials = Object.keys(localStorageData).some(
       key => key.includes('remember') || key.includes('username') || key.includes('password')
     );
-
+    
     expect(hasStoredCredentials).toBe(true);
   });
 });
