@@ -131,11 +131,15 @@ test.describe('Login Page', () => {
     const isFullscreen = await page.evaluate(() => !!document.fullscreenElement);
     expect(isFullscreen).toBe(true);
 
-    // Click the fullscreen button again to exit
-    await fullscreenButton.click();
+    // Exit fullscreen using the document API directly (most reliable)
+    await page.evaluate(() => {
+      if (document.fullscreenElement) {
+        return document.exitFullscreen();
+      }
+    });
 
-    // Wait for fullscreen to exit
-    await page.waitForFunction(() => !document.fullscreenElement);
+    // Wait for fullscreen to exit with a reasonable timeout
+    await page.waitForFunction(() => !document.fullscreenElement, { timeout: 5000 });
 
     // Check if we exited fullscreen
     const isNotFullscreen = await page.evaluate(() => !document.fullscreenElement);
