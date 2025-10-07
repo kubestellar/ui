@@ -79,6 +79,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     }
   }, [formError]);
 
+  const MIN_PASSWORD_LENGTH = 6;
+
   const validateForm = () => {
     if (!username.trim()) {
       return { isValid: false, error: 'Username is required' };
@@ -96,6 +98,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
           return { isValid: false, error: 'Password is required' };
         }
 
+        if (password.length < MIN_PASSWORD_LENGTH) {
+          return {
+            isValid: false,
+            error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
+          };
+        }
+
         if (password !== confirmPassword) {
           return { isValid: false, error: 'Passwords do not match' };
         }
@@ -104,6 +113,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
       else {
         // If user provides password in edit mode, both fields must match
         if (password || confirmPassword) {
+          if (password && password.length < MIN_PASSWORD_LENGTH) {
+            return {
+              isValid: false,
+              error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
+            };
+          }
           if (password !== confirmPassword) {
             return { isValid: false, error: 'Passwords do not match' };
           }
@@ -113,6 +128,31 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
 
     return { isValid: true, error: null };
   };
+
+  const isUsernameValidForSubmit =
+    username.trim().length > 0 && /^[a-zA-Z0-9_-]+$/.test(username.trim());
+
+  const isPasswordValidForSubmit = (() => {
+    if (!showPasswordFields) {
+      return true;
+    }
+
+    if (!passwordOptional) {
+      return (
+        password.length >= MIN_PASSWORD_LENGTH &&
+        confirmPassword.length >= MIN_PASSWORD_LENGTH &&
+        password === confirmPassword
+      );
+    }
+
+    if (password || confirmPassword) {
+      return password.length >= MIN_PASSWORD_LENGTH && password === confirmPassword;
+    }
+
+    return true;
+  })();
+
+  const isSubmitDisabled = !(isUsernameValidForSubmit && isPasswordValidForSubmit);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -340,6 +380,16 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         )}
                       </button>
                     </div>
+                    {password && password.length < MIN_PASSWORD_LENGTH && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-1 flex items-center gap-1 text-xs text-red-500"
+                      >
+                        <FiAlertCircle size={12} />
+                        {`Password must be at least ${MIN_PASSWORD_LENGTH} characters long`}
+                      </motion.p>
+                    )}
                   </div>
 
                   {/* Confirm Password field */}
@@ -396,16 +446,19 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         {t('admin.users.errors.passwordMismatch')}
                       </motion.p>
                     )}
-                    {password && confirmPassword && password === confirmPassword && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-1 flex items-center gap-1 text-xs text-green-500"
-                      >
-                        <FiCheck size={12} />
-                        Passwords match
-                      </motion.p>
-                    )}
+                    {password &&
+                      confirmPassword &&
+                      password === confirmPassword &&
+                      password.length >= MIN_PASSWORD_LENGTH && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 flex items-center gap-1 text-xs text-green-500"
+                        >
+                          <FiCheck size={12} />
+                          Passwords match
+                        </motion.p>
+                      )}
                   </div>
                 </>
               )}
@@ -574,17 +627,21 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                   {t('common.cancel')}
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={isSubmitDisabled ? undefined : { scale: 1.02 }}
+                  whileTap={isSubmitDisabled ? undefined : { scale: 0.98 }}
                   type="submit"
+                  disabled={isSubmitDisabled}
                   className="flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-all duration-200"
                   style={{
                     background: isDark
                       ? 'linear-gradient(to bottom right, #3b82f6, #2563eb)'
                       : 'linear-gradient(to bottom right, #3b82f6, #1d4ed8)',
-                    boxShadow: `0 4px 12px ${isDark ? 'rgba(37, 99, 235, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+                    boxShadow: isSubmitDisabled
+                      ? 'none'
+                      : `0 4px 12px ${isDark ? 'rgba(37, 99, 235, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+                    opacity: isSubmitDisabled ? 0.6 : 1,
+                    cursor: isSubmitDisabled ? 'not-allowed' : 'pointer',
                   }}
-                  disabled={formSubmitted}
                 >
                   {formSubmitted ? (
                     <>
