@@ -170,12 +170,7 @@ export function useKubestellarData({
       setWorkloads(workloadData);
       setError(prev => ({ ...prev, workloads: undefined }));
     }
-  }, [
-    skipFetch,
-    workloadsQueryData,
-    workloadsQueryError,
-    t,
-  ]);
+  }, [skipFetch, workloadsQueryData, workloadsQueryError, t]);
 
   // Fetch binding policies
   const fetchPolicies = useCallback(async () => {
