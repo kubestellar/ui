@@ -23,18 +23,6 @@ interface ClusterApiData {
   capacity?: Record<string, unknown>;
 }
 
-interface WorkloadApiData {
-  name: string;
-  kind?: string;
-  namespace?: string;
-  creationTime: string;
-  labels?: Record<string, string>;
-  status?: string;
-  replicas?: number;
-  selector?: Record<string, string>;
-  apiVersion?: string;
-}
-
 interface BindingPolicyApiData {
   name: string;
   status?: string;
