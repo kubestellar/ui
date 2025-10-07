@@ -432,7 +432,7 @@ const ObjectFilterPage: React.FC = () => {
   const handleApplyFilters = useCallback(async () => {
     const kindsToFetch = nonNamespaceKinds.map(k => k.name);
 
-    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
+    if (kindsToFetch.length > 0) {
       await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
     }
   }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters]);
@@ -440,7 +440,7 @@ const ObjectFilterPage: React.FC = () => {
   const handleRefresh = useCallback(async () => {
     const kindsToFetch = nonNamespaceKinds.map(k => k.name);
 
-    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
+    if (kindsToFetch.length > 0) {
       setIsRefreshing(true);
       await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
       setIsRefreshing(false);
@@ -518,7 +518,7 @@ const ObjectFilterPage: React.FC = () => {
 
   useEffect(() => {
     // Auto-apply filters when both kinds and namespaces are selected
-    if (nonNamespaceKinds.length > 0 && selectedNamespaces.length > 0) {
+    if (nonNamespaceKinds.length > 0) {
       handleApplyFilters();
     }
   }, [nonNamespaceKinds, selectedNamespaces, handleApplyFilters]);
