@@ -1,0 +1,20 @@
+# Simple automatic ingress - routes everything to frontend, frontend handles API proxying
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubestellar-ui-simple
+spec:
+  rules:
+    # Handle all requests - frontend nginx will proxy /api/* to backend internally
+    - http:
+        paths:
+          # All routes go to frontend (which has nginx config to proxy /api/* to backend)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+{{- end }}

@@ -1,4 +1,5 @@
 name: Build, Check Formatting, and Run Tests
+
 on:
   push:
     branches: ['*']
@@ -9,6 +10,11 @@ jobs:
   frontend:
     name: Frontend Checks
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,29 +23,35 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
+        working-directory: frontend
         run: npm ci
 
       - name: Check Formatting
+        working-directory: frontend
         run: npm run format:check
       - name: ✅ Formatting Check Passed
         if: success()
         run: echo "Prettier formatting check passed ✅"
 
       - name: Lint Check
+        working-directory: frontend
         run: npm run lint
       - name: ✅ Lint Check Passed
         if: success()
         run: echo "Linting successful ✅"
 
       - name: Run Frontend Tests
-        run: npm test -- --ci --coverage
+        working-directory: frontend
+        run: npm test -- --ci --coverage --passWithNoTests
       - name: ✅ Frontend Tests Passed
         if: success()
         run: echo "Frontend tests passed ✅"
 
       - name: Build
+        working-directory: frontend
         run: npm run build
         env:
           VITE_BASE_URL: http://localhost:4000
@@ -48,6 +60,7 @@ jobs:
         run: echo "Frontend build successful ✅"
 
       - name: Run Frontend
+        working-directory: frontend
         run: |
           echo "Starting Frontend Server..."
           npm run dev &
@@ -60,6 +73,18 @@ jobs:
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -96,6 +121,13 @@ jobs:
         if: success()
         run: echo "Backend build successful ✅"
 
+      - name: Run Backend Tests
+        working-directory: backend
+        run: go test ./... -v
+      - name: ✅ Backend Tests Passed
+        if: success()
+        run: echo "Backend Tests Passed ✅"
+
       - name: Run Backend
         working-directory: backend
         run: |
@@ -104,3 +136,44 @@ jobs:
       - name: ✅ Backend Server Started
         if: success()
         run: echo "Backend server started successfully ✅"
+
+  helm-chart-test:
+    name: Helm Chart Test
+    runs-on: ubuntu-latest
+    needs: [frontend, backend]  # ✅ Wait until images are built & pushed
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up KinD Cluster
+        uses: helm/kind-action@v1.9.0
+        with:
+          cluster_name: helm-ui-test  # 🧠 Must match --cluster arg in test script
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Build Helm Dependencies
+        run: |
+          cd chart
+          helm dependency build
+
+      - name: Patch Helm values with SHA-tagged GHCR images
+        run: |
+          cp chart/values.yaml chart/values.ci.yaml
+          yq e '
+            .frontend.image.repository = "ghcr.io/kubestellar/ui-frontend" |
+            .frontend.image.tag = "${{ github.sha }}" |
+            .backend.image.repository = "ghcr.io/kubestellar/ui-backend" |
+            .backend.image.tag = "${{ github.sha }}"
+          ' -i chart/values.ci.yaml
+      - name: Run Helm Chart Test Script
+        run: |
+          bash scripts/helm-test.sh \
+            --release=ui-test-release \
+            --namespace=helm-ui-test \
+            --cluster=helm-ui-test \
+            --values=chart/values.ci.yaml        

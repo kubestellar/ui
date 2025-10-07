@@ -1,0 +1,107 @@
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from '@mui/material';
+import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
+import { getConfirmationDialogPaperProps } from '../../utils/dialogUtils';
+// Add i18n import
+import { useTranslation } from 'react-i18next';
+
+interface Props {
+  cancelConfirmationOpen: boolean;
+  handleCloseCancelConfirmation: () => void;
+  handleConfirmCancel: () => void;
+}
+
+export const CancelConfirmationDialog = ({
+  cancelConfirmationOpen,
+  handleCloseCancelConfirmation,
+  handleConfirmCancel,
+}: Props) => {
+  const theme = useTheme(state => state.theme); // Get the current theme
+  const { t } = useTranslation();
+
+  return (
+    <Dialog
+      open={cancelConfirmationOpen}
+      onClose={handleCloseCancelConfirmation}
+      PaperProps={getConfirmationDialogPaperProps(theme)}
+    >
+      <DialogTitle sx={{ padding: '16px 24px' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningAmberIcon sx={{ color: '#f5c518', fontSize: '1.5rem' }} />
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 500, color: theme === 'dark' ? '#fff' : '#333' }}
+          >
+            {t('cancelConfirmationDialog.title')}
+          </Typography>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{ padding: '24px', py: 0 }}>
+        <DialogContent sx={{ border: '1px solid #ff9800', py: 1.5, mt: 2, borderRadius: '8px' }}>
+          <Box sx={{ display: 'flex', marginLeft: '-9px', gap: 2, alignItems: 'center' }}>
+            <WarningAmberIcon
+              sx={{ color: theme === 'dark' ? '#fff' : '#f5c518', fontSize: '1.4rem' }}
+            />
+            <Box sx={{ alignItems: 'center', marginLeft: '-6px', mb: 0.5 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 500, color: theme === 'dark' ? '#fff' : 'rgb(102, 60, 0)' }}
+              >
+                {t('cancelConfirmationDialog.warning')}
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ color: theme === 'dark' ? '#fff' : 'rgb(102, 60, 0)', fontSize: '14px' }}
+              >
+                {t('cancelConfirmationDialog.message')}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+      </DialogContent>
+
+      <DialogActions sx={{ padding: '16px 16px' }}>
+        <Button
+          onClick={handleCloseCancelConfirmation}
+          sx={{
+            textTransform: 'none',
+            fontWeight: 500,
+            color: '#1976d2',
+            padding: '6px 8px',
+            '&:hover': {
+              backgroundColor: '#f5f5f5',
+            },
+          }}
+        >
+          {t('cancelConfirmationDialog.continueEditing')}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleConfirmCancel}
+          sx={{
+            textTransform: 'none',
+            fontWeight: 500,
+            backgroundColor: '#d32f2f',
+            color: '#fff',
+            padding: '6px 16px',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#b71c1c',
+            },
+          }}
+        >
+          {t('cancelConfirmationDialog.yesCancel')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};

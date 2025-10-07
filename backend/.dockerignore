@@ -6,7 +6,6 @@
 *.a
 
 # Ignore Go modules cache
-/pkg/
 vendor/
 
 # Ignore dependency files (if using Go modules, only go.mod & go.sum are needed)

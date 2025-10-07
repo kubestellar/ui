@@ -5,17 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"gopkg.in/yaml.v3"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"io"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/tools/cache"
 	"log"
 	"net/http"
 	"reflect"
@@ -23,6 +14,18 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"gopkg.in/yaml.v3"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
@@ -38,6 +41,7 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 			if strings.EqualFold(resource.Kind, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
+					telemetry.K8sClientErrorCounter.WithLabelValues("getGVR", "parse_group_version", "500").Inc()
 					return schema.GroupVersionResource{}, false, err
 				}
 				isNamespaced := resource.Namespaced
@@ -45,6 +49,7 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 			} else if strings.EqualFold(resource.Name, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
+					telemetry.K8sClientErrorCounter.WithLabelValues("getGVR", "parse_group_version", "500").Inc()
 					return schema.GroupVersionResource{}, false, err
 				}
 				isNamespaced := resource.Namespaced
@@ -138,6 +143,7 @@ func EnsureNamespaceExistsAndAddLabel(dynamicClient dynamic.Interface, namespace
 
 	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("EnsureNamespaceExistsAndAddLabel", "create_namespace", "500").Inc()
 		return fmt.Errorf("failed to create namespace %s: %v", namespace, err)
 	}
 
@@ -306,6 +312,11 @@ func ListResources(c *gin.Context) {
 	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
 
+	// Get filter parameters
+	kindFilter := c.Query("kind")
+	namespaceFilter := c.Query("namespace")
+	labelFilter := c.Query("label") // Format: key=value
+
 	discoveryClient := clientset.Discovery()
 	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
@@ -320,11 +331,36 @@ func ListResources(c *gin.Context) {
 		resource = dynamicClient.Resource(gvr)
 	}
 
+	// Create list options with label selector if provided
+	listOptions := v1.ListOptions{}
+	if labelFilter != "" {
+		listOptions.LabelSelector = labelFilter
+	}
+
 	// Retrieve list of resources
-	result, err := resource.List(c, v1.ListOptions{})
+	result, err := resource.List(c, listOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Apply additional filtering on the server side
+	if kindFilter != "" || namespaceFilter != "" {
+		filteredItems := make([]unstructured.Unstructured, 0)
+		for _, item := range result.Items {
+			// Apply kind filter if specified
+			if kindFilter != "" && item.GetKind() != kindFilter {
+				continue
+			}
+
+			// Apply namespace filter if specified
+			if namespaceFilter != "" && item.GetNamespace() != namespaceFilter {
+				continue
+			}
+
+			filteredItems = append(filteredItems, item)
+		}
+		result.Items = filteredItems
 	}
 
 	format := c.Query("format")
@@ -341,7 +377,7 @@ func ListResources(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// UpdateResource updates an existing Kubernetes resource
+// UpdateResource updates an existing Kubernetes resource with retry logic
 func UpdateResource(c *gin.Context) {
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
@@ -355,16 +391,17 @@ func UpdateResource(c *gin.Context) {
 
 	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
-	name := c.Param("name") // Extract resource name
+	name := c.Param("name")
 
 	discoveryClient := clientset.Discovery()
 	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
+		telemetry.K8sClientErrorCounter.WithLabelValues("UpdateResource", "getGVR", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
-	var resource dynamic.ResourceInterface
 
+	var resource dynamic.ResourceInterface
 	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
 	} else {
@@ -377,11 +414,31 @@ func UpdateResource(c *gin.Context) {
 		return
 	}
 
-	// Ensure the resource has a name before updating
+	// Prepare unstructured object from client
 	resourceObj := &unstructured.Unstructured{Object: resourceData}
 	resourceObj.SetName(name)
-	// TODO: Retry Logic
-	result, err := resource.Update(c, resourceObj, v1.UpdateOptions{})
+
+	var result *unstructured.Unstructured
+
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, getErr := resource.Get(c, name, v1.GetOptions{})
+		if getErr != nil {
+			return fmt.Errorf("failed to get current resource: %w", getErr)
+		}
+
+		for k, v := range resourceObj.Object {
+			current.Object[k] = v
+		}
+
+		updated, updateErr := resource.Update(c, current, v1.UpdateOptions{})
+		if updateErr != nil {
+			return fmt.Errorf("update failed: %w", updateErr)
+		}
+
+		result = updated
+		return nil
+	})
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -507,10 +564,12 @@ func LogWorkloads(c *gin.Context) {
 	// ALL VALIDATION DONE - Now safe to upgrade to WebSocket
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionUpgradedFailed.WithLabelValues("logWorkloads", "upgrade_error").Inc()
 		log.Println("WebSocket Upgrade Error:", err)
 		// DO NOT call c.JSON here - just return
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("logWorkloads", cookieContext).Inc()
 	defer conn.Close()
 
 	// Create informer factory filtering by name if provided
@@ -1132,4 +1191,101 @@ func LogWorkloads(c *gin.Context) {
 
 	<-c.Done()
 	sendMessage("INFO", "Stopping monitoring session")
+}
+
+// GetResourceKinds returns a list of all available resource kinds in the cluster
+func GetResourceKinds(c *gin.Context) {
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, _, err := GetClientSetWithContext(cookieContext)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	discoveryClient := clientset.Discovery()
+	apiResourceLists, err := discoveryClient.ServerPreferredResources()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Extract and organize resource kinds
+	resourceKinds := make([]map[string]interface{}, 0)
+
+	for _, apiResourceList := range apiResourceLists {
+		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
+		if err != nil {
+			continue
+		}
+
+		for _, apiResource := range apiResourceList.APIResources {
+			// Skip subresources
+			if strings.Contains(apiResource.Name, "/") {
+				continue
+			}
+
+			// Skip if we can't list this resource
+			if !containsVerb(apiResource.Verbs, "list") {
+				continue
+			}
+
+			resourceKind := map[string]interface{}{
+				"kind":       apiResource.Kind,
+				"name":       apiResource.Name,
+				"group":      gv.Group,
+				"version":    gv.Version,
+				"namespaced": apiResource.Namespaced,
+			}
+
+			resourceKinds = append(resourceKinds, resourceKind)
+		}
+	}
+
+	c.JSON(http.StatusOK, resourceKinds)
+}
+
+// GetNamespaces returns a list of all namespaces in the cluster
+func GetNamespaces(c *gin.Context) {
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, _, err := GetClientSetWithContext(cookieContext)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	namespaces, err := clientset.CoreV1().Namespaces().List(c, v1.ListOptions{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Extract namespace names and metadata
+	namespaceList := make([]map[string]interface{}, 0, len(namespaces.Items))
+	for _, ns := range namespaces.Items {
+		namespaceInfo := map[string]interface{}{
+			"name":      ns.Name,
+			"createdAt": ns.CreationTimestamp.Time,
+			"status":    ns.Status.Phase,
+			"labels":    ns.Labels,
+		}
+		namespaceList = append(namespaceList, namespaceInfo)
+	}
+
+	c.JSON(http.StatusOK, namespaceList)
+}
+
+// Helper function to check if a verb is in the list of verbs
+func containsVerb(verbs []string, verb string) bool {
+	for _, v := range verbs {
+		if v == verb {
+			return true
+		}
+	}
+	return false
 }

@@ -1,0 +1,60 @@
+name: Release UI Helm Chart
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-helm-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.12.0
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract tag name
+        run: echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Clean old chart packages
+        run: rm -f ./*.tgz
+
+      - name: Update image versions in values.yaml
+        run: |
+          sed -i "s|image: ghcr.io/kubestellar/ui/frontend:.*|image: ghcr.io/kubestellar/ui/frontend:${{ env.RELEASE_TAG }}|" chart/values.yaml
+          sed -i "s|image: ghcr.io/kubestellar/ui/backend:.*|image: ghcr.io/kubestellar/ui/backend:${{ env.RELEASE_TAG }}|" chart/values.yaml
+
+
+      - name: Package Helm Chart
+        run: |
+          helm package chart \
+            --version "${{ env.RELEASE_TAG }}" \
+            --app-version "${{ env.RELEASE_TAG }}"
+
+      - name: Push Helm Chart to GHCR
+        run: |
+          helm push *.tgz oci://ghcr.io/kubestellar/ui
+
+      - name: Verify pushed chart
+        env:
+          HELM_EXPERIMENTAL_OCI: 1
+        run: |
+          helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          helm pull oci://ghcr.io/kubestellar/ui/kubestellar-ui --version "${{ env.RELEASE_TAG }}"
+          helm show chart oci://ghcr.io/kubestellar/ui/kubestellar-ui --version "${{ env.RELEASE_TAG }}"
+

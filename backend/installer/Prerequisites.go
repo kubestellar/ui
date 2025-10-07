@@ -259,23 +259,34 @@ func checkPrerequisite(name, command string, args []string, versionArgs []string
 
 	// Get version information
 	cmd := exec.Command(command, versionArgs...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
+	rawBytes, err := cmd.CombinedOutput()
+	rawOutput := string(rawBytes)
+	if err != nil && len(rawOutput) == 0 {
+		// Command failed and no output, so not installed
 		return PrerequisiteStatus{
 			Name:         name,
-			Installed:    true, // Command exists but version check failed
-			Version:      "unknown",
+			Installed:    false,
+			Version:      "Unknown",
 			Required:     required,
 			InstallGuide: installGuide,
 		}
 	}
 
-	rawOutput := string(output)
+	// Try to pull a version out of what it printed
 	version := extractor(rawOutput)
+	if version == "" {
+		// it ran, but we couldn’t recognize any version string
+		return PrerequisiteStatus{
+			Name:         name,
+			Installed:    true, // command exists but version check fails
+			Version:      "Unknown",
+			Required:     required,
+			InstallGuide: installGuide,
+		}
+	}
 
-	// Compare with required version
+	// Compare versions
 	isValid := compareVersions(version, required)
-
 	return PrerequisiteStatus{
 		Name:         name,
 		Installed:    isValid,
@@ -287,8 +298,10 @@ func checkPrerequisite(name, command string, args []string, versionArgs []string
 
 // CheckCommand checks if a command is available
 func CheckCommand(name string, args ...string) bool {
-	cmd := exec.Command(name, args...)
-	return cmd.Run() == nil
+	if _, err := exec.LookPath(name); err != nil {
+		return false
+	}
+	return true
 }
 
 // compareVersions checks if the actual version satisfies the required constraint

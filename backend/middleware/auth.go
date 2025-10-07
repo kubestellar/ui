@@ -5,82 +5,75 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/kubestellar/ui/auth"
-	jwtconfig "github.com/kubestellar/ui/jwt"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 // AuthenticateMiddleware validates JWT token
 func AuthenticateMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenString := c.GetHeader("Authorization")
-		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
 			return
 		}
 
-		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-		claims := jwt.MapClaims{}
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == authHeader {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Bearer token required"})
+			c.Abort()
+			return
+		}
 
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtconfig.GetJWTSecret()), nil
-		})
-
-		if err != nil || !token.Valid {
+		claims, err := utils.ValidateToken(tokenString)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
-		username, exists := claims["username"].(string)
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token payload"})
-			c.Abort()
-			return
-		}
-
-		// Get user permissions from auth system
-		userConfig, exists, err := auth.GetUserByUsername(username)
-		if err != nil || !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-			c.Abort()
-			return
-		}
-
-		// Store both username and permissions in context
-		c.Set("username", username)
-		c.Set("permissions", userConfig.Permissions)
+		c.Set("username", claims.Username)
+		c.Set("is_admin", claims.IsAdmin)
+		c.Set("permissions", claims.Permissions)
+		c.Set("user_id", claims.UserID)
 		c.Next()
 	}
 }
 
-// RequirePermission middleware checks if the user has a specific permission
-func RequirePermission(permission string) gin.HandlerFunc {
+// RequireAdmin ensures user has admin privileges
+func RequireAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		permissionsInterface, exists := c.Get("permissions")
+		isAdmin, exists := c.Get("is_admin")
+		if !exists || !isAdmin.(bool) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+// RequirePermission checks if user has specific permission for a component
+func RequirePermission(component, requiredPermission string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		permissions, exists := c.Get("permissions")
 		if !exists {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Authorization required"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "No permissions found"})
 			c.Abort()
 			return
 		}
 
-		permissions, ok := permissionsInterface.([]string)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid permission format"})
+		userPermissions := permissions.(map[string]string)
+		userPerm, hasComponent := userPermissions[component]
+
+		if !hasComponent {
+			c.JSON(http.StatusForbidden, gin.H{"error": "No permission for this component"})
 			c.Abort()
 			return
 		}
 
-		hasPermission := false
-		for _, p := range permissions {
-			if p == permission {
-				hasPermission = true
-				break
-			}
-		}
-
-		if !hasPermission {
+		if !hasRequiredPermission(userPerm, requiredPermission) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
 			c.Abort()
 			return
@@ -90,7 +83,14 @@ func RequirePermission(permission string) gin.HandlerFunc {
 	}
 }
 
-// RequireAdmin middleware checks if the user has admin permissions
-func RequireAdmin() gin.HandlerFunc {
-	return RequirePermission("admin")
+// hasRequiredPermission checks if user permission satisfies requirement
+func hasRequiredPermission(userPerm, required string) bool {
+	switch required {
+	case "read":
+		return userPerm == "read" || userPerm == "write"
+	case "write":
+		return userPerm == "write"
+	default:
+		return false
+	}
 }

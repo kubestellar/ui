@@ -11,13 +11,23 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/redis"
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/redis"
+	"github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+)
+
+const (
+	// workloadDelimiter is the delimiter used in specificWorkloads annotation
+	// Format: "apiVersion,kind,name,namespace"
+	workloadDelimiter = ","
+
+	// expectedSpecificWorkloadsParts is the expected number of parts when splitting specificWorkloads annotation
+	expectedSpecificWorkloadsParts = 4
 )
 
 type StoredBindingPolicy struct {
@@ -54,12 +64,19 @@ type BindingPolicyWithStatus struct {
 func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 	log.LogDebug("retrieving all binding policies")
 	log.LogDebug("Using wds context: ", zap.String("wds_context", os.Getenv("wds_context")))
-
+	start := time.Now()
+	defer func() {
+		telemetry.BindingPolicyOperationDuration.WithLabelValues("GetAllBp").Observe(time.Since(start).Seconds())
+	}()
 	// Try to get from Redis cache first
 	cachedPolicies, err := redis.GetAllBindingPolicies()
 	if err != nil {
+		telemetry.BindingPolicyCacheMisses.WithLabelValues("get", "cache_miss").Inc()
 		log.LogWarn("failed to get binding policies from Redis cache", zap.Error(err))
-	} else if cachedPolicies != nil && len(cachedPolicies) > 0 {
+	} else if cachedPolicies != nil {
+		telemetry.BindingPolicyCacheHits.WithLabelValues("redis").Inc()
+		telemetry.BindingPolicyOperationsTotal.WithLabelValues("get", "cache_hit").Inc()
+
 		log.LogInfo("Using cached binding policies from Redis", zap.Int("count", len(cachedPolicies)))
 		// Convert cached policies to response format
 		responseArray := make([]map[string]interface{}, len(cachedPolicies))
@@ -273,7 +290,31 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 
 			// Try to extract from annotations if there's any workload info
 			if annotations := bpList.Items[i].Annotations; annotations != nil {
-				if specificWorkload, ok := annotations["specific-workload-name"]; ok && specificWorkload != "" {
+				// First try to extract from specificWorkloads annotation
+				if specificWorkloadsStr, ok := annotations["specificWorkloads"]; ok && specificWorkloadsStr != "" {
+					// Parse the specificWorkloads annotation which contains: apiVersion,kind,name,namespace
+					parts := strings.Split(specificWorkloadsStr, workloadDelimiter)
+					if len(parts) >= expectedSpecificWorkloadsParts {
+						// Trim whitespace from each part
+						for i := range parts {
+							parts[i] = strings.TrimSpace(parts[i])
+						}
+						apiVersion := parts[0]
+						kind := parts[1]
+						name := parts[2]
+						namespace := parts[3]
+						// Validate that none of the required parts are empty
+						if apiVersion != "" && kind != "" && name != "" && namespace != "" {
+							workloadDesc := fmt.Sprintf("Specific: %s/%s: %s (ns:%s)", apiVersion, kind, name, namespace)
+							if !contains(workloads, workloadDesc) {
+								workloads = append(workloads, workloadDesc)
+								log.LogDebug("GetAllBp - Added specific workload from specificWorkloads annotation", zap.String("workloadDesc", workloadDesc))
+							}
+						} else {
+							log.LogWarn("GetAllBp - Malformed specificWorkloads annotation, skipping", zap.String("annotation", specificWorkloadsStr))
+						}
+					}
+				} else if specificWorkload, ok := annotations["specific-workload-name"]; ok && specificWorkload != "" {
 					// Try to determine API group and kind from annotations
 					apiVersion := annotations["workload-api-version"]
 					if apiVersion == "" {
@@ -323,6 +364,8 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 		if len(workloads) == 0 {
 			workloads = append(workloads, "No workload specified")
 			log.LogDebug("GetAllBp - No workloads found, adding default")
+		} else {
+			log.LogDebug("GetAllBp - Found workloads", zap.String("policyName", policyName), zap.Any("workloads", workloads))
 		}
 
 		// Ensure we have cluster count consistent with the array
@@ -560,10 +603,11 @@ func GetAllBp(ctx *gin.Context) {
 	// Call the core function to get binding policies
 	bpolicies, err := GetBindingPolicies(namespace)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policies", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/binding-policies", "200").Inc()
 	// Return the binding policies
 	ctx.JSON(http.StatusOK, gin.H{
 		"bindingPolicies": bpolicies,
@@ -573,7 +617,6 @@ func GetAllBp(ctx *gin.Context) {
 
 // CreateBp creates a new BindingPolicy
 func CreateBp(ctx *gin.Context) {
-
 	log.LogInfo("starting Createbp handler",
 		zap.String("wds_context", os.Getenv("wds_context")))
 	// Check Content-Type header
@@ -581,6 +624,7 @@ func CreateBp(ctx *gin.Context) {
 	var err error
 	contentType := ctx.ContentType()
 	if !contentTypeValid(contentType) {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "content-type not supported"})
 		return
 	}
@@ -594,6 +638,7 @@ func CreateBp(ctx *gin.Context) {
 	if baseContentType == "application/yaml" {
 		bpRawYamlBytes, err = io.ReadAll(ctx.Request.Body)
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies", "500").Inc()
 			log.LogError("error reading yaml input", zap.String("error", err.Error()))
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -603,6 +648,7 @@ func CreateBp(ctx *gin.Context) {
 		var err error
 		bpRawYamlBytes, err = utils.GetFormFileBytes("bpYaml", ctx)
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies", "500").Inc()
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			log.LogError(err.Error())
 			return
@@ -619,6 +665,7 @@ func CreateBp(ctx *gin.Context) {
 	bp, err := getBpObjFromYaml(bpRawYamlBytes)
 	if err != nil {
 		log.LogError(err.Error())
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 
@@ -626,12 +673,14 @@ func CreateBp(ctx *gin.Context) {
 	c, err := getClientForBp()
 	if err != nil {
 		log.LogInfo(err.Error())
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	_, err = c.BindingPolicies().Create(context.TODO(), bp, v1.CreateOptions{})
 	if err != nil {
 		log.LogError(err.Error())
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -648,11 +697,12 @@ func CreateBp(ctx *gin.Context) {
 
 	log.LogInfo("Storing binding policy in Redis cache", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(string(bpRawYamlBytes))))
 	if err := redis.StoreBindingPolicy(cachedBPolicy); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies", "500").Inc()
 		log.LogWarn("failed to cache new binding policy", zap.Error(err))
 	} else {
 		log.LogInfo("Successfully cached new binding policy", zap.String("policyName", bp.Name))
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/binding-policies", "201").Inc()
 	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Created binding policy '%s' successfully", bp.Name)})
 }
 
@@ -661,31 +711,35 @@ func DeleteBp(ctx *gin.Context) {
 	name := ctx.Param("name")
 
 	if name == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/binding-policy/:name", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name parameter is required"})
 		return
 	}
 
 	// Delete from Redis first
 	if err := redis.DeleteBindingPolicy(name); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/binding-policy/:name", "500").Inc()
 		log.LogWarn("failed to delete binding policy from Redis cache", zap.Error(err))
 	}
 
 	log.LogInfo("", zap.String("deleting bp: ", name))
 	c, err := getClientForBp()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/binding-policy/:name", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	err = c.BindingPolicies().Delete(context.TODO(), name, v1.DeleteOptions{})
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/binding-policy/:name", "500").Inc()
 		log.LogError("", zap.String("err", err.Error()))
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("failed to delte Bp: %s", name),
 		})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/binding-policy/:name", "200").Inc()
 	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("deleted %s", name)})
 
 }
@@ -694,11 +748,13 @@ func DeleteBp(ctx *gin.Context) {
 func DeleteAllBp(ctx *gin.Context) {
 	// Delete from Redis first
 	if err := redis.DeleteAllBindingPolicies(); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/binding-policies", "500").Inc()
 		log.LogError("failed to delete all binding policies from Redis cache", zap.Error(err))
 	}
 
 	c, err := getClientForBp()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/binding-policies", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -709,6 +765,7 @@ func DeleteAllBp(ctx *gin.Context) {
 
 	err = c.BindingPolicies().DeleteCollection(context.TODO(), v1.DeleteOptions{}, listOptions)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/binding-policies", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Sprintf("Failed to delete binding policies: %v", err),
 		})
@@ -719,7 +776,7 @@ func DeleteAllBp(ctx *gin.Context) {
 	if namespace != "" {
 		message = fmt.Sprintf("Deleted all binding policies in namespace '%s'", namespace)
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/binding-policies", "200").Inc()
 	ctx.JSON(http.StatusOK, gin.H{"message": message})
 }
 
@@ -729,6 +786,7 @@ func GetBpStatus(ctx *gin.Context) {
 	namespace := ctx.Query("namespace")
 
 	if name == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name parameter is required"})
 		return
 	}
@@ -736,18 +794,21 @@ func GetBpStatus(ctx *gin.Context) {
 	// Try to get from Redis cache first
 	cachedPolicy, err := redis.GetBindingPolicy(name)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "500").Inc()
 		log.LogWarn("failed to get binding policy from Redis cache", zap.Error(err))
 	} else if cachedPolicy != nil {
+
 		log.LogInfo("Using cached binding policy from Redis", zap.String("policyName", name))
 
 		// Ensure YAML content is properly mapped
 		yamlContent := cachedPolicy.RawYAML
 		if yamlContent == "" {
+			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "404").Inc()
 			log.LogWarn("Empty YAML content in cached policy", zap.String("policyName", name))
 		} else {
 			log.LogDebug("Found YAML content in cached policy", zap.String("policyName", name), zap.Int("yamlLength", len(yamlContent)))
 		}
-
+		telemetry.TotalHTTPRequests.WithLabelValues("GET", "/binding-policy/status", "200").Inc()
 		ctx.JSON(http.StatusOK, gin.H{
 			"name":              cachedPolicy.Name,
 			"namespace":         cachedPolicy.Namespace,
@@ -775,6 +836,7 @@ func GetBpStatus(ctx *gin.Context) {
 
 	c, err := getClientForBp()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "500").Inc()
 		log.LogError("GetBpStatus - Client error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -783,11 +845,13 @@ func GetBpStatus(ctx *gin.Context) {
 	// Try to get binding policy directly
 	bp, err := c.BindingPolicies().Get(context.TODO(), name, v1.GetOptions{})
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "404").Inc()
 		log.LogDebug("GetBpStatus - Direct Get error", zap.Error(err))
 
 		// Try to list all binding policies to see if it exists
 		bpList, listErr := c.BindingPolicies().List(context.TODO(), v1.ListOptions{})
 		if listErr != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "500").Inc()
 			log.LogError("GetBpStatus - List error", zap.Error(listErr))
 			ctx.JSON(http.StatusNotFound, gin.H{
 				"error": fmt.Sprintf("Binding policy '%s' not found and failed to list policies: %v", name, listErr),
@@ -807,6 +871,7 @@ func GetBpStatus(ctx *gin.Context) {
 		}
 
 		if foundBP == nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "404").Inc()
 			ctx.JSON(http.StatusNotFound, gin.H{
 				"error": fmt.Sprintf("Binding policy '%s' not found in any namespace", name),
 			})
@@ -943,6 +1008,7 @@ func GetBpStatus(ctx *gin.Context) {
 		// Parse the raw YAML to extract information
 		var yamlMap map[string]interface{}
 		if err := yaml.Unmarshal([]byte(storedBP.RawYAML), &yamlMap); err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/binding-policy/status", "500").Inc()
 			log.LogDebug("GetAllBp - Failed to parse raw YAML", zap.Error(err))
 
 		} else {
@@ -1114,7 +1180,7 @@ func GetBpStatus(ctx *gin.Context) {
 		zap.Any("clusters", clusters),
 		zap.Int("workloads_count", len(workloads)),
 		zap.Any("workloads", workloads))
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/binding-policy/status", "200").Inc()
 	ctx.JSON(http.StatusOK, gin.H{
 		"name":              bp.Name,
 		"namespace":         bp.Namespace,
@@ -1135,24 +1201,29 @@ func UpdateBp(ctx *gin.Context) {
 
 	bpName := ctx.Param("name")
 	if bpName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/binding-policy/:name", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "expected name for Binding policy"})
 		return
 	}
 	jsonBytes, err := ctx.GetRawData()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/binding-policy/:name", "400").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
 	c, err := getClientForBp()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/binding-policy/:name", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	updatedBp, err := c.BindingPolicies().Patch(context.TODO(), bpName, types.MergePatchType, jsonBytes, v1.PatchOptions{})
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/binding-policy/:name", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	telemetry.TotalHTTPRequests.WithLabelValues("PATCH", "/binding-policy/:name", "200").Inc()
 	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("updated %s", updatedBp.Name)})
 
 }
@@ -1167,6 +1238,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	contentType := ctx.GetHeader("Content-Type")
 	log.LogDebug("Content-Type", zap.String("contentType", contentType))
 	if !strings.Contains(contentType, "application/json") {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/json", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Content-Type must be application/json"})
 		return
 	}
@@ -1194,12 +1266,14 @@ func CreateBpFromJson(ctx *gin.Context) {
 	var bpRequest BindingPolicyRequest
 	if err := ctx.ShouldBindJSON(&bpRequest); err != nil {
 		log.LogError("JSON binding error", zap.Error(err))
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/json", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
 		return
 	}
 
 	// Validate required fields
 	if bpRequest.Name == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/json", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
 		return
 	}
@@ -1394,6 +1468,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	// Generate YAML for the policy object
 	yamlData, err := yaml.Marshal(policyObj)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/json", "500").Inc()
 		log.LogError("YAML marshaling error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
 		return
@@ -1404,6 +1479,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	// Now parse back into a BindingPolicy struct
 	newBP := &v1alpha1.BindingPolicy{}
 	if err := yaml.Unmarshal(yamlData, newBP); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/json", "500").Inc()
 		log.LogError("Error parsing generated YAML back into BindingPolicy", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to parse generated YAML: %s", err.Error())})
 		return
@@ -1444,6 +1520,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	c, err := getClientForBp()
 	if err != nil {
 		log.LogError("Client creation error", zap.Error(err))
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/json", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create client: %s", err.Error())})
 		return
 	}
@@ -1452,6 +1529,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	_, err = c.BindingPolicies().Create(context.TODO(), newBP, v1.CreateOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/json", "409").Inc()
 			ctx.JSON(http.StatusConflict, gin.H{
 				"error":  fmt.Sprintf("BindingPolicy '%s' in namespace '%s' already exists", newBP.Name, newBP.Namespace),
 				"status": "exists",
@@ -1509,7 +1587,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 			workloads = append(workloads, workloadDesc)
 		}
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/binding-policies/json", "201").Inc()
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Created binding policy '%s' in namespace '%s' successfully", newBP.Name, newBP.Namespace),
 		"bindingPolicy": gin.H{
@@ -1918,6 +1996,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	var request QuickBindingPolicyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		log.LogError("JSON binding error", zap.Error(err))
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/quick-yaml", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
 		return
 	}
@@ -1926,11 +2005,13 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 
 	// Validate required fields
 	if len(request.WorkloadLabels) == 0 {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/quick-yaml", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "workloadLabels are required"})
 		return
 	}
 
 	if len(request.ClusterLabels) == 0 {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/quick-yaml", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "clusterLabels are required"})
 		return
 	}
@@ -1948,6 +2029,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	}
 
 	if len(resourceConfigs) == 0 {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/quick-yaml", "400").Inc()
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one resource type is required"})
 		return
 	}
@@ -2150,6 +2232,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	yamlData, err := yaml.Marshal(policyObj)
 	if err != nil {
 		log.LogError("YAML marshaling error", zap.Error(err))
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/binding-policies/quick-yaml", "500").Inc()
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
 		return
 	}
@@ -2193,7 +2276,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			"workloadsCount": len(resourcesFormatted) + len(workloadLabelsFormatted),
 		},
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/binding-policies/quick-yaml", "200").Inc()
 	ctx.JSON(http.StatusOK, response)
 }
 

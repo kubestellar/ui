@@ -10,14 +10,14 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
-# Copy the source codesudo apt  install docker-compose 
+# Copy the source code
 COPY . .
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o backend main.go
 
 # Stage 2: Create a lightweight runtime image
-FROM alpine:latest
+FROM alpine:latest AS stage-1
 
 # Install necessary packages, Helm, and clusteradm
 RUN apk --no-cache add ca-certificates curl openssl git bash kubectl && \
@@ -39,13 +39,17 @@ WORKDIR /root/
 
 # Generate JWT secret and set it as an environment variable
 RUN JWT_SECRET=$(openssl rand -base64 32) && \
-    echo "export JWT_SECRET=$JWT_SECRET" > /root/.env
+    echo "export JWT_SECRET=$JWT_SECRET" > /root/.env && \
+    echo "export PORT=4000" >> /root/.env
 
 # Create a temp directory for git operations
 RUN mkdir -p /tmp && chmod 777 /tmp
 
 # Copy the compiled binary from the builder stage
 COPY --from=backend-builder /app/backend .
+
+# Copy migration files
+COPY --from=backend-builder /app/postgresql/migrations ./postgresql/migrations
 
 # Allow access to Kubernetes API via a volume mount for kubeconfig
 VOLUME ["/root/.kube"]
@@ -54,4 +58,4 @@ VOLUME ["/root/.kube"]
 EXPOSE 4000
 
 # Source the environment variables and run the backend
-CMD ["/bin/sh", "-c", "source /root/.env && ./backend"]
+CMD ["/bin/sh", "-c", ". /root/.env && exec ./backend"]

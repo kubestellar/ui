@@ -4,16 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/redis"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/redis"
+	"github.com/kubestellar/ui/backend/telemetry"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"time"
 )
 
@@ -44,6 +47,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 	}
 	clientset, dynamicClient, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/list/:namespace", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -51,6 +55,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 	nsName := c.Param("namespace")
 
 	if nsName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/list/:namespace", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "namespace is required param",
 		})
@@ -64,6 +69,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 	cacheKey := getCacheKey(cookieContext, "list", nsName)
 	found, err := redis.GetJSONValue(cacheKey, &result)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/list/:namespace", "500").Inc()
 		log.Printf("Error retrieving list view ns details data from cache: %v", err)
 	} else if found && len(result.Namespaced) > 0 {
 		c.JSON(http.StatusOK, gin.H{
@@ -118,6 +124,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 	if err != nil {
 		log.Printf("Error caching list view namespaces details data: %v", err)
 	}
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/wds/list/:namespace", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"data": result,
 	})
@@ -129,7 +136,7 @@ func ListAllResourcesDetailsSSE(c *gin.Context) {
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Flush()
-
+	startTime := time.Now()
 	sendEvent := func(event string, data any) {
 		jsonData, _ := json.Marshal(data)
 		fmt.Fprintf(c.Writer, "event: %s\n", event)
@@ -156,6 +163,7 @@ func ListAllResourcesDetailsSSE(c *gin.Context) {
 
 	clientset, dynamicClient, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/list", "500").Inc()
 		sendEvent("error", gin.H{"error": err.Error()})
 		return
 	}
@@ -170,6 +178,7 @@ func ListAllResourcesDetailsSSE(c *gin.Context) {
 	if !found {
 		cachedResources, err = discoveryClient.ServerPreferredResources()
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/list", "500").Inc()
 			sendEvent("error", gin.H{"error": "failed to fetch API resources"})
 			return
 		}
@@ -180,6 +189,7 @@ func ListAllResourcesDetailsSSE(c *gin.Context) {
 		Group: "", Version: "v1", Resource: "namespaces",
 	}).List(c, metav1.ListOptions{})
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/list", "500").Inc()
 		sendEvent("error", gin.H{"error": "failed to list namespaces"})
 		return
 	}
@@ -295,7 +305,8 @@ func ListAllResourcesDetailsSSE(c *gin.Context) {
 					//	result.ClusterScoped[res.Kind] = append(result.ClusterScoped[res.Kind], extractObjDetails(&obj))
 					//}
 					mutex.Unlock()
-
+					telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/wds/list", "200").Inc()
+					telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/wds/list").Observe(time.Since(startTime).Seconds())
 					sendEvent("progress", gin.H{
 						"scope": "cluster",
 						"kind":  res.Kind,
