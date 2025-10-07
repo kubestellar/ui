@@ -2,36 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../types/bindingPolicy';
 import { useTranslation } from 'react-i18next';
+import { useWDSQueries } from './queries/useWDSQueries';
+import { useClusterQueries } from './queries/useClusterQueries';
 
 interface UseKubestellarDataProps {
   // Optional callback to run after data refresh
   onDataLoaded?: () => void;
   skipFetch?: boolean;
-}
-
-// Define interfaces for API response types
-interface ClusterApiData {
-  name: string;
-  labels?: Record<string, string>;
-  status?: string;
-  context?: string;
-  creationTime: string;
-  location?: string;
-  provider?: string;
-  version?: string;
-  capacity?: Record<string, unknown>;
-}
-
-interface WorkloadApiData {
-  name: string;
-  kind?: string;
-  namespace?: string;
-  creationTime: string;
-  labels?: Record<string, string>;
-  status?: string;
-  replicas?: number;
-  selector?: Record<string, string>;
-  apiVersion?: string;
 }
 
 interface BindingPolicyApiData {
@@ -50,6 +27,8 @@ export function useKubestellarData({
   skipFetch = false,
 }: UseKubestellarDataProps = {}) {
   const { t } = useTranslation();
+  const { useWorkloads } = useWDSQueries();
+  const { useClusters } = useClusterQueries();
   const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [policies, setPolicies] = useState<BindingPolicyInfo[]>([]);
@@ -64,91 +43,113 @@ export function useKubestellarData({
     policies?: string;
   }>({});
 
-  // Fetch clusters from Inventory Space
-  const fetchClusters = useCallback(async () => {
-    if (skipFetch) return;
-    try {
-      setLoading(prev => ({ ...prev, clusters: true }));
-      const response = await api.get('/api/clusters');
-      console.log(t('kubestellarData.logging.clustersApiResponse'), response.data);
+  const {
+    data: clustersQueryData,
+    isLoading: isLoadingClusters,
+    isFetching: isFetchingClusters,
+    error: clustersQueryError,
+    refetch: refetchClusters,
+  } = useClusters(1, {
+    enabled: !skipFetch,
+  });
 
-      let clusterData: ManagedCluster[] = [];
+  useEffect(() => {
+    if (skipFetch) {
+      setLoading(prev => ({ ...prev, clusters: false }));
+      return;
+    }
 
-      // Process the itsData first since it has more information
-      if (response.data.itsData && Array.isArray(response.data.itsData)) {
-        clusterData = response.data.itsData.map((cluster: ClusterApiData) => ({
-          name: cluster.name,
-          labels: cluster.labels || {},
-          status: cluster.status || t('kubestellarData.defaults.ready'),
-          context: cluster.context,
-          creationTime: cluster.creationTime,
-          // Add any additional fields that might be useful
-          location: cluster.location || t('kubestellarData.defaults.unknown'), // Geographical location if available
-          provider: cluster.provider || t('kubestellarData.defaults.unknown'), // Cloud provider if available
-          version: cluster.version || t('kubestellarData.defaults.unknown'), // Kubernetes version if available
-          capacity: cluster.capacity || {}, // Resource capacity if available
-        }));
-      }
+    setLoading(prev => ({
+      ...prev,
+      clusters: isLoadingClusters || isFetchingClusters,
+    }));
+  }, [skipFetch, isLoadingClusters, isFetchingClusters]);
 
-      // If there are no ITS clusters, or if we want to include the simple cluster list too
-      if (
-        clusterData.length === 0 &&
-        response.data.clusters &&
-        Array.isArray(response.data.clusters)
-      ) {
-        // Just use the simple cluster names
-        clusterData = response.data.clusters.map((clusterName: string) => ({
-          name: clusterName,
-          labels: {},
-          status: t('kubestellarData.defaults.unknown'),
-          creationTime: new Date().toISOString(), // Default to current time
-        }));
-      }
+  useEffect(() => {
+    if (skipFetch) {
+      setClusters([]);
+      setError(prev => ({ ...prev, clusters: undefined }));
+      return;
+    }
+
+    if (clustersQueryError) {
+      console.error(t('kubestellarData.logging.errorFetchingClusters'), clustersQueryError);
+      setError(prev => ({ ...prev, clusters: t('kubestellarData.errors.failedFetchClusters') }));
+      setClusters([]);
+      return;
+    }
+
+    if (clustersQueryData) {
+      const clusterData: ManagedCluster[] = clustersQueryData.clusters.map(cluster => ({
+        name: cluster.name,
+        labels: cluster.labels || {},
+        status: cluster.status || t('kubestellarData.defaults.ready'),
+        context: cluster.context,
+        creationTime: cluster.creationTime,
+        location: t('kubestellarData.defaults.unknown'),
+        provider: t('kubestellarData.defaults.unknown'),
+        version: cluster.rawStatus?.version?.kubernetes || t('kubestellarData.defaults.unknown'),
+        capacity: cluster.rawStatus?.capacity || {},
+      }));
 
       console.log(t('kubestellarData.logging.processedClusters'), clusterData);
       setClusters(clusterData);
       setError(prev => ({ ...prev, clusters: undefined }));
-    } catch (err) {
-      console.error(t('kubestellarData.logging.errorFetchingClusters'), err);
-      setError(prev => ({ ...prev, clusters: t('kubestellarData.errors.failedFetchClusters') }));
-      setClusters([]);
-    } finally {
-      setLoading(prev => ({ ...prev, clusters: false }));
     }
-  }, [skipFetch, t]);
+  }, [skipFetch, clustersQueryData, clustersQueryError, t]);
 
-  // Fetch workloads from Workload Description Space
-  const fetchWorkloads = useCallback(async () => {
-    if (skipFetch) return;
-    try {
-      setLoading(prev => ({ ...prev, workloads: true }));
-      const response = await api.get('/api/wds/workloads');
+  const {
+    data: workloadsQueryData,
+    isLoading: isLoadingWorkloads,
+    isFetching: isFetchingWorkloads,
+    error: workloadsQueryError,
+    refetch: refetchWorkloads,
+  } = useWorkloads({
+    enabled: !skipFetch,
+  });
 
-      // Map the response data to our Workload type
-      const workloadData = response.data.map((workload: WorkloadApiData) => ({
+  useEffect(() => {
+    if (skipFetch) {
+      setLoading(prev => ({ ...prev, workloads: false }));
+      return;
+    }
+
+    setLoading(prev => ({
+      ...prev,
+      workloads: isLoadingWorkloads || isFetchingWorkloads,
+    }));
+  }, [skipFetch, isLoadingWorkloads, isFetchingWorkloads]);
+
+  useEffect(() => {
+    if (skipFetch) {
+      setWorkloads([]);
+      setError(prev => ({ ...prev, workloads: undefined }));
+      return;
+    }
+
+    if (workloadsQueryError) {
+      console.error(t('kubestellarData.logging.errorFetchingWorkloads'), workloadsQueryError);
+      setError(prev => ({ ...prev, workloads: t('kubestellarData.errors.failedFetchWorkloads') }));
+      setWorkloads([]);
+      return;
+    }
+
+    if (workloadsQueryData) {
+      const workloadData: Workload[] = workloadsQueryData.map(workload => ({
         name: workload.name,
-        type: workload.kind || t('kubestellarData.defaults.deployment'), // Default to Deployment if kind is not specified
+        kind: workload.kind || t('kubestellarData.defaults.deployment'),
         namespace: workload.namespace || t('kubestellarData.defaults.defaultNamespace'),
         creationTime: workload.creationTime,
-        labels: workload.labels || {}, // Using empty object as default
-        // Additional details that might be useful
+        labels: workload.labels || {},
         status: workload.status || t('kubestellarData.defaults.active'),
-        replicas: workload.replicas || 1,
-        selector: workload.selector || {},
-        apiVersion: workload.apiVersion || 'apps/v1',
+        replicas: workload.replicas,
       }));
 
       console.log(t('kubestellarData.logging.processedWorkloads'), workloadData);
       setWorkloads(workloadData);
       setError(prev => ({ ...prev, workloads: undefined }));
-    } catch (err) {
-      console.error(t('kubestellarData.logging.errorFetchingWorkloads'), err);
-      setError(prev => ({ ...prev, workloads: t('kubestellarData.errors.failedFetchWorkloads') }));
-      setWorkloads([]);
-    } finally {
-      setLoading(prev => ({ ...prev, workloads: false }));
     }
-  }, [skipFetch, t]);
+  }, [skipFetch, workloadsQueryData, workloadsQueryError, t]);
 
   // Fetch binding policies
   const fetchPolicies = useCallback(async () => {
@@ -192,14 +193,16 @@ export function useKubestellarData({
 
   // Function to refresh all data
   const refreshAllData = useCallback(() => {
-    fetchClusters();
-    fetchWorkloads();
+    if (!skipFetch) {
+      void refetchClusters();
+      void refetchWorkloads();
+    }
     fetchPolicies();
 
     if (onDataLoaded) {
       onDataLoaded();
     }
-  }, [fetchClusters, fetchWorkloads, fetchPolicies, onDataLoaded]);
+  }, [fetchPolicies, onDataLoaded, refetchClusters, refetchWorkloads, skipFetch]);
 
   // Fetch all data on initial load
   useEffect(() => {
