@@ -1518,7 +1518,7 @@ const ObjectFilterPage: React.FC = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {(filteredResources as unknown as Resource[]).map(resource => {
+                      {derivedResources.map(resource => {
                         const resourceStatus =
                           typeof resource.status === 'string'
                             ? resource.status === 'Running' || resource.status === 'Active'
