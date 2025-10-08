@@ -107,7 +107,7 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
         setIsLoading(false);
       }
     },
-    []
+    [resourceKinds]
   );
 
   return {

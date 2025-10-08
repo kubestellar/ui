@@ -119,7 +119,6 @@ func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic
 		telemetry.K8sClientErrorCounter.WithLabelValues("GetClientSetWithContext", "create_restconfig", "500").Inc()
 		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
-
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		log.LogError("Failed to create Kubernetes client", zap.Error(err))

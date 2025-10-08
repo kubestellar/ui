@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubestellar/ui/backend/telemetry"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/kubestellar/ui/backend/telemetry"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -350,8 +351,7 @@ func listResourcesCommon(c *gin.Context, namespace string, namespaceProvided boo
 	if labelFilter != "" {
 		listOptions.LabelSelector = labelFilter
 	}
-
-	// Retrieve list of resources
+	// call list
 	result, err := resource.List(c, listOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
