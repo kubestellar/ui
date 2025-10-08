@@ -147,7 +147,8 @@ const ObjectFilterPage: React.FC = () => {
     () =>
       namespaces.filter(
         (ns: { name: string }) =>
-          !ns.name.toLowerCase().startsWith('kube-') && ns.name.toLowerCase() !== 'kubestellar-report'
+          !ns.name.toLowerCase().startsWith('kube-') &&
+          ns.name.toLowerCase() !== 'kubestellar-report'
       ),
     [namespaces]
   );

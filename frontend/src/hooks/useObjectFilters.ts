@@ -85,8 +85,8 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
         const fetchPromises: Promise<FetchResourcesResponse>[] = [];
         for (const kind of kinds) {
           const kindInfo = resourceKinds.find(resourceKind => resourceKind.name === kind);
-          console.log(resourceKinds)
-          console.log(kindInfo)
+          console.log(resourceKinds);
+          console.log(kindInfo);
           const isNamespaced = kindInfo?.namespaced ?? true;
           if (isNamespaced) {
             for (const ns of nsList) {
