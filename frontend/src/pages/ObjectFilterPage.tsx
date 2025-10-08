@@ -89,6 +89,7 @@ interface ResourceKind {
   kind: string;
   group: string;
   version: string;
+  namespaced?: boolean;
 }
 
 // Enhanced view modes for better UX
@@ -145,59 +146,18 @@ const ObjectFilterPage: React.FC = () => {
   const filteredNamespaces = useMemo(
     () =>
       namespaces.filter(
-        (ns: { name: string }) => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
+        (ns: { name: string }) =>
+          !ns.name.toLowerCase().startsWith('kube-') && ns.name.toLowerCase() !== 'kubestellar-report'
       ),
     [namespaces]
   );
 
-  const hasNamespaceKind = useMemo(
-    () => selectedKinds.some(kind => kind.kind.toLowerCase() === 'namespace'),
-    [selectedKinds]
-  );
-
-  const nonNamespaceKinds = useMemo(
-    () => selectedKinds.filter(kind => kind.kind.toLowerCase() !== 'namespace'),
-    [selectedKinds]
-  );
-
-  const namespaceResources = useMemo<Resource[]>(() => {
-    if (!hasNamespaceKind) return [];
-
-    const hasSelection = selectedNamespaces.length > 0;
-    const selectedSet = new Set(selectedNamespaces);
-
-    return filteredNamespaces
-      .filter(ns => !hasSelection || selectedSet.has(ns.name))
-      .map(ns => ({
-        kind: 'Namespace',
-        metadata: {
-          name: ns.name,
-          namespace: '',
-          uid: `namespace-${ns.name}`,
-          creationTimestamp: ns.createdAt,
-        },
-        status: ns.status,
-        labels: ns.labels || {},
-      }));
-  }, [filteredNamespaces, hasNamespaceKind, selectedNamespaces]);
-
   const displayResources = useMemo<Resource[]>(() => {
-    const combined: Resource[] = [];
-
-    if (hasNamespaceKind) {
-      combined.push(...namespaceResources);
-    }
-
     if (filteredResources && Array.isArray(filteredResources)) {
-      combined.push(...((filteredResources as unknown as Resource[]) || []));
+      return [...((filteredResources as unknown as Resource[]) || [])];
     }
-
-    if (!hasNamespaceKind) {
-      return combined;
-    }
-
-    return combined;
-  }, [filteredResources, hasNamespaceKind, namespaceResources]);
+    return [];
+  }, [filteredResources]);
 
   const derivedResources = useMemo<DerivedResource[]>(() => {
     if (!displayResources || displayResources.length === 0) return [];
@@ -430,25 +390,22 @@ const ObjectFilterPage: React.FC = () => {
   }, []);
 
   const handleApplyFilters = useCallback(async () => {
-    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+    const kindsToFetch = selectedKinds.map(k => k.name);
 
     if (kindsToFetch.length > 0) {
       await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
     }
-  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters]);
+  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   const handleRefresh = useCallback(async () => {
-    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+    const kindsToFetch = selectedKinds.map(k => k.name);
 
     if (kindsToFetch.length > 0) {
       setIsRefreshing(true);
       await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
       setIsRefreshing(false);
-    } else if (hasNamespaceKind) {
-      setIsRefreshing(true);
-      setIsRefreshing(false);
     }
-  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters, hasNamespaceKind]);
+  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   // New handlers for enhanced functionality
   const handleViewModeChange = (_event: React.MouseEvent<HTMLElement>, newViewMode: ViewMode) => {
@@ -517,11 +474,10 @@ const ObjectFilterPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Auto-apply filters when both kinds and namespaces are selected
-    if (nonNamespaceKinds.length > 0) {
+    if (selectedKinds.length > 0) {
       handleApplyFilters();
     }
-  }, [nonNamespaceKinds, selectedNamespaces, handleApplyFilters]);
+  }, [selectedKinds, selectedNamespaces, handleApplyFilters]);
 
   // Helper function to determine status color
   const getStatusColor = (status: string | undefined) => {
@@ -672,11 +628,7 @@ const ObjectFilterPage: React.FC = () => {
             <Tooltip title={t('resources.refresh')}>
               <IconButton
                 onClick={handleRefresh}
-                disabled={
-                  isRefreshing ||
-                  selectedKinds.length === 0 ||
-                  (!hasNamespaceKind && selectedNamespaces.length === 0)
-                }
+                disabled={isRefreshing || selectedKinds.length === 0}
                 sx={{
                   color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                   '&:hover': {
@@ -994,7 +946,7 @@ const ObjectFilterPage: React.FC = () => {
             </Grid>
           </Box>
 
-          {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) && (
+          {selectedKinds.length > 0 && (
             <Box
               sx={{
                 mt: 3,
@@ -1709,7 +1661,7 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
+                {selectedKinds.length > 0
                   ? t('resources.emptyState.noResourcesFound')
                   : t('resources.emptyState.readyToExplore')}
               </Typography>
@@ -1722,11 +1674,11 @@ const ObjectFilterPage: React.FC = () => {
                   margin: '0 auto 24px',
                 }}
               >
-                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
+                {selectedKinds.length > 0
                   ? t('resources.emptyState.noResourcesDescription')
                   : t('resources.emptyState.getStartedDescription')}
               </Typography>
-              {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) ? (
+              {selectedKinds.length > 0 ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"
