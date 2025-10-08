@@ -6,7 +6,6 @@ import { useWDSQueries } from './queries/useWDSQueries';
 import { useClusterQueries } from './queries/useClusterQueries';
 
 interface UseKubestellarDataProps {
-  // Optional callback to run after data refresh
   onDataLoaded?: () => void;
   skipFetch?: boolean;
 }
@@ -151,7 +150,6 @@ export function useKubestellarData({
     }
   }, [skipFetch, workloadsQueryData, workloadsQueryError, t]);
 
-  // Fetch binding policies
   const fetchPolicies = useCallback(async () => {
     if (skipFetch) return;
     try {
@@ -162,7 +160,6 @@ export function useKubestellarData({
         throw new Error(response.data.error);
       }
 
-      // If there are no binding policies, set empty array
       if (!response.data.bindingPolicies || response.data.bindingPolicies.length === 0) {
         setPolicies([]);
         return;
@@ -191,7 +188,6 @@ export function useKubestellarData({
     }
   }, [skipFetch, t]);
 
-  // Function to refresh all data
   const refreshAllData = useCallback(() => {
     if (!skipFetch) {
       void refetchClusters();
@@ -204,14 +200,12 @@ export function useKubestellarData({
     }
   }, [fetchPolicies, onDataLoaded, refetchClusters, refetchWorkloads, skipFetch]);
 
-  // Fetch all data on initial load
   useEffect(() => {
     if (!skipFetch) {
       refreshAllData();
     }
   }, [refreshAllData, skipFetch]);
 
-  // Function to assign policy to target
   const assignPolicyToTarget = useCallback(
     async (policyName: string, targetType: 'cluster' | 'workload', targetName: string) => {
       try {
@@ -222,8 +216,6 @@ export function useKubestellarData({
             targetName,
           })
         );
-        // This would normally call your API
-        // For now, just log and return success
         return {
           success: true,
           message: t('kubestellarData.success.successfullyAssigned', {
@@ -256,7 +248,6 @@ export function useKubestellarData({
     loading,
     error,
     refreshData: refreshAllData,
-
     actions: {
       assignPolicyToTarget,
     },
