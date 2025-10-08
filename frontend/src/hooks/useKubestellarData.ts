@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../types/bindingPolicy';
 import { useTranslation } from 'react-i18next';
+import { useWDSQueries } from './queries/useWDSQueries';
 
 interface UseKubestellarDataProps {
   // Optional callback to run after data refresh
@@ -22,18 +23,6 @@ interface ClusterApiData {
   capacity?: Record<string, unknown>;
 }
 
-interface WorkloadApiData {
-  name: string;
-  kind?: string;
-  namespace?: string;
-  creationTime: string;
-  labels?: Record<string, string>;
-  status?: string;
-  replicas?: number;
-  selector?: Record<string, string>;
-  apiVersion?: string;
-}
-
 interface BindingPolicyApiData {
   name: string;
   status?: string;
@@ -50,6 +39,7 @@ export function useKubestellarData({
   skipFetch = false,
 }: UseKubestellarDataProps = {}) {
   const { t } = useTranslation();
+  const { useWorkloads } = useWDSQueries();
   const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [policies, setPolicies] = useState<BindingPolicyInfo[]>([]);
@@ -117,38 +107,58 @@ export function useKubestellarData({
     }
   }, [skipFetch, t]);
 
-  // Fetch workloads from Workload Description Space
-  const fetchWorkloads = useCallback(async () => {
-    if (skipFetch) return;
-    try {
-      setLoading(prev => ({ ...prev, workloads: true }));
-      const response = await api.get('/api/wds/workloads');
+  const {
+    data: workloadsQueryData,
+    isLoading: isLoadingWorkloads,
+    isFetching: isFetchingWorkloads,
+    error: workloadsQueryError,
+    refetch: refetchWorkloads,
+  } = useWorkloads({
+    enabled: !skipFetch,
+  });
 
-      // Map the response data to our Workload type
-      const workloadData = response.data.map((workload: WorkloadApiData) => ({
+  useEffect(() => {
+    if (skipFetch) {
+      setLoading(prev => ({ ...prev, workloads: false }));
+      return;
+    }
+
+    setLoading(prev => ({
+      ...prev,
+      workloads: isLoadingWorkloads || isFetchingWorkloads,
+    }));
+  }, [skipFetch, isLoadingWorkloads, isFetchingWorkloads]);
+
+  useEffect(() => {
+    if (skipFetch) {
+      setWorkloads([]);
+      setError(prev => ({ ...prev, workloads: undefined }));
+      return;
+    }
+
+    if (workloadsQueryError) {
+      console.error(t('kubestellarData.logging.errorFetchingWorkloads'), workloadsQueryError);
+      setError(prev => ({ ...prev, workloads: t('kubestellarData.errors.failedFetchWorkloads') }));
+      setWorkloads([]);
+      return;
+    }
+
+    if (workloadsQueryData) {
+      const workloadData: Workload[] = workloadsQueryData.map(workload => ({
         name: workload.name,
-        type: workload.kind || t('kubestellarData.defaults.deployment'), // Default to Deployment if kind is not specified
+        kind: workload.kind || t('kubestellarData.defaults.deployment'),
         namespace: workload.namespace || t('kubestellarData.defaults.defaultNamespace'),
         creationTime: workload.creationTime,
-        labels: workload.labels || {}, // Using empty object as default
-        // Additional details that might be useful
+        labels: workload.labels || {},
         status: workload.status || t('kubestellarData.defaults.active'),
-        replicas: workload.replicas || 1,
-        selector: workload.selector || {},
-        apiVersion: workload.apiVersion || 'apps/v1',
+        replicas: workload.replicas,
       }));
 
       console.log(t('kubestellarData.logging.processedWorkloads'), workloadData);
       setWorkloads(workloadData);
       setError(prev => ({ ...prev, workloads: undefined }));
-    } catch (err) {
-      console.error(t('kubestellarData.logging.errorFetchingWorkloads'), err);
-      setError(prev => ({ ...prev, workloads: t('kubestellarData.errors.failedFetchWorkloads') }));
-      setWorkloads([]);
-    } finally {
-      setLoading(prev => ({ ...prev, workloads: false }));
     }
-  }, [skipFetch, t]);
+  }, [skipFetch, workloadsQueryData, workloadsQueryError, t]);
 
   // Fetch binding policies
   const fetchPolicies = useCallback(async () => {
@@ -193,13 +203,15 @@ export function useKubestellarData({
   // Function to refresh all data
   const refreshAllData = useCallback(() => {
     fetchClusters();
-    fetchWorkloads();
+    if (!skipFetch) {
+      void refetchWorkloads();
+    }
     fetchPolicies();
 
     if (onDataLoaded) {
       onDataLoaded();
     }
-  }, [fetchClusters, fetchWorkloads, fetchPolicies, onDataLoaded]);
+  }, [fetchClusters, fetchPolicies, onDataLoaded, refetchWorkloads, skipFetch]);
 
   // Fetch all data on initial load
   useEffect(() => {
