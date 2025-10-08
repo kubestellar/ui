@@ -31,7 +31,10 @@ import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { useTranslation } from 'react-i18next';
-import { useUserActivityQuery } from '../hooks/queries/useUserActivityQuery.ts';
+import {
+  useUserActivityQuery,
+  useDeletedUsersActivityQuery,
+} from '../hooks/queries/useUserActivityQuery.ts';
 
 // Lazy load the ClusterDetailDialog component
 const ClusterDetailDialog = lazy(
@@ -40,27 +43,6 @@ const ClusterDetailDialog = lazy(
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
-  // Check for command palette by detecting body overflow hidden
-  useEffect(() => {
-    const checkCommandPalette = () => {
-      setIsCommandPaletteOpen(document.body.style.overflow === 'hidden');
-    };
-
-    // Initial check
-    checkCommandPalette();
-
-    // Watch for body style changes
-    const observer = new MutationObserver(checkCommandPalette);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['style'],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   // Memoize the color calculation to avoid recalculating on every render
   const { color, bgGradient } = useMemo(() => {
     if (value >= 90) {
@@ -94,10 +76,6 @@ const HealthIndicator = ({ value }: { value: number }) => {
   return (
     <div
       className={`inline-flex items-center rounded-full px-2 py-1 ${color} relative overflow-hidden shadow-sm transition-all duration-200`}
-      style={{
-        filter: isCommandPaletteOpen ? 'blur(5px)' : 'none',
-        pointerEvents: isCommandPaletteOpen ? 'none' : 'auto',
-      }}
     >
       {/* Pulse effect without animation loop */}
       <span
@@ -158,7 +136,7 @@ const OptimizedProgressBar = ({
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
-              <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+              <div className="invisible absolute -left-4 -top-40 z-50 max-h-48 w-64 overflow-y-auto whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 sm:-top-36 md:-top-32 lg:-top-28">
                 {tooltip}
               </div>
             </>
@@ -500,6 +478,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
   const { useClusters } = useClusterQueries();
   const { useBindingPolicies } = useBPQueries();
   const { data: userActivities = [], isLoading: userLoading } = useUserActivityQuery();
+  const { data: deletedActivities = [] } = useDeletedUsersActivityQuery();
 
   // Use the existing query hooks to fetch data
   const {
@@ -547,6 +526,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
           });
         }
         items.push(...userActivities.slice(0, 5));
+        items.push(...deletedActivities.slice(0, 5));
 
         // Sort by timestamp (newest first)
         items.sort((a, b) => {
@@ -659,7 +639,8 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
       status === 'Available' ||
       status === 'Synced' ||
       status === 'Created' ||
-      status === 'Updated'
+      status === 'Updated' ||
+      status === 'Deleted'
     ) {
       return <CheckCircle size={12} />;
     } else if (status === 'Warning' || status === 'Pending') {
@@ -850,7 +831,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 // Main function for rendering the dashboard
 const K8sInfo = () => {
   const { t } = useTranslation();
-  const { useK8sInfo, usePodHealthQuery, useClusterMetricsQuery } = useK8sQueries();
+  const { useK8sInfo, useClusterMetricsQuery, useAggregatedPodHealthQuery } = useK8sQueries();
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
   const { useBindingPolicies } = useBPQueries();
@@ -873,7 +854,13 @@ const K8sInfo = () => {
     cacheTime: 300000,
   });
 
-  const { data: podHealth } = usePodHealthQuery({
+  const theme = useTheme(state => state.theme);
+  const isDark = theme === 'dark';
+
+  // Get current context early for use in queries
+  const currentContext = k8sData?.currentContext || '';
+
+  const { data: aggregatedPodHealth } = useAggregatedPodHealthQuery({
     staleTime: 120000, // 2 minutes
     cacheTime: 300000,
   });
@@ -883,10 +870,6 @@ const K8sInfo = () => {
     cacheTime: 300000,
   });
 
-  const theme = useTheme(state => state.theme);
-  const isDark = theme === 'dark';
-
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -1027,20 +1010,6 @@ const K8sInfo = () => {
     }
   }, [k8sData, clusterData, workloadsData, processedClusters, bindingPoliciesData, clusterMetrics]);
 
-  // Handle refresh
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetchK8s();
-      toast.success('Data refreshed successfully!');
-    } catch (err) {
-      toast.error('Failed to refresh data');
-      console.error('Refresh error:', err);
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 700);
-    }
-  };
-
   // Format date for better display
   const formatDate = (dateString: string): string => {
     if (!dateString) return t('clusters.dashboard.notAvailable');
@@ -1080,8 +1049,6 @@ const K8sInfo = () => {
         </div>
       </div>
     );
-
-  const currentContext = k8sData?.currentContext || '';
 
   // Sort managed clusters by status, ensuring we handle all possible statuses
   const sortedClusters = [...processedClusters].sort((a, b) => {
@@ -1210,20 +1177,19 @@ const K8sInfo = () => {
           </p>
         </div>
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
-          <button
-            className="dark:hover:bg-gray-750 flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCcw size={16} className={`${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{t('common.refresh')}</span>
-          </button>
           <Link
             to="/its"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
           >
-            <Plus size={16} />
-            <span>{t('clusters.dashboard.addCluster')}</span>
+            <Layers size={16} />
+            <span>{t('clusters.title')}</span>
+          </Link>
+          <Link
+            to="/resources"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <ClipboardList size={16} />
+            <span>{t('menu.items.resourceExplorer')}</span>
           </Link>
         </div>
       </div>
@@ -1396,9 +1362,9 @@ const K8sInfo = () => {
               delay={0.2}
             />
 
-            {/* Pod Health with OptimizedProgressBar */}
+            {/* KubeStellar Pod Health */}
             <OptimizedProgressBar
-              value={!podHealth ? 0 : Math.round(podHealth.healthPercent)}
+              value={!aggregatedPodHealth ? 0 : Math.round(aggregatedPodHealth.healthPercent)}
               color="bg-gradient-to-br from-emerald-500 to-green-600"
               label={t('clusters.dashboard.pods.health')}
               icon={Layers}
@@ -1414,6 +1380,35 @@ const K8sInfo = () => {
                         {t('clusters.dashboard.pods.formulaDesc')}
                       </code>
                     </div>
+                    {aggregatedPodHealth ? (
+                      <div className="mt-2 rounded-md bg-green-50 p-2 dark:bg-green-900/20">
+                        <div className="flex items-center text-xs text-green-700 dark:text-green-300">
+                          <CheckCircle size={12} className="mr-1" />
+                          KubeStellar Core & KubeFlex Monitoring
+                        </div>
+                        <div className="mt-1 text-xs text-green-700 dark:text-green-300">
+                          {aggregatedPodHealth.contexts.length} KubeStellar contexts
+                        </div>
+                        {aggregatedPodHealth.totalPods > 0 && (
+                          <div className="mt-1 text-xs text-green-700 dark:text-green-300">
+                            Total: {aggregatedPodHealth.totalPods} pods, Healthy:{' '}
+                            {aggregatedPodHealth.healthyPods} ({aggregatedPodHealth.healthPercent}%)
+                          </div>
+                        )}
+                        {aggregatedPodHealth.note && (
+                          <div className="mt-2 text-xs italic text-amber-600 dark:text-amber-400">
+                            {aggregatedPodHealth.note}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-md bg-amber-50 p-2 dark:bg-amber-900/20">
+                        <div className="flex items-center text-xs text-amber-700 dark:text-amber-300">
+                          <AlertTriangle size={12} className="mr-1" />
+                          Loading KubeStellar metrics...
+                        </div>
+                      </div>
+                    )}
                     <p className="text-xs italic">{t('clusters.dashboard.pods.status')}</p>
                   </div>
                   <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">

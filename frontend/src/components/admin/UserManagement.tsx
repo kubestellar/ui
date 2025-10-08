@@ -90,32 +90,47 @@ const CustomDropdown = ({
           }}
         >
           <div className="py-1">
-            {options.map(opt => (
-              <button
-                key={opt.value}
-                className={`flex w-full items-center px-4 py-2 text-left transition-colors hover:bg-blue-500/10 ${value === opt.value ? 'font-bold' : ''}`}
-                style={{
-                  color: isDark
-                    ? value === opt.value
-                      ? '#60a5fa'
-                      : '#fff'
-                    : value === opt.value
-                      ? '#2563eb'
-                      : '#222',
-                  background: value === opt.value ? (isDark ? '#334155' : '#e0e7ff') : undefined,
-                }}
-                onClick={() => {
-                  setOpen(false);
-                  onChange(opt.value);
-                }}
-                type="button"
-              >
-                {opt.color && (
-                  <span className="mr-2 h-2 w-2 rounded-full" style={{ background: opt.color }} />
-                )}
-                {opt.label}
-              </button>
-            ))}
+            {options.map(opt => {
+              const isSelected = value === opt.value;
+              const textColor = isDark
+                ? isSelected
+                  ? '#60a5fa'
+                  : '#ffffff'
+                : isSelected
+                  ? '#2563eb'
+                  : '#222222';
+
+              const bgColor = isSelected ? (isDark ? '#334155' : '#e0e7ff') : 'transparent';
+
+              const hoverBg = isDark
+                ? 'rgba(96, 165, 250, 0.1)' // Light blue hover for dark
+                : 'rgba(37, 99, 235, 0.1)'; // Light blue hover for light
+
+              return (
+                <button
+                  key={opt.value}
+                  className={`flex w-full items-center px-4 py-2 text-left transition-colors ${isSelected ? 'font-bold' : ''}`}
+                  style={{
+                    color: textColor,
+                    background: bgColor,
+                  }}
+                  onMouseEnter={e =>
+                    (e.currentTarget.style.background = isSelected ? bgColor : hoverBg)
+                  }
+                  onMouseLeave={e => (e.currentTarget.style.background = bgColor)}
+                  onClick={() => {
+                    setOpen(false);
+                    onChange(opt.value);
+                  }}
+                  type="button"
+                >
+                  {opt.color && (
+                    <span className="mr-2 h-2 w-2 rounded-full" style={{ background: opt.color }} />
+                  )}
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
         </motion.div>
       )}
@@ -150,6 +165,8 @@ const UserManagement = () => {
     sortDirection: 'asc',
   });
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+  const [isFilterHovered, setIsFilterHovered] = useState(false);
+  const [isRefreshHovered, setIsRefreshHovered] = useState(false);
 
   // Form states
   const [username, setUsername] = useState('');
@@ -602,13 +619,15 @@ const UserManagement = () => {
                   : '#3b82f6'
                 : themeStyles.colors.text.secondary,
               border: `1px solid ${
-                showFilters
+                showFilters || isFilterHovered
                   ? isDark
                     ? 'rgba(59, 130, 246, 0.4)'
                     : 'rgba(59, 130, 246, 0.2)'
                   : 'transparent'
               }`,
             }}
+            onHoverStart={() => setIsFilterHovered(true)}
+            onHoverEnd={() => setIsFilterHovered(false)}
             onClick={toggleFilters}
           >
             <FiFilter className="h-5 w-5" />
@@ -634,9 +653,18 @@ const UserManagement = () => {
             style={{
               background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(243, 244, 246, 0.8)',
               color: themeStyles.colors.text.secondary,
+              border: `1px solid ${
+                isRefreshHovered
+                  ? isDark
+                    ? 'rgba(59, 130, 246, 0.35)'
+                    : 'rgba(59, 130, 246, 0.2)'
+                  : 'transparent'
+              }`,
             }}
             onClick={refreshUsers}
             disabled={isRefreshing}
+            onHoverStart={() => setIsRefreshHovered(true)}
+            onHoverEnd={() => setIsRefreshHovered(false)}
           >
             <FiRefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{t('admin.users.refresh')}</span>

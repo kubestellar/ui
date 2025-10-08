@@ -5,7 +5,7 @@ import ListViewSkeleton from './skeleton/ListViewSkeleton';
 import { api } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';
-import ResourceFilters, { ResourceFilter } from './ResourceFilters';
+import ObjectFilters, { ObjectFilter } from './ObjectFilters';
 
 // Define the response interfaces
 export interface ResourceItem {
@@ -56,8 +56,8 @@ interface ListViewComponentProps {
     contextCounts: Record<string, number>;
     totalCount: number;
   }) => void;
-  initialResourceFilters?: ResourceFilter;
-  onResourceFiltersChange?: (filters: ResourceFilter) => void;
+  initialResourceFilters?: ObjectFilter;
+  onResourceFiltersChange?: (filters: ObjectFilter) => void;
 }
 
 const ListViewComponent = ({
@@ -83,10 +83,10 @@ const ListViewComponent = ({
   const [itemsPerPage] = useState<number>(25);
 
   // Add resource filters state - use a ref to track if this is the initial mount
-  const [resourceFilters, setResourceFilters] = useState<ResourceFilter>(initialResourceFilters);
+  const [resourceFilters, setResourceFilters] = useState<ObjectFilter>(initialResourceFilters);
   const prevFiltersRef = useRef({ filteredContext, resourceFilters: initialResourceFilters });
   const isInitialMountRef = useRef(true);
-  const lastInitialFiltersRef = useRef<ResourceFilter>(initialResourceFilters);
+  const lastInitialFiltersRef = useRef<ObjectFilter>(initialResourceFilters);
 
   // Initialize filters from props only on mount or meaningful changes from parent
   useEffect(() => {
@@ -614,7 +614,7 @@ const ListViewComponent = ({
   };
 
   // Handle resource filter changes
-  const handleResourceFiltersChange = (filters: ResourceFilter) => {
+  const handleResourceFiltersChange = (filters: ObjectFilter) => {
     // Only update if filters actually changed to prevent unnecessary re-renders and loops
     const filtersChanged = JSON.stringify(resourceFilters) !== JSON.stringify(filters);
 
@@ -780,9 +780,9 @@ const ListViewComponent = ({
             </Box>
           )}
 
-          {/* Add ResourceFilters component */}
+          {/* Add ObjectFilters component */}
           {!isLoading && resources.length > 0 && (
-            <ResourceFilters
+            <ObjectFilters
               availableResources={resources}
               activeFilters={resourceFilters}
               onFiltersChange={handleResourceFiltersChange}

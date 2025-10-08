@@ -16,22 +16,20 @@ interface IfeedbackModalProps {
 }
 
 interface IFeedbackFormData {
-  pluginId: number;
   rating: number | null;
   comment: string;
-  suggestion: string;
+  suggestions: string;
 }
 
-const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) => {
+const FeedbackModel = ({ pluginAPI, onClose, pluginId }: IfeedbackModalProps) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
   const [formData, setFormData] = useState<IFeedbackFormData>({
     comment: '',
-    suggestion: '',
+    suggestions: '',
     rating: null,
-    pluginId: pluginId,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -77,7 +75,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
     try {
       console.log(formData);
 
-      const response = await pluginAPI.submitPluginFeedback(formData);
+      const response = await pluginAPI.submitPluginFeedback(pluginId, formData);
 
       if (response.status == 201) {
         toast.success(response?.data?.message || 'Feedback submitted successfully');
@@ -185,9 +183,9 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
           <div className="flex flex-col gap-3">
             <div>{t('plugins.feedback.suggestion.title')}</div>
             <textarea
-              name="suggestion"
+              name="suggestions"
               placeholder={t('plugins.feedback.suggestion.placeholder')}
-              value={formData.suggestion}
+              value={formData.suggestions}
               onChange={handleChange}
               required
               disabled={isSubmitting}

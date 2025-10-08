@@ -128,10 +128,9 @@ func TestSetupPluginRoutes(t *testing.T) {
 		},
 		{
 			name:   "Submit plugin feedback",
-			path:   "/api/plugins/feedback",
+			path:   "/api/plugins/1/feedback",
 			method: "POST",
 			body: map[string]interface{}{
-				"pluginId":   1,
 				"rating":     5,
 				"comment":    "Great plugin!",
 				"suggestion": "Please make it more stable!",

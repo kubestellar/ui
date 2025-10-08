@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
+import { Tooltip } from '@mui/material';
 import Header from './Header';
 import useTheme from '../stores/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -124,7 +125,7 @@ export function Layout() {
         <div className="relative mb-auto flex w-full gap-0 pt-14 xl:pt-[76px] 2xl:pt-[88px]">
           {/* Sidebar/Menu - Desktop */}
           <motion.aside
-            className="sticky mt-1 hidden overflow-visible px-3 py-3 transition-all duration-300 xl:block"
+            className="sticky mt-1 hidden overflow-visible px-3 py-3 xl:block"
             style={{
               height: 'calc(100vh - 76px)',
               top: '76px',
@@ -132,14 +133,19 @@ export function Layout() {
             }}
             animate={{
               width: isSidebarCollapsed ? '80px' : '280px',
-              transition: { duration: 0.25, ease: 'easeInOut' },
+              transition: {
+                duration: 0.4,
+                ease: [0.4, 0.0, 0.2, 1],
+                type: 'tween',
+              },
             }}
             initial={false}
           >
             <div className="mb-3 flex justify-end">
-              <div
-                className="tooltip tooltip-right"
-                data-tip={isSidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
+              <Tooltip
+                title={isSidebarCollapsed ? 'Expand menu' : 'Collapse menu'}
+                placement="right"
+                arrow
               >
                 <motion.button
                   onClick={toggleSidebar}
@@ -199,7 +205,7 @@ export function Layout() {
                     </svg>
                   </div>
                 </motion.button>
-              </div>
+              </Tooltip>
             </div>
             <motion.div key={isSidebarCollapsed ? 'collapsed' : 'expanded'}>
               <Suspense fallback={<LoadingPlaceholder />}>

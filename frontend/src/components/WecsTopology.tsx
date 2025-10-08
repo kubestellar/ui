@@ -568,8 +568,9 @@ const WecsTreeview = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: theme === 'dark' ? '#333' : '#fff',
-              color: theme === 'dark' ? '#fff' : '#000',
+              backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
+              color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+              border: '1px solid rgba(0, 0, 0, 0)',
               transition: 'all 0.2s ease-in-out',
             },
           };
@@ -582,7 +583,7 @@ const WecsTreeview = () => {
           ...edge,
           style: {
             ...edge.style,
-            stroke: theme === 'dark' ? '#94a3b8' : '#64748b',
+            stroke: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
           },
         }));
       });
@@ -795,8 +796,9 @@ const WecsTreeview = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: theme === 'dark' ? '#333' : '#fff',
-            color: theme === 'dark' ? '#fff' : '#000',
+            backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
+            color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+            border: '1px solid rgba(0, 0, 0, 0)',
             transition: 'all 0.2s ease-in-out',
           },
           sourcePosition: Position.Right,
@@ -809,8 +811,9 @@ const WecsTreeview = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: theme === 'dark' ? '#333' : '#fff',
-          color: theme === 'dark' ? '#fff' : '#000',
+          backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
+          color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+          border: '1px solid rgba(0, 0, 0, 0)',
           transition: 'all 0.2s ease-in-out',
         };
       }

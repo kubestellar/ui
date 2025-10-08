@@ -2,14 +2,14 @@ import { memo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../../stores/themeStore';
-import ResourceFilters, { ResourceFilter } from '../ResourceFilters';
+import ObjectFilters, { ObjectFilter } from '../ObjectFilters';
 import { ResourceItem } from '../ListViewComponent';
 import { darkTheme, lightTheme } from '../../lib/theme-utils';
 
 interface TreeViewFiltersProps {
   filteredContext: string;
   resources?: ResourceItem[];
-  onResourceFiltersChange?: (filters: ResourceFilter) => void;
+  onResourceFiltersChange?: (filters: ObjectFilter) => void;
 }
 
 const TreeViewFilters = memo<TreeViewFiltersProps>(
@@ -17,9 +17,9 @@ const TreeViewFilters = memo<TreeViewFiltersProps>(
     const { t } = useTranslation();
     const theme = useTheme(state => state.theme);
     const isDark = theme === 'dark';
-    const [resourceFilters, setResourceFilters] = useState<ResourceFilter>({});
+    const [resourceFilters, setResourceFilters] = useState<ObjectFilter>({});
 
-    const handleResourceFiltersChange = (filters: ResourceFilter) => {
+    const handleResourceFiltersChange = (filters: ObjectFilter) => {
       // Only update if filters actually changed to prevent unnecessary re-renders
       const filtersChanged = JSON.stringify(resourceFilters) !== JSON.stringify(filters);
 
@@ -79,9 +79,9 @@ const TreeViewFilters = memo<TreeViewFiltersProps>(
           </Box>
         )}
 
-        {/* Add ResourceFilters component if resources are available */}
+        {/* Add ObjectFilters component if resources are available */}
         {resources && resources.length > 0 && onResourceFiltersChange && (
-          <ResourceFilters
+          <ObjectFilters
             availableResources={resources}
             activeFilters={resourceFilters}
             onFiltersChange={handleResourceFiltersChange}

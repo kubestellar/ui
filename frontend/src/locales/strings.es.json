@@ -1963,8 +1963,8 @@
         "description": "Gestionar cargas de trabajo en clusters"
       },
       "resourceExplorer": {
-        "title": "Explorador de Recursos",
-        "description": "Buscar y filtrar recursos de Kubernetes"
+        "title": "Explorador de Objetos",
+        "description": "Buscar y filtrar objetos de Kubernetes"
       },
       "bindingPolicies": {
         "title": "Políticas de vinculación",

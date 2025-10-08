@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 import { setGlobalNetworkError } from '../utils/networkErrorUtils';
+import { isOnLoginPage } from '../utils/routeUtils';
 import {
   getAccessToken,
   clearTokens,
@@ -64,7 +65,12 @@ api.interceptors.response.use(
       } else {
         console.error('Axios Interceptor: Token refresh failed. Redirecting to login.');
         clearTokens();
-        toast.error('Session expired. Please log in again.');
+
+        // Only show toast if user is not already on login page
+        if (!isOnLoginPage()) {
+          toast.error('Session expired. Please log in again.');
+        }
+
         window.location.href = '/login';
         return Promise.reject(error);
       }
@@ -77,9 +83,17 @@ api.interceptors.response.use(
       setGlobalNetworkError(true);
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
-      // For other errors, show toast but use a consistent ID to prevent duplicates
-      const toastId = `api-error-${error.response?.status || 'unknown'}`;
-      toast.error(errorMessage, { id: toastId });
+      // Don't show error toast for 401 responses from auth checks (/api/me) when on login page
+      // Suppress toast if:
+      // - user is already on login page (we don't want "Invalid Token" there)
+      // - OR it's an auth check endpoint
+      const shouldSuppressToast = isOnLoginPage() || (error.response.status === 401 && isAuthCheck);
+
+      if (!shouldSuppressToast) {
+        // For other errors, show toast but use a consistent ID to prevent duplicates
+        const toastId = `api-error-${error.response?.status || 'unknown'}`;
+        toast.error(errorMessage, { id: toastId });
+      }
     }
 
     return Promise.reject(error);

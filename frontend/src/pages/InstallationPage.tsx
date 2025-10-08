@@ -876,117 +876,104 @@ const InstallationPage = () => {
   // Check prerequisites
   useEffect(() => {
     if (isChecking || checkError || skipPrerequisitesCheck) return;
+    let mounted = true;
 
     const checkPrerequisites = async () => {
       try {
         const { data } = await api.get('/api/prerequisites');
 
-        // Update prerequisites with real data
-        const updatedPrereqs = prerequisites.map(prereq => {
-          // Try to find the tool by name or alias
-          let tool = data.prerequisites?.find(
-            (t: PrereqToolData) => t.name.toLowerCase() === prereq.name.toLowerCase()
-          );
-
-          // If not found and aliases exist, try to find by alias
-          if (!tool && prereq.aliasNames) {
-            for (const alias of prereq.aliasNames) {
-              tool = data.prerequisites?.find(
-                (t: PrereqToolData) => t.name.toLowerCase() === alias.toLowerCase()
-              );
-              if (tool) break;
-            }
-          }
-
-          // Special case for OCM CLI (clusteradm)
-          if (prereq.name === 'clusteradm' && !tool) {
-            // Try alternative name formats
-            tool = data.prerequisites?.find(
-              (t: PrereqToolData) =>
-                t.name.toLowerCase().includes('ocm') ||
-                t.name.toLowerCase().includes('cluster') ||
-                t.name.toLowerCase() === 'open cluster management'
+        // Use functional setState to avoid using `prerequisites` from closure
+        setPrerequisites(prev => {
+          const updated = prev.map(prereq => {
+            // do NOT mutate `prereq` — always return new object
+            let tool = data.prerequisites?.find(
+              (t: PrereqToolData) => t.name.toLowerCase() === prereq.name.toLowerCase()
             );
-          }
+            if (!tool && prereq.aliasNames) {
+              for (const alias of prereq.aliasNames) {
+                tool = data.prerequisites?.find(
+                  (t: PrereqToolData) => t.name.toLowerCase() === alias.toLowerCase()
+                );
+                if (tool) break;
+              }
+            }
+            if (prereq.name === 'clusteradm' && !tool) {
+              tool = data.prerequisites?.find(
+                (t: PrereqToolData) =>
+                  t.name.toLowerCase().includes('ocm') ||
+                  t.name.toLowerCase().includes('cluster') ||
+                  t.name.toLowerCase() === 'open cluster management'
+              );
+            }
 
-          if (!tool) {
-            return {
-              ...prereq,
-              status: PrereqStatus.Error,
-              details: 'Tool not found',
-            };
-          }
-
-          // Set version if available
-          if (tool.version) {
-            prereq.version = tool.version;
-          }
-
-          // Check version requirements
-          if (!tool.installed) {
-            return {
-              ...prereq,
-              status: PrereqStatus.Error,
-              details: 'Not installed',
-            };
-          } else if (prereq.minVersion && tool.version) {
-            const versionMet = compareVersions(tool.version, prereq.minVersion) >= 0;
-            const maxVersionMet = prereq.maxVersion
-              ? compareVersions(tool.version, prereq.maxVersion) <= 0
-              : true;
-
-            if (!versionMet) {
+            if (!tool) {
               return {
                 ...prereq,
-                status: PrereqStatus.Warning,
-                details: `Version too old. Required: ${prereq.minVersion} or higher.`,
-              };
-            } else if (!maxVersionMet) {
-              return {
-                ...prereq,
-                status: PrereqStatus.Warning,
-                details: `Version too new. Required: up to ${prereq.maxVersion}.`,
-              };
-            } else {
-              return {
-                ...prereq,
-                status: PrereqStatus.Success,
+                status: PrereqStatus.Error,
+                details: 'Tool not found',
+                version: undefined,
               };
             }
-          } else {
-            return {
-              ...prereq,
-              status: PrereqStatus.Success,
-            };
+
+            const version = tool.version;
+            if (!tool.installed) {
+              return { ...prereq, status: PrereqStatus.Error, details: 'Not installed', version };
+            }
+
+            if (prereq.minVersion && version) {
+              const versionMet = compareVersions(version, prereq.minVersion) >= 0;
+              const maxVersionMet = prereq.maxVersion
+                ? compareVersions(version, prereq.maxVersion) <= 0
+                : true;
+              if (!versionMet) {
+                return {
+                  ...prereq,
+                  status: PrereqStatus.Warning,
+                  details: `Version too old. Required: ${prereq.minVersion} or higher.`,
+                  version,
+                };
+              } else if (!maxVersionMet) {
+                return {
+                  ...prereq,
+                  status: PrereqStatus.Warning,
+                  details: `Version too new. Required: up to ${prereq.maxVersion}.`,
+                  version,
+                };
+              } else {
+                return { ...prereq, status: PrereqStatus.Success, version };
+              }
+            }
+
+            return { ...prereq, status: PrereqStatus.Success, version };
+          });
+
+          // If component unmounted, don't update UI states
+          if (!mounted) return prev;
+
+          // If any problems, set step to install
+          const firstProblem = updated.find(
+            p => p.status === PrereqStatus.Error || p.status === PrereqStatus.Warning
+          );
+          if (firstProblem) {
+            setCurrentStep('install');
           }
+
+          return updated;
         });
-
-        setPrerequisites(updatedPrereqs);
-
-        // Expand first error or warning automatically
-        const firstProblem = updatedPrereqs.find(
-          p => p.status === PrereqStatus.Error || p.status === PrereqStatus.Warning
-        );
-
-        if (firstProblem) {
-          setCurrentStep('install');
-        }
-      } catch (error) {
-        console.error('Error checking prerequisites:', error);
-
-        // Set all prerequisites to unknown
-        setPrerequisites(
-          prerequisites.map(prereq => ({
-            ...prereq,
-            status: PrereqStatus.Unknown,
-            details: 'Failed to check',
-          }))
+      } catch (err) {
+        console.error('Error checking prerequisites:', err);
+        setPrerequisites(prev =>
+          prev.map(pr => ({ ...pr, status: PrereqStatus.Unknown, details: 'Failed to check' }))
         );
       }
     };
 
     checkPrerequisites();
-  }, [isChecking, checkError, prerequisites, skipPrerequisitesCheck]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [isChecking, checkError, skipPrerequisitesCheck]);
 
   // Periodically check if KubeStellar is now installed
   useEffect(() => {
@@ -1185,7 +1172,7 @@ const InstallationPage = () => {
           isDark ? 'border-slate-800/50 bg-slate-900/90' : 'border-gray-200/50 bg-white/90'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               <div className="flex items-center transition-opacity hover:opacity-90">

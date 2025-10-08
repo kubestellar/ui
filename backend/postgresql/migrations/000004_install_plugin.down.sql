@@ -1,3 +1,5 @@
+TRUNCATE TABLE plugin_feedback RESTART IDENTITY CASCADE;
+
 -- Revert column rename and foreign keys in plugin_feedback
 ALTER TABLE plugin_feedback DROP CONSTRAINT IF EXISTS plugin_feedback_marketplace_plugin_id_fkey;
 ALTER TABLE plugin_feedback DROP CONSTRAINT IF EXISTS plugin_feedback_user_id_fkey;

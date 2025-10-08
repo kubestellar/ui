@@ -56,8 +56,8 @@
         "description": "Workloads über Cluster hinweg verwalten"
       },
       "resourceExplorer": {
-        "title": "Ressourcen-Explorer",
-        "description": "Kubernetes-Ressourcen durchsuchen und filtern"
+        "title": "Objekt-Explorer",
+        "description": "Kubernetes-Objekte durchsuchen und filtern"
       },
       "bindingPolicies": {
         "title": "Bindungsrichtlinien",

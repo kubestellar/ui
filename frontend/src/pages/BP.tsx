@@ -380,6 +380,17 @@ const BP = () => {
     // Set overall loading state based on all queries
     setLoading(bindingPoliciesLoading || workloadsLoading || clustersLoading);
 
+    // Debug logging to understand the current state
+    console.log('BP Debug - Current state:', {
+      loading: bindingPoliciesLoading || workloadsLoading || clustersLoading,
+      bindingPoliciesLoading,
+      workloadsLoading,
+      clustersLoading,
+      bindingPoliciesLength: bindingPoliciesData?.length || 0,
+      clustersLength: clustersData?.clusters?.length || 0,
+      workloadsLength: workloadsData?.length || 0,
+    });
+
     // Update bindingPolicies state when bindingPoliciesData changes
     if (bindingPoliciesData) {
       // Debug log to see the data structure
@@ -836,11 +847,10 @@ const BP = () => {
               <EmptyState onCreateClick={() => navigate('/its')} type="both" />
             ) : !clusters.some(cluster => cluster.available === true) ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
-            ) : workloads.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
             ) : bindingPolicies.length === 0 ? (
               <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
             ) : (
+              // If we have binding policies, show the table regardless of workloads
               <>
                 <BPTable
                   policies={paginatedPolicies}
@@ -865,64 +875,38 @@ const BP = () => {
           </>
         ) : viewMode === 'visualize' ? (
           <>
-            {clusters.length === 0 ||
-            !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ||
-            workloads.length === 0 ? (
-              <Box
-                sx={{
-                  height: 'calc(100vh - 170px)',
-                  minHeight: '600px',
-                  position: 'relative',
-                  border: '1px solid',
-                  borderColor: theme === 'dark' ? '#3B4252' : '#E5E7EB',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  backgroundColor: theme === 'dark' ? '#212633' : 'transparent',
-                  '& .react-flow__container': {
-                    backgroundColor: 'transparent',
-                  },
-                  mb: 2,
-                }}
-              >
-                {clusters.length === 0 && workloads.length === 0 ? (
-                  <EmptyState onCreateClick={() => navigate('/its')} type="both" />
-                ) : !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ? (
-                  <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
-                ) : (
-                  <EmptyState
-                    onCreateClick={() => navigate('/workloads/manage')}
-                    type="workloads"
-                  />
-                )}
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  height: 'calc(100vh - 170px)',
-                  minHeight: '600px',
-                  position: 'relative',
-                  border: '1px solid',
-                  borderColor: theme === 'dark' ? '#3B4252' : '#E5E7EB',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  backgroundColor: theme === 'dark' ? '#212633' : 'transparent',
-                  '& .react-flow__container': {
-                    backgroundColor: 'transparent',
-                  },
-                  mb: 2,
-                }}
-              >
-                {bindingPolicies.length === 0 ? (
-                  <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
-                ) : (
-                  <BPVisualizationWrapper
-                    policies={bindingPolicies}
-                    clusters={clusters}
-                    workloads={workloads}
-                  />
-                )}
-              </Box>
-            )}
+            <Box
+              sx={{
+                height: 'calc(100vh - 170px)',
+                minHeight: '600px',
+                position: 'relative',
+                border: '1px solid',
+                borderColor: theme === 'dark' ? '#3B4252' : '#E5E7EB',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                backgroundColor: theme === 'dark' ? '#212633' : 'transparent',
+                '& .react-flow__container': {
+                  backgroundColor: 'transparent',
+                },
+                mb: 2,
+              }}
+            >
+              {clusters.length === 0 && workloads.length === 0 ? (
+                <EmptyState onCreateClick={() => navigate('/its')} type="both" />
+              ) : !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ? (
+                <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
+              ) : bindingPolicies.length === 0 ? (
+                <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
+              ) : workloads.length === 0 ? (
+                <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
+              ) : (
+                <BPVisualizationWrapper
+                  policies={bindingPolicies}
+                  clusters={clusters}
+                  workloads={workloads}
+                />
+              )}
+            </Box>
           </>
         ) : (
           <Box sx={{ position: 'relative' }}>

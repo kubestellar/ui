@@ -35,6 +35,15 @@ jobs:
             --severity CRITICAL,HIGH \
             --vuln-type os,library \
             --no-progress .
+            
+      # Generate SBOM in CycloneDX JSON format
+      - name: Generate SBOM
+        run: |
+          trivy fs \
+            --format cyclonedx \
+            --output sbom-cyclonedx.json \
+            --no-progress .
+          
       - name: Check for HIGH or CRITICAL vulnerabilities
         id: parse-results
         run: |
@@ -43,13 +52,23 @@ jobs:
           else
             echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
           fi
+      # Upload JSON report
       - name: Upload Trivy JSON report as artifact
         if: steps.parse-results.outputs.vulnerabilities_found == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: trivy-json-report
           path: trivy-results.json
-          retention-days: 1
+          retention-days: 3
+          
+      # Upload SBOM as artifact
+      - name: Upload SBOM report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom-cyclonedx.json
+          retention-days: 3
+      # Upload SARIF results to GitHub Security tab
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:

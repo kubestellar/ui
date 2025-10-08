@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-import { ResourceFilter } from '../components/ResourceFilters';
+import { ObjectFilter } from '../components/ObjectFilters';
 
 export interface ResourceQueryParams {
   kind?: string;
@@ -18,9 +18,9 @@ export interface ResourceQueryParams {
 export const fetchResources = async (
   resourceKind: string,
   namespace: string,
-  filters?: ResourceFilter
+  filters?: ObjectFilter
 ) => {
-  // Convert ResourceFilter to query parameters
+  // Convert ObjectFilter to query parameters
   const queryParams: ResourceQueryParams = {};
 
   if (filters) {

@@ -24,6 +24,13 @@ type Permission struct {
 	Permission string `json:"permission"`
 }
 
+type DeletedUser struct {
+	ID        int       `json:"id"`
+	Username  string    `json:"username"`
+	IsAdmin   bool      `json:"is_admin"`
+	DeletedAt time.Time `json:"deleted_at"`
+}
+
 // HashPassword hashes a plain text password
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
@@ -226,12 +233,20 @@ func DeleteUser(username string) error {
 
 	// First, get the user ID to delete permissions
 	var userID int
-	err = tx.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	var isAdmin bool
+	err = tx.QueryRow("SELECT id , is_admin FROM users WHERE username = $1", username).Scan(&userID, &isAdmin)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("user not found")
 		}
 		return fmt.Errorf("failed to get user ID: %v", err)
+	}
+
+	// Insert into deleted_users_log
+	_, err = tx.Exec(`INSERT INTO deleted_users_log (username, is_admin) VALUES ($1, $2)`,
+		username, isAdmin)
+	if err != nil {
+		return fmt.Errorf("failed to log deleted user: %v", err)
 	}
 
 	// Delete user permissions first (due to foreign key constraint)
@@ -288,4 +303,29 @@ func ListAllUsers() ([]*User, error) {
 	}
 
 	return users, nil
+}
+
+func ListDeletedUsers() ([]DeletedUser, error) {
+	query := `SELECT id, username, is_admin, deleted_at FROM deleted_users_log ORDER BY deleted_at DESC`
+
+	rows, err := database.DB.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query deleted users log: %v", err)
+	}
+	defer rows.Close()
+
+	var deletedUsers []DeletedUser
+	for rows.Next() {
+		var du DeletedUser
+		if err := rows.Scan(&du.ID, &du.Username, &du.IsAdmin, &du.DeletedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %v", err)
+		}
+		deletedUsers = append(deletedUsers, du)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %v", err)
+	}
+
+	return deletedUsers, nil
 }

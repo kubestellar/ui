@@ -1,6 +1,7 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import { isOnLoginPage } from '../../utils/routeUtils';
 
 const queryCache = new QueryCache({
   onError: (error: unknown) => {
@@ -16,7 +17,10 @@ const queryCache = new QueryCache({
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
       if (status === 401) {
-        toast.error('Authentication required. Please log in again.');
+        // Only show authentication toast if user is not already on login page
+        if (!isOnLoginPage()) {
+          toast.error('Authentication required. Please log in again.');
+        }
       } else if (status === 403) {
         toast.error("Access denied. You don't have permission for this action.");
       } else if (status && status >= 500) {
@@ -47,7 +51,10 @@ const mutationCache = new MutationCache({
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
       if (status === 401) {
-        toast.error('Authentication required. Please log in again.');
+        // Only show authentication toast if user is not already on login page
+        if (!isOnLoginPage()) {
+          toast.error('Authentication required. Please log in again.');
+        }
       } else if (status === 403) {
         toast.error("Access denied. You don't have permission for this action.");
       } else if (status && status >= 500) {

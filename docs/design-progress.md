@@ -48,7 +48,7 @@ This document tracks the progress of the design system foundation efforts for th
 
 ---
 
-## 📂 Audit Resources
+## 📂 All Resources
 
 1. **Design System – Objective & Timeline**  
    🔗 [Objective & Timeline – Google Docs](https://docs.google.com/document/d/1u06DFqyFBBe8NcgUUhRvDRMVmf57BUUAHBY8VtZbj1g/edit?usp=sharing)
@@ -70,6 +70,9 @@ This document tracks the progress of the design system foundation efforts for th
 
 7. **Landing Page Design**  
    🔗 [Kubestellar Docs – Figma Design](https://www.figma.com/design/YeGMzcwefc2LYWmmx0rVmN/Kubestellar-Docs-Figma-Design?node-id=0-1&t=X5tOTPfk760XFboI-1)
+
+8. **Contribute Handbook & Program Page**  
+   🔗 [Program Page – Figma Design](https://www.figma.com/design/7SyJsOA51BMXkZcg3SXl0u/program-page?node-id=0-1&t=nwiyTVlSDuWrsF1N-1)   
 
 ---
 
@@ -308,4 +311,71 @@ Redesigned the footer to enhance usability and user engagement:
   - Easier updates to UI components
   - Improved collaboration between design and development teams
 
+### 📘 Design – Contribute Handbook Page
+
+- Consolidated all contributor guidance into one structured page.  
+- Covers: **Onboarding, Code of Conduct, Guidelines, License, Governance, Testing, Docs Management Overview, Testing Website PRs, Release Process, Release Testing, and Signoff/Signing Contributions.**  
+- Goal: Provide a single source of truth for contribution rules and processes.  
+  
+### 🗂️ KubeStellar/docs – Programs Page Design
+
+Designed a dedicated **Programs** page featuring card-based layouts for showcasing key initiatives:
+- 📌 **LFX Mentorship**
+- 📌 **Google Summer of Code (GSoC)**
+- 📌 **ESOC**
+- 📌 **IFoS**
+Each program is represented as a card with a title, description, and quick access link for better visibility and navigation.
+
+### 🌐 KubeStellar/docs – Google Summer of Code (GSoC) Page Design
+
+Created a dedicated **GSoC program page** with structured content sections for clarity and accessibility:
+-  **Program Name with Logo/Image**
+-  **Description** – Brief introduction to GSoC and its purpose
+-  **Overview** – Organizing details and background
+-  **Eligibility Criteria** – Who can apply
+-  **Timeline** – Key application and participation dates
+-  **Program Structure** – Stages and workflow
+-  **How to Apply** – Step-by-step guide
+-  **Benefits** – What contributors and organizations gain
+-  **Resources** – Useful links and reference material
+This structured layout improves readability and makes it easy for newcomers to understand the program and get started.
+
+### 🛠️ KubeStellar/docs – LFX Page Design
+
+Designed a dedicated LFX program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
+
+### 🚀 KubeStellar/docs – IFoS Page Design  
+
+Designed the IFoS program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
+
+### 🌍 KubeStellar/docs – ESOC Page Design  
+
+Designed the ESOC program page with sections for program name & image, description, overview, eligibility, timeline, structure, how to apply, benefits, and resources.
+
+### 🌐 KubeStellar/docs – Landing Page Web Design  
+
+Developed a functional **landing page** on the web to test design and interactions beyond Figma.  
+Key highlights:  
+- 🎨 Implemented the UI design from Figma into a working web prototype  
+- ⚡ Interactive components and navigation integrated  
+- 📱 Responsive layout for desktop and mobile  
+- 🔍 Allows testing of real user flow, functionality, and performance  
+
+This helps validate the design in a real environment and ensures smooth usability before production.
+
+### 📖 KubeStellar/docs – Contribute Handbook & Program Pages (Web Design) 
+
+Developed functional **Contribute Handbook** and **Program Pages** as live web versions to validate design and usability.  
+
+Key highlights:  
+- Converted Figma designs into interactive web pages  
+- Implemented navigation, cards, and structured content for each program (LFX, GSoC, ESOC, IFoS)  
+- Added Contribute Handbook with sections for onboarding, guidelines, governance, and license  
+- Fully responsive across devices (desktop, tablet, mobile)  
+- Enabled real-time testing of user flow and functionality  
+
+Contributers: 
+- [Saumya Kumar](https://github.com/oksaumya)
+- [Mahi Monga](https://github.com/mahimonga)
+- [Naman](https://github.com/naman9271)
 ---

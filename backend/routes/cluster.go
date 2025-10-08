@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/backend/api"
 	"github.com/kubestellar/ui/backend/its/manual/handlers"
+	"github.com/kubestellar/ui/backend/middleware"
 )
 
 func setupClusterRoutes(router *gin.Engine) {
@@ -39,8 +40,11 @@ func setupClusterRoutes(router *gin.Engine) {
 	// Available clusters
 	router.GET("/api/clusters/available", handlers.GetAvailableClustersHandler)
 
-	// Managed cluster label update
-	router.PATCH("/api/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
+	// Managed cluster label update - requires authentication and resources write permission
+	router.PATCH("/api/managedclusters/labels",
+		middleware.AuthenticateMiddleware(),
+		middleware.RequirePermission("resources", "write"),
+		api.UpdateManagedClusterLabelsHandler)
 
 	router.GET("/ws/detachment", api.HandleDetachmentWebSocket)
 

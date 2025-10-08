@@ -5,7 +5,7 @@ export interface ActivityItem {
   type: 'user';
   name: string;
   timestamp: string;
-  status: 'Created' | 'Updated';
+  status: 'Created' | 'Updated' | 'Deleted';
 }
 
 interface APIUser {
@@ -50,6 +50,40 @@ export const useUserActivityQuery = () => {
         console.log(`[useUserActivityQuery] Processed activity:`, activity);
         return activity;
       });
+
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      return activities;
+    },
+  });
+};
+
+export const useDeletedUsersActivityQuery = () => {
+  return useQuery<ActivityItem[]>({
+    queryKey: ['deletedUsersActivity'],
+    queryFn: async () => {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        console.warn('No auth token found in localStorage.');
+        return [];
+      }
+
+      console.log('[useDeletedUsersActivityQuery] Fetching deleted users activity...');
+      const response = await api.get('/api/admin/users/deleted', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const deletedUsers: { username: string; deleted_at: string }[] =
+        response.data.deleted_users || [];
+
+      const activities: ActivityItem[] = deletedUsers.map(user => ({
+        type: 'user',
+        name: user.username,
+        timestamp: new Date(user.deleted_at).toISOString(),
+        status: 'Deleted',
+      }));
 
       activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 

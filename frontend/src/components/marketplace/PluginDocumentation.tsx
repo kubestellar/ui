@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   HiOutlineDocumentText,
   HiOutlineClipboardDocument,
@@ -53,6 +54,7 @@ interface TutorialStep {
 }
 
 export const PluginDocumentation: React.FC<PluginDocumentationProps> = ({ plugin }) => {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
@@ -243,13 +245,29 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
   };
 
   const sections = [
-    { id: 'overview', label: 'Overview', icon: HiOutlineDocumentText },
-    { id: 'installation', label: 'Installation', icon: HiOutlineRocketLaunch },
-    { id: 'api', label: 'API Reference', icon: HiOutlineClipboardDocument },
-    { id: 'examples', label: 'Code Examples', icon: HiCodeBracket },
-    { id: 'tutorials', label: 'Tutorials', icon: HiOutlineAcademicCap },
-    { id: 'faq', label: 'FAQ', icon: HiOutlineQuestionMarkCircle },
-    { id: 'troubleshooting', label: 'Troubleshooting', icon: HiOutlineWrenchScrewdriver },
+    { id: 'overview', label: t('marketplace.documentation.overview'), icon: HiOutlineDocumentText },
+    {
+      id: 'installation',
+      label: t('marketplace.documentation.installation'),
+      icon: HiOutlineRocketLaunch,
+    },
+    {
+      id: 'api',
+      label: t('marketplace.documentation.apiReference'),
+      icon: HiOutlineClipboardDocument,
+    },
+    { id: 'examples', label: t('marketplace.documentation.codeExamples'), icon: HiCodeBracket },
+    {
+      id: 'tutorials',
+      label: t('marketplace.documentation.tutorials'),
+      icon: HiOutlineAcademicCap,
+    },
+    { id: 'faq', label: t('marketplace.documentation.faq'), icon: HiOutlineQuestionMarkCircle },
+    {
+      id: 'troubleshooting',
+      label: t('marketplace.documentation.troubleshooting'),
+      icon: HiOutlineWrenchScrewdriver,
+    },
   ] as const;
 
   const renderCodeBlock = (example: CodeExample, index: number) => (
@@ -291,7 +309,9 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
           }}
         >
           <HiOutlineClipboard className="h-3 w-3" />
-          {copiedCode === `code-${index}` ? 'Copied!' : 'Copy'}
+          {copiedCode === `code-${index}`
+            ? t('marketplace.documentation.copied')
+            : t('marketplace.documentation.copy')}
         </motion.button>
       </div>
       <div className="p-4">
@@ -321,7 +341,7 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
             className="mb-4 text-lg font-semibold"
             style={{ color: themeStyles.colors.text.primary }}
           >
-            Documentation
+            {t('marketplace.documentation.title')}
           </h3>
           <nav className="space-y-1">
             {sections.map(section => {
@@ -386,7 +406,7 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                   className="mb-4 text-2xl font-bold"
                   style={{ color: themeStyles.colors.text.primary }}
                 >
-                  {plugin.name} Documentation
+                  {plugin.name} {t('marketplace.documentation.title')}
                 </h2>
                 <div
                   className="rounded-xl p-6"
@@ -399,13 +419,11 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                     className="mb-4"
                     style={{ color: themeStyles.colors.text.secondary, lineHeight: '1.7' }}
                   >
-                    Welcome to the comprehensive documentation for {plugin.name}. This plugin
-                    extends KubeStellar's capabilities with advanced features designed to enhance
-                    your multi-cluster management experience.
+                    {t('marketplace.documentation.welcomeMessage')} {plugin.name}.{' '}
+                    {t('marketplace.documentation.extendsCapabilities')}
                   </p>
                   <p style={{ color: themeStyles.colors.text.secondary, lineHeight: '1.7' }}>
-                    {plugin.description ||
-                      'This powerful plugin provides essential functionality for modern Kubernetes environments, offering seamless integration with existing workflows and robust performance monitoring capabilities.'}
+                    {plugin.description || t('marketplace.documentation.powerfulPlugin')}
                   </p>
                 </div>
               </div>
@@ -434,17 +452,17 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                     className="mb-2 text-lg font-semibold"
                     style={{ color: themeStyles.colors.text.primary }}
                   >
-                    Key Features
+                    {t('marketplace.documentation.keyFeatures')}
                   </h3>
                   <ul
                     className="space-y-2 text-sm"
                     style={{ color: themeStyles.colors.text.secondary }}
                   >
-                    <li>• Advanced multi-cluster synchronization</li>
-                    <li>• Real-time monitoring and alerting</li>
-                    <li>• Automated scaling and optimization</li>
-                    <li>• Security policy enforcement</li>
-                    <li>• Comprehensive API coverage</li>
+                    <li>• {t('marketplace.documentation.advancedMultiCluster')}</li>
+                    <li>• {t('marketplace.documentation.realTimeMonitoring')}</li>
+                    <li>• {t('marketplace.documentation.automatedScaling')}</li>
+                    <li>• {t('marketplace.documentation.securityPolicy')}</li>
+                    <li>• {t('marketplace.documentation.comprehensiveAPI')}</li>
                   </ul>
                 </motion.div>
 
@@ -471,17 +489,17 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                     className="mb-2 text-lg font-semibold"
                     style={{ color: themeStyles.colors.text.primary }}
                   >
-                    Requirements
+                    {t('marketplace.documentation.requirements')}
                   </h3>
                   <ul
                     className="space-y-2 text-sm"
                     style={{ color: themeStyles.colors.text.secondary }}
                   >
-                    <li>• KubeStellar v1.0.0 or higher</li>
-                    <li>• Kubernetes 1.19+</li>
-                    <li>• 512MB RAM minimum (1GB recommended)</li>
-                    <li>• Network connectivity to target clusters</li>
-                    <li>• Valid authentication credentials</li>
+                    <li>• {t('marketplace.documentation.kubestellarVersion')}</li>
+                    <li>• {t('marketplace.documentation.kubernetesVersion')}</li>
+                    <li>• {t('marketplace.documentation.ramMinimum')}</li>
+                    <li>• {t('marketplace.documentation.networkConnectivity')}</li>
+                    <li>• {t('marketplace.documentation.validCredentials')}</li>
                   </ul>
                 </motion.div>
               </div>
@@ -501,11 +519,11 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                   className="mb-4 text-2xl font-bold"
                   style={{ color: themeStyles.colors.text.primary }}
                 >
-                  Installation Guide
+                  {t('marketplace.documentation.installationGuide')}
                 </h2>
                 <p className="mb-6" style={{ color: themeStyles.colors.text.secondary }}>
-                  Follow these steps to install and configure {plugin.name} in your KubeStellar
-                  environment.
+                  {t('marketplace.documentation.followSteps')} {plugin.name}{' '}
+                  {t('marketplace.documentation.inEnvironment')}
                 </p>
               </div>
 
@@ -620,10 +638,10 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                   className="mb-4 text-2xl font-bold"
                   style={{ color: themeStyles.colors.text.primary }}
                 >
-                  Code Examples
+                  {t('marketplace.documentation.codeExamples')}
                 </h2>
                 <p className="mb-6" style={{ color: themeStyles.colors.text.secondary }}>
-                  Practical examples to help you get started with {plugin.name}.
+                  {t('marketplace.documentation.practicalExamples')} {plugin.name}.
                 </p>
               </div>
 
@@ -646,7 +664,7 @@ curl -X GET "https://your-kubestellar-instance.com/api/plugins/${plugin.name.toL
                   className="mb-4 text-2xl font-bold"
                   style={{ color: themeStyles.colors.text.primary }}
                 >
-                  Frequently Asked Questions
+                  {t('marketplace.documentation.faq')}
                 </h2>
               </div>
 

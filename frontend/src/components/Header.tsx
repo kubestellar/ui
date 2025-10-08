@@ -256,8 +256,12 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
               </motion.button>
             </motion.div>
 
-            <CommandPalette />
-            <LanguageSwitcher />
+            <div className="relative z-[6]">
+              <CommandPalette />
+            </div>
+            <div className="relative z-[6]">
+              <LanguageSwitcher />
+            </div>
 
             <div className="hidden xl:flex">
               <FullScreenToggle
@@ -268,7 +272,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
               />
             </div>
 
-            <div className="relative flex items-center">
+            <div className="relative z-[6] flex items-center">
               <ProfileSection />
             </div>
           </>
@@ -331,8 +335,12 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
               </motion.button>
             </motion.div>
 
-            <CommandPalette />
-            <LanguageSwitcher />
+            <div className="relative z-[6]">
+              <CommandPalette />
+            </div>
+            <div className="relative z-[6]">
+              <LanguageSwitcher />
+            </div>
 
             <div className="hidden xl:flex">
               <FullScreenToggle

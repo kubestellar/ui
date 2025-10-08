@@ -18,7 +18,14 @@ redis:
   architecture: standalone
   auth:
     enabled: false
-  # Add more overrides as needed for the Bitnami subchart
+  image:
+    registry: ghcr.io
+    repository: kubestellar/ui/redis
+    tag: latest
+    pullPolicy: IfNotPresent
+  global:
+    security:
+      allowInsecureImages: true
 
 postgresql:
   enabled: true

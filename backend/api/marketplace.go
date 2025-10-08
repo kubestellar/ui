@@ -17,6 +17,8 @@ import (
 	"github.com/kubestellar/ui/backend/models"
 	pluginpkg "github.com/kubestellar/ui/backend/pkg/plugins"
 	"go.uber.org/zap"
+
+	config "github.com/kubestellar/ui/backend/pkg/config"
 )
 
 func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.FileHeader) (string, *os.File, error) {
@@ -68,7 +70,7 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 	}
 
 	// 3. If exists
-	existed, err := pluginpkg.CheckPluginDetailsExist(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID)
+	existed, err := pluginpkg.CheckPluginDetailsExist(manifest.Metadata.Name, manifest.Metadata.Version, manifest.Metadata.Description, author.ID, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Error checking plugin exists: " + manifest.Metadata.Name,
@@ -100,6 +102,7 @@ func HandlePluginFile(c *gin.Context, file multipart.File, header *multipart.Fil
 		[]byte(`[{"dependencies": "not mentioned"}]`),
 		"unknown", // TODO: update this with the pluginID-pluginName.tar.gz
 		int(header.Size),
+		true,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -466,7 +469,6 @@ func GetMarketplacePluginReviewsHandler(c *gin.Context) {
 }
 
 func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
-	// TODO: update the plugin rating average and count for both manager and database
 	var feedback models.PluginFeedback
 	if err := c.ShouldBindJSON(&feedback); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback format"})
@@ -496,69 +498,53 @@ func SubmitMarketplacePluginFeedbackHandler(c *gin.Context) {
 		return
 	}
 
-	// find the corresponding marketplace_plugin_ID
-	// we need to do this because the plugin_feedback table uses marketplace_plugin_ID
-	marketplacePluginID, err := pluginpkg.GetMarketplacePluginID(feedback.PluginID)
+	// check if the plugin is installed from the marketplace
+	exists, err := marketplace.CheckMarketplacePlugin(feedback.PluginID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get marketplace plugin ID"})
-		log.LogError("error getting marketplace plugin ID", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
-		return
-	}
-
-	// add to the database and get the ID
-	err = pluginpkg.AddPluginFeedbackToDB(
-		marketplacePluginID, feedback.UserID, feedback.Rating, feedback.Comment, feedback.Suggestions,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add feedback to database"})
-		log.LogError("error adding feedback to database", zap.String("error", err.Error()))
-		return
-	}
-	// add to the marketplace manager
-	manager := marketplace.GetGlobalMarketplaceManager()
-	if manager == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Marketplace manager not initialized"})
-		log.LogError("marketplace manager not initialized", zap.String("manager", "nil"))
-		return
-	}
-	err = manager.AddFeedback(&feedback, feedback.PluginID)
-
-	// update the plugin rating average and count in the DB
-	ratingAvg, err := manager.GetRatingAverage(feedback.PluginID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get rating average"})
-		log.LogError("error getting rating average", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
-		return
-	}
-
-	ratingCnt, err := manager.GetRatingCount(feedback.PluginID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get rating count"})
-		log.LogError("error getting rating count", zap.Int("plugin_id", feedback.PluginID), zap.String("error", err.Error()))
-		return
-	}
-
-	err = pluginpkg.UpdateRating(feedback.PluginID, ratingAvg, ratingCnt)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update plugin rating in database"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Error checking marketplace plugin: %v", err),
+		})
 		log.LogError(
-			"error updating plugin rating in database",
-			zap.Int("plugin_id", feedback.PluginID),
+			"error checking marketplace plugin exists",
+			zap.Int("pluginID", feedback.PluginID),
 			zap.String("error", err.Error()),
 		)
+		return
+	}
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":    "Plugin not found in marketplace",
+			"pluginId": feedback.PluginID,
+		})
+		log.LogInfo("Plugin not found in marketplace",
+			zap.String("pluginId", strconv.Itoa(feedback.PluginID)))
+		return
+	}
+
+	// add feedback
+	err = marketplace.AddMarketplacePluginFeedback(feedback.PluginID, &feedback)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Error adding feedback to marketplace: %v", err),
+		})
+		log.LogError(
+			"error adding feedback to marketplace",
+			zap.Int("pluginID", feedback.PluginID),
+			zap.String("error", err.Error()),
+		)
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Feedback submitted successfully",
 		"feedback": gin.H{
-			"plugin_id":             feedback.PluginID,
-			"marketplace_plugin_id": marketplacePluginID,
-			"user_id":               feedback.UserID,
-			"rating":                feedback.Rating,
-			"comment":               feedback.Comment,
-			"suggestions":           feedback.Suggestions,
-			"created_at":            feedback.CreatedAt,
-			"updated_at":            feedback.UpdatedAt,
+			"plugin_id":   feedback.PluginID,
+			"user_id":     feedback.UserID,
+			"rating":      feedback.Rating,
+			"comment":     feedback.Comment,
+			"suggestions": feedback.Suggestions,
+			"created_at":  feedback.CreatedAt,
+			"updated_at":  feedback.UpdatedAt,
 		},
 	})
 }
@@ -697,11 +683,28 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		return
 	}
 
+	// checks if plugin is installed or not
+	existed, err := pluginpkg.CheckPluginWithInfo(plugin.PluginName, plugin.Version, plugin.Description, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error checking if plugin installed: " + plugin.PluginName,
+		})
+		log.LogError("Error checking if plugin installed:", zap.String("error", err.Error()))
+		return
+	}
+	if existed {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "Plugin already installed: " + plugin.PluginName,
+		})
+		log.LogInfo("plugin already installed", zap.String("plugin", plugin.PluginName))
+		return
+	}
+
 	pluginKey := fmt.Sprintf("%s-%d", plugin.PluginName, pluginID)
 	fileKey := fmt.Sprintf("%s.tar.gz", pluginKey)
 
 	// download the plugin from git repo and extract it to plugins/ folder
-	pluginFolder := filepath.Join(".", "plugins")
+	pluginFolder := config.GetPluginDirectory()
 
 	err = marketplaceManager.Store.DownloadFile(c.Request.Context(), fileKey, pluginFolder)
 	if err != nil {
@@ -740,7 +743,7 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 	}
 
 	// add to DB
-	installedPluginID, err := pluginpkg.AddInstalledPluginToDB(
+	_, err = pluginpkg.AddInstalledPluginToDB(
 		installedPlugin.PluginDetailsID,
 		installedPlugin.MarketplacePluginID,
 		installedPlugin.UserID,
@@ -759,7 +762,37 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add installed plugin to database"})
 		return
 	}
-	log.LogInfo("installed plugin ID", zap.Int("installed_plugin_id", installedPluginID))
+
+	// increase download count in DB
+	err = pluginpkg.IncrementPluginDownloads(pluginID)
+
+	if err != nil {
+		log.LogError(
+			"error incrementing plugin downloads count",
+			zap.Int("plugin_id", pluginID),
+			zap.String("error", err.Error()),
+		)
+	} else {
+		log.LogInfo(
+			"successfully incremented plugin downloads count",
+			zap.Int("plugin_id", pluginID),
+		)
+
+		// increase in memory download count
+		err := marketplaceManager.IncrementDownloads(pluginID)
+		if err != nil {
+			log.LogError(
+				"error incrementing in-memory download count",
+				zap.Int("plugin_id", pluginID),
+				zap.String("error", err.Error()),
+			)
+		} else {
+			log.LogInfo(
+				"successfully incremented in-memory download count",
+				zap.Int("plugin_id", pluginID),
+			)
+		}
+	}
 
 	pluginManager := GetGlobalPluginManager()
 	if pluginManager == nil {
@@ -768,23 +801,11 @@ func InstallMarketplacePluginHandler(c *gin.Context) {
 		return
 	}
 
-	// use installed plugin id for creating newly created plugin directpry
-	pluginKey = fmt.Sprintf("%s-%d", plugin.PluginName, installedPluginID)
-
-	newInstalledPath := filepath.Join(pluginFolder, pluginKey)
-
-	// Rename the directory
-	renameErr := os.Rename(installedPath, newInstalledPath)
-	if renameErr != nil {
-		log.LogError("Error renaming directory:", zap.Error(renameErr))
-		return
-	}
-
 	// Load the plugin dynamically using the global plugin manager
-	if err := pluginManager.LoadPlugin(newInstalledPath); err != nil {
+	if err := pluginManager.LoadPlugin(installedPath); err != nil {
 		log.LogError("Failed to load plugin after installation",
 			zap.String("plugin", pluginKey),
-			zap.String("installed_path", newInstalledPath),
+			zap.String("installed_path", installedPath),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load plugin"})
 		return

@@ -57,6 +57,26 @@ export const PluginDeleteModal: React.FC<PluginDeleteModalProps> = ({
     }
   }, [isOpen]);
 
+  // Close on Escape and lock body scroll while open
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && deleteStep !== 'deleting') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, deleteStep, onClose]);
+
   const handleDelete = () => {
     if (!plugin || confirmText !== plugin.name) return;
 
