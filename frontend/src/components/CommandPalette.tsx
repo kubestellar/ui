@@ -20,6 +20,7 @@ import { useAuthActions, useAdminCheck } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { HiOutlinePuzzlePiece } from 'react-icons/hi2';
 import { FaRocket } from 'react-icons/fa';
+import { SiGrafana } from 'react-icons/si';
 
 // Command types to support various actions
 type CommandType = 'navigation' | 'action' | 'documentation' | 'admin';
@@ -126,6 +127,16 @@ const CommandPalette: React.FC = () => {
         'import',
         'onboard',
       ],
+      section: t('commandPalette.sections.navigation'),
+    },
+    {
+      id: 'grafana',
+      type: 'navigation',
+      icon: SiGrafana,
+      title: t('commandPalette.commands.Grafana.title'),
+      description: t('commandPalette.commands.Grafana.description'),
+      action: () => navigate('/grafana'),
+      keywords: ['grafana', 'monitoring', 'dashboard'],
       section: t('commandPalette.sections.navigation'),
     },
     {

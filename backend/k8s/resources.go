@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubestellar/ui/backend/telemetry"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/kubestellar/ui/backend/telemetry"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -299,6 +300,15 @@ func GetResource(c *gin.Context) {
 
 // ListResources lists all resources of a given type in a namespace
 func ListResources(c *gin.Context) {
+	listResourcesCommon(c, c.Param("namespace"), true)
+}
+
+// ListClusterResources lists all cluster-scoped resources of a given type
+func ListClusterResources(c *gin.Context) {
+	listResourcesCommon(c, "", false)
+}
+
+func listResourcesCommon(c *gin.Context, namespace string, namespaceProvided bool) {
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
 		cookieContext = "wds1"
@@ -310,7 +320,6 @@ func ListResources(c *gin.Context) {
 	}
 
 	resourceKind := c.Param("resourceKind")
-	namespace := c.Param("namespace")
 
 	// Get filter parameters
 	kindFilter := c.Query("kind")
@@ -326,9 +335,15 @@ func ListResources(c *gin.Context) {
 
 	var resource dynamic.ResourceInterface
 	if isNamespaced {
+		if !namespaceProvided || namespace == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Namespace is required for this resource"})
+			return
+		}
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
 	} else {
 		resource = dynamicClient.Resource(gvr)
+		namespace = ""
+		namespaceFilter = ""
 	}
 
 	// Create list options with label selector if provided
@@ -336,8 +351,7 @@ func ListResources(c *gin.Context) {
 	if labelFilter != "" {
 		listOptions.LabelSelector = labelFilter
 	}
-
-	// Retrieve list of resources
+	// call list
 	result, err := resource.List(c, listOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -345,16 +359,21 @@ func ListResources(c *gin.Context) {
 	}
 
 	// Apply additional filtering on the server side
-	if kindFilter != "" || namespaceFilter != "" {
+	if kindFilter != "" || namespaceFilter != "" || namespace != "" {
 		filteredItems := make([]unstructured.Unstructured, 0)
 		for _, item := range result.Items {
 			// Apply kind filter if specified
-			if kindFilter != "" && item.GetKind() != kindFilter {
+			if kindFilter != "" && !strings.EqualFold(item.GetKind(), kindFilter) {
 				continue
 			}
 
 			// Apply namespace filter if specified
 			if namespaceFilter != "" && item.GetNamespace() != namespaceFilter {
+				continue
+			}
+
+			// Ensure items respect the requested namespace when provided
+			if namespace != "" && item.GetNamespace() != namespace {
 				continue
 			}
 
