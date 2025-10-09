@@ -99,12 +99,27 @@ var httpClient = &http.Client{
 	Timeout: 30 * time.Second,
 }
 
+// SanitizeRepoURL removes credentials from a GitHub repo URL for safe logging or error reporting
+func SanitizeRepoURL(repoURL string) string {
+	if strings.HasPrefix(repoURL, "https://") {
+		// Remove credentials if present
+		parts := strings.SplitN(repoURL[8:], "@", 2)
+		if len(parts) == 2 {
+			return "https://" + parts[1]
+		}
+	}
+	return repoURL
+}
+
 // Improved GitHub API fetching with better error handling and rate limiting awareness
 func fetchGitHubYAMLs(repoURL, folderPath, branch, gitUsername, gitToken string) (map[string][]byte, error) {
 	// Validate inputs
 	if repoURL == "" {
 		return nil, &APIError{Code: http.StatusBadRequest, Message: "Repository URL is required"}
 	}
+
+	// Sanitize repoURL for any logging or error reporting
+	safeRepoURL := SanitizeRepoURL(repoURL)
 
 	if branch == "" {
 		branch = "main"
@@ -113,7 +128,7 @@ func fetchGitHubYAMLs(repoURL, folderPath, branch, gitUsername, gitToken string)
 	// Extract owner and repo from the GitHub URL with better validation
 	urlParts := strings.Split(strings.TrimSuffix(repoURL, ".git"), "/")
 	if len(urlParts) < 2 {
-		return nil, &APIError{Code: http.StatusBadRequest, Message: "Invalid GitHub repository URL format"}
+		return nil, &APIError{Code: http.StatusBadRequest, Message: "Invalid GitHub repository URL format: " + safeRepoURL}
 	}
 
 	ownerRepo := fmt.Sprintf("%s/%s", urlParts[len(urlParts)-2], urlParts[len(urlParts)-1])
