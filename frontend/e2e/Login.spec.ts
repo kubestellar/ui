@@ -223,15 +223,15 @@ test.describe('Login Page', () => {
 
     // Wait a moment for any loading state
     await page.waitForTimeout(2000);
-    
+
     // Check that we're still on the login page (didn't redirect) - this indicates an error
     await expect(page).toHaveURL(/login/);
-    
+
     // Try to find any error indication - toast, alert, or error text
-    const hasErrorToast = await page.locator('.toast-error').count() > 0;
-    const hasAlert = await page.locator('[role="alert"]').count() > 0;
-    const hasErrorText = await page.locator('text=/Invalid|Error|Failed/i').count() > 0;
-    
+    const hasErrorToast = (await page.locator('.toast-error').count()) > 0;
+    const hasAlert = (await page.locator('[role="alert"]').count()) > 0;
+    const hasErrorText = (await page.locator('text=/Invalid|Error|Failed/i').count()) > 0;
+
     // At least one error indication should be present
     expect(hasErrorToast || hasAlert || hasErrorText).toBeTruthy();
   });
@@ -261,9 +261,10 @@ test.describe('Login Page', () => {
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
     // Check for loading state - either loading toast or disabled button
-    const isLoading = await page.locator('.toast-loading, [role="status"], button:disabled').count() > 0;
+    const isLoading =
+      (await page.locator('.toast-loading, [role="status"], button:disabled').count()) > 0;
     expect(isLoading).toBeTruthy();
-    
+
     // Wait for successful login
     await expect(page).toHaveURL('/', { timeout: 1000 });
   });
@@ -275,17 +276,18 @@ test.describe('Login Page', () => {
 
     // Wait for error to be handled
     await page.waitForTimeout(2000);
-    
+
     // Check that we're still on login page (error occurred)
     await expect(page).toHaveURL(/login/);
-    
+
     // Check for toast container existence
     const toastContainer = page.locator('.toast-container');
-    const hasContainer = await toastContainer.count() > 0;
-    
+    const hasContainer = (await toastContainer.count()) > 0;
+
     // Check for any accessibility attributes
-    const hasAccessibility = await page.locator('[role="alert"], [aria-live], .toast-error').count() > 0;
-    
+    const hasAccessibility =
+      (await page.locator('[role="alert"], [aria-live], .toast-error').count()) > 0;
+
     // At least one accessibility feature should be present
     expect(hasContainer || hasAccessibility).toBeTruthy();
   });
@@ -297,12 +299,10 @@ test.describe('Login Page', () => {
 
     // Wait for loading toast to appear first
     await page.waitForTimeout(1000);
-    
+
     // Look for any text containing error messages - be more flexible
-    const errorTexts = [
-      'Invalid username or password',
-    ];
-    
+    const errorTexts = ['Invalid username or password'];
+
     let errorFound = false;
     for (const errorText of errorTexts) {
       try {
@@ -315,7 +315,7 @@ test.describe('Login Page', () => {
         // Continue to next error text
       }
     }
-    
+
     // If no specific error text found, check if we're still on login page (which indicates error)
     if (!errorFound) {
       await expect(page).toHaveURL(/login/);
