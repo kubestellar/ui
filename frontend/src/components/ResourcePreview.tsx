@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, Divider, Paper, Tooltip } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import useTheme from '../stores/themeStore';
 import { darkTheme, lightTheme } from '../lib/theme-utils';
 import InfoIcon from '@mui/icons-material/Info';
@@ -30,6 +31,7 @@ function isRenderable(val: unknown): val is string | number {
 }
 
 const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource, children }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
 
@@ -98,7 +100,7 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource, children })
             color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
           }}
         >
-          Object Details
+          {t('resources.preview.objectDetails')}
         </Typography>
       </Box>
 
@@ -163,7 +165,7 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource, children })
                 color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
               }}
             >
-              <strong>Namespace:</strong> {resource.metadata.namespace}
+              <strong>{t('resources.preview.namespace')}:</strong> {resource.metadata.namespace}
             </Typography>
           </Box>
         )}
@@ -182,7 +184,7 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource, children })
                 color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
               }}
             >
-              <strong>Created:</strong>{' '}
+              <strong>{t('resources.preview.created')}:</strong>{' '}
               {new Date(resource.metadata.creationTimestamp).toLocaleDateString()}
             </Typography>
           </Box>
@@ -198,7 +200,7 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource, children })
               wordBreak: 'break-all',
             }}
           >
-            <strong>UID:</strong> {resource.metadata.uid}
+            <strong>{t('resources.preview.uid')}:</strong> {resource.metadata.uid}
           </Typography>
         )}
       </Box>
@@ -224,7 +226,7 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource, children })
                 mb: 1,
               }}
             >
-              Labels ({Object.keys(resource.labels).length})
+              {t('resources.preview.labels')} ({Object.keys(resource.labels).length})
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {Object.entries(resource.labels)

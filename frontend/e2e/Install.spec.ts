@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 // Test suite for InstallationPage comprehensive testing
 test.describe('InstallationPage', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript({
+      content: `window.__MSW_SCENARIO = 'statusNotReady';`,
+    });
     await page.goto('http://localhost:5173/install');
     await page.waitForLoadState('networkidle');
   });

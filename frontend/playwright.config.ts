@@ -85,6 +85,10 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !isCI,
+    env: {
+      VITE_PLAYWRIGHT_TESTING: 'true',
+      VITE_DISABLE_CANVAS: 'false', // app handle Firefox detection
+    },
     timeout: 120 * 1000,
   },
 });

@@ -177,9 +177,10 @@ const ResourceCard = memo<ResourceCardProps>(
       const now = new Date();
       const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-      if (diffInHours < 1) return 'Just now';
-      if (diffInHours < 24) return `${diffInHours}h ago`;
-      if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+      if (diffInHours < 1) return t('resources.time.justNow');
+      if (diffInHours < 24) return t('resources.time.hoursAgo', { count: diffInHours });
+      if (diffInHours < 168)
+        return t('resources.time.daysAgo', { count: Math.floor(diffInHours / 24) });
       return date.toLocaleDateString();
     };
 

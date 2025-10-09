@@ -76,6 +76,13 @@ interface Resource {
   [key: string]: unknown;
 }
 
+interface DerivedResource extends Resource {
+  displayName: string;
+  displayNamespace: string;
+  displayStatus: ResourceItem['status'];
+  displayCreatedAt: string;
+}
+
 // Define the type for a single resource kind object for Autocomplete
 interface ResourceKind {
   name: string;
@@ -134,20 +141,79 @@ const ObjectFilterPage: React.FC = () => {
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
 
-  // Optimized resources processing with memoization and performance improvements
-  const resources: ResourceItem[] = useMemo(() => {
-    if (!filteredResources || filteredResources.length === 0) return [];
+  const availableResourceKinds = useMemo(
+    () => resourceKinds.filter(kind => kind.kind.toLowerCase() !== 'binding'),
+    [resourceKinds]
+  );
 
-    // Pre-compile search term for better performance
+  // Optimized resources processing with memoization and performance improvements
+  const filteredNamespaces = useMemo(
+    () =>
+      namespaces.filter(
+        (ns: { name: string }) => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
+      ),
+    [namespaces]
+  );
+
+  const hasNamespaceKind = useMemo(
+    () => selectedKinds.some(kind => kind.kind.toLowerCase() === 'namespace'),
+    [selectedKinds]
+  );
+
+  const nonNamespaceKinds = useMemo(
+    () => selectedKinds.filter(kind => kind.kind.toLowerCase() !== 'namespace'),
+    [selectedKinds]
+  );
+
+  const namespaceResources = useMemo<Resource[]>(() => {
+    if (!hasNamespaceKind) return [];
+
+    const hasSelection = selectedNamespaces.length > 0;
+    const selectedSet = new Set(selectedNamespaces);
+
+    return filteredNamespaces
+      .filter(ns => !hasSelection || selectedSet.has(ns.name))
+      .map(ns => ({
+        kind: 'Namespace',
+        metadata: {
+          name: ns.name,
+          namespace: '',
+          uid: `namespace-${ns.name}`,
+          creationTimestamp: ns.createdAt,
+        },
+        status: ns.status,
+        labels: ns.labels || {},
+      }));
+  }, [filteredNamespaces, hasNamespaceKind, selectedNamespaces]);
+
+  const displayResources = useMemo<Resource[]>(() => {
+    const combined: Resource[] = [];
+
+    if (hasNamespaceKind) {
+      combined.push(...namespaceResources);
+    }
+
+    if (filteredResources && Array.isArray(filteredResources)) {
+      combined.push(...((filteredResources as unknown as Resource[]) || []));
+    }
+
+    if (!hasNamespaceKind) {
+      return combined;
+    }
+
+    return combined;
+  }, [filteredResources, hasNamespaceKind, namespaceResources]);
+
+  const derivedResources = useMemo<DerivedResource[]>(() => {
+    if (!displayResources || displayResources.length === 0) return [];
+
     const searchLower = quickSearchQuery?.toLowerCase() || '';
     const hasSearch = Boolean(searchLower);
 
-    return (filteredResources as unknown as Resource[])
+    return displayResources
       .filter(resource => {
-        // Early return if no search query
         if (!hasSearch) return true;
 
-        // Optimized search with early exit
         const name = resource.metadata?.name?.toLowerCase();
         const kind = resource.kind?.toLowerCase();
         const namespace = resource.metadata?.namespace?.toLowerCase();
@@ -163,14 +229,11 @@ const ObjectFilterPage: React.FC = () => {
         );
       })
       .map(resource => {
-        // Helper function to extract status from Kubernetes resource
         const extractResourceStatus = (resource: Resource): string => {
-          // If status is already a string, use it
           if (typeof resource.status === 'string') {
             return resource.status;
           }
 
-          // Handle different resource types
           const kind = resource.kind.toLowerCase();
           const statusObj = resource.status as Record<string, unknown> | undefined;
 
@@ -179,12 +242,12 @@ const ObjectFilterPage: React.FC = () => {
           }
 
           switch (kind) {
+            case 'namespace':
+              return t('resources.status.active');
             case 'pod': {
-              // For pods, check the phase
               if (statusObj.phase) {
                 return String(statusObj.phase);
               }
-              // Fallback to container statuses
               if (statusObj.containerStatuses && Array.isArray(statusObj.containerStatuses)) {
                 const containerStatus = statusObj.containerStatuses[0];
                 if (containerStatus?.state?.running) return t('resources.status.running');
@@ -195,7 +258,6 @@ const ObjectFilterPage: React.FC = () => {
             }
 
             case 'deployment': {
-              // For deployments, check readiness
               const replicas = Number(statusObj.replicas || 0);
               const readyReplicas = Number(statusObj.readyReplicas || 0);
               const availableReplicas = Number(statusObj.availableReplicas || 0);
@@ -212,7 +274,6 @@ const ObjectFilterPage: React.FC = () => {
             case 'service':
             case 'configmap':
             case 'secret':
-              // Services, ConfigMaps and Secrets are typically active if they exist
               return t('resources.status.active');
 
             case 'daemonset': {
@@ -260,7 +321,6 @@ const ObjectFilterPage: React.FC = () => {
             }
 
             default:
-              // For other resources, try to infer from common status patterns
               if (statusObj.phase) {
                 return String(statusObj.phase);
               }
@@ -281,7 +341,6 @@ const ObjectFilterPage: React.FC = () => {
         };
         const resourceStatus = extractResourceStatus(resource);
 
-        // Map extracted status to display status
         const getDisplayStatus = (status: string): ResourceItem['status'] => {
           const statusLower = status.toLowerCase();
 
@@ -310,30 +369,31 @@ const ObjectFilterPage: React.FC = () => {
           }
         };
 
+        const displayNamespace =
+          resource.metadata?.namespace ||
+          (resource.kind.toLowerCase() === 'namespace' ? resource.metadata?.name || '' : '');
+
         return {
-          kind: resource.kind,
-          name: resource.metadata?.name || '',
-          namespace: resource.metadata?.namespace || '',
-          status: getDisplayStatus(resourceStatus),
-          createdAt: resource.metadata?.creationTimestamp?.toString() || '',
-          labels: resource.labels || {},
-          metadata: resource.metadata || {},
+          ...resource,
+          displayName: resource.metadata?.name || '',
+          displayNamespace,
+          displayStatus: getDisplayStatus(resourceStatus),
+          displayCreatedAt: resource.metadata?.creationTimestamp?.toString() || '',
         };
       })
       .sort((a, b) => {
-        // Optimized sorting with cached values
-        const getValue = (resource: ResourceItem, key: string): string => {
+        const getValue = (resource: DerivedResource, key: string): string => {
           switch (key) {
             case 'name':
-              return resource.name;
+              return resource.displayName;
             case 'kind':
               return resource.kind;
             case 'namespace':
-              return resource.namespace;
+              return resource.displayNamespace;
             case 'createdAt':
-              return resource.createdAt;
+              return resource.displayCreatedAt;
             default:
-              return resource.name;
+              return resource.displayName;
           }
         };
 
@@ -343,12 +403,25 @@ const ObjectFilterPage: React.FC = () => {
         const comparison = aValue.localeCompare(bValue);
         return sortOrder === 'asc' ? comparison : -comparison;
       });
-  }, [filteredResources, quickSearchQuery, sortBy, sortOrder]); // Enhanced handlers
+  }, [displayResources, quickSearchQuery, sortBy, sortOrder, t]);
+
+  const resources: ResourceItem[] = useMemo(() => {
+    return derivedResources.map(resource => ({
+      kind: resource.kind,
+      name: resource.displayName,
+      namespace: resource.displayNamespace,
+      status: resource.displayStatus,
+      createdAt: resource.displayCreatedAt,
+      labels: resource.labels || {},
+      metadata: resource.metadata || {},
+    }));
+  }, [derivedResources]);
   const handleKindsChange = (
     _event: React.SyntheticEvent<Element, Event>,
     value: ResourceKind[]
   ) => {
-    setSelectedKinds(value);
+    const filteredKinds = value.filter(kind => kind.kind.toLowerCase() !== 'binding');
+    setSelectedKinds(filteredKinds);
     setSelectedResources([]);
   };
 
@@ -363,26 +436,25 @@ const ObjectFilterPage: React.FC = () => {
   }, []);
 
   const handleApplyFilters = useCallback(async () => {
-    if (selectedKinds.length > 0 && selectedNamespaces.length > 0) {
-      await applyFilters(
-        selectedKinds.map(k => k.name),
-        selectedNamespaces,
-        resourceFilters
-      );
+    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+
+    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
+      await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
     }
-  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
+  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   const handleRefresh = useCallback(async () => {
-    if (selectedKinds.length > 0 && selectedNamespaces.length > 0) {
+    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+
+    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
       setIsRefreshing(true);
-      await applyFilters(
-        selectedKinds.map(k => k.name),
-        selectedNamespaces,
-        resourceFilters
-      );
+      await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
+      setIsRefreshing(false);
+    } else if (hasNamespaceKind) {
+      setIsRefreshing(true);
       setIsRefreshing(false);
     }
-  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
+  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters, hasNamespaceKind]);
 
   // New handlers for enhanced functionality
   const handleViewModeChange = (_event: React.MouseEvent<HTMLElement>, newViewMode: ViewMode) => {
@@ -452,10 +524,10 @@ const ObjectFilterPage: React.FC = () => {
 
   useEffect(() => {
     // Auto-apply filters when both kinds and namespaces are selected
-    if (selectedKinds.length > 0 && selectedNamespaces.length > 0) {
+    if (nonNamespaceKinds.length > 0 && selectedNamespaces.length > 0) {
       handleApplyFilters();
     }
-  }, [selectedKinds, selectedNamespaces, handleApplyFilters]);
+  }, [nonNamespaceKinds, selectedNamespaces, handleApplyFilters]);
 
   // Helper function to determine status color
   const getStatusColor = (status: string | undefined) => {
@@ -485,10 +557,6 @@ const ObjectFilterPage: React.FC = () => {
         };
     }
   };
-
-  const filteredNamespaces = namespaces.filter(
-    (ns: { name: string }) => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
-  );
 
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
@@ -611,7 +679,9 @@ const ObjectFilterPage: React.FC = () => {
               <IconButton
                 onClick={handleRefresh}
                 disabled={
-                  isRefreshing || selectedKinds.length === 0 || selectedNamespaces.length === 0
+                  isRefreshing ||
+                  selectedKinds.length === 0 ||
+                  (!hasNamespaceKind && selectedNamespaces.length === 0)
                 }
                 sx={{
                   color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
@@ -663,32 +733,20 @@ const ObjectFilterPage: React.FC = () => {
               <FilterAltIcon />
               {t('resources.objectSelection')}
             </Typography>
-
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
+                <Autocomplete<ResourceKind, true, false, false>
                   multiple
                   options={
-                    resourceKinds
-                      ? [...resourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
+                    availableResourceKinds
+                      ? [...availableResourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
                       : []
                   }
                   getOptionLabel={option => option.kind}
                   onChange={handleKindsChange}
                   isOptionEqualToValue={(option, value) => option.name === value.name}
-                  ChipProps={{
-                    sx: {
-                      color: '#fff', // White text
-                      backgroundColor: 'rgba(255,255,255,0.3)', // White background with 0.3 opacity
-                      fontWeight: 600,
-                      '& .MuiChip-deleteIcon': {
-                        color: '#fff',
-                      },
-                    },
-                    deleteIcon: <CloseIcon />,
-                  }}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
+                  renderTags={(value: ResourceKind[], getTagProps) =>
+                    value.map((option: ResourceKind, index: number) => (
                       <Chip
                         label={option.kind}
                         {...getTagProps({ index })}
@@ -930,7 +988,7 @@ const ObjectFilterPage: React.FC = () => {
             </Grid>
           </Box>
 
-          {selectedKinds.length > 0 && selectedNamespaces.length > 0 && (
+          {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) && (
             <Box
               sx={{
                 mt: 3,
@@ -1193,12 +1251,12 @@ const ObjectFilterPage: React.FC = () => {
           ) : resources.length > 0 ? (
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
               {/* Resource Statistics Overview */}
-              <ResourceStats resources={filteredResources as unknown as Resource[]} />
+              <ResourceStats resources={displayResources} />
 
               {/* Grid View */}
               {viewMode === 'grid' && (
                 <Grid container spacing={3}>
-                  {(filteredResources as unknown as Resource[]).map(resource => {
+                  {derivedResources.map(resource => {
                     const uid =
                       resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
                     const isSelected = selectedResources.some(r => r.uid === uid);
@@ -1225,19 +1283,8 @@ const ObjectFilterPage: React.FC = () => {
               {/* List View */}
               {viewMode === 'list' && (
                 <Box sx={{ mt: 2 }}>
-                  {(filteredResources as unknown as Resource[]).map(resource => {
-                    const resourceStatus =
-                      typeof resource.status === 'string'
-                        ? resource.status === 'Running' || resource.status === 'Active'
-                          ? 'Healthy'
-                          : resource.status === 'Pending'
-                            ? 'OutOfSync'
-                            : resource.status === 'Failed'
-                              ? 'Missing'
-                              : 'Synced'
-                        : undefined;
-
-                    const statusColors = getStatusColor(resourceStatus);
+                  {derivedResources.map(resource => {
+                    const statusColors = getStatusColor(resource.displayStatus);
                     const uid =
                       resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
                     const isSelected = selectedResources.some(r => r.uid === uid);
@@ -1283,7 +1330,7 @@ const ObjectFilterPage: React.FC = () => {
                                   fontSize: '1rem',
                                 }}
                               >
-                                {resource.metadata?.name}
+                                {resource.displayName}
                               </Typography>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                                 <Chip
@@ -1299,9 +1346,9 @@ const ObjectFilterPage: React.FC = () => {
                                     fontWeight: 600,
                                   }}
                                 />
-                                {resource.metadata?.namespace && (
+                                {resource.displayNamespace && (
                                   <Chip
-                                    label={resource.metadata.namespace}
+                                    label={resource.displayNamespace}
                                     size="small"
                                     variant="outlined"
                                     sx={{
@@ -1314,9 +1361,9 @@ const ObjectFilterPage: React.FC = () => {
                                     }}
                                   />
                                 )}
-                                {resourceStatus && (
+                                {resource.displayStatus && (
                                   <Chip
-                                    label={resourceStatus}
+                                    label={resource.displayStatus}
                                     size="small"
                                     sx={{
                                       backgroundColor: statusColors.bg,
@@ -1420,7 +1467,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Name
+                          {t('resources.table.name')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1428,7 +1475,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Kind
+                          {t('resources.table.kind')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1436,7 +1483,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Namespace
+                          {t('resources.table.namespace')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1444,7 +1491,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Status
+                          {t('resources.table.status')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1452,7 +1499,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Created
+                          {t('resources.table.created')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1460,12 +1507,12 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Actions
+                          {t('resources.table.actions')}
                         </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {(filteredResources as unknown as Resource[]).map(resource => {
+                      {derivedResources.map(resource => {
                         const resourceStatus =
                           typeof resource.status === 'string'
                             ? resource.status === 'Running' || resource.status === 'Active'
@@ -1656,9 +1703,9 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {selectedKinds.length > 0 && selectedNamespaces.length > 0
-                  ? 'No resources found'
-                  : 'Ready to explore'}
+                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
+                  ? t('resources.emptyState.noResourcesFound')
+                  : t('resources.emptyState.readyToExplore')}
               </Typography>
               <Typography
                 variant="body1"
@@ -1669,11 +1716,11 @@ const ObjectFilterPage: React.FC = () => {
                   margin: '0 auto 24px',
                 }}
               >
-                {selectedKinds.length > 0 && selectedNamespaces.length > 0
-                  ? 'No resources match your current filters. Try adjusting your search criteria or clearing filters.'
-                  : 'Select a resource kind and namespace to begin exploring your Kubernetes objects.'}
+                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
+                  ? t('resources.emptyState.noResourcesDescription')
+                  : t('resources.emptyState.getStartedDescription')}
               </Typography>
-              {selectedKinds.length > 0 && selectedNamespaces.length > 0 ? (
+              {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"

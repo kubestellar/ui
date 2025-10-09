@@ -851,6 +851,10 @@
       "fullscreen": "Enter Fullscreen",
       "exitFullscreen": "Exit Fullscreen"
     },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
+    },
     "nodeLabel": {
       "labels": "Labels:",
       "noLabels": "No labels"
@@ -965,6 +969,10 @@
       "square": "Square",
       "fullscreen": "Enter Fullscreen",
       "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "contextMenu": {
       "details": "Details",
@@ -2757,6 +2765,44 @@
       "topResourceKinds": "Top Object Kinds",
       "topNamespaces": "Top Namespaces"
     },
+    "table": {
+      "name": "Name",
+      "kind": "Kind",
+      "namespace": "Namespace",
+      "status": "Status",
+      "age": "Age",
+      "createdAt": "Created",
+      "labels": "Labels",
+      "actions": "Actions"
+    },
+    "preview": {
+      "objectDetails": "Object Details",
+      "namespace": "Namespace",
+      "createdAt": "Created",
+      "uid": "UID",
+      "noLabels": "No labels",
+      "labels": "Labels"
+    },
+    "time": {
+      "justNow": "Just now",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "loading": {
+      "resources": "Loading resources...",
+      "applying": "Applying filters...",
+      "refreshing": "Refreshing..."
+    },
+    "errors": {
+      "loadFailed": "Failed to load resources",
+      "filterFailed": "Failed to apply filters",
+      "actionFailed": "Action failed"
+    },
+    "notifications": {
+      "filtersApplied": "Filters applied successfully",
+      "resourcesRefreshed": "Resources refreshed successfully"
+    },
+    "subtitle": "Explore and manage Kubernetes resources",
     "status": {
       "healthy": "Healthy",
       "warning": "Warning",
