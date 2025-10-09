@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: duckdns-certbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: duckdns-certbot
+  template:
+    metadata:
+      labels:
+        app: duckdns-certbot
+    spec:
+      containers:
+        - name: duckdns
+          image: crazymax/duckdns:latest
+          env:
+            - name: DUCKDNS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: duckdns-secret
+                  key: token
+            - name: DUCKDNS_DOMAINS
+              valueFrom:
+                secretKeyRef:
+                  name: duckdns-secret
+                  key: domain
+            - name: DUCKDNS_UPDATE_INTERVAL
+              value: "300"
+          volumeMounts:
+            - name: ssl
+              mountPath: /ssl
+        - name: certbot
+          image: certbot/certbot:latest
+          args:
+            - certonly
+            - --non-interactive
+            - --agree-tos
+            - --email
+            - your-email@example.com # <-- CHANGE THIS
+            - --dns-duckdns
+            - --dns-duckdns-credentials
+            - /ssl/duckdns.ini
+            - -d
+            - $(DUCKDNS_DOMAINS)
+          env:
+            - name: DUCKDNS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: duckdns-secret
+                  key: token
+            - name: DUCKDNS_DOMAINS
+              valueFrom:
+                secretKeyRef:
+                  name: duckdns-secret
+                  key: domain
+          volumeMounts:
+            - name: ssl
+              mountPath: /ssl
+      volumes:
+        - name: ssl
+          emptyDir: {}
