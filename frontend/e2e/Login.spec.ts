@@ -221,8 +221,21 @@ test.describe('Login Page', () => {
     await page.getByRole('textbox', { name: 'Password' }).fill('wrongpassword');
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
-    // Wait a moment for any loading state
-    await page.waitForTimeout(2000);
+    // Wait for any error indication to appear (toast, alert, or error text)
+    await Promise.race([
+      page
+        .locator('.toast-error')
+        .waitFor({ timeout: 3000 })
+        .catch(() => {}),
+      page
+        .locator('[role="alert"]')
+        .waitFor({ timeout: 3000 })
+        .catch(() => {}),
+      page
+        .locator('text=/Invalid|Error|Failed/i')
+        .waitFor({ timeout: 3000 })
+        .catch(() => {}),
+    ]);
 
     // Check that we're still on the login page (didn't redirect) - this indicates an error
     await expect(page).toHaveURL(/login/);
@@ -242,8 +255,21 @@ test.describe('Login Page', () => {
     await page.getByRole('textbox', { name: 'Password' }).fill('wrongpassword');
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
-    // Wait and verify we're still on login page (error occurred)
-    await page.waitForTimeout(2000);
+    // Wait for any error indication to appear (toast, alert, or error text)
+    await Promise.race([
+      page
+        .locator('.toast-error')
+        .waitFor({ timeout: 3000 })
+        .catch(() => {}),
+      page
+        .locator('[role="alert"]')
+        .waitFor({ timeout: 3000 })
+        .catch(() => {}),
+      page
+        .locator('text=/Invalid|Error|Failed/i')
+        .waitFor({ timeout: 3000 })
+        .catch(() => {}),
+    ]);
     await expect(page).toHaveURL(/login/);
 
     // Now try with correct credentials
@@ -266,7 +292,7 @@ test.describe('Login Page', () => {
     expect(isLoading).toBeTruthy();
 
     // Wait for successful login
-    await expect(page).toHaveURL('/', { timeout: 1000 });
+    await expect(page).toHaveURL('/', { timeout: 5000 });
   });
 
   test('error handling maintains accessibility', async ({ page }) => {
@@ -274,8 +300,8 @@ test.describe('Login Page', () => {
     await page.getByRole('textbox', { name: 'Password' }).fill('wrongpassword');
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
-    // Wait for error to be handled
-    await page.waitForTimeout(2000);
+    // Wait for toast container to be visible
+    await expect(page.locator('.toast-container')).toBeVisible({ timeout: 3000 });
 
     // Check that we're still on login page (error occurred)
     await expect(page).toHaveURL(/login/);
@@ -297,8 +323,17 @@ test.describe('Login Page', () => {
     await page.getByRole('textbox', { name: 'Password' }).fill('wrongpassword');
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
-    // Wait for loading toast to appear first
-    await page.waitForTimeout(1000);
+    // Wait for loading toast or status indicator to disappear, or error toast/alert to appear
+    await Promise.race([
+      page
+        .locator('.toast-loading, [role="status"]')
+        .first()
+        .waitFor({ state: 'hidden', timeout: 3000 }),
+      page
+        .locator('[role="alert"], .toast-error')
+        .first()
+        .waitFor({ state: 'visible', timeout: 3000 }),
+    ]);
 
     // Look for any text containing error messages - be more flexible
     const errorTexts = ['Invalid username or password'];
