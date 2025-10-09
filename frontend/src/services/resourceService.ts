@@ -15,10 +15,15 @@ export interface ResourceQueryParams {
  * @param filters Optional filters to apply
  * @returns Promise with the filtered resources
  */
+interface FetchResourcesOptions {
+  isNamespaced?: boolean;
+}
+
 export const fetchResources = async (
   resourceKind: string,
-  namespace: string,
-  filters?: ObjectFilter
+  namespace?: string,
+  filters?: ObjectFilter,
+  options?: FetchResourcesOptions
 ) => {
   // Convert ObjectFilter to query parameters
   const queryParams: ResourceQueryParams = {};
@@ -35,7 +40,19 @@ export const fetchResources = async (
     .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
     .join('&');
 
-  const url = `/api/${resourceKind}/${namespace}${queryString ? `?${queryString}` : ''}`;
+  const trimmedNamespace = namespace?.trim();
+
+  let basePath: string;
+
+  if (options?.isNamespaced === false) {
+    basePath = `/api/cluster/${resourceKind}`;
+  } else if (trimmedNamespace) {
+    basePath = `/api/${resourceKind}/${trimmedNamespace}`;
+  } else {
+    basePath = `/api/cluster/${resourceKind}`;
+  }
+
+  const url = `${basePath}${queryString ? `?${queryString}` : ''}`;
 
   try {
     const response = await api.get(url);
