@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useWebSocket } from '../../../context/webSocketExports';
 import { useLocation } from 'react-router-dom';
 import * as dagre from 'dagre';
@@ -53,15 +53,22 @@ export const useTreeViewData = ({
   const renderStartTime = useRef<number>(0);
   const isInitialRender = useRef(true);
 
+  const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ['namespaces'];
 
-  const { data: websocketData } = useQuery<NamespaceResource[]>({
+  const {
+    data: namespaceData = [],
+    isLoading: namespacesLoading,
+    error: namespacesError,
+  } = useQuery<NamespaceResource[]>({
     queryKey: NAMESPACE_QUERY_KEY,
     queryFn: async () => {
-      throw new Error('API not implemented');
+      throw new Error(
+        'Namespace API fetch is not implemented; WebSocket provider must populate cache.'
+      );
     },
     enabled: false,
-    initialData: [],
+    initialData: () => queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY) ?? [],
   });
 
   const { createNode, clearNodeCache, updateNodeStyles } = useTreeViewNodes({
@@ -93,10 +100,19 @@ export const useTreeViewData = ({
   }, [connect]);
 
   useEffect(() => {
-    if (websocketData !== undefined && !dataReceived) {
+    if (namespaceData !== undefined && !dataReceived) {
       setDataReceived(true);
     }
-  }, [websocketData, dataReceived]);
+  }, [namespaceData, dataReceived]);
+
+  useEffect(() => {
+    if (namespacesError) {
+      console.warn(
+        'Namespace query reported an error. Ensure WebSocket provider populates cache.',
+        namespacesError
+      );
+    }
+  }, [namespacesError]);
 
   // Check for create=true in URL parameter
   useEffect(() => {
@@ -355,11 +371,11 @@ export const useTreeViewData = ({
   );
 
   useEffect(() => {
-    if (websocketData !== undefined) {
+    if (namespaceData !== undefined) {
       setIsTransforming(true);
-      transformDataToTree(websocketData);
+      transformDataToTree(namespaceData);
     }
-  }, [websocketData, transformDataToTree]);
+  }, [namespaceData, transformDataToTree]);
 
   const handleResourceDataChange = useCallback(
     (data: ResourceDataChangeEvent) => {
@@ -372,8 +388,13 @@ export const useTreeViewData = ({
   );
 
   const isLoading = useMemo(
-    () => !isConnected || !hasValidData || isTransforming || !minimumLoadingTimeElapsed,
-    [isConnected, hasValidData, isTransforming, minimumLoadingTimeElapsed]
+    () =>
+      !isConnected ||
+      !hasValidData ||
+      namespacesLoading ||
+      isTransforming ||
+      !minimumLoadingTimeElapsed,
+    [isConnected, hasValidData, namespacesLoading, isTransforming, minimumLoadingTimeElapsed]
   );
 
   return {

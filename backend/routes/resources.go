@@ -21,6 +21,7 @@ func setupResourceRoutes(router *gin.Engine) {
 		api.GET("/:resourceKind/:namespace/log", k8s.LogWorkloads)
 		api.POST("/resources", k8s.CreateResource)                        // Create a new resource
 		api.POST("/resource/upload", k8s.UploadYAMLFile)                  // Upload any k8s resource file with "wds" key
+		api.GET("/cluster/:resourceKind", k8s.ListClusterResources)       // List cluster-scoped resources
 		api.GET("/:resourceKind/:namespace", k8s.ListResources)           // List all resources
 		api.GET("/:resourceKind/:namespace/:name", k8s.GetResource)       // Get a resource
 		api.PUT("/:resourceKind/:namespace/:name", k8s.UpdateResource)    // Update a resource
@@ -30,4 +31,5 @@ func setupResourceRoutes(router *gin.Engine) {
 		api.GET("/resources/kinds", k8s.GetResourceKinds)   // Get all available resource kinds
 		api.GET("/resources/namespaces", k8s.GetNamespaces) // Get all available namespaces
 	}
+
 }

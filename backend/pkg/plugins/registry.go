@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 
+	"github.com/kubestellar/ui/backend/models"
 	"gopkg.in/yaml.v3"
 )
 
@@ -108,24 +107,34 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	}
 
 	// Get plugin ID from the folder name
-	parts := strings.Split(filepath.Base(dirPath), "-")
-	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid plugin folder name: %s", filepath.Base(dirPath))
-	}
-	pluginIdStr := parts[len(parts)-1]
-	pluginIdFolder, err := strconv.Atoi(pluginIdStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid plugin ID in folder name: %s", filepath.Base(dirPath))
+	pluginName := manifest.Metadata.Name
+	authorName := manifest.Metadata.Author
+	pluginVersion := manifest.Metadata.Version
+
+	if pluginName == "" || authorName == "" || pluginVersion == "" {
+		return nil, fmt.Errorf("plugin name, author name and version are required in manifest")
 	}
 
-	exist, err := CheckInstalledPluginWithID(pluginIdFolder)
+	author, err := models.GetUserByUsername(authorName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get author by username: %v", err)
+	}
+	if author == nil {
+		return nil, fmt.Errorf("author not found: %s", authorName)
+	}
+
+	exist, err := CheckPluginDetailsExistByNameAuthorVersion(pluginName, author.ID, pluginVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if the plugin ID from the database matches the folder name
 	if !exist {
-		return nil, fmt.Errorf("plugin ID mismatch: plugin not found, DB ID %d", pluginIdFolder)
+		return nil, fmt.Errorf("plugin not registered in database: %s", pluginName)
+	}
+
+	pluginID, err := GetPluginIDByNameAuthorVersion(pluginName, author.ID, pluginVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get plugin ID: %v", err)
 	}
 
 	// Check if WASM file exists
@@ -140,7 +149,7 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &PluginInfo{
-				ID:           pluginIdFolder,
+				ID:           pluginID,
 				Name:         manifest.Metadata.Name,
 				Path:         dirPath,
 				ManifestPath: manifestPath,
@@ -162,14 +171,14 @@ func (pr *PluginRegistry) discoverPluginInDirectory(dirPath string) (*PluginInfo
 	status := "inactive" // Default status if not loaded
 
 	if exist {
-		status, err = GetPluginStatusDB(pluginIdFolder)
+		status, err = GetPluginStatusDB(pluginID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get plugin status: %v", err)
 		}
 	}
 
 	return &PluginInfo{
-		ID:           pluginIdFolder,
+		ID:           pluginID,
 		Name:         manifest.Metadata.Name,
 		Version:      manifest.Metadata.Version,
 		Author:       manifest.Metadata.Author,
