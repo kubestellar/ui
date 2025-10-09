@@ -67,11 +67,11 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
           const items = await Promise.all(
             manifest.spec.frontend.navigation.map(async navItem => {
               const LoadedPluginComponent = PluginComponent(
-                `/api/plugins/${manifest.metadata.name}-${manifest.id}/frontend/dist/${manifest.spec.frontend.routes[0].component}`
+                `/api/plugins/${manifest.metadata.name}~${manifest.metadata.author}~${manifest.metadata.version}/frontend/dist/${manifest.spec.frontend.routes[0].component}`
               );
 
               const res = await api.get(
-                `/api/plugins/${manifest.metadata.name}-${manifest.id}/frontend/dist/${navItem.icon}`
+                `/api/plugins/${manifest.metadata.name}~${manifest.metadata.author}~${manifest.metadata.version}/frontend/dist/${navItem.icon}`
               );
               const iconBlob = new Blob([res.data], { type: res.headers['content-type'] });
               const iconUrl = URL.createObjectURL(iconBlob);
@@ -79,7 +79,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
               const Element = await LoadedPluginComponent;
 
               const pluginRoute: RouteObject = {
-                path: `${navItem.path}-${manifest.id}`,
+                path: `${navItem.path}~${manifest.metadata.author}~${manifest.metadata.version}`,
                 element: (
                   <ProtectedRoute>
                     <Suspense
@@ -107,7 +107,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
 
               return {
                 isLink: true,
-                url: `${navItem.path}-${manifest.id}`,
+                url: `${navItem.path}~${manifest.metadata.author}~${manifest.metadata.version}`,
                 icon: iconUrl,
                 label: navItem.label,
                 isPlugin: true,
