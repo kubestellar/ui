@@ -147,7 +147,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
     color: isActive
       ? isDark
         ? darkTheme.brand.primary
-        : lightTheme.brand.primary
+        : lightTheme.brand.primaryDark
       : isDark
         ? darkTheme.text.primary
         : lightTheme.text.primary,
@@ -609,7 +609,7 @@ const ObjectFilters: React.FC<ObjectFiltersProps> = ({
                     activeFilters.kind === kind
                       ? isDark
                         ? darkTheme.brand.primaryLight
-                        : lightTheme.brand.primary
+                        : lightTheme.brand.primaryDark
                       : isDark
                         ? darkTheme.text.secondary
                         : lightTheme.text.secondary,
