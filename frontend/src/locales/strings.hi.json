@@ -2458,7 +2458,7 @@
       "adminSettings": "प्रशासन सेटिंग्स",
       "settingsComingSoon": "सेटिंग्स पैनल जल्द ही आ रहा है।",
       "marketplaceManagement": "मार्केटप्लेस प्रबंधन",
-      "adminPanel": "एडमिन पैनल"
+      "adminPanel": "प्रशासन पैनल"
     },
     "search": {
       "noResults": "कोई प्लगइन नहीं मिला",
@@ -2760,6 +2760,44 @@
       "topResourceKinds": "शीर्ष संसाधन प्रकार",
       "topNamespaces": "शीर्ष नेमस्पेस"
     },
+    "table": {
+      "name": "नाम",
+      "kind": "प्रकार",
+      "namespace": "नेमस्पेस",
+      "status": "स्थिति",
+      "age": "आयु",
+      "createdAt": "निर्मित",
+      "labels": "लेबल्स",
+      "actions": "कार्रवाइयां"
+    },
+    "preview": {
+      "objectDetails": "ऑब्जेक्ट विवरण",
+      "namespace": "नेमस्पेस",
+      "createdAt": "निर्मित",
+      "uid": "UID",
+      "noLabels": "कोई लेबल नहीं",
+      "labels": "लेबल्स"
+    },
+    "time": {
+      "justNow": "अभी",
+      "hoursAgo": "{{count}} घंटे पहले",
+      "daysAgo": "{{count}} दिन पहले"
+    },
+    "loading": {
+      "resources": "संसाधन लोड हो रहे हैं...",
+      "applying": "फ़िल्टर्स लागू कर रहे हैं...",
+      "refreshing": "रीफ्रेश कर रहे हैं..."
+    },
+    "errors": {
+      "loadFailed": "संसाधन लोड करने में विफल",
+      "filterFailed": "फ़िल्टर्स लागू करने में विफल",
+      "actionFailed": "कार्रवाई विफल"
+    },
+    "notifications": {
+      "filtersApplied": "फ़िल्टर्स सफलतापूर्वक लागू किए गए",
+      "resourcesRefreshed": "संसाधन सफलतापूर्वक रीफ्रेश किए गए"
+    },
+    "subtitle": "Kubernetes संसाधनों का अन्वेषण और प्रबंधन करें",
     "status": {
       "healthy": "स्वस्थ",
       "warning": "चेतावनी",
