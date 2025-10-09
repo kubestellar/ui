@@ -29,13 +29,22 @@ interface Resource {
   status?: Record<string, unknown>;
 }
 
+interface FetchResourcesResponse {
+  items?: Resource[];
+  [key: string]: unknown;
+}
+
 interface UseObjectFiltersResult {
   resourceKinds: ResourceKind[];
   namespaces: Namespace[];
   filteredResources: Resource[];
   isLoading: boolean;
   error: string | null;
-  applyFilters: (resourceKind: string, namespace: string, filters: ObjectFilter) => Promise<void>;
+  applyFilters: (
+    resourceKinds: string[],
+    namespaces: string[],
+    filters: ObjectFilter
+  ) => Promise<void>;
 }
 
 export const useObjectFilters = (): UseObjectFiltersResult => {
@@ -52,12 +61,8 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
       setError(null);
 
       try {
-        // Load resource kinds
-        const kinds = await getResourceKinds();
+        const [kinds, ns] = await Promise.all([getResourceKinds(), getNamespaces()]);
         setResourceKinds(kinds);
-
-        // Load namespaces
-        const ns = await getNamespaces();
         setNamespaces(ns);
       } catch (err) {
         console.error('Error loading resource data:', err);
@@ -70,15 +75,31 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
     loadResourceData();
   }, []);
 
-  // Apply filters to fetch resources
+  // Apply filters to fetch resources for multiple kinds and namespaces
   const applyFilters = useCallback(
-    async (resourceKind: string, namespace: string, filters: ObjectFilter) => {
+    async (kinds: string[], nsList: string[], filters: ObjectFilter) => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const resources = await fetchResources(resourceKind, namespace, filters);
-        setFilteredResources(resources.items || []);
+        const fetchPromises: Promise<FetchResourcesResponse>[] = [];
+        for (const kind of kinds) {
+          const kindInfo = resourceKinds.find(resourceKind => resourceKind.name === kind);
+          console.log(resourceKinds);
+          console.log(kindInfo);
+          const isNamespaced = kindInfo?.namespaced ?? true;
+          if (isNamespaced) {
+            for (const ns of nsList) {
+              fetchPromises.push(fetchResources(kind, ns, filters, { isNamespaced: true }));
+            }
+          } else {
+            fetchPromises.push(fetchResources(kind, undefined, filters, { isNamespaced: false }));
+          }
+        }
+        const results = await Promise.all(fetchPromises);
+        // Flatten all items arrays into one
+        const allResources: Resource[] = results.map(res => (res.items ? res.items : [])).flat();
+        setFilteredResources(allResources);
       } catch (err) {
         console.error('Error applying resource filters:', err);
         setError('Failed to filter resources. Please try again.');
@@ -86,7 +107,7 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
         setIsLoading(false);
       }
     },
-    []
+    [resourceKinds]
   );
 
   return {

@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     container_name: auth_postgres
     environment:
-      POSTGRES_DB: authdbui
+      POSTGRES_DB: authdb
       POSTGRES_USER: authuser
       POSTGRES_PASSWORD: authpass123
     ports:

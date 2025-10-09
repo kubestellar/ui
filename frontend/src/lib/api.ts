@@ -54,7 +54,14 @@ api.interceptors.response.use(
       error.response?.data?.message || error.response?.data?.error || error.message;
     const isAuthCheck = error.config?.url?.includes('/api/me');
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthCheck) {
+    const isLoginEndpoint = error.config?.url?.includes('/login');
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthCheck &&
+      !isLoginEndpoint
+    ) {
       console.warn('Axios Interceptor: 401 Unauthorized. Attempting token refresh.');
       originalRequest._retry = true;
       const newToken = await refreshAccessToken(api);
@@ -65,8 +72,6 @@ api.interceptors.response.use(
       } else {
         console.error('Axios Interceptor: Token refresh failed. Redirecting to login.');
         clearTokens();
-
-        // Only show toast if user is not already on login page
         if (!isOnLoginPage()) {
           toast.error('Session expired. Please log in again.');
         }
@@ -83,9 +88,14 @@ api.interceptors.response.use(
       setGlobalNetworkError(true);
     } else {
       console.error('Axios Interceptor: API error response.', error.response);
-      // For other errors, show toast but use a consistent ID to prevent duplicates
-      const toastId = `api-error-${error.response?.status || 'unknown'}`;
-      toast.error(errorMessage, { id: toastId });
+      const isLoginEndpoint = error.config?.url?.includes('/login');
+      const shouldSuppressToast = (error.response.status === 401 && isAuthCheck) || isLoginEndpoint;
+
+      if (!shouldSuppressToast) {
+        // For other errors, show toast but use a consistent ID to prevent duplicates
+        const toastId = `api-error-${error.response?.status || 'unknown'}`;
+        toast.error(errorMessage, { id: toastId });
+      }
     }
 
     return Promise.reject(error);

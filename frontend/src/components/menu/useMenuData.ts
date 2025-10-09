@@ -7,8 +7,8 @@ import {
   HiOutlineViewfinderCircle,
 } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
-import { BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { SiGrafana } from 'react-icons/si';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
 import { usePlugins } from '../../plugins/PluginLoader';
@@ -46,7 +46,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/grafana',
-          icon: HiOutlineCube,
+          icon: SiGrafana,
           label: t('menu.items.Grafana'),
         },
         {
@@ -72,12 +72,6 @@ export const useMenuData = (): MenuItemData[] => {
           url: '/resources',
           icon: HiOutlineViewfinderCircle,
           label: t('menu.items.resourceExplorer'),
-        },
-        {
-          isLink: true,
-          url: '/metrics',
-          icon: BarChart3,
-          label: t('menu.items.metricsDashboard'),
         },
       ],
     },

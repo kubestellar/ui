@@ -36,6 +36,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Checkbox,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../stores/themeStore';
@@ -73,6 +74,13 @@ interface Resource {
   status?: string;
   labels?: Record<string, string>;
   [key: string]: unknown;
+}
+
+interface DerivedResource extends Resource {
+  displayName: string;
+  displayNamespace: string;
+  displayStatus: ResourceItem['status'];
+  displayCreatedAt: string;
 }
 
 // Define the type for a single resource kind object for Autocomplete
@@ -117,8 +125,8 @@ const ObjectFilterPage: React.FC = () => {
   } = useObjectFilters();
 
   // Enhanced state management
-  const [selectedKind, setSelectedKind] = useState<ResourceKind | null>(null);
-  const [selectedNamespace, setSelectedNamespace] = useState<string>('');
+  const [selectedKinds, setSelectedKinds] = useState<ResourceKind[]>([]);
+  const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>([]);
   const [resourceFilters, setResourceFilters] = useState<ObjectFilter>({});
   const [showFilters, setShowFilters] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -134,19 +142,73 @@ const ObjectFilterPage: React.FC = () => {
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
 
   // Optimized resources processing with memoization and performance improvements
-  const resources: ResourceItem[] = useMemo(() => {
-    if (!filteredResources || filteredResources.length === 0) return [];
+  const filteredNamespaces = useMemo(
+    () =>
+      namespaces.filter(
+        (ns: { name: string }) => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
+      ),
+    [namespaces]
+  );
 
-    // Pre-compile search term for better performance
+  const hasNamespaceKind = useMemo(
+    () => selectedKinds.some(kind => kind.kind.toLowerCase() === 'namespace'),
+    [selectedKinds]
+  );
+
+  const nonNamespaceKinds = useMemo(
+    () => selectedKinds.filter(kind => kind.kind.toLowerCase() !== 'namespace'),
+    [selectedKinds]
+  );
+
+  const namespaceResources = useMemo<Resource[]>(() => {
+    if (!hasNamespaceKind) return [];
+
+    const hasSelection = selectedNamespaces.length > 0;
+    const selectedSet = new Set(selectedNamespaces);
+
+    return filteredNamespaces
+      .filter(ns => !hasSelection || selectedSet.has(ns.name))
+      .map(ns => ({
+        kind: 'Namespace',
+        metadata: {
+          name: ns.name,
+          namespace: '',
+          uid: `namespace-${ns.name}`,
+          creationTimestamp: ns.createdAt,
+        },
+        status: ns.status,
+        labels: ns.labels || {},
+      }));
+  }, [filteredNamespaces, hasNamespaceKind, selectedNamespaces]);
+
+  const displayResources = useMemo<Resource[]>(() => {
+    const combined: Resource[] = [];
+
+    if (hasNamespaceKind) {
+      combined.push(...namespaceResources);
+    }
+
+    if (filteredResources && Array.isArray(filteredResources)) {
+      combined.push(...((filteredResources as unknown as Resource[]) || []));
+    }
+
+    if (!hasNamespaceKind) {
+      return combined;
+    }
+
+    return combined;
+  }, [filteredResources, hasNamespaceKind, namespaceResources]);
+
+  const derivedResources = useMemo<DerivedResource[]>(() => {
+    if (!displayResources || displayResources.length === 0) return [];
+
     const searchLower = quickSearchQuery?.toLowerCase() || '';
     const hasSearch = Boolean(searchLower);
 
-    return (filteredResources as unknown as Resource[])
+    return displayResources
       .filter(resource => {
-        // Early return if no search query
         if (!hasSearch) return true;
 
-        // Optimized search with early exit
         const name = resource.metadata?.name?.toLowerCase();
         const kind = resource.kind?.toLowerCase();
         const namespace = resource.metadata?.namespace?.toLowerCase();
@@ -162,14 +224,11 @@ const ObjectFilterPage: React.FC = () => {
         );
       })
       .map(resource => {
-        // Helper function to extract status from Kubernetes resource
         const extractResourceStatus = (resource: Resource): string => {
-          // If status is already a string, use it
           if (typeof resource.status === 'string') {
             return resource.status;
           }
 
-          // Handle different resource types
           const kind = resource.kind.toLowerCase();
           const statusObj = resource.status as Record<string, unknown> | undefined;
 
@@ -178,12 +237,12 @@ const ObjectFilterPage: React.FC = () => {
           }
 
           switch (kind) {
+            case 'namespace':
+              return t('resources.status.active');
             case 'pod': {
-              // For pods, check the phase
               if (statusObj.phase) {
                 return String(statusObj.phase);
               }
-              // Fallback to container statuses
               if (statusObj.containerStatuses && Array.isArray(statusObj.containerStatuses)) {
                 const containerStatus = statusObj.containerStatuses[0];
                 if (containerStatus?.state?.running) return t('resources.status.running');
@@ -194,7 +253,6 @@ const ObjectFilterPage: React.FC = () => {
             }
 
             case 'deployment': {
-              // For deployments, check readiness
               const replicas = Number(statusObj.replicas || 0);
               const readyReplicas = Number(statusObj.readyReplicas || 0);
               const availableReplicas = Number(statusObj.availableReplicas || 0);
@@ -211,7 +269,6 @@ const ObjectFilterPage: React.FC = () => {
             case 'service':
             case 'configmap':
             case 'secret':
-              // Services, ConfigMaps and Secrets are typically active if they exist
               return t('resources.status.active');
 
             case 'daemonset': {
@@ -259,7 +316,6 @@ const ObjectFilterPage: React.FC = () => {
             }
 
             default:
-              // For other resources, try to infer from common status patterns
               if (statusObj.phase) {
                 return String(statusObj.phase);
               }
@@ -280,7 +336,6 @@ const ObjectFilterPage: React.FC = () => {
         };
         const resourceStatus = extractResourceStatus(resource);
 
-        // Map extracted status to display status
         const getDisplayStatus = (status: string): ResourceItem['status'] => {
           const statusLower = status.toLowerCase();
 
@@ -309,30 +364,31 @@ const ObjectFilterPage: React.FC = () => {
           }
         };
 
+        const displayNamespace =
+          resource.metadata?.namespace ||
+          (resource.kind.toLowerCase() === 'namespace' ? resource.metadata?.name || '' : '');
+
         return {
-          kind: resource.kind,
-          name: resource.metadata?.name || '',
-          namespace: resource.metadata?.namespace || '',
-          status: getDisplayStatus(resourceStatus),
-          createdAt: resource.metadata?.creationTimestamp?.toString() || '',
-          labels: resource.labels || {},
-          metadata: resource.metadata || {},
+          ...resource,
+          displayName: resource.metadata?.name || '',
+          displayNamespace,
+          displayStatus: getDisplayStatus(resourceStatus),
+          displayCreatedAt: resource.metadata?.creationTimestamp?.toString() || '',
         };
       })
       .sort((a, b) => {
-        // Optimized sorting with cached values
-        const getValue = (resource: ResourceItem, key: string): string => {
+        const getValue = (resource: DerivedResource, key: string): string => {
           switch (key) {
             case 'name':
-              return resource.name;
+              return resource.displayName;
             case 'kind':
               return resource.kind;
             case 'namespace':
-              return resource.namespace;
+              return resource.displayNamespace;
             case 'createdAt':
-              return resource.createdAt;
+              return resource.displayCreatedAt;
             default:
-              return resource.name;
+              return resource.displayName;
           }
         };
 
@@ -342,15 +398,31 @@ const ObjectFilterPage: React.FC = () => {
         const comparison = aValue.localeCompare(bValue);
         return sortOrder === 'asc' ? comparison : -comparison;
       });
-  }, [filteredResources, quickSearchQuery, sortBy, sortOrder]); // Enhanced handlers
-  const handleKindChange = (_event: React.SyntheticEvent, value: ResourceKind | null) => {
-    setSelectedKind(value);
-    setSelectedResources([]); // Clear selections when changing context
+  }, [displayResources, quickSearchQuery, sortBy, sortOrder, t]);
+
+  const resources: ResourceItem[] = useMemo(() => {
+    return derivedResources.map(resource => ({
+      kind: resource.kind,
+      name: resource.displayName,
+      namespace: resource.displayNamespace,
+      status: resource.displayStatus,
+      createdAt: resource.displayCreatedAt,
+      labels: resource.labels || {},
+      metadata: resource.metadata || {},
+    }));
+  }, [derivedResources]);
+  const handleKindsChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    value: ResourceKind[]
+  ) => {
+    setSelectedKinds(value);
+    setSelectedResources([]);
   };
 
-  const handleNamespaceChange = (event: SelectChangeEvent) => {
-    setSelectedNamespace(event.target.value);
-    setSelectedResources([]); // Clear selections when changing context
+  const handleNamespacesChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value as string[];
+    setSelectedNamespaces(value);
+    setSelectedResources([]);
   };
 
   const handleFiltersChange = useCallback((filters: ObjectFilter) => {
@@ -358,18 +430,25 @@ const ObjectFilterPage: React.FC = () => {
   }, []);
 
   const handleApplyFilters = useCallback(async () => {
-    if (selectedKind && selectedNamespace) {
-      await applyFilters(selectedKind.name, selectedNamespace, resourceFilters);
+    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+
+    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
+      await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
     }
-  }, [selectedKind, selectedNamespace, resourceFilters, applyFilters]);
+  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   const handleRefresh = useCallback(async () => {
-    if (selectedKind && selectedNamespace) {
+    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+
+    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
       setIsRefreshing(true);
-      await applyFilters(selectedKind.name, selectedNamespace, resourceFilters);
+      await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
+      setIsRefreshing(false);
+    } else if (hasNamespaceKind) {
+      setIsRefreshing(true);
       setIsRefreshing(false);
     }
-  }, [selectedKind, selectedNamespace, resourceFilters, applyFilters]);
+  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters, hasNamespaceKind]);
 
   // New handlers for enhanced functionality
   const handleViewModeChange = (_event: React.MouseEvent<HTMLElement>, newViewMode: ViewMode) => {
@@ -438,11 +517,11 @@ const ObjectFilterPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Auto-apply filters when both kind and namespace are selected
-    if (selectedKind && selectedNamespace) {
+    // Auto-apply filters when both kinds and namespaces are selected
+    if (nonNamespaceKinds.length > 0 && selectedNamespaces.length > 0) {
       handleApplyFilters();
     }
-  }, [selectedKind, selectedNamespace, handleApplyFilters]);
+  }, [nonNamespaceKinds, selectedNamespaces, handleApplyFilters]);
 
   // Helper function to determine status color
   const getStatusColor = (status: string | undefined) => {
@@ -472,10 +551,6 @@ const ObjectFilterPage: React.FC = () => {
         };
     }
   };
-
-  const filteredNamespaces = namespaces.filter(
-    (ns: { name: string }) => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
-  );
 
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
@@ -597,7 +672,11 @@ const ObjectFilterPage: React.FC = () => {
             <Tooltip title={t('resources.refresh')}>
               <IconButton
                 onClick={handleRefresh}
-                disabled={isRefreshing || !selectedKind || !selectedNamespace}
+                disabled={
+                  isRefreshing ||
+                  selectedKinds.length === 0 ||
+                  (!hasNamespaceKind && selectedNamespaces.length === 0)
+                }
                 sx={{
                   color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                   '&:hover': {
@@ -648,33 +727,72 @@ const ObjectFilterPage: React.FC = () => {
               <FilterAltIcon />
               {t('resources.objectSelection')}
             </Typography>
-
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} sm={6} md={4}>
                 <Autocomplete
+                  multiple
                   options={
                     resourceKinds
                       ? [...resourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
                       : []
                   }
                   getOptionLabel={option => option.kind}
-                  value={selectedKind}
-                  onChange={handleKindChange}
+                  onChange={handleKindsChange}
                   isOptionEqualToValue={(option, value) => option.name === value.name}
+                  ChipProps={{
+                    sx: isDark
+                      ? {
+                          color: '#fff',
+                          backgroundColor: 'rgba(255,255,255,0.2)',
+                          fontWeight: 600,
+                          '& .MuiChip-deleteIcon': { color: '#fff' },
+                        }
+                      : {
+                          color: '#000',
+                          backgroundColor: 'rgba(0,0,0,0.08)',
+                          fontWeight: 600,
+                          '& .MuiChip-deleteIcon': { color: '#000' },
+                        },
+                    deleteIcon: <CloseIcon />,
+                  }}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        label={option.kind}
+                        {...getTagProps({ index })}
+                        sx={
+                          isDark
+                            ? {
+                                color: '#fff',
+                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                fontWeight: 600,
+                                '& .MuiChip-deleteIcon': { color: '#fff' },
+                              }
+                            : {
+                                color: '#000',
+                                backgroundColor: 'rgba(0,0,0,0.08)',
+                                fontWeight: 600,
+                                '& .MuiChip-deleteIcon': { color: '#000' },
+                              }
+                        }
+                        deleteIcon={<CloseIcon />}
+                      />
+                    ))
+                  }
                   PaperComponent={props => (
                     <Paper
                       elevation={8}
                       {...props}
                       sx={{
-                        backgroundColor: isDark ? '#1f2937' : '#fff',
+                        backgroundColor: isDark ? '#111827' : '#f9fafb',
                         color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                         boxShadow: isDark
                           ? '0px 8px 25px rgba(0, 0, 0, 0.4)'
                           : '0px 8px 25px rgba(0, 0, 0, 0.15)',
                         borderRadius: '12px',
                         border: isDark
-                          ? '1px solid rgba(255, 255, 255, 0.1)'
-                          : '1px solid rgba(0, 0, 0, 0.05)',
+                          ? '1px solid rgba(255,255,255,0.1)'
+                          : '1px solid rgba(0,0,0,0.05)',
                         backdropFilter: 'blur(10px)',
                       }}
                     />
@@ -712,9 +830,7 @@ const ObjectFilterPage: React.FC = () => {
                             ml: 'auto',
                             fontSize: '0.7rem',
                             height: '20px',
-                            backgroundColor: isDark
-                              ? 'rgba(255, 255, 255, 0.1)'
-                              : 'rgba(0, 0, 0, 0.08)',
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
                           }}
                         />
                       </Box>
@@ -744,7 +860,7 @@ const ObjectFilterPage: React.FC = () => {
                           color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                         },
                         '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                          borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
                         },
                       }}
                     />
@@ -761,36 +877,66 @@ const ObjectFilterPage: React.FC = () => {
                       color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                       borderRadius: '12px',
                       transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
-                      },
+                      '&:hover': { boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md },
                       '&.Mui-focused': {
-                        boxShadow: `0 0 0 3px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'}`,
+                        boxShadow: `0 0 0 3px ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.1)'}`,
                       },
                     },
                     '& .MuiInputLabel-root': {
                       color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
                     },
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                      borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
                     },
                   }}
                 >
                   <InputLabel id="namespace-label">{t('resources.selectNamespace')}</InputLabel>
                   <Select
                     labelId="namespace-label"
-                    value={selectedNamespace}
+                    multiple
+                    value={selectedNamespaces}
                     label={t('resources.selectNamespace')}
-                    onChange={handleNamespaceChange}
+                    onChange={handleNamespacesChange}
+                    renderValue={selected => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(selected as string[]).map(ns => (
+                          <Chip
+                            key={ns}
+                            label={ns}
+                            size="small"
+                            sx={
+                              isDark
+                                ? {
+                                    color: '#fff',
+                                    backgroundColor: 'rgba(255,255,255,0.2)',
+                                    fontWeight: 600,
+                                    '& .MuiChip-deleteIcon': { color: '#fff' },
+                                  }
+                                : {
+                                    color: '#000',
+                                    backgroundColor: 'rgba(0,0,0,0.08)',
+                                    fontWeight: 600,
+                                    '& .MuiChip-deleteIcon': { color: '#000' },
+                                  }
+                            }
+                            onDelete={e => {
+                              e.stopPropagation();
+                              setSelectedNamespaces(selectedNamespaces.filter(n => n !== ns));
+                            }}
+                            deleteIcon={<CloseIcon />}
+                          />
+                        ))}
+                      </Box>
+                    )}
                     MenuProps={{
                       PaperProps: {
                         component: Paper,
                         elevation: 8,
                         sx: {
-                          backgroundColor: isDark ? '#1f2937' : '#fff',
+                          backgroundColor: isDark ? '#111827' : '#f9fafb',
                           color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                           boxShadow: isDark
                             ? '0px 8px 25px rgba(0, 0, 0, 0.4)'
@@ -798,38 +944,17 @@ const ObjectFilterPage: React.FC = () => {
                           maxHeight: 300,
                           borderRadius: '12px',
                           border: isDark
-                            ? '1px solid rgba(255, 255, 255, 0.1)'
-                            : '1px solid rgba(0, 0, 0, 0.05)',
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.05)',
                           backdropFilter: 'blur(10px)',
                         },
                       },
                     }}
                   >
                     {filteredNamespaces.map((ns: { name: string }) => (
-                      <MenuItem
-                        key={ns.name}
-                        value={ns.name}
-                        sx={{
-                          margin: '4px 8px',
-                          borderRadius: '8px',
-                          '&:hover': {
-                            backgroundColor: isDark
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : 'rgba(0, 0, 0, 0.04)',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: isDark
-                              ? 'rgba(59, 130, 246, 0.2)'
-                              : 'rgba(59, 130, 246, 0.1)',
-                            '&:hover': {
-                              backgroundColor: isDark
-                                ? 'rgba(59, 130, 246, 0.3)'
-                                : 'rgba(59, 130, 246, 0.15)',
-                            },
-                          },
-                        }}
-                      >
-                        {ns.name}
+                      <MenuItem key={ns.name} value={ns.name}>
+                        <Checkbox checked={selectedNamespaces.indexOf(ns.name) > -1} />
+                        <ListItemText primary={ns.name} />
                       </MenuItem>
                     ))}
                   </Select>
@@ -867,15 +992,13 @@ const ObjectFilterPage: React.FC = () => {
                       color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                       borderRadius: '12px',
                       transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
-                      },
+                      '&:hover': { boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md },
                       '&.Mui-focused': {
                         boxShadow: `0 0 0 3px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'}`,
                       },
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
                     },
                   }}
                 />
@@ -883,7 +1006,7 @@ const ObjectFilterPage: React.FC = () => {
             </Grid>
           </Box>
 
-          {selectedKind && selectedNamespace && (
+          {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) && (
             <Box
               sx={{
                 mt: 3,
@@ -1146,12 +1269,12 @@ const ObjectFilterPage: React.FC = () => {
           ) : resources.length > 0 ? (
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
               {/* Resource Statistics Overview */}
-              <ResourceStats resources={filteredResources as unknown as Resource[]} />
+              <ResourceStats resources={displayResources} />
 
               {/* Grid View */}
               {viewMode === 'grid' && (
                 <Grid container spacing={3}>
-                  {(filteredResources as unknown as Resource[]).map(resource => {
+                  {derivedResources.map(resource => {
                     const uid =
                       resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
                     const isSelected = selectedResources.some(r => r.uid === uid);
@@ -1178,19 +1301,8 @@ const ObjectFilterPage: React.FC = () => {
               {/* List View */}
               {viewMode === 'list' && (
                 <Box sx={{ mt: 2 }}>
-                  {(filteredResources as unknown as Resource[]).map(resource => {
-                    const resourceStatus =
-                      typeof resource.status === 'string'
-                        ? resource.status === 'Running' || resource.status === 'Active'
-                          ? 'Healthy'
-                          : resource.status === 'Pending'
-                            ? 'OutOfSync'
-                            : resource.status === 'Failed'
-                              ? 'Missing'
-                              : 'Synced'
-                        : undefined;
-
-                    const statusColors = getStatusColor(resourceStatus);
+                  {derivedResources.map(resource => {
+                    const statusColors = getStatusColor(resource.displayStatus);
                     const uid =
                       resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
                     const isSelected = selectedResources.some(r => r.uid === uid);
@@ -1236,7 +1348,7 @@ const ObjectFilterPage: React.FC = () => {
                                   fontSize: '1rem',
                                 }}
                               >
-                                {resource.metadata?.name}
+                                {resource.displayName}
                               </Typography>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                                 <Chip
@@ -1252,9 +1364,9 @@ const ObjectFilterPage: React.FC = () => {
                                     fontWeight: 600,
                                   }}
                                 />
-                                {resource.metadata?.namespace && (
+                                {resource.displayNamespace && (
                                   <Chip
-                                    label={resource.metadata.namespace}
+                                    label={resource.displayNamespace}
                                     size="small"
                                     variant="outlined"
                                     sx={{
@@ -1267,9 +1379,9 @@ const ObjectFilterPage: React.FC = () => {
                                     }}
                                   />
                                 )}
-                                {resourceStatus && (
+                                {resource.displayStatus && (
                                   <Chip
-                                    label={resourceStatus}
+                                    label={resource.displayStatus}
                                     size="small"
                                     sx={{
                                       backgroundColor: statusColors.bg,
@@ -1373,7 +1485,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Name
+                          {t('resources.table.name')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1381,7 +1493,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Kind
+                          {t('resources.table.kind')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1389,7 +1501,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Namespace
+                          {t('resources.table.namespace')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1397,7 +1509,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Status
+                          {t('resources.table.status')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1405,7 +1517,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Created
+                          {t('resources.table.created')}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1413,7 +1525,7 @@ const ObjectFilterPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Actions
+                          {t('resources.table.actions')}
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -1609,7 +1721,7 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {selectedKind && selectedNamespace
+                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
                   ? t('resources.emptyState.noResourcesFound')
                   : t('resources.emptyState.readyToExplore')}
               </Typography>
@@ -1622,11 +1734,11 @@ const ObjectFilterPage: React.FC = () => {
                   margin: '0 auto 24px',
                 }}
               >
-                {selectedKind && selectedNamespace
+                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
                   ? t('resources.emptyState.noResourcesDescription')
                   : t('resources.emptyState.getStartedDescription')}
               </Typography>
-              {selectedKind && selectedNamespace ? (
+              {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"

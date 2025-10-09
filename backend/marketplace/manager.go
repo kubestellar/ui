@@ -277,3 +277,18 @@ func (m *MarketplaceManager) SearchPlugins(keyword, sortBy, tag string) []*Marke
 
 	return results
 }
+
+func (m *MarketplaceManager) IncrementDownloads(pluginID int) error {
+
+	plugin, exists := m.plugins[pluginID]
+	if !exists {
+		return fmt.Errorf("plugin with ID %d not found", pluginID)
+	}
+
+	plugin.Downloads++
+	log.LogInfo("Increase download count for marketplace plugin",
+		zap.Int("plugin_id", pluginID),
+		zap.Int("downloads: ", plugin.Downloads))
+
+	return nil
+}

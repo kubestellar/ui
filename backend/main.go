@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -132,7 +133,11 @@ func main() {
 	// Initialize plugin system
 	logger.Info("Initializing plugin system...")
 	pluginManager := plugins.NewPluginManager(router)
-	pluginRegistry := plugins.NewPluginRegistry("./plugins", pluginManager)
+
+	pluginsDir := config.GetPluginDirectory()
+	logger.Info("Using plugins directory", zap.String("path", pluginsDir))
+
+	pluginRegistry := plugins.NewPluginRegistry(pluginsDir, pluginManager)
 
 	// Set global plugin manager for API access
 	api.SetGlobalPluginManager(pluginManager, pluginRegistry)
@@ -207,6 +212,27 @@ func isWebSocketUpgrade(c *gin.Context) bool {
 		strings.ToLower(c.GetHeader("Upgrade")) == "websocket"
 }
 
+// Helper function to sanitize the headers for logging
+func sanitizeHeader(headers http.Header) map[string][]string {
+	safeHeaders := make(map[string][]string)
+	for k, v := range headers {
+		if strings.ToLower(k) == "authorization" {
+			if len(v) > 0 {
+				// Mask the token, keep only first 10 chars for debugging
+				token := v[0]
+				if len(token) > 10 {
+					safeHeaders[k] = []string{token[:10] + "...[truncated]"}
+				} else {
+					safeHeaders[k] = []string{"[masked]"}
+				}
+			}
+		} else if len(v) > 0 {
+			safeHeaders[k] = v
+		}
+	}
+	return safeHeaders
+}
+
 // Fixed Middleware to handle WebSocket connections properly
 func ZapMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -244,6 +270,9 @@ func ZapMiddleware() gin.HandlerFunc {
 		responseSize := c.Writer.Size()
 		headers := c.Request.Header
 
+		// Sanitize headers for logging
+		safeHeaders := sanitizeHeader(headers)
+
 		// Truncate the request body length
 		maxBodyLen := 500
 		if len(requestBody) > maxBodyLen {
@@ -260,7 +289,7 @@ func ZapMiddleware() gin.HandlerFunc {
 			zap.String("user-agent", c.Request.UserAgent()),
 			zap.Any("query-params", c.Request.URL.Query()),
 			zap.String("request-body", requestBody),
-			zap.Any("headers", headers),
+			zap.Any("headers", safeHeaders),
 			zap.Int("response-size", responseSize),
 		)
 
