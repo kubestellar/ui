@@ -538,6 +538,7 @@ func InstallPluginHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"success": true,
 		"message": "Plugin installed and loaded successfully",
 		"name":    manifest.Metadata.Name,
 		"version": manifest.Metadata.Version,
