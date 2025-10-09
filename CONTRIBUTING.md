@@ -482,6 +482,29 @@ make lint
 
 ---
 
+## **Git Hooks & Pre-commit**
+
+This project uses **Husky** to run pre-commit hooks that automatically:
+- Format frontend code with Prettier
+- Run ESLint checks
+- Format Go code with gofmt
+- Run Go linting and security checks
+
+### **Skipping Pre-commit Hooks**
+
+If you need to skip the pre-commit hooks (e.g., for a quick fix or emergency commit), use the `--no-verify` or `-n` flag:
+
+```bash
+# Skip all pre-commit hooks
+git commit -n -m "fix: emergency hotfix"
+
+```
+
+> [!WARNING]
+> Only skip pre-commit hooks when absolutely necessary. The hooks ensure code quality and consistency across the project.
+
+---
+
 ## Important Note
 
 ### 1. Localize All Frontend Strings
