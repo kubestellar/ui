@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -143,6 +144,11 @@ type PluginConfigItem struct {
 	Description string      `yaml:"description" json:"description"` // Description of the configuration
 }
 
+var (
+	// sanitize input to allow only alphanumeric, underscore, hyphen
+	safePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+)
+
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
 func NewPluginManager(router *gin.Engine) *PluginManager {
 	ctx := context.Background()
@@ -189,11 +195,32 @@ func (pm *PluginManager) LoadPlugin(pluginPath string) error {
 		return err
 	}
 
-	pluginID, err := ExtractPluginPathID(pluginPath)
+	pluginName := manifest.Metadata.Name
+	authorName := manifest.Metadata.Author
+	pluginVersion := manifest.Metadata.Version
+
+	if pluginName == "" || authorName == "" || pluginVersion == "" {
+		return errors.New("plugin name, author name and version are required in manifest")
+	}
+
+	author, err := models.GetUserByUsername(authorName)
+	if err != nil {
+		log.LogError("error get authorID", zap.String("error", err.Error()))
+		return err
+	}
+
+	// Get pluginDetailsID from database
+	pluginID, err := GetPluginIDByNameAuthorVersion(pluginName, author.ID, pluginVersion)
 	if err != nil {
 		log.LogError("error getting pluginID", zap.String("error", err.Error()))
 		return err
 	}
+
+	// pluginID, err := ExtractPluginPathID(pluginPath)
+	// if err != nil {
+	// 	log.LogError("error getting pluginID", zap.String("error", err.Error()))
+	// 	return err
+	// }
 	pluginStatus, err := GetPluginStatusDB(pluginID)
 	if err != nil {
 		log.LogError("error getting plugin status", zap.String("error", err.Error()))
@@ -440,7 +467,7 @@ func (pm *PluginManager) RegisterPlugin(plugin *Plugin, userIDAuth int) {
 	// check if the plugin is in database
 	// if not, add to database with status "active"
 	// if yes, update the status to "active"
-	exist, err := CheckPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, plugin.Manifest.Metadata.Description, userIDAuth)
+	exist, err := CheckInstalledPluginWithInfo(plugin.Manifest.Metadata.Name, plugin.Manifest.Metadata.Version, userIDAuth)
 	if err != nil {
 		log.LogError("Failed to check plugin existence", zap.Error(err))
 		return
@@ -625,4 +652,30 @@ func (pm *PluginManager) IsPluginDisabled(id int) bool {
 		return false
 	}
 	return plugin.Status == "inactive"
+}
+
+func santinize(input string) (string, error) {
+	if safePattern.MatchString(input) {
+		return input, nil
+	}
+	return "", fmt.Errorf("input contains unsafe characters: %s", input)
+}
+
+func BuildPluginKey(pluginName, author, version string) (string, error) {
+	safePluginName, err := santinize(pluginName)
+	if err != nil {
+		return "", err
+	}
+
+	safeAuthor, err := santinize(author)
+	if err != nil {
+		return "", err
+	}
+
+	safeVersion, err := santinize(version)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s~%s~%s", safePluginName, safeAuthor, safeVersion), nil
 }

@@ -84,8 +84,16 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
       try {
         const fetchPromises: Promise<FetchResourcesResponse>[] = [];
         for (const kind of kinds) {
-          for (const ns of nsList) {
-            fetchPromises.push(fetchResources(kind, ns, filters));
+          const kindInfo = resourceKinds.find(resourceKind => resourceKind.name === kind);
+          console.log(resourceKinds);
+          console.log(kindInfo);
+          const isNamespaced = kindInfo?.namespaced ?? true;
+          if (isNamespaced) {
+            for (const ns of nsList) {
+              fetchPromises.push(fetchResources(kind, ns, filters, { isNamespaced: true }));
+            }
+          } else {
+            fetchPromises.push(fetchResources(kind, undefined, filters, { isNamespaced: false }));
           }
         }
         const results = await Promise.all(fetchPromises);
@@ -99,7 +107,7 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
         setIsLoading(false);
       }
     },
-    []
+    [resourceKinds]
   );
 
   return {
