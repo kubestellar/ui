@@ -377,6 +377,50 @@ const ObjectFilterPage: React.FC = () => {
       metadata: resource.metadata || {},
     }));
   }, [derivedResources]);
+
+  const filterChipStyles = useMemo(
+    () => ({
+      fontWeight: 600,
+      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.25)' : lightTheme.brand.primary,
+      color: isDark ? darkTheme.text.secondary : '#ffffff',
+      '& .MuiChip-deleteIcon': {
+        color: isDark ? darkTheme.text.secondary : '#ffffff',
+      },
+      '&:hover': {
+        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.35)' : lightTheme.brand.primaryDark,
+      },
+    }),
+    [isDark]
+  );
+
+  const autoRefreshSwitchStyles = useMemo(
+    () => ({
+      '& .MuiSwitch-switchBase': {
+        color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+        '&:hover': {
+          backgroundColor: isDark ? 'rgba(59, 130, 246, 0.12)' : 'rgba(37, 99, 235, 0.08)',
+        },
+      },
+      '& .MuiSwitch-switchBase.Mui-checked': {
+        color: isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary,
+        '&:hover': {
+          backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(37, 99, 235, 0.12)',
+        },
+      },
+      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.6)' : 'rgba(37, 99, 235, 0.6)',
+        opacity: 1,
+      },
+      '& .MuiSwitch-track': {
+        backgroundColor: isDark ? 'rgba(148, 163, 184, 0.4)' : 'rgba(148, 163, 184, 0.4)',
+        opacity: 1,
+      },
+      '& .MuiSwitch-thumb': {
+        backgroundColor: '#ffffff',
+      },
+    }),
+    [isDark]
+  );
   const handleKindsChange = (
     _event: React.SyntheticEvent<Element, Event>,
     value: ResourceKind[]
@@ -566,6 +610,7 @@ const ObjectFilterPage: React.FC = () => {
                   checked={autoRefresh}
                   onChange={e => setAutoRefresh(e.target.checked)}
                   size="small"
+                  sx={autoRefreshSwitchStyles}
                 />
               }
               label={t('resources.autoRefresh')}
@@ -703,14 +748,7 @@ const ObjectFilterPage: React.FC = () => {
                       <Chip
                         label={option.kind}
                         {...getTagProps({ index })}
-                        sx={{
-                          color: '#fff',
-                          backgroundColor: 'rgba(255,255,255,0.3)', // White background with 0.3 opacity
-                          fontWeight: 600,
-                          '& .MuiChip-deleteIcon': {
-                            color: '#fff',
-                          },
-                        }}
+                        sx={filterChipStyles}
                         deleteIcon={<CloseIcon />}
                       />
                     ))
@@ -847,14 +885,7 @@ const ObjectFilterPage: React.FC = () => {
                             key={ns}
                             label={ns}
                             size="small"
-                            sx={{
-                              color: '#fff',
-                              backgroundColor: 'rgba(255,255,255,0.3)', // White background with 0.3 opacity
-                              fontWeight: 600,
-                              '& .MuiChip-deleteIcon': {
-                                color: '#fff',
-                              },
-                            }}
+                            sx={filterChipStyles}
                             onDelete={e => {
                               e.stopPropagation();
                               setSelectedNamespaces(selectedNamespaces.filter(n => n !== ns));
