@@ -786,14 +786,14 @@ const UserManagement = () => {
                   </div>
 
                   {/* Sort By Filter */}
-                  <div>
+                  <div className="flex-shrink-0">
                     <label
                       className="mb-1 block text-sm font-medium"
                       style={{ color: themeStyles.colors.text.secondary }}
                     >
                       {t('admin.users.filters.sortBy')}
                     </label>
-                    <div className="flex">
+                    <div className="flex gap-2">
                       <CustomDropdown
                         options={[
                           { value: 'username', label: t('admin.users.table.username') },
@@ -804,11 +804,12 @@ const UserManagement = () => {
                         onChange={v => handleFilterChange('sortBy', v)}
                         placeholder={t('admin.users.filters.sortBy')}
                         isDark={isDark}
+                        style={{ minWidth: '140px' }}
                       />
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="ml-2 flex items-center justify-center rounded-lg px-3 transition-all duration-200"
+                        className="flex items-center justify-center rounded-lg px-3 transition-all duration-200"
                         style={{
                           background: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(243, 244, 246, 0.8)',
                           color: themeStyles.colors.text.secondary,
