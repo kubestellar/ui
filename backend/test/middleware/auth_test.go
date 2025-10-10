@@ -132,7 +132,7 @@ func TestRequireAdmin_NonAdminUser(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "Admin access required")
+	assert.Contains(t, w.Body.String(), "Insufficient permission")
 }
 
 func TestRequireAdmin_NoAdminFlag(t *testing.T) {
@@ -147,7 +147,7 @@ func TestRequireAdmin_NoAdminFlag(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "Admin access required")
+	assert.Contains(t, w.Body.String(), "Insufficient permission")
 }
 
 func TestRequirePermission_ValidPermission(t *testing.T) {
@@ -205,7 +205,7 @@ func TestRequirePermission_InsufficientPermission(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "Insufficient permissions")
+	assert.Contains(t, w.Body.String(), "Insufficient permission")
 }
 
 func TestRequirePermission_NoComponentPermission(t *testing.T) {
@@ -225,7 +225,7 @@ func TestRequirePermission_NoComponentPermission(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "No permission for this component")
+	assert.Contains(t, w.Body.String(), "Insufficient permission")
 }
 
 func TestRequirePermission_NoPermissions(t *testing.T) {
@@ -240,7 +240,7 @@ func TestRequirePermission_NoPermissions(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "No permissions found")
+	assert.Contains(t, w.Body.String(), "Insufficient permission")
 }
 
 func TestRequirePermission_InvalidRequiredPermission(t *testing.T) {
@@ -260,7 +260,7 @@ func TestRequirePermission_InvalidRequiredPermission(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "Insufficient permissions")
+	assert.Contains(t, w.Body.String(), "Insufficient permission")
 }
 
 // Test the permission logic by creating a test function that mimics the middleware behavior

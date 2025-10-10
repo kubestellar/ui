@@ -46,7 +46,7 @@ func RequireAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		isAdmin, exists := c.Get("is_admin")
 		if !exists || !isAdmin.(bool) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permission"})
 			c.Abort()
 			return
 		}
@@ -59,7 +59,7 @@ func RequirePermission(component, requiredPermission string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		permissions, exists := c.Get("permissions")
 		if !exists {
-			c.JSON(http.StatusForbidden, gin.H{"error": "No permissions found"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permission"})
 			c.Abort()
 			return
 		}
@@ -68,13 +68,13 @@ func RequirePermission(component, requiredPermission string) gin.HandlerFunc {
 		userPerm, hasComponent := userPermissions[component]
 
 		if !hasComponent {
-			c.JSON(http.StatusForbidden, gin.H{"error": "No permission for this component"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permission"})
 			c.Abort()
 			return
 		}
 
 		if !hasRequiredPermission(userPerm, requiredPermission) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permission"})
 			c.Abort()
 			return
 		}
