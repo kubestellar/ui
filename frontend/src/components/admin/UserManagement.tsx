@@ -89,7 +89,7 @@ const CustomDropdown = ({
             border: isDark ? '1px solid #334155' : '1px solid #e5e7eb',
           }}
         >
-          <div className="py-1">
+          <div>
             {options.map(opt => {
               const isSelected = value === opt.value;
               const textColor = isDark
