@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Home, RefreshCw, Rocket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 const NotFoundPage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [currentQuote, setCurrentQuote] = useState(0);
 
   // Get quotes from translation with fallback
@@ -24,6 +26,10 @@ const NotFoundPage: React.FC = () => {
     }, 5000);
     return () => clearInterval(timer);
   }, [quotes.length]);
+
+  const handleGoHome = () => {
+    navigate('/');
+  };
 
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-base-200">
@@ -295,7 +301,7 @@ const NotFoundPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
-          <button onClick={() => (window.location.href = '/')} className="btn btn-primary">
+          <button onClick={handleGoHome} className="btn btn-primary">
             <Home size={20} />
             {t('notFoundPage.returnHomeButton')}
           </button>
