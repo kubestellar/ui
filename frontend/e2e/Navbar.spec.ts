@@ -204,7 +204,7 @@ test.describe('Navbar (Header)', () => {
       // Try to wait for header, but if it doesn't appear, skip the test
       try {
         await page.waitForSelector('header', { timeout: 5000 });
-      } catch (error) {
+      } catch {
         // If header doesn't appear, likely in install state - skip test
         test.skip();
         return;
@@ -288,7 +288,7 @@ test.describe('Navbar (Header)', () => {
             await page.keyboard.press('Escape');
             break;
           }
-        } catch (e) {
+        } catch {
           // Try next button
           continue;
         }
@@ -346,7 +346,7 @@ test.describe('Navbar (Header)', () => {
             }
             break;
           }
-        } catch (e) {
+        } catch {
           continue;
         }
       }
@@ -402,7 +402,7 @@ test.describe('Navbar (Header)', () => {
             await expect(dropdown).not.toBeVisible();
             break;
           }
-        } catch (e) {
+        } catch {
           continue;
         }
       }
@@ -458,7 +458,7 @@ test.describe('Navbar (Header)', () => {
             await expect(dropdown).not.toBeVisible();
             break;
           }
-        } catch (e) {
+        } catch {
           continue;
         }
       }
@@ -521,7 +521,7 @@ test.describe('Navbar (Header)', () => {
             await page.keyboard.press('Escape');
             break;
           }
-        } catch (e) {
+        } catch {
           continue;
         }
       }
@@ -687,7 +687,7 @@ test.describe('Navbar (Header)', () => {
       // Try to wait for header, but if it doesn't appear, skip the test
       try {
         await page.waitForSelector('header', { timeout: 5000 });
-      } catch (error) {
+      } catch {
         // If header doesn't appear, likely in install state - skip test
         test.skip();
         return;
