@@ -1024,7 +1024,10 @@ const ObjectFilterPage: React.FC = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              {t('resources.bulkActions.resourcesSelected', { count: selectedResources.length })}
+              {t('resources.bulkActions.resourcesSelected', {
+                count: selectedResources.length,
+                objectText: selectedResources.length === 1 ? 'object' : 'objects',
+              })}
             </Typography>
             <Button
               variant="outlined"
