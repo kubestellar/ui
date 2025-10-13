@@ -644,17 +644,17 @@ const DynamicDetailsPanel = ({
       ) : resource && isOpen ? (
         <Box ref={panelRef} sx={{ p: 4, height: '100%' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography
-                variant="h4"
-                fontWeight="bold"
-                sx={{
-                  color: theme === 'dark' ? '#FFFFFF' : '#000000',
-                  fontSize: '30px',
-                  marginLeft: '4px',
-                }}
-              >
-                {type.toUpperCase()} : <span style={{ color: '#2F86FF' }}>{name}</span>
-              </Typography>
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              sx={{
+                color: theme === 'dark' ? '#FFFFFF' : '#000000',
+                fontSize: '30px',
+                marginLeft: '4px',
+              }}
+            >
+              {type.toUpperCase()} : <span style={{ color: '#2F86FF' }}>{name}</span>
+            </Typography>
             <Stack direction="row" spacing={1}>
               {onSync && (
                 <Tooltip title="Sync Resource">
