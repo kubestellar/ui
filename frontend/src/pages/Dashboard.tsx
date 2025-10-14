@@ -31,7 +31,10 @@ import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { useTranslation } from 'react-i18next';
-import { useUserActivityQuery } from '../hooks/queries/useUserActivityQuery.ts';
+import {
+  useUserActivityQuery,
+  useDeletedUsersActivityQuery,
+} from '../hooks/queries/useUserActivityQuery.ts';
 
 // Lazy load the ClusterDetailDialog component
 const ClusterDetailDialog = lazy(
@@ -40,27 +43,6 @@ const ClusterDetailDialog = lazy(
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
-  // Check for command palette by detecting body overflow hidden
-  useEffect(() => {
-    const checkCommandPalette = () => {
-      setIsCommandPaletteOpen(document.body.style.overflow === 'hidden');
-    };
-
-    // Initial check
-    checkCommandPalette();
-
-    // Watch for body style changes
-    const observer = new MutationObserver(checkCommandPalette);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['style'],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   // Memoize the color calculation to avoid recalculating on every render
   const { color, bgGradient } = useMemo(() => {
     if (value >= 90) {
@@ -94,10 +76,6 @@ const HealthIndicator = ({ value }: { value: number }) => {
   return (
     <div
       className={`inline-flex items-center rounded-full px-2 py-1 ${color} relative overflow-hidden shadow-sm transition-all duration-200`}
-      style={{
-        filter: isCommandPaletteOpen ? 'blur(5px)' : 'none',
-        pointerEvents: isCommandPaletteOpen ? 'none' : 'auto',
-      }}
     >
       {/* Pulse effect without animation loop */}
       <span
@@ -500,6 +478,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
   const { useClusters } = useClusterQueries();
   const { useBindingPolicies } = useBPQueries();
   const { data: userActivities = [], isLoading: userLoading } = useUserActivityQuery();
+  const { data: deletedActivities = [] } = useDeletedUsersActivityQuery();
 
   // Use the existing query hooks to fetch data
   const {
@@ -547,6 +526,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
           });
         }
         items.push(...userActivities.slice(0, 5));
+        items.push(...deletedActivities.slice(0, 5));
 
         // Sort by timestamp (newest first)
         items.sort((a, b) => {
@@ -659,7 +639,8 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
       status === 'Available' ||
       status === 'Synced' ||
       status === 'Created' ||
-      status === 'Updated'
+      status === 'Updated' ||
+      status === 'Deleted'
     ) {
       return <CheckCircle size={12} />;
     } else if (status === 'Warning' || status === 'Pending') {
@@ -889,7 +870,6 @@ const K8sInfo = () => {
     cacheTime: 300000,
   });
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -1029,20 +1009,6 @@ const K8sInfo = () => {
       setIsInitialLoad(false);
     }
   }, [k8sData, clusterData, workloadsData, processedClusters, bindingPoliciesData, clusterMetrics]);
-
-  // Handle refresh
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetchK8s();
-      toast.success('Data refreshed successfully!');
-    } catch (err) {
-      toast.error('Failed to refresh data');
-      console.error('Refresh error:', err);
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 700);
-    }
-  };
 
   // Format date for better display
   const formatDate = (dateString: string): string => {
@@ -1211,20 +1177,19 @@ const K8sInfo = () => {
           </p>
         </div>
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
-          <button
-            className="dark:hover:bg-gray-750 flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCcw size={16} className={`${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{t('common.refresh')}</span>
-          </button>
           <Link
             to="/its"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
           >
-            <Plus size={16} />
-            <span>{t('clusters.dashboard.addCluster')}</span>
+            <Layers size={16} />
+            <span>{t('clusters.title')}</span>
+          </Link>
+          <Link
+            to="/resources"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <ClipboardList size={16} />
+            <span>{t('menu.items.resourceExplorer')}</span>
           </Link>
         </div>
       </div>
