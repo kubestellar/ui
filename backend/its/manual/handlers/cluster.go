@@ -415,6 +415,7 @@ func ImportClusterHandler(c *gin.Context) {
 	})
 }
 
+// TODO: use SDK in future in the function
 func ImportClusterByURLHandler(c *gin.Context) {
 	startTime := time.Now()
 
