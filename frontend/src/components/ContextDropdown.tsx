@@ -511,9 +511,7 @@ const ContextDropdown = ({
               },
             }}
           >
-            {isCreating
-              ? t('contexts.creatingContext')
-              : t('contexts.createContext')}
+            {isCreating ? t('contexts.creatingContext') : t('contexts.createContext')}
           </Button>
         </DialogActions>
       </Dialog>
