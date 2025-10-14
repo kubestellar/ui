@@ -1611,7 +1611,7 @@
     "versionRequired": "La versión de KubeStellar es obligatoria",
     "operationTimeout": "La operación superó el tiempo de espera. El proceso puede seguir ejecutándose en segundo plano.",
     "failedToCreateContext": "No se pudo crear el contexto",
-    "creatingContext": "Error al crear el contexto:",
+    "creatingContext": "Creando...",
     "websocketConnectionFailed": "No se pudo conectar con el servidor. Verifica tu conexión de red e intenta nuevamente.",
     "websocketClosedUnexpectedly": "La conexión WebSocket se cerró inesperadamente",
     "fetchingContexts": "Error al obtener los contextos:"

@@ -1613,7 +1613,7 @@
     "versionRequired": "La version de KubeStellar est requise",
     "operationTimeout": "Délai de l'opération dépassé. Le processus peut encore s'exécuter en arrière-plan.",
     "failedToCreateContext": "Échec de la création du contexte",
-    "creatingContext": "Erreur lors de la création du contexte :",
+    "creatingContext": "Création...",
     "websocketConnectionFailed": "Impossible de se connecter au serveur. Veuillez vérifier votre connexion réseau et réessayer.",
     "websocketClosedUnexpectedly": "La connexion WebSocket s'est fermée de manière inattendue",
     "fetchingContexts": "Erreur lors de la récupération des contextes :"

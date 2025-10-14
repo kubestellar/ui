@@ -1770,7 +1770,7 @@
     "versionRequired": "KubeStellar version is required",
     "operationTimeout": "Operation timed out. The process might still be running in the background.",
     "failedToCreateContext": "Failed to create context",
-    "creatingContext": "Error creating context:",
+    "creatingContext": "Creating...",
     "websocketConnectionFailed": "Could not connect to the server. Please check your network connection and try again.",
     "websocketClosedUnexpectedly": "WebSocket connection closed unexpectedly",
     "fetchingContexts": "Error fetching contexts:"

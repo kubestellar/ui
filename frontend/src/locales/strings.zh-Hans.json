@@ -1768,7 +1768,7 @@
     "versionRequired": "KubeStellar 版本是必需的",
     "operationTimeout": "操作超时。进程可能仍在后台运行。",
     "failedToCreateContext": "创建上下文失败",
-    "creatingContext": "创建上下文时出错：",
+    "creatingContext": "正在创建...",
     "websocketConnectionFailed": "无法连接到服务器。请检查您的网络连接并重试。",
     "websocketClosedUnexpectedly": "WebSocket 连接意外关闭",
     "fetchingContexts": "获取上下文时出错："
