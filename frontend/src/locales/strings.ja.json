@@ -1720,7 +1720,7 @@
     "versionRequired": "KubeStellarのバージョンは必須です",
     "operationTimeout": "操作がタイムアウトしました。バックグラウンドで処理が継続している可能性があります。",
     "failedToCreateContext": "コンテキストの作成に失敗しました",
-    "creatingContext": "作成中...",
+    "creatingContext": "コンテキスト作成エラー：",
     "websocketConnectionFailed": "サーバーに接続できません。ネットワーク接続を確認して再試行してください。",
     "websocketClosedUnexpectedly": "WebSocket接続が予期せず切断されました",
     "fetchingContexts": "コンテキストの取得中にエラーが発生しました："

@@ -1762,7 +1762,7 @@
     "versionRequired": "KubeStellar संस्करण आवश्यक है",
     "operationTimeout": "ऑपरेशन समय समाप्त। प्रक्रिया अभी भी बैकग्राउंड में चल रही हो सकती है।",
     "failedToCreateContext": "Context बनाने में विफल",
-    "creatingContext": "बना रहा है...",
+    "creatingContext": "Context बनाने में त्रुटि:",
     "websocketConnectionFailed": "सर्वर से कनेक्ट नहीं हो सका। कृपया अपना नेटवर्क कनेक्शन जांचें और पुनः प्रयास करें।",
     "websocketClosedUnexpectedly": "WebSocket कनेक्शन अप्रत्याशित रूप से बंद हो गया",
     "fetchingContexts": "Contexts प्राप्त करने में त्रुटि:"
