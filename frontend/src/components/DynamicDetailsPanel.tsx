@@ -250,7 +250,10 @@ const DynamicDetailsPanel = ({
   }, [isOpen, initialTab, isChildNode]);
 
   useEffect(() => {
-    if (!namespace || !name) {
+    const resolvedName = resourceData?.metadata?.name ?? name;
+    const resolvedNamespace = resourceData?.metadata?.namespace ?? namespace;
+
+    if (!resolvedName) {
       setResource(null);
       setLoading(false);
       return;
@@ -264,7 +267,7 @@ const DynamicDetailsPanel = ({
 
         // If the resource is a Namespace, fetch the manifest from the API
         if (kind === 'Namespace') {
-          const response = await api.get(`/api/namespaces/${name}`);
+          const response = await api.get(`/api/namespaces/${resolvedName}`);
           manifestData = response.data
             ? JSON.stringify(response.data, null, 2)
             : 'No manifest available';
@@ -276,8 +279,8 @@ const DynamicDetailsPanel = ({
         }
 
         const resourceInfo: ResourceInfo = {
-          name: resourceData?.metadata?.name ?? name,
-          namespace: resourceData?.metadata?.namespace ?? namespace,
+          name: resolvedName,
+          namespace: resolvedNamespace || '',
           kind: kind,
           createdAt: resourceData?.metadata?.creationTimestamp ?? 'N/A',
           age: calculateAge(resourceData?.metadata?.creationTimestamp),
@@ -527,15 +530,21 @@ const DynamicDetailsPanel = ({
     const creationTimeValue =
       resource.createdAt === 'N/A' ? 'N/A' : `${resource.createdAt} (${resource.age})`;
 
+    const summaryRows = [
+      { label: 'KIND', value: resource.kind },
+      { label: 'NAME', value: resource.name },
+    ];
+
+    if (namespaceValue && namespaceValue !== 'N/A') {
+      summaryRows.push({ label: 'NAMESPACE', value: namespaceValue });
+    }
+
+    summaryRows.push({ label: 'CREATED AT', value: creationTimeValue });
+
     return (
       <Table sx={{ borderRadius: 1 }}>
         <TableBody>
-          {[
-            { label: 'KIND', value: resource.kind },
-            { label: 'NAME', value: resource.name },
-            { label: 'NAMESPACE', value: namespaceValue },
-            { label: 'CREATED AT', value: creationTimeValue },
-          ].map((row, index) => (
+          {summaryRows.map((row, index) => (
             <TableRow key={index}>
               <TableCell
                 sx={{
