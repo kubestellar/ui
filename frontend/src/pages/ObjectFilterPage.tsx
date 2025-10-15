@@ -89,6 +89,7 @@ interface ResourceKind {
   kind: string;
   group: string;
   version: string;
+  namespaced?: boolean;
 }
 
 // Enhanced view modes for better UX
@@ -141,63 +142,28 @@ const ObjectFilterPage: React.FC = () => {
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
 
+  const availableResourceKinds = useMemo(
+    () => resourceKinds.filter(kind => kind.kind.toLowerCase() !== 'binding'),
+    [resourceKinds]
+  );
+
   // Optimized resources processing with memoization and performance improvements
   const filteredNamespaces = useMemo(
     () =>
       namespaces.filter(
-        (ns: { name: string }) => !ns.name.startsWith('kube-') && ns.name !== 'kubestellar-report'
+        (ns: { name: string }) =>
+          !ns.name.toLowerCase().startsWith('kube-') &&
+          ns.name.toLowerCase() !== 'kubestellar-report'
       ),
     [namespaces]
   );
 
-  const hasNamespaceKind = useMemo(
-    () => selectedKinds.some(kind => kind.kind.toLowerCase() === 'namespace'),
-    [selectedKinds]
-  );
-
-  const nonNamespaceKinds = useMemo(
-    () => selectedKinds.filter(kind => kind.kind.toLowerCase() !== 'namespace'),
-    [selectedKinds]
-  );
-
-  const namespaceResources = useMemo<Resource[]>(() => {
-    if (!hasNamespaceKind) return [];
-
-    const hasSelection = selectedNamespaces.length > 0;
-    const selectedSet = new Set(selectedNamespaces);
-
-    return filteredNamespaces
-      .filter(ns => !hasSelection || selectedSet.has(ns.name))
-      .map(ns => ({
-        kind: 'Namespace',
-        metadata: {
-          name: ns.name,
-          namespace: '',
-          uid: `namespace-${ns.name}`,
-          creationTimestamp: ns.createdAt,
-        },
-        status: ns.status,
-        labels: ns.labels || {},
-      }));
-  }, [filteredNamespaces, hasNamespaceKind, selectedNamespaces]);
-
   const displayResources = useMemo<Resource[]>(() => {
-    const combined: Resource[] = [];
-
-    if (hasNamespaceKind) {
-      combined.push(...namespaceResources);
-    }
-
     if (filteredResources && Array.isArray(filteredResources)) {
-      combined.push(...((filteredResources as unknown as Resource[]) || []));
+      return [...((filteredResources as unknown as Resource[]) || [])];
     }
-
-    if (!hasNamespaceKind) {
-      return combined;
-    }
-
-    return combined;
-  }, [filteredResources, hasNamespaceKind, namespaceResources]);
+    return [];
+  }, [filteredResources]);
 
   const derivedResources = useMemo<DerivedResource[]>(() => {
     if (!displayResources || displayResources.length === 0) return [];
@@ -411,11 +377,56 @@ const ObjectFilterPage: React.FC = () => {
       metadata: resource.metadata || {},
     }));
   }, [derivedResources]);
+
+  const filterChipStyles = useMemo(
+    () => ({
+      fontWeight: 600,
+      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.25)' : lightTheme.brand.primary,
+      color: isDark ? darkTheme.text.secondary : '#ffffff',
+      '& .MuiChip-deleteIcon': {
+        color: isDark ? darkTheme.text.secondary : '#ffffff',
+      },
+      '&:hover': {
+        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.35)' : lightTheme.brand.primaryDark,
+      },
+    }),
+    [isDark]
+  );
+
+  const autoRefreshSwitchStyles = useMemo(
+    () => ({
+      '& .MuiSwitch-switchBase': {
+        color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+        '&:hover': {
+          backgroundColor: isDark ? 'rgba(59, 130, 246, 0.12)' : 'rgba(37, 99, 235, 0.08)',
+        },
+      },
+      '& .MuiSwitch-switchBase.Mui-checked': {
+        color: isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary,
+        '&:hover': {
+          backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(37, 99, 235, 0.12)',
+        },
+      },
+      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.6)' : 'rgba(37, 99, 235, 0.6)',
+        opacity: 1,
+      },
+      '& .MuiSwitch-track': {
+        backgroundColor: isDark ? 'rgba(148, 163, 184, 0.4)' : 'rgba(148, 163, 184, 0.4)',
+        opacity: 1,
+      },
+      '& .MuiSwitch-thumb': {
+        backgroundColor: '#ffffff',
+      },
+    }),
+    [isDark]
+  );
   const handleKindsChange = (
     _event: React.SyntheticEvent<Element, Event>,
     value: ResourceKind[]
   ) => {
-    setSelectedKinds(value);
+    const filteredKinds = value.filter(kind => kind.kind.toLowerCase() !== 'binding');
+    setSelectedKinds(filteredKinds);
     setSelectedResources([]);
   };
 
@@ -430,25 +441,22 @@ const ObjectFilterPage: React.FC = () => {
   }, []);
 
   const handleApplyFilters = useCallback(async () => {
-    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+    const kindsToFetch = selectedKinds.map(k => k.name);
 
-    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
+    if (kindsToFetch.length > 0) {
       await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
     }
-  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters]);
+  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   const handleRefresh = useCallback(async () => {
-    const kindsToFetch = nonNamespaceKinds.map(k => k.name);
+    const kindsToFetch = selectedKinds.map(k => k.name);
 
-    if (kindsToFetch.length > 0 && selectedNamespaces.length > 0) {
+    if (kindsToFetch.length > 0) {
       setIsRefreshing(true);
       await applyFilters(kindsToFetch, selectedNamespaces, resourceFilters);
       setIsRefreshing(false);
-    } else if (hasNamespaceKind) {
-      setIsRefreshing(true);
-      setIsRefreshing(false);
     }
-  }, [nonNamespaceKinds, selectedNamespaces, resourceFilters, applyFilters, hasNamespaceKind]);
+  }, [selectedKinds, selectedNamespaces, resourceFilters, applyFilters]);
 
   // New handlers for enhanced functionality
   const handleViewModeChange = (_event: React.MouseEvent<HTMLElement>, newViewMode: ViewMode) => {
@@ -517,11 +525,10 @@ const ObjectFilterPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Auto-apply filters when both kinds and namespaces are selected
-    if (nonNamespaceKinds.length > 0 && selectedNamespaces.length > 0) {
+    if (selectedKinds.length > 0) {
       handleApplyFilters();
     }
-  }, [nonNamespaceKinds, selectedNamespaces, handleApplyFilters]);
+  }, [selectedKinds, selectedNamespaces, handleApplyFilters]);
 
   // Helper function to determine status color
   const getStatusColor = (status: string | undefined) => {
@@ -603,6 +610,7 @@ const ObjectFilterPage: React.FC = () => {
                   checked={autoRefresh}
                   onChange={e => setAutoRefresh(e.target.checked)}
                   size="small"
+                  sx={autoRefreshSwitchStyles}
                 />
               }
               label={t('resources.autoRefresh')}
@@ -672,11 +680,7 @@ const ObjectFilterPage: React.FC = () => {
             <Tooltip title={t('resources.refresh')}>
               <IconButton
                 onClick={handleRefresh}
-                disabled={
-                  isRefreshing ||
-                  selectedKinds.length === 0 ||
-                  (!hasNamespaceKind && selectedNamespaces.length === 0)
-                }
+                disabled={isRefreshing || selectedKinds.length === 0}
                 sx={{
                   color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                   '&:hover': {
@@ -729,52 +733,22 @@ const ObjectFilterPage: React.FC = () => {
             </Typography>
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} sm={6} md={4}>
-                <Autocomplete
+                <Autocomplete<ResourceKind, true, false, false>
                   multiple
                   options={
-                    resourceKinds
-                      ? [...resourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
+                    availableResourceKinds
+                      ? [...availableResourceKinds].sort((a, b) => a.kind.localeCompare(b.kind))
                       : []
                   }
                   getOptionLabel={option => option.kind}
                   onChange={handleKindsChange}
                   isOptionEqualToValue={(option, value) => option.name === value.name}
-                  ChipProps={{
-                    sx: isDark
-                      ? {
-                          color: '#fff',
-                          backgroundColor: 'rgba(255,255,255,0.2)',
-                          fontWeight: 600,
-                          '& .MuiChip-deleteIcon': { color: '#fff' },
-                        }
-                      : {
-                          color: '#000',
-                          backgroundColor: 'rgba(0,0,0,0.08)',
-                          fontWeight: 600,
-                          '& .MuiChip-deleteIcon': { color: '#000' },
-                        },
-                    deleteIcon: <CloseIcon />,
-                  }}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
+                  renderTags={(value: ResourceKind[], getTagProps) =>
+                    value.map((option: ResourceKind, index: number) => (
                       <Chip
                         label={option.kind}
                         {...getTagProps({ index })}
-                        sx={
-                          isDark
-                            ? {
-                                color: '#fff',
-                                backgroundColor: 'rgba(255,255,255,0.2)',
-                                fontWeight: 600,
-                                '& .MuiChip-deleteIcon': { color: '#fff' },
-                              }
-                            : {
-                                color: '#000',
-                                backgroundColor: 'rgba(0,0,0,0.08)',
-                                fontWeight: 600,
-                                '& .MuiChip-deleteIcon': { color: '#000' },
-                              }
-                        }
+                        sx={filterChipStyles}
                         deleteIcon={<CloseIcon />}
                       />
                     ))
@@ -784,15 +758,15 @@ const ObjectFilterPage: React.FC = () => {
                       elevation={8}
                       {...props}
                       sx={{
-                        backgroundColor: isDark ? '#111827' : '#f9fafb',
+                        backgroundColor: isDark ? '#1f2937' : '#fff',
                         color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                         boxShadow: isDark
                           ? '0px 8px 25px rgba(0, 0, 0, 0.4)'
                           : '0px 8px 25px rgba(0, 0, 0, 0.15)',
                         borderRadius: '12px',
                         border: isDark
-                          ? '1px solid rgba(255,255,255,0.1)'
-                          : '1px solid rgba(0,0,0,0.05)',
+                          ? '1px solid rgba(255, 255, 255, 0.1)'
+                          : '1px solid rgba(0, 0, 0, 0.05)',
                         backdropFilter: 'blur(10px)',
                       }}
                     />
@@ -830,7 +804,9 @@ const ObjectFilterPage: React.FC = () => {
                             ml: 'auto',
                             fontSize: '0.7rem',
                             height: '20px',
-                            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                            backgroundColor: isDark
+                              ? 'rgba(255, 255, 255, 0.1)'
+                              : 'rgba(0, 0, 0, 0.08)',
                           }}
                         />
                       </Box>
@@ -860,7 +836,7 @@ const ObjectFilterPage: React.FC = () => {
                           color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                         },
                         '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
                         },
                       }}
                     />
@@ -877,19 +853,21 @@ const ObjectFilterPage: React.FC = () => {
                       color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                       borderRadius: '12px',
                       transition: 'all 0.2s ease-in-out',
-                      '&:hover': { boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md },
+                      '&:hover': {
+                        boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
+                      },
                       '&.Mui-focused': {
-                        boxShadow: `0 0 0 3px ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.1)'}`,
+                        boxShadow: `0 0 0 3px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'}`,
                       },
                     },
                     '& .MuiInputLabel-root': {
                       color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
                     },
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
                     },
                   }}
                 >
@@ -907,21 +885,7 @@ const ObjectFilterPage: React.FC = () => {
                             key={ns}
                             label={ns}
                             size="small"
-                            sx={
-                              isDark
-                                ? {
-                                    color: '#fff',
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    fontWeight: 600,
-                                    '& .MuiChip-deleteIcon': { color: '#fff' },
-                                  }
-                                : {
-                                    color: '#000',
-                                    backgroundColor: 'rgba(0,0,0,0.08)',
-                                    fontWeight: 600,
-                                    '& .MuiChip-deleteIcon': { color: '#000' },
-                                  }
-                            }
+                            sx={filterChipStyles}
                             onDelete={e => {
                               e.stopPropagation();
                               setSelectedNamespaces(selectedNamespaces.filter(n => n !== ns));
@@ -936,7 +900,7 @@ const ObjectFilterPage: React.FC = () => {
                         component: Paper,
                         elevation: 8,
                         sx: {
-                          backgroundColor: isDark ? '#111827' : '#f9fafb',
+                          backgroundColor: isDark ? '#1f2937' : '#fff',
                           color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                           boxShadow: isDark
                             ? '0px 8px 25px rgba(0, 0, 0, 0.4)'
@@ -944,8 +908,8 @@ const ObjectFilterPage: React.FC = () => {
                           maxHeight: 300,
                           borderRadius: '12px',
                           border: isDark
-                            ? '1px solid rgba(255,255,255,0.1)'
-                            : '1px solid rgba(0,0,0,0.05)',
+                            ? '1px solid rgba(255, 255, 255, 0.1)'
+                            : '1px solid rgba(0, 0, 0, 0.05)',
                           backdropFilter: 'blur(10px)',
                         },
                       },
@@ -992,13 +956,15 @@ const ObjectFilterPage: React.FC = () => {
                       color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
                       borderRadius: '12px',
                       transition: 'all 0.2s ease-in-out',
-                      '&:hover': { boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md },
+                      '&:hover': {
+                        boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
+                      },
                       '&.Mui-focused': {
                         boxShadow: `0 0 0 3px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'}`,
                       },
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
                     },
                   }}
                 />
@@ -1006,7 +972,7 @@ const ObjectFilterPage: React.FC = () => {
             </Grid>
           </Box>
 
-          {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) && (
+          {selectedKinds.length > 0 && (
             <Box
               sx={{
                 mt: 3,
@@ -1530,7 +1496,7 @@ const ObjectFilterPage: React.FC = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {(filteredResources as unknown as Resource[]).map(resource => {
+                      {derivedResources.map(resource => {
                         const resourceStatus =
                           typeof resource.status === 'string'
                             ? resource.status === 'Running' || resource.status === 'Active'
@@ -1721,7 +1687,7 @@ const ObjectFilterPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
+                {selectedKinds.length > 0
                   ? t('resources.emptyState.noResourcesFound')
                   : t('resources.emptyState.readyToExplore')}
               </Typography>
@@ -1734,11 +1700,11 @@ const ObjectFilterPage: React.FC = () => {
                   margin: '0 auto 24px',
                 }}
               >
-                {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0)
+                {selectedKinds.length > 0
                   ? t('resources.emptyState.noResourcesDescription')
                   : t('resources.emptyState.getStartedDescription')}
               </Typography>
-              {selectedKinds.length > 0 && (hasNamespaceKind || selectedNamespaces.length > 0) ? (
+              {selectedKinds.length > 0 ? (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                   <Button
                     variant="outlined"

@@ -6,7 +6,6 @@ import { api } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';
 import ObjectFilters, { ObjectFilter } from './ObjectFilters';
-import { useListViewData } from '../hooks/queries/useListViewQueries';
 
 // Define the response interfaces
 export interface ResourceItem {
@@ -69,19 +68,6 @@ const ListViewComponent = ({
 }: ListViewComponentProps) => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
-
-  // React Query hook for data fetching (single hook pattern)
-  const {
-    data: queryData,
-    error: queryError,
-    refetch: refetchQuery,
-  } = useListViewData({
-    staleTime: 30000, // 30 seconds
-    gcTime: 300000, // 5 minutes
-    refetchInterval: 60000, // 1 minute background refresh
-  });
-
-  // Keep existing state for SSE fallback and compatibility
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [filteredResources, setFilteredResources] = useState<ResourceItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -102,29 +88,6 @@ const ListViewComponent = ({
   const isInitialMountRef = useRef(true);
   const lastInitialFiltersRef = useRef<ObjectFilter>(initialResourceFilters);
 
-  // Sync React Query data with existing state (non-breaking change)
-  useEffect(() => {
-    if (queryData && queryData.length > 0) {
-      console.log('[ListViewComponent] Using React Query data:', queryData.length, 'resources');
-      setResources(queryData);
-      resourcesRef.current = queryData;
-      setTotalRawResources(queryData.length);
-      setIsLoading(false);
-      setInitialLoading(false);
-      setError(null);
-    }
-  }, [queryData]);
-
-  // Handle React Query errors
-  useEffect(() => {
-    if (queryError) {
-      console.error('[ListViewComponent] React Query error:', queryError);
-      setError(queryError.message);
-      setIsLoading(false);
-      setInitialLoading(false);
-    }
-  }, [queryError]);
-
   // Initialize filters from props only on mount or meaningful changes from parent
   useEffect(() => {
     // On initial mount, always use the provided filters
@@ -144,7 +107,7 @@ const ListViewComponent = ({
       setResourceFilters(initialResourceFilters);
       lastInitialFiltersRef.current = initialResourceFilters;
     }
-  }, [initialResourceFilters]);
+  }, [initialResourceFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Add useEffect to notify parent of resource data changes
   useEffect(() => {
@@ -253,14 +216,7 @@ const ListViewComponent = ({
     }
   };
 
-  // SSE fallback effect - only runs when React Query fails or is disabled
   useEffect(() => {
-    // Only run SSE fallback if React Query data is not available
-    if (queryData && queryData.length > 0) {
-      console.log('[ListViewComponent] React Query data available, skipping SSE fallback');
-      return;
-    }
-
     let isMounted = true;
     let eventSource: EventSource | null = null;
     isUnmountedRef.current = false;
@@ -596,7 +552,7 @@ const ListViewComponent = ({
         eventSource.close();
       }
     };
-  }, [t, queryData]); // Include queryData to trigger fallback when needed
+  }, [t]); // Keep original dependencies
 
   // Calculate pagination values using filteredResources instead of resources
   const actualTotalItems = filteredResources.length;
@@ -654,14 +610,7 @@ const ListViewComponent = ({
 
   // Retry handler for when errors occur
   const handleRetry = () => {
-    // Use React Query refetch if available, otherwise fallback to page reload
-    if (refetchQuery) {
-      console.log('[ListViewComponent] Retrying with React Query refetch');
-      refetchQuery();
-    } else {
-      console.log('[ListViewComponent] React Query not available, reloading page');
-      window.location.reload();
-    }
+    window.location.reload();
   };
 
   // Handle resource filter changes
