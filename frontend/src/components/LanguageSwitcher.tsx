@@ -16,6 +16,7 @@ const LanguageSwitcher = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -120,13 +121,20 @@ const LanguageSwitcher = () => {
       itemRefs.current[focusedIndex]?.focus();
     }
   }, [focusedIndex]);
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Trigger Button */}
       {isLoginPage ? (
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            if (!isOpen) {
+              const rect = triggerRef.current?.getBoundingClientRect();
+              if (rect) {
+                setMenuPosition({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+              }
+            }
+            setIsOpen(!isOpen);
+          }}
           className="flex items-center gap-2 rounded-full bg-blue-900/30 px-3 py-1.5 text-sm text-blue-300 transition-colors duration-200 hover:bg-blue-800/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
@@ -157,7 +165,15 @@ const LanguageSwitcher = () => {
           data-tip={currentLang.name}
         >
           <motion.button
-            onClick={() => (isOpen ? closeDropdown() : setIsOpen(true))}
+            onClick={() => {
+              if (!isOpen) {
+                const rect = triggerRef.current?.getBoundingClientRect();
+                if (rect) {
+                  setMenuPosition({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                }
+              }
+              setIsOpen(prev => !prev);
+            }}
             className="btn btn-circle relative transition-all duration-300"
             style={{
               color: themeStyles.colors.text.primary,
@@ -166,7 +182,7 @@ const LanguageSwitcher = () => {
               overflow: 'hidden',
             }}
             aria-label={t('header.switchLanguage')}
-            ref={triggerRef as unknown as React.Ref<HTMLButtonElement>}
+            ref={triggerRef}
           >
             <motion.div
               className="absolute inset-0 rounded-full"
@@ -215,14 +231,14 @@ const LanguageSwitcher = () => {
             {/* Backdrop - strong blur so page content blurs */}
             {createPortal(
               <motion.div
-                className="fixed inset-0 z-[100]"
+                className="fixed inset-0 z-[9998]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2, delay: 0.08 }}
                 onClick={closeDropdown}
                 style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                  backgroundColor: isLoginPage ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.45)',
                   pointerEvents: 'auto',
                 }}
               />,
@@ -232,18 +248,25 @@ const LanguageSwitcher = () => {
             {/* Language dropdown rendered in portal so it sits above blur */}
             {createPortal(
               <motion.div
-                className="fixed inset-0 z-[110] flex justify-end"
+                className="fixed inset-0 z-[9999]"
                 style={{ pointerEvents: 'none' }}
                 initial={{ opacity: 0, y: -10, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -5, scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
               >
-                <div className="pointer-events-auto pr-4 pt-[96px] sm:pr-6 md:pr-8">
+                <div
+                  className="pointer-events-auto"
+                  style={
+                    menuPosition
+                      ? { position: 'fixed', top: menuPosition.top, right: menuPosition.right }
+                      : { position: 'fixed', top: 96, right: 16 }
+                  }
+                >
                   <div
                     className={
                       isLoginPage
-                        ? 'w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
+                        ? 'w-48 overflow-hidden rounded-lg border border-white/20 bg-gradient-to-b from-slate-900/90 to-blue-900/80 text-slate-200 shadow-xl backdrop-blur-md'
                         : `w-48 overflow-hidden rounded-lg border shadow-xl ${
                             isDark
                               ? 'border-gray-700 bg-gray-800 text-gray-200'
@@ -252,28 +275,39 @@ const LanguageSwitcher = () => {
                     }
                     role="listbox"
                   >
-                    {!isLoginPage && (
-                      <div
-                        className={`flex items-center justify-between border-b px-3 py-2 ${
-                          isDark ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'
-                        }`}
+                    <div
+                      className={
+                        isLoginPage
+                          ? 'flex items-center justify-between border-b border-white/10 px-3 py-2 text-slate-300'
+                          : `flex items-center justify-between border-b px-3 py-2 ${
+                              isDark
+                                ? 'border-gray-700 text-gray-400'
+                                : 'border-gray-200 text-gray-500'
+                            }`
+                      }
+                    >
+                      <p className="text-xs font-medium uppercase tracking-wider">
+                        {t('header.selectLanguage')}
+                      </p>
+                      <kbd
+                        className="hidden items-center rounded px-1.5 py-0.5 text-xs font-semibold sm:inline-flex"
+                        style={
+                          isLoginPage
+                            ? {
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                color: 'rgba(203, 213, 225, 0.7)',
+                              }
+                            : {
+                                background: isDark
+                                  ? 'rgba(55, 65, 81, 0.5)'
+                                  : 'rgba(229, 231, 235, 0.5)',
+                                color: isDark ? 'rgba(156, 163, 175, 1)' : 'rgba(107, 114, 128, 1)',
+                              }
+                        }
                       >
-                        <p className="text-xs font-medium uppercase tracking-wider">
-                          {t('header.selectLanguage')}
-                        </p>
-                        <kbd
-                          className="hidden items-center rounded px-1.5 py-0.5 text-xs font-semibold sm:inline-flex"
-                          style={{
-                            background: isDark
-                              ? 'rgba(55, 65, 81, 0.5)'
-                              : 'rgba(229, 231, 235, 0.5)',
-                            color: isDark ? 'rgba(156, 163, 175, 1)' : 'rgba(107, 114, 128, 1)',
-                          }}
-                        >
-                          ESC
-                        </kbd>
-                      </div>
-                    )}
+                        ESC
+                      </kbd>
+                    </div>
                     <div className="max-h-60 overflow-auto py-1">
                       {languages.map((lang, idx) => (
                         <button
@@ -283,10 +317,10 @@ const LanguageSwitcher = () => {
                           onClick={() => changeLanguage(lang.code)}
                           className={
                             isLoginPage
-                              ? `flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-blue-700/30 ${
+                              ? `flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
                                   i18n.language === lang.code
-                                    ? 'bg-blue-600/40 text-blue-100'
-                                    : 'bg-transparent text-blue-200 hover:bg-blue-700/30'
+                                    ? 'bg-white/10 text-white'
+                                    : 'bg-transparent text-slate-300 hover:bg-white/5'
                                 }`
                               : `flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors ${
                                   isDark
@@ -303,9 +337,11 @@ const LanguageSwitcher = () => {
                         >
                           <div className="flex items-center">
                             <span
-                              className={`mr-2.5 text-sm font-medium uppercase ${
+                              className={`mr-2.5 text-xs font-medium uppercase ${
                                 isLoginPage
-                                  ? ''
+                                  ? i18n.language === lang.code
+                                    ? 'text-slate-300'
+                                    : 'text-slate-400'
                                   : isDark
                                     ? 'text-gray-500'
                                     : i18n.language === lang.code
@@ -323,7 +359,7 @@ const LanguageSwitcher = () => {
                               animate={{ scale: 1 }}
                               className={`flex h-5 w-5 items-center justify-center rounded-full ${
                                 isLoginPage
-                                  ? 'bg-blue-600/30'
+                                  ? 'bg-white/20'
                                   : isDark
                                     ? 'bg-indigo-800/50'
                                     : 'bg-indigo-100'
@@ -341,7 +377,7 @@ const LanguageSwitcher = () => {
                                 strokeLinejoin="round"
                                 className={
                                   isLoginPage
-                                    ? 'text-blue-300'
+                                    ? 'text-white'
                                     : isDark
                                       ? 'text-indigo-300'
                                       : 'text-indigo-600'

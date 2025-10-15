@@ -53,7 +53,7 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       
       # Database Configuration
-      - DATABASE_URL=postgres://authuser:authpass123@127.0.0.1:5400/authdb?sslmode=disable
+      - DATABASE_URL=postgres://authuser:authpass123@127.0.0.1:5400/authdbui?sslmode=disable
       - DB_HEALTH_TIMEOUT=${DB_HEALTH_TIMEOUT:-5s}
       
       # Redis Configuration
@@ -101,7 +101,7 @@ services:
     image: postgres:15-alpine
     container_name: auth_postgres
     environment:
-      POSTGRES_DB: authdb
+      POSTGRES_DB: authdbui
       POSTGRES_USER: authuser
       POSTGRES_PASSWORD: authpass123
       # Performance optimizations
@@ -115,7 +115,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # - ./backend/postgresql/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U authuser -d authdb"]
+      test: ["CMD-SHELL", "pg_isready -U authuser -d authdbui"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -222,7 +222,7 @@ services:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
     environment:
-      DATA_SOURCE_NAME: "postgresql://authuser:authpass123@localhost:5400/authdb?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://authuser:authpass123@localhost:5400/authdbui?sslmode=disable"
     network_mode: host
     depends_on:
       postgres:
