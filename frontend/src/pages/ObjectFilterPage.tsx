@@ -1110,27 +1110,15 @@ const ObjectFilterPage: React.FC = () => {
             >
               {t('resources.results')}
             </Typography>
-            <Badge
-              badgeContent={resources.length}
-              color="primary"
+            <Chip
+              label={`${resources.length} object${resources.length !== 1 ? 's' : ''}`}
+              size="small"
               sx={{
-                '& .MuiBadge-badge': {
-                  backgroundColor: isDark ? darkTheme.brand.primary : lightTheme.brand.primary,
-                  color: '#ffffff',
-                  fontWeight: 600,
-                },
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
+                color: isDark ? darkTheme.brand.primaryLight : darkTheme.brand.primary,
+                fontWeight: 600,
               }}
-            >
-              <Chip
-                label={`${resources.length} object${resources.length !== 1 ? 's' : ''}`}
-                size="small"
-                sx={{
-                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-                  color: isDark ? darkTheme.brand.primaryLight : darkTheme.brand.primary,
-                  fontWeight: 600,
-                }}
-              />
-            </Badge>
+            />
           </Box>
 
           {resources.length > 0 && (
