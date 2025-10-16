@@ -21,7 +21,6 @@ import {
   Tooltip,
   Autocomplete,
   TextField,
-  Badge,
   ToggleButtonGroup,
   ToggleButton,
   Switch,
