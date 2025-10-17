@@ -112,7 +112,7 @@ cp .env.example .env
 **Example `.env` file:**
 
 ```env
-VITE_PROMETHEUS_URL=http://localhost:9090
+VITE_PROMETHEUS_URL=http://localhost:19090
 VITE_BASE_URL=http://localhost:4000
 VITE_APP_VERSION=0.1.0
 VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH
@@ -127,12 +127,12 @@ KubestellarUI uses environment variables to track the app version and the curren
 
 **Environment Variables**
 
-| Variable               | Purpose                                 | Example                 |
-| ---------------------- | --------------------------------------- | ----------------------- |
-| `VITE_PROMETHEUS_URL`  | Defines the Prometheus URL              | `http://localhost:9090` |
-| `VITE_BASE_URL`        | Defines the base URL for API calls      | `http://localhost:4000` |
-| `VITE_APP_VERSION`     | Defines the current application version | `0.1.0`                 |
-| `VITE_GIT_COMMIT_HASH` | Captures the current Git commit hash    | (Set during build)      |
+| Variable               | Purpose                                 | Example                  |
+| ---------------------- | --------------------------------------- | ------------------------ |
+| `VITE_PROMETHEUS_URL`  | Defines the Prometheus URL              | `http://localhost:19090` |
+| `VITE_BASE_URL`        | Defines the base URL for API calls      | `http://localhost:4000`  |
+| `VITE_APP_VERSION`     | Defines the current application version | `0.1.0`                  |
+| `VITE_GIT_COMMIT_HASH` | Captures the current Git commit hash    | (Set during build)       |
 
 #### Step 2: Run Redis Container (Optional)
 
@@ -382,7 +382,8 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 1. **Backend API**: [http://localhost:4000](http://localhost:4000) (or custom port if `BACKEND_PORT` is set)
 2. **Frontend UI**: [http://localhost:5173](http://localhost:5173) (or custom port if `FRONTEND_PORT` is set)
-3. **Grafana Dashboard**: [http://localhost:3000](http://localhost:3000) (when monitoring profile is enabled)
+3. **Grafana Dashboard**: [http://localhost:13000](http://localhost:13000) (when monitoring profile is enabled)
+4. **Prometheus Metrics**: [http://localhost:19090](http://localhost:19090) (when monitoring profile is enabled)
 
 #### Accessing Grafana Dashboard
 
@@ -394,7 +395,7 @@ To access the Grafana monitoring dashboard:
    ```
 
 2. **Access Grafana**:
-   - URL: [http://localhost:3000](http://localhost:3000)
+   - URL: [http://localhost:13000](http://localhost:13000)
    - Username: `admin`
    - Password: `admin` (or custom password if `GRAFANA_PASSWORD` is set)
 
@@ -405,6 +406,13 @@ To access the Grafana monitoring dashboard:
 
 > [!NOTE]
 > The monitoring stack includes Prometheus (metrics collection), Grafana (visualization), and various exporters for system, database, and Redis metrics. All services use host networking for optimal performance.
+
+> [!IMPORTANT]
+> **Custom Port Configuration**: KubeStellar UI uses custom ports for its monitoring stack to avoid conflicts with user-installed Prometheus and Grafana instances:
+> - **Prometheus**: Port `19090` (instead of default `9090`)
+> - **Grafana**: Port `13000` (instead of default `3000`)
+>
+> This allows users to run their own monitoring stack alongside KubeStellar UI without port conflicts.
 
 ### Migration Commands
 
