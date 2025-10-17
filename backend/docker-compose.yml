@@ -36,7 +36,7 @@ services:
     image: prom/prometheus:latest
     container_name: kubestellar-prometheus
     ports:
-      - "9090:9090"
+      - "19090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml/config.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -50,7 +50,7 @@ services:
     image: grafana/grafana:latest
     container_name: kubestellar-grafana
     ports:
-      - "3000:3000"
+      - "13000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
