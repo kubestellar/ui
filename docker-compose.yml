@@ -176,6 +176,7 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
+      - '--web.listen-address=0.0.0.0:19090'
     restart: unless-stopped
     profiles:
       - monitoring
@@ -194,6 +195,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_HTTP_PORT=13000
     depends_on:
       - prometheus
     restart: unless-stopped
