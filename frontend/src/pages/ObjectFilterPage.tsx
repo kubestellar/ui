@@ -142,7 +142,7 @@ const ObjectFilterPage: React.FC = () => {
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const itemsPerPage = 9;
 
   const availableResourceKinds = useMemo(
     () => resourceKinds.filter(kind => kind.kind.toLowerCase() !== 'binding'),
