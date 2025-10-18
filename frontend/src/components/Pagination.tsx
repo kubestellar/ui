@@ -59,8 +59,7 @@ const Pagination = ({
               : isDark
                 ? darkTheme.brand.primary
                 : lightTheme.brand.primary,
-          backgroundColor:
-            isDark && currentPage !== 1 ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+          backgroundColor: isDark && currentPage !== 1 ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
           '&:hover': {
             borderColor:
               currentPage !== 1

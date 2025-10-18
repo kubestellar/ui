@@ -162,31 +162,10 @@ const ObjectFilterPage: React.FC = () => {
   );
 
   const displayResources = useMemo<Resource[]>(() => {
-    // TEMPORARY: Add 20 demo resources for testing pagination
-    const demoResources: Resource[] = Array.from({ length: 20 }, (_, i) => ({
-      kind: ['Pod', 'Deployment', 'Service', 'ConfigMap'][i % 4],
-      apiVersion: 'v1',
-      metadata: {
-        name: `demo-resource-${String(i + 1).padStart(2, '0')}`,
-        namespace: ['default', 'kube-system', 'production'][i % 3],
-        uid: `demo-uid-${i + 1}`,
-        creationTimestamp: new Date(Date.now() - i * 86400000).toISOString(),
-        labels: {
-          app: `demo-app-${(i % 5) + 1}`,
-          env: ['dev', 'staging', 'prod'][i % 3],
-        },
-      },
-      status: ['running', 'pending', 'succeeded', 'active'][i % 4],
-      labels: {
-        app: `demo-app-${(i % 5) + 1}`,
-        env: ['dev', 'staging', 'prod'][i % 3],
-      },
-    }));
-
     if (filteredResources && Array.isArray(filteredResources)) {
-      return [...demoResources, ...((filteredResources as unknown as Resource[]) || [])];
+      return [...((filteredResources as unknown as Resource[]) || [])];
     }
-    return demoResources;
+    return [];
   }, [filteredResources]);
 
   const derivedResources = useMemo<DerivedResource[]>(() => {
@@ -1030,7 +1009,21 @@ const ObjectFilterPage: React.FC = () => {
         </Paper>
       </Collapse>
 
-      {/* Error Display - TEMPORARY: Hidden for testing */}
+      {/* Error Display */}
+      {error && (
+        <Alert
+          severity="error"
+          variant="filled"
+          sx={{
+            mb: 3,
+            backgroundColor: isDark ? 'rgba(211, 47, 47, 0.9)' : undefined,
+            borderRadius: '12px',
+            boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
+          }}
+        >
+          {error as string}
+        </Alert>
+      )}
 
       {/* Bulk Actions Bar */}
       {selectedResources.length > 0 && (
