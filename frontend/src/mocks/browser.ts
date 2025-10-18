@@ -10,16 +10,34 @@ export const scenarios: Record<string, HttpHandler[]> = {
   statusReady: [h.statusReady],
   statusNotReady: [h.statusNotReady],
   login: [h.login],
+  dashboard: [
+    h.k8sInfo,
+    h.clusterMetrics,
+    h.podHealth,
+    h.userActivities,
+    h.deletedUserActivities,
+    h.clusterDetails,
+    h.clusterStatus,
+    h.workloadStatus,
+    h.workloadLogs,
+    h.workloadDetails,
+    h.clusters,
+    h.bindingPolicies,
+    h.workloads,
+    h.me,
+  ],
+  metrics: [h.clusterMetrics, h.podHealth, h.k8sInfo],
+  userActivity: [h.userActivities, h.deletedUserActivities, h.me],
+  clusterDetails: [h.clusterDetails, h.clusterStatus, h.clusters],
+  workloadDetails: [h.workloadDetails, h.workloadStatus, h.workloadLogs, h.workloads],
 };
 
 export function applyScenarioByName(name: string) {
   const s = scenarios[name];
   if (Array.isArray(s) && s.length) {
     worker.use(...s);
-    // eslint-disable-next-line no-console
     console.log('[MSW] applied scenario:', name);
   } else {
-    // eslint-disable-next-line no-console
     console.warn('[MSW] scenario not found or empty:', name);
   }
 }
