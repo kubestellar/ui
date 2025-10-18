@@ -270,8 +270,10 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 '&:hover': { bgcolor: colors.primaryDark },
                 textTransform: 'none',
                 fontWeight: '600',
-                padding: '8px 20px',
-                borderRadius: '8px',
+                // Match size with Status Filter button
+                padding: '8px 16px',
+                height: '45px',
+                borderRadius: '10px',
                 boxShadow: isDark
                   ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)'
                   : '0 4px 6px -1px rgba(47, 134, 255, 0.2), 0 2px 4px -2px rgba(47, 134, 255, 0.1)',
