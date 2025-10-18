@@ -60,6 +60,7 @@ import { ResourceItem as ResourceItemType } from '../components/treeView/types';
 import ResourceStats from '../components/ResourceStats';
 import DynamicDetailsPanel from '../components/DynamicDetailsPanel';
 import ResourceCard from '../components/ResourceCard';
+import Pagination from '../components/Pagination';
 //
 interface Resource {
   kind: string;
@@ -140,6 +141,8 @@ const ObjectFilterPage: React.FC = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   const availableResourceKinds = useMemo(
     () => resourceKinds.filter(kind => kind.kind.toLowerCase() !== 'binding'),
@@ -376,6 +379,22 @@ const ObjectFilterPage: React.FC = () => {
       metadata: resource.metadata || {},
     }));
   }, [derivedResources]);
+
+  // Pagination calculations
+  const totalPages = useMemo(
+    () => Math.ceil(derivedResources.length / itemsPerPage),
+    [derivedResources.length, itemsPerPage]
+  );
+  const paginatedResources = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return derivedResources.slice(startIndex, endIndex);
+  }, [derivedResources, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedKinds, selectedNamespaces, resourceFilters, quickSearchQuery]);
 
   const filterChipStyles = useMemo(
     () => ({
@@ -1229,189 +1248,217 @@ const ObjectFilterPage: React.FC = () => {
 
               {/* Grid View */}
               {viewMode === 'grid' && (
-                <Grid container spacing={3}>
-                  {derivedResources.map(resource => {
-                    const uid =
-                      resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
-                    const isSelected = selectedResources.some(r => r.uid === uid);
+                <>
+                  <Grid container spacing={3}>
+                    {paginatedResources.map(resource => {
+                      const uid =
+                        resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
+                      const isSelected = selectedResources.some(r => r.uid === uid);
 
-                    return (
-                      <Grid item xs={12} sm={6} lg={4} key={uid}>
-                        <ResourceCard
-                          resource={resource}
-                          isSelected={isSelected}
-                          isDark={isDark}
-                          onSelect={handleResourceSelect}
-                          onViewDetails={resource => handleResourceAction(resource, 'view')}
-                          onActionClick={(e, resource) => {
-                            setSelectedResourceForAction(resource);
-                            setActionMenuAnchor(e.currentTarget);
-                          }}
-                        />
-                      </Grid>
-                    );
-                  })}
-                </Grid>
+                      return (
+                        <Grid item xs={12} sm={6} lg={4} key={uid}>
+                          <ResourceCard
+                            resource={resource}
+                            isSelected={isSelected}
+                            isDark={isDark}
+                            onSelect={handleResourceSelect}
+                            onViewDetails={resource => handleResourceAction(resource, 'view')}
+                            onActionClick={(e, resource) => {
+                              setSelectedResourceForAction(resource);
+                              setActionMenuAnchor(e.currentTarget);
+                            }}
+                          />
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+
+                  {/* Pagination */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={derivedResources.length}
+                    onPageChange={setCurrentPage}
+                    isDark={isDark}
+                  />
+                </>
               )}
 
               {/* List View */}
               {viewMode === 'list' && (
-                <Box sx={{ mt: 2 }}>
-                  {derivedResources.map(resource => {
-                    const statusColors = getStatusColor(resource.displayStatus);
-                    const uid =
-                      resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
-                    const isSelected = selectedResources.some(r => r.uid === uid);
+                <>
+                  <Box sx={{ mt: 2 }}>
+                    {paginatedResources.map(resource => {
+                      const statusColors = getStatusColor(resource.displayStatus);
+                      const uid =
+                        resource.metadata?.uid || `${resource.kind}-${resource.metadata?.name}`;
+                      const isSelected = selectedResources.some(r => r.uid === uid);
 
-                    return (
-                      <Paper
-                        key={uid}
-                        elevation={0}
-                        sx={{
-                          mb: 1,
-                          p: 2,
-                          backgroundColor: isDark
-                            ? darkTheme.bg.secondary
-                            : lightTheme.bg.secondary,
-                          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-                          borderRadius: '12px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          position: 'relative',
-                          '&:hover': {
-                            backgroundColor: isDark
-                              ? 'rgba(59, 130, 246, 0.05)'
-                              : 'rgba(59, 130, 246, 0.02)',
-                            border: `1px solid ${isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary}`,
-                          },
-                        }}
-                        onClick={() => handleResourceSelect(resource)}
-                      >
-                        <Box
+                      return (
+                        <Paper
+                          key={uid}
+                          elevation={0}
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
+                            mb: 1,
+                            p: 2,
+                            backgroundColor: isDark
+                              ? darkTheme.bg.secondary
+                              : lightTheme.bg.secondary,
+                            border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            position: 'relative',
+                            '&:hover': {
+                              backgroundColor: isDark
+                                ? 'rgba(59, 130, 246, 0.05)'
+                                : 'rgba(59, 130, 246, 0.02)',
+                              border: `1px solid ${isDark ? darkTheme.brand.primaryLight : lightTheme.brand.primary}`,
+                            },
                           }}
+                          onClick={() => handleResourceSelect(resource)}
                         >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                            <Box>
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-                                  fontWeight: 600,
-                                  fontSize: '1rem',
-                                }}
-                              >
-                                {resource.displayName}
-                              </Typography>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                <Chip
-                                  label={resource.kind}
-                                  size="small"
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                              <Box>
+                                <Typography
+                                  variant="h6"
                                   sx={{
-                                    backgroundColor: isDark
-                                      ? 'rgba(59, 130, 246, 0.2)'
-                                      : 'rgba(59, 130, 246, 0.1)',
                                     color: isDark
-                                      ? darkTheme.brand.primaryLight
-                                      : darkTheme.brand.primary,
+                                      ? darkTheme.text.primary
+                                      : lightTheme.text.primary,
                                     fontWeight: 600,
+                                    fontSize: '1rem',
                                   }}
-                                />
-                                {resource.displayNamespace && (
+                                >
+                                  {resource.displayName}
+                                </Typography>
+                                <Box
+                                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
+                                >
                                   <Chip
-                                    label={resource.displayNamespace}
+                                    label={resource.kind}
                                     size="small"
-                                    variant="outlined"
                                     sx={{
-                                      borderColor: isDark
-                                        ? 'rgba(255, 255, 255, 0.23)'
-                                        : 'rgba(0, 0, 0, 0.23)',
+                                      backgroundColor: isDark
+                                        ? 'rgba(59, 130, 246, 0.2)'
+                                        : 'rgba(59, 130, 246, 0.1)',
                                       color: isDark
-                                        ? darkTheme.text.secondary
-                                        : lightTheme.text.secondary,
-                                    }}
-                                  />
-                                )}
-                                {resource.displayStatus && (
-                                  <Chip
-                                    label={resource.displayStatus}
-                                    size="small"
-                                    sx={{
-                                      backgroundColor: statusColors.bg,
-                                      color: statusColors.color,
+                                        ? darkTheme.brand.primaryLight
+                                        : darkTheme.brand.primary,
                                       fontWeight: 600,
                                     }}
                                   />
-                                )}
+                                  {resource.displayNamespace && (
+                                    <Chip
+                                      label={resource.displayNamespace}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        borderColor: isDark
+                                          ? 'rgba(255, 255, 255, 0.23)'
+                                          : 'rgba(0, 0, 0, 0.23)',
+                                        color: isDark
+                                          ? darkTheme.text.secondary
+                                          : lightTheme.text.secondary,
+                                      }}
+                                    />
+                                  )}
+                                  {resource.displayStatus && (
+                                    <Chip
+                                      label={resource.displayStatus}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor: statusColors.bg,
+                                        color: statusColors.color,
+                                        fontWeight: 600,
+                                      }}
+                                    />
+                                  )}
+                                </Box>
                               </Box>
                             </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Button
+                                size="small"
+                                startIcon={<VisibilityIcon />}
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleResourceAction(resource, 'view');
+                                }}
+                                sx={{
+                                  color: isDark
+                                    ? darkTheme.brand.primaryLight
+                                    : lightTheme.brand.primary,
+                                }}
+                              >
+                                {t('resources.actions.view')}
+                              </Button>
+                              <IconButton
+                                size="small"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setSelectedResourceForAction(resource);
+                                  setActionMenuAnchor(e.currentTarget);
+                                }}
+                                sx={{
+                                  color: isDark
+                                    ? darkTheme.text.secondary
+                                    : lightTheme.text.secondary,
+                                }}
+                              >
+                                <MoreVertIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
                           </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Button
-                              size="small"
-                              startIcon={<VisibilityIcon />}
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleResourceAction(resource, 'view');
-                              }}
+                          {/* Selection indicator */}
+                          {isSelected && (
+                            <Box
                               sx={{
-                                color: isDark
-                                  ? darkTheme.brand.primaryLight
+                                position: 'absolute',
+                                top: 8,
+                                left: 8,
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                backgroundColor: isDark
+                                  ? darkTheme.brand.primary
                                   : lightTheme.brand.primary,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                               }}
                             >
-                              {t('resources.actions.view')}
-                            </Button>
-                            <IconButton
-                              size="small"
-                              onClick={e => {
-                                e.stopPropagation();
-                                setSelectedResourceForAction(resource);
-                                setActionMenuAnchor(e.currentTarget);
-                              }}
-                              sx={{
-                                color: isDark
-                                  ? darkTheme.text.secondary
-                                  : lightTheme.text.secondary,
-                              }}
-                            >
-                              <MoreVertIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        </Box>
-                        {/* Selection indicator */}
-                        {isSelected && (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              left: 8,
-                              width: 20,
-                              height: 20,
-                              borderRadius: '50%',
-                              backgroundColor: isDark
-                                ? darkTheme.brand.primary
-                                : lightTheme.brand.primary,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Typography
-                              variant="caption"
-                              sx={{ color: '#ffffff', fontSize: '0.7rem', fontWeight: 'bold' }}
-                            >
-                              ✓
-                            </Typography>
-                          </Box>
-                        )}
-                      </Paper>
-                    );
-                  })}
-                </Box>
+                              <Typography
+                                variant="caption"
+                                sx={{ color: '#ffffff', fontSize: '0.7rem', fontWeight: 'bold' }}
+                              >
+                                ✓
+                              </Typography>
+                            </Box>
+                          )}
+                        </Paper>
+                      );
+                    })}
+                  </Box>
+
+                  {/* Pagination */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={derivedResources.length}
+                    onPageChange={setCurrentPage}
+                    isDark={isDark}
+                  />
+                </>
               )}
 
               {/* Table View */}
@@ -1486,7 +1533,7 @@ const ObjectFilterPage: React.FC = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {derivedResources.map(resource => {
+                      {paginatedResources.map(resource => {
                         const resourceStatus =
                           typeof resource.status === 'string'
                             ? resource.status === 'Running' || resource.status === 'Active'
@@ -1635,6 +1682,18 @@ const ObjectFilterPage: React.FC = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+              )}
+
+              {/* Pagination */}
+              {viewMode === 'table' && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={derivedResources.length}
+                  onPageChange={setCurrentPage}
+                  isDark={isDark}
+                />
               )}
             </Box>
           ) : (
