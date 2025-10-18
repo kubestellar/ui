@@ -500,8 +500,14 @@ const ContextDropdown = ({
             sx={{
               backgroundColor: theme === 'dark' ? '#1976d2' : '#1976d2',
               color: '#fff',
+              minWidth: '140px',
               '&:hover': {
                 backgroundColor: theme === 'dark' ? '#1565c0' : '#1565c0',
+              },
+              '&:disabled': {
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(25, 118, 210, 0.5)' : 'rgba(25, 118, 210, 0.5)',
+                color: 'rgba(255, 255, 255, 0.7)',
               },
             }}
           >
