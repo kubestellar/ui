@@ -26,27 +26,10 @@ export const scenarios: Record<string, HttpHandler[]> = {
     h.workloads,
     h.me,
   ],
-  metrics: [
-    h.clusterMetrics,
-    h.podHealth,
-    h.k8sInfo,
-  ],
-  userActivity: [
-    h.userActivities,
-    h.deletedUserActivities,
-    h.me,
-  ],
-  clusterDetails: [
-    h.clusterDetails,
-    h.clusterStatus,
-    h.clusters,
-  ],
-  workloadDetails: [
-    h.workloadDetails,
-    h.workloadStatus,
-    h.workloadLogs,
-    h.workloads,
-  ],
+  metrics: [h.clusterMetrics, h.podHealth, h.k8sInfo],
+  userActivity: [h.userActivities, h.deletedUserActivities, h.me],
+  clusterDetails: [h.clusterDetails, h.clusterStatus, h.clusters],
+  workloadDetails: [h.workloadDetails, h.workloadStatus, h.workloadLogs, h.workloads],
 };
 
 export function applyScenarioByName(name: string) {
