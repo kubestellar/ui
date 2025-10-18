@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiAlertTriangle, FiTrash2, FiUser, FiLoader } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,20 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
   isDeleting = false,
 }) => {
   const { t } = useTranslation();
+
+  // Capture original overflow outside early return to prevent scroll lock issues
+  const originalOverflow = document.body.style.overflow;
+
+  // Lock body scroll while the modal is open and handle cleanup
+  useEffect(() => {
+    if (!isOpen) return;
+
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, originalOverflow]);
 
   if (!isOpen) return null;
 
