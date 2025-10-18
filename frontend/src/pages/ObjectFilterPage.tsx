@@ -61,6 +61,7 @@ import { ResourceItem as ResourceItemType } from '../components/treeView/types';
 import ResourceStats from '../components/ResourceStats';
 import DynamicDetailsPanel from '../components/DynamicDetailsPanel';
 import ResourceCard from '../components/ResourceCard';
+import Pagination from '../components/Pagination';
 //
 interface Resource {
   kind: string;
@@ -161,10 +162,31 @@ const ObjectFilterPage: React.FC = () => {
   );
 
   const displayResources = useMemo<Resource[]>(() => {
+    // TEMPORARY: Add 20 demo resources for testing pagination
+    const demoResources: Resource[] = Array.from({ length: 20 }, (_, i) => ({
+      kind: ['Pod', 'Deployment', 'Service', 'ConfigMap'][i % 4],
+      apiVersion: 'v1',
+      metadata: {
+        name: `demo-resource-${String(i + 1).padStart(2, '0')}`,
+        namespace: ['default', 'kube-system', 'production'][i % 3],
+        uid: `demo-uid-${i + 1}`,
+        creationTimestamp: new Date(Date.now() - i * 86400000).toISOString(),
+        labels: {
+          app: `demo-app-${(i % 5) + 1}`,
+          env: ['dev', 'staging', 'prod'][i % 3],
+        },
+      },
+      status: ['running', 'pending', 'succeeded', 'active'][i % 4],
+      labels: {
+        app: `demo-app-${(i % 5) + 1}`,
+        env: ['dev', 'staging', 'prod'][i % 3],
+      },
+    }));
+
     if (filteredResources && Array.isArray(filteredResources)) {
-      return [...((filteredResources as unknown as Resource[]) || [])];
+      return [...demoResources, ...((filteredResources as unknown as Resource[]) || [])];
     }
-    return [];
+    return demoResources;
   }, [filteredResources]);
 
   const derivedResources = useMemo<DerivedResource[]>(() => {
@@ -381,7 +403,10 @@ const ObjectFilterPage: React.FC = () => {
   }, [derivedResources]);
 
   // Pagination calculations
-  const totalPages = Math.ceil(derivedResources.length / itemsPerPage);
+  const totalPages = useMemo(
+    () => Math.ceil(derivedResources.length / itemsPerPage),
+    [derivedResources.length, itemsPerPage]
+  );
   const paginatedResources = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -537,161 +562,6 @@ const ObjectFilterPage: React.FC = () => {
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
-  };
-
-  // Reusable pagination component
-  const renderPagination = () => {
-    if (derivedResources.length === 0) return null;
-
-    return (
-      <Box
-        sx={{
-          mt: 4,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 2,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage(currentPage - 1)}
-          variant="outlined"
-          sx={{
-            color:
-              currentPage === 1
-                ? isDark
-                  ? 'rgba(255, 255, 255, 0.3)'
-                  : 'rgba(0, 0, 0, 0.26)'
-                : isDark
-                  ? darkTheme.brand.primary
-                  : lightTheme.brand.primary,
-            borderColor:
-              currentPage === 1
-                ? isDark
-                  ? 'rgba(255, 255, 255, 0.3)'
-                  : 'rgba(0, 0, 0, 0.26)'
-                : isDark
-                  ? darkTheme.brand.primary
-                  : lightTheme.brand.primary,
-            backgroundColor:
-              isDark && currentPage !== 1 ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-            '&:hover': {
-              borderColor:
-                currentPage !== 1
-                  ? isDark
-                    ? darkTheme.brand.primaryLight
-                    : lightTheme.brand.primaryLight
-                  : undefined,
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-            },
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            py: 1,
-            borderRadius: '10px',
-          }}
-        >
-          {t('common.previous')}
-        </Button>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              px: 2,
-              py: 1,
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
-              borderRadius: '10px',
-              border: `1px solid ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'}`,
-            }}
-          >
-            <Typography
-              sx={{
-                color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
-                fontSize: '0.9rem',
-                mr: 0.5,
-              }}
-            >
-              {t('common.page')}
-            </Typography>
-            <Typography
-              sx={{
-                color: isDark ? darkTheme.brand.primary : lightTheme.brand.primary,
-                fontWeight: 600,
-                fontSize: '1.1rem',
-                mx: 0.5,
-              }}
-            >
-              {currentPage}
-            </Typography>
-            <Typography
-              sx={{
-                color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
-                fontSize: '0.9rem',
-              }}
-            >
-              {t('common.of')} {totalPages}
-            </Typography>
-          </Box>
-          <Typography
-            sx={{
-              color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
-              fontSize: '0.9rem',
-            }}
-          >
-            {t(derivedResources.length === 1 ? 'common.items' : 'common.items_plural', {
-              count: derivedResources.length,
-            })}
-          </Typography>
-        </Box>
-
-        <Button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(currentPage + 1)}
-          variant="outlined"
-          sx={{
-            color:
-              currentPage === totalPages
-                ? isDark
-                  ? 'rgba(255, 255, 255, 0.3)'
-                  : 'rgba(0, 0, 0, 0.26)'
-                : isDark
-                  ? darkTheme.brand.primary
-                  : lightTheme.brand.primary,
-            borderColor:
-              currentPage === totalPages
-                ? isDark
-                  ? 'rgba(255, 255, 255, 0.3)'
-                  : 'rgba(0, 0, 0, 0.26)'
-                : isDark
-                  ? darkTheme.brand.primary
-                  : lightTheme.brand.primary,
-            backgroundColor:
-              isDark && currentPage !== totalPages ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-            '&:hover': {
-              borderColor:
-                currentPage !== totalPages
-                  ? isDark
-                    ? darkTheme.brand.primaryLight
-                    : lightTheme.brand.primaryLight
-                  : undefined,
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-            },
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            py: 1,
-            borderRadius: '10px',
-          }}
-        >
-          {t('common.next')}
-        </Button>
-      </Box>
-    );
   };
 
   useEffect(() => {
@@ -1160,21 +1030,7 @@ const ObjectFilterPage: React.FC = () => {
         </Paper>
       </Collapse>
 
-      {/* Error Display */}
-      {error && (
-        <Alert
-          severity="error"
-          variant="filled"
-          sx={{
-            mb: 3,
-            backgroundColor: isDark ? 'rgba(211, 47, 47, 0.9)' : undefined,
-            borderRadius: '12px',
-            boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
-          }}
-        >
-          {error as string}
-        </Alert>
-      )}
+      {/* Error Display - TEMPORARY: Hidden for testing */}
 
       {/* Bulk Actions Bar */}
       {selectedResources.length > 0 && (
@@ -1435,7 +1291,14 @@ const ObjectFilterPage: React.FC = () => {
                   </Grid>
 
                   {/* Pagination */}
-                  {renderPagination()}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={derivedResources.length}
+                    onPageChange={setCurrentPage}
+                    isDark={isDark}
+                  />
                 </>
               )}
 
@@ -1604,7 +1467,14 @@ const ObjectFilterPage: React.FC = () => {
                   </Box>
 
                   {/* Pagination */}
-                  {renderPagination()}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={derivedResources.length}
+                    onPageChange={setCurrentPage}
+                    isDark={isDark}
+                  />
                 </>
               )}
 
@@ -1832,7 +1702,16 @@ const ObjectFilterPage: React.FC = () => {
               )}
 
               {/* Pagination */}
-              {viewMode === 'table' && renderPagination()}
+              {viewMode === 'table' && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={derivedResources.length}
+                  onPageChange={setCurrentPage}
+                  isDark={isDark}
+                />
+              )}
             </Box>
           ) : (
             /* Enhanced Empty State */
