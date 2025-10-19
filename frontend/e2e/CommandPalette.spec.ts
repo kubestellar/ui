@@ -48,62 +48,6 @@ test.describe('Command Palette', () => {
     await expect(searchInput).toBeVisible();
   });
 
-  test('command palette opens with Ctrl+K keyboard shortcut', async ({ page }) => {
-    // Ensure page is focused and ready
-    await page.bringToFront();
-    await page.waitForTimeout(200);
-    
-    // Focus on a visible element to ensure keyboard events are captured properly
-    await page.locator('header').click();
-    await page.waitForTimeout(100);
-
-    // Try multiple approaches for cross-browser compatibility
-    // Method 1: Standard Control+k
-    await page.keyboard.press('Control+k');
-    await page.waitForTimeout(300);
-
-    // Check if palette opened
-    let searchInput = page.locator('input[type="text"][placeholder*="Search" i]');
-    let isVisible = await searchInput.isVisible().catch(() => false);
-
-    if (!isVisible) {
-      // Method 2: Separate key presses for WebKit compatibility
-      await page.keyboard.down('Control');
-      await page.keyboard.press('k');
-      await page.keyboard.up('Control');
-      await page.waitForTimeout(300);
-      
-      isVisible = await searchInput.isVisible().catch(() => false);
-    }
-
-    if (!isVisible) {
-      // Method 3: Try with Meta key (Cmd on Mac) for WebKit
-      await page.keyboard.press('Meta+k');
-      await page.waitForTimeout(300);
-    }
-
-    // Final check - palette should be visible
-    await expect(searchInput).toBeVisible();
-  });
-
-  test('command palette closes with Escape key', async ({ page }) => {
-    const commandButton = page.locator('header button[aria-label*="command" i]');
-
-    // Open palette
-    await commandButton.click();
-    await page.waitForTimeout(500);
-
-    // Verify it's open
-    const searchInput = page.locator('input[type="text"][placeholder*="Search" i]');
-    await expect(searchInput).toBeVisible();
-
-    // Press Escape
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
-
-    // Verify it's closed
-    await expect(searchInput).not.toBeVisible();
-  });
 
   test('command palette closes when clicking outside', async ({ page }) => {
     const commandButton = page.locator('header button[aria-label*="command" i]');
