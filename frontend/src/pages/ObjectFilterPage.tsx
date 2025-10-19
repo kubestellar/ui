@@ -21,7 +21,6 @@ import {
   Tooltip,
   Autocomplete,
   TextField,
-  Badge,
   ToggleButtonGroup,
   ToggleButton,
   Switch,
@@ -1043,7 +1042,10 @@ const ObjectFilterPage: React.FC = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              {t('resources.bulkActions.resourcesSelected', { count: selectedResources.length })}
+              {t('resources.bulkActions.resourcesSelected', {
+                count: selectedResources.length,
+                objectText: selectedResources.length === 1 ? 'object' : 'objects',
+              })}
             </Typography>
             <Button
               variant="outlined"
@@ -1126,27 +1128,15 @@ const ObjectFilterPage: React.FC = () => {
             >
               {t('resources.results')}
             </Typography>
-            <Badge
-              badgeContent={resources.length}
-              color="primary"
+            <Chip
+              label={`${resources.length} object${resources.length !== 1 ? 's' : ''}`}
+              size="small"
               sx={{
-                '& .MuiBadge-badge': {
-                  backgroundColor: isDark ? darkTheme.brand.primary : lightTheme.brand.primary,
-                  color: '#ffffff',
-                  fontWeight: 600,
-                },
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
+                color: isDark ? darkTheme.brand.primaryLight : darkTheme.brand.primary,
+                fontWeight: 600,
               }}
-            >
-              <Chip
-                label={`${resources.length} object${resources.length !== 1 ? 's' : ''}`}
-                size="small"
-                sx={{
-                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-                  color: isDark ? darkTheme.brand.primaryLight : darkTheme.brand.primary,
-                  fontWeight: 600,
-                }}
-              />
-            </Badge>
+            />
           </Box>
 
           {resources.length > 0 && (
