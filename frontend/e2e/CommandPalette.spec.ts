@@ -48,7 +48,6 @@ test.describe('Command Palette', () => {
     await expect(searchInput).toBeVisible();
   });
 
-
   test('command palette closes when clicking outside', async ({ page }) => {
     const commandButton = page.locator('header button[aria-label*="command" i]');
 
