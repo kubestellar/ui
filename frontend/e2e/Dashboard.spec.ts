@@ -38,10 +38,10 @@ test.describe('Dashboard Page', () => {
     // Fill login form
     await page.locator('input[placeholder="Username"]').fill('admin');
     await page.locator('input[placeholder="Password"]').fill('admin');
-    
+
     // Click submit button
     await page.locator('button[type="submit"]').click();
-    
+
     // Wait for navigation with fallback
     try {
       await page.waitForURL('/', { timeout: 15000 });
@@ -52,15 +52,20 @@ test.describe('Dashboard Page', () => {
         console.log('Already on dashboard, continuing...');
       } else {
         // Try to wait for any navigation away from login
-        await page.waitForFunction(() => !window.location.href.includes('/login'), { timeout: 5000 });
+        await page.waitForFunction(() => !window.location.href.includes('/login'), {
+          timeout: 5000,
+        });
       }
     }
 
     // Wait for dashboard to load - use waitForFunction for better Chromium compatibility
-    await page.waitForFunction(() => {
-      const heading = document.querySelector('h1');
-      return heading && heading.textContent?.includes('Dashboard');
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const heading = document.querySelector('h1');
+        return heading && heading.textContent?.includes('Dashboard');
+      },
+      { timeout: 10000 }
+    );
   });
 
   test.describe('Dashboard Layout and Structure', () => {
@@ -234,7 +239,6 @@ test.describe('Dashboard Page', () => {
 
       await page.keyboard.press('Escape');
     });
-
   });
 
   test.describe('Recent Activity Section', () => {
@@ -248,29 +252,35 @@ test.describe('Dashboard Page', () => {
       const adminVisible = (await page.locator('text=admin').count()) > 0;
       const user1Visible = (await page.locator('text=user1').count()) > 0;
       const user2Visible = (await page.locator('text=user2').count()) > 0;
-      
+
       // Also check for any user-related text patterns
       const anyUserVisible = (await page.locator('text=/user|admin|User|Admin/i').count()) > 0;
-      
+
       // Check for activity status indicators
-      const statusElements = page.locator('text=/Created|Active|Deleted|Updated|Synced|created|active|deleted|updated|synced/i');
+      const statusElements = page.locator(
+        'text=/Created|Active|Deleted|Updated|Synced|created|active|deleted|updated|synced/i'
+      );
       const statusCount = await statusElements.count();
-      
+
       // Check for activity items structure
-      const activityItems = page.locator('[class*="h-16"][class*="items-center"], [class*="activity"], [class*="recent"]');
+      const activityItems = page.locator(
+        '[class*="h-16"][class*="items-center"], [class*="activity"], [class*="recent"]'
+      );
       const activityCount = await activityItems.count();
-      
+
       // Test passes if we have either user data OR activity structure OR status indicators
       const hasUserData = adminVisible || user1Visible || user2Visible || anyUserVisible;
       const hasActivityStructure = activityCount > 0;
       const hasStatusIndicators = statusCount > 0;
-      
+
       expect(hasUserData || hasActivityStructure || hasStatusIndicators).toBeTruthy();
     });
 
     test('recent activity items are clickable', async ({ page }) => {
       // Look for any activity-related links that might navigate to admin
-      const activityLinks = page.locator('a[href*="admin"], a[href*="/admin"], a:has-text("admin")');
+      const activityLinks = page.locator(
+        'a[href*="admin"], a[href*="/admin"], a:has-text("admin")'
+      );
       const linkCount = await activityLinks.count();
 
       if (linkCount > 0) {
@@ -279,18 +289,18 @@ test.describe('Dashboard Page', () => {
       } else {
         // If no admin links found, test any clickable activity item
         const anyActivityLink = page.locator('a').first();
-        if (await anyActivityLink.count() > 0) {
+        if ((await anyActivityLink.count()) > 0) {
           const initialUrl = page.url();
           await anyActivityLink.click();
-          
+
           // Wait for potential navigation
           await page.waitForTimeout(1000);
-          
+
           // Check if navigation occurred or if link was clicked successfully
           const currentUrl = page.url();
           const navigationOccurred = currentUrl !== initialUrl;
           const linkWasClickable = true; // If we got here, the link was clickable
-          
+
           // Test passes if either navigation occurred OR link was successfully clicked
           expect(navigationOccurred || linkWasClickable).toBeTruthy();
         } else {
