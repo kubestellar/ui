@@ -126,7 +126,12 @@ const Pagination = ({
             fontSize: '0.9rem',
           }}
         >
-          {`Showing ${startItem}-${endItem} of ${totalItems} ${totalItems === 1 ? 'item' : 'items'}`}
+          {t('resources.pagination.showing', {
+            from: startItem,
+            to: endItem,
+            total: totalItems,
+          })}{' '}
+          {totalItems === 1 ? 'item' : 'items'}
         </Typography>
       </Box>
 
