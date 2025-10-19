@@ -126,7 +126,7 @@ const Pagination = ({
             fontSize: '0.9rem',
           }}
         >
-          {t('resources.pagination.showing', {
+          {t('workloads.pagination.showing', {
             from: startItem,
             to: endItem,
             total: totalItems,
