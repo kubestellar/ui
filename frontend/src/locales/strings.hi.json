@@ -2097,14 +2097,14 @@
         "title": "होम",
         "description": "डैशबोर्ड पर जाएं"
       },
-     "plugin": {
-      "title": "प्लगइन मैनेजर",
-      "description": "KubeStellar प्लगइन्स प्रबंधित और निगरानी करें"
-    },
-    "Grafana": {
-      "title": "ग्राफाना डैशबोर्ड", 
-      "description": "ग्राफाना डैशबोर्ड खोलें"
-    },
+      "plugin": {
+        "title": "प्लगइन मैनेजर",
+        "description": "KubeStellar प्लगइन्स प्रबंधित और निगरानी करें"
+      },
+      "Grafana": {
+        "title": "ग्राफाना डैशबोर्ड",
+        "description": "ग्राफाना डैशबोर्ड खोलें"
+      },
       "workloads": {
         "title": "वर्कलोड्स",
         "description": "क्लस्टर्स में वर्कलोड्स प्रबंधित करें"
@@ -2114,25 +2114,25 @@
         "description": "Kubernetes ऑब्जेक्ट्स खोजें और फ़िल्टर करें"
       },
       "bindingPolicies": {
-      "title": "बाइंडिंग नीतियाँ",
-      "description": "बाइंडिंग नीतियाँ प्रबंधित करें"
-    },
+        "title": "बाइंडिंग नीतियाँ",
+        "description": "बाइंडिंग नीतियाँ प्रबंधित करें"
+      },
       "userManagement": {
-      "title": "उपयोगकर्ता प्रबंधन",
-      "description": "सिस्टम उपयोगकर्ताओं और अनुमतियों का प्रबंधन करें"
-    },
-       "wdsTreeview": {
-      "title": "WDS ट्री व्यू",
-      "description": "वर्कलोड वितरण विज़ुअलाइज़ करें"
-    },
-    "wecsTreeview": {
-      "title": "WECS ट्री व्यू",
-      "description": "डिप्लॉय किए गए वर्कलोड्स की संरचना विज़ुअलाइज़ करें"
-    },
+        "title": "उपयोगकर्ता प्रबंधन",
+        "description": "सिस्टम उपयोगकर्ताओं और अनुमतियों का प्रबंधन करें"
+      },
+      "wdsTreeview": {
+        "title": "WDS ट्री व्यू",
+        "description": "वर्कलोड वितरण विज़ुअलाइज़ करें"
+      },
+      "wecsTreeview": {
+        "title": "WECS ट्री व्यू",
+        "description": "डिप्लॉय किए गए वर्कलोड्स की संरचना विज़ुअलाइज़ करें"
+      },
       "documentation": {
-      "title": "डॉक्यूमेंटेशन खोलें",
-      "description": "KubeStellar डॉक्यूमेंटेशन लॉन्च करें"
-    },
+        "title": "डॉक्यूमेंटेशन खोलें",
+        "description": "KubeStellar डॉक्यूमेंटेशन लॉन्च करें"
+      },
       "logout": {
         "title": "लॉगआउट",
         "description": "अपने खाते से साइन आउट करें",
