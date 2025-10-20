@@ -2719,7 +2719,7 @@
     "searchPlaceholder": "Search object kinds...",
     "quickSearchPlaceholder": "Quick search objects...",
     "bulkActions": {
-      "resourcesSelected": "{{count}} object{{count > 1 ? 's' : ''}} selected",
+      "resourcesSelected": "{{count}} {{objectText}} selected",
       "clearSelection": "Clear Selection",
       "viewDetails": "View Details",
       "export": "Export"

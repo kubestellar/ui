@@ -79,6 +79,18 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     }
   }, [formError]);
 
+  // Lock body scroll while the modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
   const validateForm = () => {
     if (!username.trim()) {
       return { isValid: false, error: 'Username is required' };

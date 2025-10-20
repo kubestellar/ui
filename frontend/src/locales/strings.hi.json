@@ -2714,7 +2714,7 @@
     "searchPlaceholder": "संसाधन प्रकार खोजें...",
     "quickSearchPlaceholder": "संसाधनों को त्वरित खोजें...",
     "bulkActions": {
-      "resourcesSelected": "{{count}} संसाधन चयनित",
+      "resourcesSelected": "{{count}} {{objectText}} चयनित",
       "clearSelection": "चयन साफ़ करें",
       "viewDetails": "विवरण देखें",
       "export": "निर्यात करें"
