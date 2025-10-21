@@ -840,7 +840,7 @@ spec:
     const file = e.dataTransfer.files?.[0] || null;
     if (
       file &&
-      (file.name.endsWith('.yaml') || file.name.endsWith('.yml') || file.name.endsWith('.json'))
+      (file.name.endsWith('.yaml') || file.name.endsWith('.yml'))
     ) {
       setSelectedFile(file);
     } else {

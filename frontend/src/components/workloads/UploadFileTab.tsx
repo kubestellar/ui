@@ -304,7 +304,7 @@ export const UploadFileTab = ({
               <input
                 type="file"
                 hidden
-                accept=".yaml,.yml,.json"
+                accept=".yaml,.yml"
                 onClick={e => (e.currentTarget.value = '')}
                 onChange={handleFileChange}
               />
