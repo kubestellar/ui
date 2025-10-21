@@ -838,10 +838,7 @@ spec:
     e.preventDefault();
     e.currentTarget.style.borderColor = '#bdbdbd';
     const file = e.dataTransfer.files?.[0] || null;
-    if (
-      file &&
-      (file.name.endsWith('.yaml') || file.name.endsWith('.yml'))
-    ) {
+    if (file && (file.name.endsWith('.yaml') || file.name.endsWith('.yml'))) {
       setSelectedFile(file);
     } else {
       toast.error(t('workloads.createOptions.file.invalidFile'));
