@@ -630,7 +630,7 @@
       "notAvailable": "उपलब्ध नहीं",
       "invalidDate": "अमान्य दिनांक",
       "managedClusters": "प्रबंधित क्लस्टर्स",
-      "Grafana": "ग्राफाना",
+      "grafana": "ग्राफाना",
       "total": "कुल",
       "viewAll": "सभी देखें",
       "cpuCapacity": "CPU क्षमता",
