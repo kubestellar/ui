@@ -330,7 +330,7 @@ const GalaxyMarketplace: React.FC = () => {
   }
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
+    <div className="relative z-0 flex h-full w-full flex-col overflow-hidden">
       {/* Cosmic background */}
       <canvas
         ref={canvasRef}
@@ -359,7 +359,7 @@ const GalaxyMarketplace: React.FC = () => {
       {/* Enhanced Header */}
       {/* Header Section */}
       <motion.div
-        className="sticky top-[72px] z-30 flex flex-col gap-4 bg-opacity-95 p-6 pb-0 backdrop-blur-md xl:top-[76px] 2xl:top-[88px]"
+        className="sticky top-[72px] z-30 flex flex-col gap-4 bg-opacity-95 p-6 pb-4 backdrop-blur-md xl:top-[76px] 2xl:top-[88px]"
         style={{
           background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         }}
@@ -367,7 +367,7 @@ const GalaxyMarketplace: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center  justify-between">
           <div className="flex items-center gap-4">
             <motion.div
               className="relative rounded-2xl p-4"
