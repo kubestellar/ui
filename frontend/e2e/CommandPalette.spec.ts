@@ -67,7 +67,7 @@ test.describe('Command Palette', () => {
 
       // Open command palette
       await page.keyboard.press('Control+k');
-      
+
       // Wait for the search input to appear (consistent with other tests)
       const searchInput = page.getByPlaceholder('Search commands...');
       await expect(searchInput).toBeVisible({ timeout: 8000 });
@@ -82,7 +82,7 @@ test.describe('Command Palette', () => {
       try {
         // Look for the Home command in the results
         await page.waitForSelector('[data-command-index]', { timeout: 3000 });
-        
+
         // Verify we can see the Home command result
         const homeCommand = page.locator('text=Home').first();
         await expect(homeCommand).toBeVisible({ timeout: 1000 });
