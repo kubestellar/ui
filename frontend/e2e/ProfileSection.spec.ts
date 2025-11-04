@@ -24,7 +24,7 @@ test.describe('Profile Section', () => {
   test.describe('Profile Button Visibility', () => {
     test('profile button shows user icon', async ({ page }) => {
       const profileButton = page.getByRole('button', { name: 'Open user menu' });
-      
+
       // Check that the button contains an icon (should have a class indicating it's an icon)
       const icon = profileButton.locator('svg, .text-xl');
       await expect(icon).toBeVisible();
@@ -47,11 +47,15 @@ test.describe('Profile Section', () => {
       const profileButton = page.getByRole('button', { name: 'Open user menu' });
       await profileButton.click();
 
-      const changePasswordItem = page.getByRole('menuitem').filter({ hasText: /change.*password/i });
+      const changePasswordItem = page
+        .getByRole('menuitem')
+        .filter({ hasText: /change.*password/i });
       await changePasswordItem.click();
 
       // Wait for modal to appear - use more specific selector
-      await expect(page.locator('h2').filter({ hasText: /change.*password/i })).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('h2').filter({ hasText: /change.*password/i })).toBeVisible({
+        timeout: 5000,
+      });
     });
   });
 
@@ -63,7 +67,7 @@ test.describe('Profile Section', () => {
       // Check that help & support item exists - use broader selector
       const helpSupportItem = page.getByRole('menuitem').filter({ hasText: /help|support/i });
       await expect(helpSupportItem).toBeVisible();
-      
+
       // Just verify it's clickable - don't test the actual navigation
       await expect(helpSupportItem).toBeEnabled();
     });
@@ -75,7 +79,7 @@ test.describe('Profile Section', () => {
       // Check that raise issue item exists - use broader selector
       const raiseIssueItem = page.getByRole('menuitem').filter({ hasText: /raise|issue/i });
       await expect(raiseIssueItem).toBeVisible();
-      
+
       // Just verify it's clickable - don't test the actual navigation
       await expect(raiseIssueItem).toBeEnabled();
     });
