@@ -116,6 +116,19 @@ export const scenarios: Record<string, HttpHandler[]> = {
     h.updateClusterLabels,
     h.detachCluster,
   ],
+
+  // WDS specific success scenario
+  wdsSuccess: [
+    h.statusReady,
+    h.statusReadyRel,
+    h.me,
+    h.workloads,
+    h.workloadsRel,
+    h.workloadStatus,
+    h.workloadStatusRel,
+    h.wdsGetContextAbs,
+    h.wdsGetContextRel,
+  ],
 };
 
 export function applyScenarioByName(name: string) {

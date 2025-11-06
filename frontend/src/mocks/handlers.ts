@@ -294,6 +294,19 @@ export const workloads: HttpHandler = http.get('http://localhost:4000/api/wds/wo
   ])
 );
 
+// Relative aliases for WDS (frontend often calls relative URLs)
+export const workloadsRel: HttpHandler = http.get('/api/wds/workloads', () =>
+  HttpResponse.json([
+    {
+      name: 'kubernetes',
+      kind: 'Service',
+      namespace: 'default',
+      creationTime: new Date().toISOString(),
+      labels: { component: 'apiserver', provider: 'kubernetes' },
+    },
+  ])
+);
+
 export const me: HttpHandler = http.get('http://localhost:4000/api/me', () =>
   HttpResponse.json({
     is_admin: true,
@@ -515,6 +528,12 @@ export const workloadStatus: HttpHandler = http.get('http://localhost:4000/api/w
   ])
 );
 
+export const workloadStatusRel: HttpHandler = http.get('/api/wds/status', () =>
+  HttpResponse.json([
+    { name: 'kubernetes-service', status: 'Running', namespace: 'default', kind: 'Service' },
+  ])
+);
+
 // Workload logs endpoint
 export const workloadLogs: HttpHandler = http.get(
   'http://localhost:4000/api/wds/logs',
@@ -561,6 +580,28 @@ export const workloadDetails: HttpHandler = http.get(
       },
     });
   }
+);
+
+// Context endpoints (absolute and relative)
+export const wdsGetContextAbs: HttpHandler = http.get('http://localhost:4000/wds/get/context', () =>
+  HttpResponse.json({
+    'ui-wds-context': 'wds1',
+    'system-context': 'wds1',
+    'other-wds-context': ['wds1', 'wds2'],
+  })
+);
+
+export const wdsGetContextRel: HttpHandler = http.get('/wds/get/context', () =>
+  HttpResponse.json({
+    'ui-wds-context': 'wds1',
+    'system-context': 'wds1',
+    'other-wds-context': ['wds1', 'wds2'],
+  })
+);
+
+// Relative status for Kubestellar install check
+export const statusReadyRel: HttpHandler = http.get('/api/kubestellar/status', () =>
+  HttpResponse.json({ allReady: true })
 );
 
 // ITS Page - Import cluster
@@ -672,12 +713,14 @@ export const detachCluster: HttpHandler = http.post(
 
 export const defaultHandlers: HttpHandler[] = [
   statusReady,
+  statusReadyRel,
   health,
   prerequisites,
   login,
   clusters,
   bindingPolicies,
   workloads,
+  workloadsRel,
   me,
   k8sInfo,
   clusterMetrics,
@@ -687,12 +730,14 @@ export const defaultHandlers: HttpHandler[] = [
   clusterDetails,
   clusterStatus,
   workloadStatus,
+  workloadStatusRel,
   workloadLogs,
   workloadDetails,
-  // ITS specific handlers
   importCluster,
   onboardCluster,
   generateOnboardCommand,
   updateClusterLabels,
   detachCluster,
+  wdsGetContextAbs,
+  wdsGetContextRel,
 ];
