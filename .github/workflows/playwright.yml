@@ -58,7 +58,7 @@ jobs:
     
     - name: List available tests
       working-directory: ./frontend
-      run: npx playwright test --list --project=${{ matrix.browser }} | head -5
+      run: npx playwright test --list --project=${{ matrix.browser }} > /tmp/playwright_list.txt && head -5 /tmp/playwright_list.txt && rm /tmp/playwright_list.txt
     
     - name: Build frontend
       working-directory: ./frontend
