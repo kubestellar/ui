@@ -260,7 +260,7 @@ export class LoginPage extends BasePage {
     // Open dropdown if not already open
     const dropdown = this.page.locator('[role="listbox"]');
     const isDropdownVisible = await this.isVisible(dropdown, 1000);
-    
+
     if (!isDropdownVisible) {
       await this.openLanguageDropdown();
       // Wait for dropdown to appear
@@ -273,24 +273,24 @@ export class LoginPage extends BasePage {
       .locator('[role="option"]')
       .filter({ hasText: languageText })
       .first();
-    
+
     // Wait for element to be visible and stable
     await languageOption.waitFor({ state: 'visible', timeout: 3000 });
-    
+
     // Ensure element is attached to DOM by checking it's still visible
     await this.page.waitForFunction(
-      (text) => {
+      text => {
         const options = Array.from(document.querySelectorAll('[role="option"]'));
         return options.some(opt => opt.textContent?.includes(text));
       },
       languageText,
       { timeout: 2000 }
     );
-    
+
     // Use a more reliable click approach - wait for element to be actionable
     await languageOption.waitFor({ state: 'attached', timeout: 2000 });
     await this.page.waitForTimeout(100); // Small wait for stability
-    
+
     // Click with retry handling
     try {
       await languageOption.click({ timeout: 5000 });
@@ -408,9 +408,6 @@ export class LoginPage extends BasePage {
    * Check if accessibility attributes are present
    */
   async hasAccessibilityAttributes(): Promise<boolean> {
-    return (
-      (await this.page.locator('[role="alert"], [aria-live], .toast-error').count()) > 0
-    );
+    return (await this.page.locator('[role="alert"], [aria-live], .toast-error').count()) > 0;
   }
 }
-

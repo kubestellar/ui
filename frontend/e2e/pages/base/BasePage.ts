@@ -73,4 +73,3 @@ export class BasePage {
     await this.page.screenshot({ path });
   }
 }
-

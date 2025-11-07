@@ -11,14 +11,11 @@ export class MSWHelper {
    * Apply an MSW scenario by name
    */
   async applyScenario(scenarioName: string) {
-    await this.page.evaluate(
-      (name: string) => {
-        if (window.__msw) {
-          window.__msw.applyScenarioByName(name);
-        }
-      },
-      scenarioName
-    );
+    await this.page.evaluate((name: string) => {
+      if (window.__msw) {
+        window.__msw.applyScenarioByName(name);
+      }
+    }, scenarioName);
   }
 
   /**
@@ -41,4 +38,3 @@ export class MSWHelper {
     });
   }
 }
-
