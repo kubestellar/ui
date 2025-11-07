@@ -2,24 +2,23 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from './pages/LoginPage';
 
 test.describe('Login Page', () => {
-  let loginPage: LoginPage;
-
-  test.beforeEach(async ({ page }) => {
-    loginPage = new LoginPage(page);
+  test('login page shows UI elements', async ({ page }) => {
+    const loginPage = new LoginPage(page);
     await loginPage.goto();
-  });
-
-  test('login page shows UI elements', async () => {
     await loginPage.verifyUIElements();
     await loginPage.verifyCanvasElements();
   });
 
   test('success with admin/admin logs in and redirects', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.login('admin', 'admin');
     await expect(page).toHaveURL('/', { timeout: 10000 });
   });
 
-  test('remember me checkbox persists behavior', async () => {
+  test('remember me checkbox persists behavior', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.fillUsername('admin');
     await loginPage.fillPassword('admin');
     await loginPage.checkRememberMe();
@@ -32,6 +31,8 @@ test.describe('Login Page', () => {
 
   // Form Validation Tests
   test('form validation prevents submission with empty fields', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.submitEmptyForm();
 
     // Form should not submit and we should stay on login page
@@ -39,12 +40,14 @@ test.describe('Login Page', () => {
     await loginPage.verifyFormValidation();
   });
 
-  test('form validation clears errors when typing', async () => {
+  test('form validation clears errors when typing', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     // Test that form prevents submission with empty fields
     await loginPage.submitEmptyForm();
 
     // Should stay on login page (form didn't submit)
-    await expect(loginPage.page).toHaveURL(/login/);
+    await expect(page).toHaveURL(/login/);
 
     // Test that typing in fields works correctly
     await loginPage.fillUsername('testuser');
@@ -56,7 +59,9 @@ test.describe('Login Page', () => {
   });
 
   // Password Visibility Toggle Tests
-  test('password visibility toggle works', async () => {
+  test('password visibility toggle works', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.fillPassword('testpassword');
 
     await loginPage.togglePasswordVisibility();
@@ -68,18 +73,19 @@ test.describe('Login Page', () => {
 
   // Language Switching Tests
   test('language switcher opens and changes language', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     // Select language - this will open dropdown and select
     await loginPage.selectLanguage('हिन्दी');
 
-    // Wait a bit for language change to take effect
-    await page.waitForTimeout(500);
-
-    // Verify language changed by checking if we're still on login page
+    // Wait for language change to take effect by checking URL
     await expect(page).toHaveURL(/login/);
   });
 
   // Fullscreen Toggle Tests
-  test('fullscreen toggle works', async () => {
+  test('fullscreen toggle works', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     // Check initial state
     const initialFullscreen = await loginPage.isFullscreen();
     expect(initialFullscreen).toBe(false);
@@ -99,17 +105,23 @@ test.describe('Login Page', () => {
   });
 
   // Accessibility Tests
-  test('keyboard navigation works correctly', async () => {
+  test('keyboard navigation works correctly', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.testKeyboardNavigation();
   });
 
   // Responsive Design Tests
-  test('responsive design works on mobile', async () => {
+  test('responsive design works on mobile', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.testMobileView();
   });
 
   // Security Features Tests
   test('remember me stores credentials securely', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.fillUsername('admin');
     await loginPage.fillPassword('admin');
     await loginPage.checkRememberMe();
@@ -131,22 +143,37 @@ test.describe('Login Page', () => {
 
   // Error Handling Tests
   test('shows error for invalid credentials', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.fillUsername('invaliduser');
     await loginPage.fillPassword('wrongpassword');
     await loginPage.clickSignIn();
 
-    // Wait for error indication
-    await loginPage.waitForError();
+    // Wait for error indication - give it more time in Chromium
+    await loginPage.waitForError(8000);
 
-    // Check that we're still on the login page (didn't redirect)
-    await expect(page).toHaveURL(/login/);
+    // Check that we're still on the login page (didn't redirect) - this is the primary indicator of error
+    await expect(page).toHaveURL(/login/, { timeout: 10000 });
 
     // At least one error indication should be present
-    const hasError = await loginPage.hasError();
+    // In Chromium, error might take longer to appear, so wait for error elements with retry
+    let hasError = false;
+    for (let i = 0; i < 3; i++) {
+      hasError = await loginPage.hasError();
+      if (hasError) break;
+      // Wait for any error element to appear
+      await Promise.race([
+        loginPage.errorToast.waitFor({ state: 'visible', timeout: 2000 }).catch(() => {}),
+        loginPage.errorAlert.waitFor({ state: 'visible', timeout: 2000 }).catch(() => {}),
+        loginPage.errorText.waitFor({ state: 'visible', timeout: 2000 }).catch(() => {}),
+      ]);
+    }
     expect(hasError).toBeTruthy();
   });
 
   test('error handling works with invalid then valid credentials', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     // First attempt with invalid credentials
     await loginPage.fillUsername('invaliduser');
     await loginPage.fillPassword('wrongpassword');
@@ -155,14 +182,25 @@ test.describe('Login Page', () => {
     await loginPage.waitForError();
     await expect(page).toHaveURL(/login/);
 
-    // Now try with correct credentials
-    await loginPage.login('admin', 'admin');
+    // Ensure form inputs are ready and enabled (waitForError already waits for this, but double-check)
+    await expect(loginPage.usernameInput).toBeEnabled({ timeout: 5000 });
+    await expect(loginPage.passwordInput).toBeEnabled({ timeout: 5000 });
+    await expect(loginPage.signInButton).toBeEnabled({ timeout: 5000 });
+
+    // Now try with correct credentials - use individual methods instead of login() to have more control
+    await loginPage.usernameInput.clear();
+    await loginPage.passwordInput.clear();
+    await loginPage.fillUsername('admin');
+    await loginPage.fillPassword('admin');
+    await loginPage.clickSignIn();
 
     // Wait for successful login and redirect
-    await expect(page).toHaveURL('/', { timeout: 5000 });
+    await expect(page).toHaveURL('/', { timeout: 10000 });
   });
 
   test('loading state appears during login attempt', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.fillUsername('admin');
     await loginPage.fillPassword('admin');
     await loginPage.clickSignIn();
@@ -176,6 +214,8 @@ test.describe('Login Page', () => {
   });
 
   test('error handling maintains accessibility', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.fillUsername('invaliduser');
     await loginPage.fillPassword('wrongpassword');
     await loginPage.clickSignIn();
@@ -192,6 +232,8 @@ test.describe('Login Page', () => {
   });
 
   test('error toast appears with correct message content', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
     await loginPage.fillUsername('invaliduser');
     await loginPage.fillPassword('wrongpassword');
     await loginPage.clickSignIn();

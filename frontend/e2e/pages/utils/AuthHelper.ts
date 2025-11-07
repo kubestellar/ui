@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 import { LoginPage } from '../LoginPage';
+import { DEFAULT_CREDENTIALS } from '../constants';
 
 /**
  * Authentication Helper
@@ -14,7 +15,7 @@ export class AuthHelper {
   async loginAsAdmin(): Promise<void> {
     const loginPage = new LoginPage(this.page);
     await loginPage.goto();
-    await loginPage.login('admin', 'admin');
+    await loginPage.login(DEFAULT_CREDENTIALS.username, DEFAULT_CREDENTIALS.password);
   }
 
   /**
@@ -29,7 +30,10 @@ export class AuthHelper {
   /**
    * Login with remember me enabled
    */
-  async loginWithRememberMe(username: string = 'admin', password: string = 'admin'): Promise<void> {
+  async loginWithRememberMe(
+    username: string = DEFAULT_CREDENTIALS.username,
+    password: string = DEFAULT_CREDENTIALS.password
+  ): Promise<void> {
     const loginPage = new LoginPage(this.page);
     await loginPage.goto();
     await loginPage.fillUsername(username);

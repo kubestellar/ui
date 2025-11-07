@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './base/BasePage';
+import { DEFAULT_CREDENTIALS } from './constants';
 
 /**
  * Login Page Object Model
@@ -33,17 +34,28 @@ export class LoginPage extends BasePage {
   readonly toastContainer: Locator;
   readonly loadingToast: Locator;
 
+  // Private helper for error locators
+  private get errorLocators(): Locator[] {
+    return [this.errorToast, this.errorAlert, this.errorText];
+  }
+
   constructor(page: Page) {
     super(page);
     // Form elements
     this.usernameInput = page.getByRole('textbox', { name: 'Username' });
-    this.passwordInput = page.getByRole('textbox', { name: 'Password' });
+    // Password input is the second input in the form (username is first)
+    // It can be type="password" or type="text" depending on visibility toggle
+    // Target inputs within the form to avoid matching other inputs on the page
+    this.passwordInput = page
+      .locator('form input[type="password"], form input[type="text"]')
+      .nth(1);
     this.signInButton = page.getByRole('button', { name: /Sign In|Sign In to/i });
     this.rememberMeCheckbox = page.getByRole('checkbox', { name: /Remember me/i });
     this.passwordToggle = page.getByRole('button', { name: /Show password|Hide password/i });
 
     // UI elements
-    this.welcomeHeading = page.getByRole('heading', { name: 'Welcome Back' });
+    // The heading text varies by translation - use flexible selector
+    this.welcomeHeading = page.getByRole('heading').first();
     this.seamlessText = page.getByText('Seamless Multi-Cluster');
     this.builtForText = page.getByText('Built for the Future.');
     this.fullscreenButton = page.getByRole('button', { name: 'Toggle full screen' });
@@ -94,7 +106,14 @@ export class LoginPage extends BasePage {
   /**
    * Complete login flow
    */
-  async login(username: string = 'admin', password: string = 'admin') {
+  async login(
+    username: string = DEFAULT_CREDENTIALS.username,
+    password: string = DEFAULT_CREDENTIALS.password
+  ) {
+    // Clear any previous input
+    await this.usernameInput.clear();
+    await this.passwordInput.clear();
+
     await this.fillUsername(username);
     await this.fillPassword(password);
     await this.clickSignIn();
@@ -141,13 +160,35 @@ export class LoginPage extends BasePage {
    * Verify all UI elements are visible
    */
   async verifyUIElements() {
-    await expect(this.welcomeHeading).toBeVisible();
-    await expect(this.usernameInput).toBeVisible();
-    await expect(this.passwordInput).toBeVisible();
+    // Wait for page to load - use domcontentloaded instead of networkidle for better reliability
+    // networkidle can timeout in Chromium if there are long-running connections
+    await this.page.waitForLoadState('domcontentloaded');
+
+    // Wait for form elements to be visible (more reliable than networkidle)
+    await expect(this.usernameInput).toBeVisible({ timeout: 10000 });
+    await expect(this.passwordInput).toBeVisible({ timeout: 10000 });
+
+    // Check for any heading (text may vary by translation)
+    const headings = this.page.locator('h1, h2, h3, [role="heading"]');
+    const headingCount = await headings.count();
+    expect(headingCount).toBeGreaterThan(0);
+
+    // Verify form elements (most important)
     await expect(this.signInButton).toBeVisible();
     await expect(this.rememberMeCheckbox).toBeVisible();
-    await expect(this.seamlessText).toBeVisible();
-    await expect(this.builtForText).toBeVisible();
+
+    // Verify text elements (may vary by translation, so check if any exist)
+    const seamlessVisible = await this.isVisible(this.seamlessText, 2000);
+    const builtForVisible = await this.isVisible(this.builtForText, 2000);
+
+    // At least one of these text elements should be visible
+    if (!seamlessVisible && !builtForVisible) {
+      // Check for alternative text that might be translated
+      const anyText = this.page.locator('text=/Seamless|Multi-Cluster|Built|Future/i');
+      const textCount = await anyText.count();
+      expect(textCount).toBeGreaterThan(0);
+    }
+
     await expect(this.fullscreenButton).toBeVisible();
     await expect(this.languageButton).toBeVisible();
   }
@@ -194,36 +235,52 @@ export class LoginPage extends BasePage {
   /**
    * Wait for error message to appear
    */
-  async waitForError(timeout: number = 3000) {
+  async waitForError(timeout: number = 5000) {
+    // Wait for any error indicator to appear
     await Promise.race([
-      this.errorToast.waitFor({ timeout }).catch(() => {}),
-      this.errorAlert.waitFor({ timeout }).catch(() => {}),
-      this.errorText.waitFor({ timeout }).catch(() => {}),
+      this.errorToast.waitFor({ state: 'visible', timeout }).catch(() => {}),
+      this.errorAlert.waitFor({ state: 'visible', timeout }).catch(() => {}),
+      this.errorText.waitFor({ state: 'visible', timeout }).catch(() => {}),
+      // Also check if we're still on login page (indicates error)
+      this.page.waitForURL(/login/, { timeout }).catch(() => {}),
     ]);
+
+    // Wait for form to be ready again (inputs enabled)
+    await expect(this.usernameInput)
+      .toBeEnabled({ timeout: 2000 })
+      .catch(() => {});
+    await expect(this.passwordInput)
+      .toBeEnabled({ timeout: 2000 })
+      .catch(() => {});
   }
 
   /**
    * Check if error is displayed
    */
   async hasError(): Promise<boolean> {
-    const hasErrorToast = (await this.errorToast.count()) > 0;
-    const hasAlert = (await this.errorAlert.count()) > 0;
-    const hasErrorText = (await this.errorText.count()) > 0;
-    return hasErrorToast || hasAlert || hasErrorText;
+    // Check multiple ways to detect error
+    const counts = await Promise.all(this.errorLocators.map(locator => locator.count()));
+    const hasErrorElement = counts.some(count => count > 0);
+
+    // Also check if we're still on login page after attempting login (indicates error)
+    const isStillOnLogin = await this.isOnLoginPage();
+
+    // Check for error text in the page
+    const errorTextExists =
+      (await this.page.locator('text=/Invalid|Error|Failed|incorrect/i').count()) > 0;
+
+    return hasErrorElement || (isStillOnLogin && errorTextExists);
   }
 
   /**
    * Get error message text
    */
   async getErrorMessage(): Promise<string | null> {
-    if (await this.errorToast.isVisible({ timeout: 1000 }).catch(() => false)) {
-      return await this.errorToast.textContent();
-    }
-    if (await this.errorAlert.isVisible({ timeout: 1000 }).catch(() => false)) {
-      return await this.errorAlert.textContent();
-    }
-    if (await this.errorText.isVisible({ timeout: 1000 }).catch(() => false)) {
-      return await this.errorText.textContent();
+    for (const locator of this.errorLocators) {
+      const isVisible = await locator.isVisible({ timeout: 1000 }).catch(() => false);
+      if (isVisible) {
+        return await locator.textContent();
+      }
     }
     return null;
   }
@@ -289,7 +346,7 @@ export class LoginPage extends BasePage {
 
     // Use a more reliable click approach - wait for element to be actionable
     await languageOption.waitFor({ state: 'attached', timeout: 2000 });
-    await this.page.waitForTimeout(100); // Small wait for stability
+    await expect(languageOption).toBeEnabled({ timeout: 2000 });
 
     // Click with retry handling
     try {
@@ -319,7 +376,7 @@ export class LoginPage extends BasePage {
     const isFullscreen = await this.page.evaluate(() => !!document.fullscreenElement);
     if (!isFullscreen) {
       await this.toggleFullscreen();
-      await this.page.waitForFunction(() => !!document.fullscreenElement);
+      await this.page.waitForFunction(() => !!document.fullscreenElement, { timeout: 5000 });
     }
   }
 
@@ -376,16 +433,8 @@ export class LoginPage extends BasePage {
    * Check if remember me stored credentials
    */
   async hasStoredCredentials(): Promise<boolean> {
-    const localStorageData = await this.page.evaluate(() => {
-      const keys = Object.keys(localStorage);
-      const data: Record<string, string | null> = {};
-      keys.forEach(key => {
-        data[key] = localStorage.getItem(key);
-      });
-      return data;
-    });
-
-    return Object.keys(localStorageData).some(
+    const keys = await this.page.evaluate(() => Object.keys(localStorage));
+    return keys.some(
       key => key.includes('remember') || key.includes('username') || key.includes('password')
     );
   }

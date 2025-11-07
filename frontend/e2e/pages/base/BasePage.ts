@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { BASE_URL } from '../constants';
 
 /**
  * Base Page Object Model class
@@ -6,7 +7,7 @@ import { Page, Locator, expect } from '@playwright/test';
  */
 export class BasePage {
   readonly page: Page;
-  readonly BASE_URL = 'http://localhost:5173';
+  readonly BASE_URL = BASE_URL;
 
   constructor(page: Page) {
     this.page = page;
