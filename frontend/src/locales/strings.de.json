@@ -620,7 +620,7 @@
       "distribution": "Verteilung",
       "state": "Ausstehend oder inaktiv",
       "otherClusters": "Weitere Cluster",
-      "hoverFormula": Zum Anzeigen der Formel mit der Maus darüberfahren,
+      "hoverFormula": "Zum Anzeigen der Formel mit der Maus darüberfahren",
       "healthScore": "Health-Score-Formel",
       "clusterHealth": "Gesamtzustand des Clusters",
       "clusterStatus": "Clusterstatus",
@@ -712,7 +712,7 @@
     "errors": {
       "notConnected": "WebSocket ist nicht verbunden",
       "closingError": "Fehler beim Schließen von WebSocket:",
-      "expectedStringData": Es wurden String-Daten für das JSON-Parsing erwartet",
+      "expectedStringData": "Es wurden String-Daten für das JSON-Parsing erwartet",
       "processingFailed": "Verarbeitung der WebSocket-Nachricht fehlgeschlagen",
       "connectionError": "WebSocket-Fehler"
     }
@@ -757,7 +757,7 @@
     "logging": {
       "clusterOnboardRequestPayload": "[DEBUG] Cluster-Onboarding: Request-Payload:",
       "clusterOnboardResponse": "[DEBUG] Cluster-Onboarding: Response:",
-      "onboardSuccessful": "[DEBUG] Onboarding der Cluster-Mutation erfolgreich, Cluster-Abfrage-Cache ungültig“,
+      "onboardSuccessful": "[DEBUG] Onboarding der Cluster-Mutation erfolgreich, Cluster-Abfrage-Cache ungültig",
       "onboardError": "[DEBUG] Fehler beim Onboarding der Cluster-Mutation:",
       "mutationStart": "[DEBUG] ========== START DER MUTATION ==========",
       "context": "[DEBUG] Kontext:",
