@@ -2098,10 +2098,10 @@
         "description": "डैशबोर्ड पर जाएं"
       },
       "plugin": {
-        "title": "Plugin Manager",
-        "description": "KubeStellar plugins प्रबंधित और निगरानी करें"
+        "title": "प्लगइन मैनेजर",
+        "description": "KubeStellar प्लगइन्स प्रबंधित और निगरानी करें"
       },
-      "grafana": {
+      "Grafana": {
         "title": "ग्राफाना डैशबोर्ड",
         "description": "ग्राफाना डैशबोर्ड खोलें"
       },
@@ -2114,24 +2114,24 @@
         "description": "Kubernetes ऑब्जेक्ट्स खोजें और फ़िल्टर करें"
       },
       "bindingPolicies": {
-        "title": "Binding Policies",
-        "description": "Binding policies प्रबंधित करें"
+        "title": "बाइंडिंग नीतियाँ",
+        "description": "बाइंडिंग नीतियाँ प्रबंधित करें"
       },
       "userManagement": {
-        "title": "User Management",
-        "description": "सिस्टम users और permissions प्रबंधित करें"
+        "title": "उपयोगकर्ता प्रबंधन",
+        "description": "सिस्टम उपयोगकर्ताओं और अनुमतियों का प्रबंधन करें"
       },
       "wdsTreeview": {
-        "title": "WDS Treeview",
-        "description": "वर्कलोड वितरण visualize करें"
+        "title": "WDS ट्री व्यू",
+        "description": "वर्कलोड वितरण विज़ुअलाइज़ करें"
       },
       "wecsTreeview": {
-        "title": "WECS Treeview",
-        "description": "Deployed Workloads संरचना visualize करें"
+        "title": "WECS ट्री व्यू",
+        "description": "डिप्लॉय किए गए वर्कलोड्स की संरचना विज़ुअलाइज़ करें"
       },
       "documentation": {
-        "title": "Documentation खोलें",
-        "description": "KubeStellar documentation लॉन्च करें"
+        "title": "डॉक्यूमेंटेशन खोलें",
+        "description": "KubeStellar डॉक्यूमेंटेशन लॉन्च करें"
       },
       "logout": {
         "title": "लॉगआउट",
@@ -2169,7 +2169,7 @@
     },
     "items": {
       "home": "होम",
-      "grafana": "ग्राफाना डैशबोर्ड",
+      "Grafana": "ग्राफाना डैशबोर्ड",
       "stagedWorkloads": "स्टेज्ड वर्कलोड्स",
       "bindingPolicies": "बाइंडिंग नीतियाँ",
       "deployedWorkloads": "परिनियोजित वर्कलोड्स",

@@ -146,7 +146,7 @@ type PluginConfigItem struct {
 
 var (
 	// sanitize input to allow only alphanumeric, underscore, hyphen
-	safePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+	safePattern = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
 )
 
 // NewPluginManager initializes a new PluginManager with wazero runtime and Gin router.
@@ -352,6 +352,10 @@ func (pm *PluginManager) createPluginHandler(plugin *Plugin, handlerName string)
 
 		result, err := pm.callPluginFunction(plugin, handlerName, body)
 		if err != nil {
+			log.LogError("Plugin handler execution failed",
+				zap.Int("pluginID", plugin.ID), zap.String("handler", handlerName),
+				zap.String("error", err.Error()),
+			)
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
@@ -654,7 +658,9 @@ func (pm *PluginManager) IsPluginDisabled(id int) bool {
 	return plugin.Status == "inactive"
 }
 
-func santinize(input string) (string, error) {
+func sanitize(input string) (string, error) {
+	input = strings.TrimSpace(input)
+	input = strings.ToLower(input)
 	if safePattern.MatchString(input) {
 		return input, nil
 	}
@@ -662,17 +668,17 @@ func santinize(input string) (string, error) {
 }
 
 func BuildPluginKey(pluginName, author, version string) (string, error) {
-	safePluginName, err := santinize(pluginName)
+	safePluginName, err := sanitize(pluginName)
 	if err != nil {
 		return "", err
 	}
 
-	safeAuthor, err := santinize(author)
+	safeAuthor, err := sanitize(author)
 	if err != nil {
 		return "", err
 	}
 
-	safeVersion, err := santinize(version)
+	safeVersion, err := sanitize(version)
 	if err != nil {
 		return "", err
 	}
