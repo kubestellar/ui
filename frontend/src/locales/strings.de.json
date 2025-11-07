@@ -1,102 +1,103 @@
 {
-  "raiseIssue": "Problem melden",
-  "profileSection": {
-    "changePassword": "Passwort ändern",
-    "changePasswordSubtitle": "Bitte geben Sie Ihr aktuelles Passwort ein und wählen Sie ein neues.",
-    "currentPassword": "Aktuelles Passwort",
-    "newPassword": "Neues Passwort",
-    "confirmNewPassword": "Neues Passwort bestätigen",
-    "passwordChangedSuccess": "Passwort erfolgreich geändert.",
-    "passwordChangedError": "Passwort konnte nicht geändert werden.",
-    "passwordsDoNotMatch": "Die neuen Passwörter stimmen nicht überein.",
-    "passwordRequired": "Passwort ist erforderlich.",
-    "errorCurrentPasswordIncorrect": "Das aktuelle Passwort ist falsch",
+  "common": {
+    "changes": "Änderungen",
+    "clusterLabel": "Cluster-Label",
+    "workloadLabel": "Workload-Label",
+    "workloads": "Workloads",
+    "clearCanvas": "Canvas leeren",
+    "clearFilter": "Filter löschen",
     "cancel": "Abbrechen",
-    "changePasswordButton": "Passwort ändern",
-    "passwordsMatch": "Passwörter stimmen überein!"
-  },
-  "commandPalette": {
-    "ariaLabel": "Befehls-Palette öffnen",
-    "title": "Befehls-Palette (Ctrl+K)",
-    "badge": "K",
-    "searchPlaceholder": "Befehle suchen...",
-    "noCommandsFound": "Keine Befehle gefunden. Versuchen Sie einen anderen Suchbegriff.",
-    "footer": {
-      "navigate": "navigieren",
-      "select": "auswählen",
-      "shortcut": "Ctrl+K"
+    "save": "Speichern",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "create": "Erstellen",
+    "add": "Hinzufügen",
+    "refresh": "Aktualisieren",
+    "search": "Suchen",
+    "connect": "Verbinden",
+    "import": "Importieren",
+    "loading": "Wird geladen...",
+    "success": "Erfolg",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "actions": "Aktionen",
+    "status": {
+      "status": "Status",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "pending": "Ausstehend",
+      "checking": "Prüfen",
+      "success": "Erfolgreich",
+      "warning": "Versionskonflikt",
+      "error": "Fehlt",
+      "installed": "Installiert"
     },
-    "kbd": {
-      "esc": "ESC",
-      "arrows": "↑↓",
-      "enter": "↵"
-    },
-    "sections": {
-      "navigation": "Navigation",
-      "visualizations": "Visualisierungen",
-      "help": "Hilfe",
-      "account": "Konto",
-      "admin": "Administration"
-    },
-    "commands": {
-      "home": {
-        "title": "Startseite",
-        "description": "Zum Dashboard gehen"
-      },
-      "plugin": {
-        "title": "Plugin-Manager",
-        "description": "KubeStellar-Plugins verwalten und überwachen"
-      },
-      "managedClusters": {
-        "title": "Verwaltete Cluster",
-        "description": "Kubernetes-Cluster verwalten"
-      },
-      "workloads": {
-        "title": "Workloads",
-        "description": "Workloads über Cluster hinweg verwalten"
-      },
-      "resourceExplorer": {
-        "title": "Objekt-Explorer",
-        "description": "Kubernetes-Objekte durchsuchen und filtern"
-      },
-      "bindingPolicies": {
-        "title": "Bindungsrichtlinien",
-        "description": "Bindungsrichtlinien konfigurieren"
-      },
-      "userManagement": {
-        "title": "Benutzerverwaltung",
-        "description": "Systembenutzer und Berechtigungen verwalten"
-      },
-      "wdsTreeview": {
-        "title": "WDS-Baumansicht",
-        "description": "Workload-Verteilung visualisieren"
-      },
-      "wecsTreeview": {
-        "title": "WECS-Baumansicht",
-        "description": "Struktur der bereitgestellten Workloads visualisieren"
-      },
-      "documentation": {
-        "title": "Dokumentation öffnen",
-        "description": "KubeStellar-Dokumentation starten"
-      },
-      "logout": {
-        "title": "Abmelden",
-        "description": "Von Ihrem Konto abmelden",
-        "infoMessage": "Sie wurden erfolgreich abgemeldet."
-      },
-      "galaxyMarketplace": {
-        "title": "Galaxy-Marktplatz",
-        "description": "Entdecken und installieren Sie Plugins aus dem Galaxy-Marktplatz"
-      }
-    }
+    "noResource": "Keine {{resource}} angegeben",
+    "copy": "Kopieren",
+    "close": "Schließen",
+    "update": "Aktualisieren",
+    "unknown": "Unbekannt",
+    "workload": "Workload",
+    "tryAgain": "Erneut versuchen",
+    "confirm": "Bestätigen",
+    "continue": "Weiter",
+    "back": "Zurück",
+    "submit": "Senden",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "details": "Details",
+    "view": "Ansicht",
+    "yes": "Ja",
+    "no": "Nein",
+    "all": "Alle",
+    "none": "Keine",
+    "ok": "OK",
+    "finish": "Fertig",
+    "next": "Weiter",
+    "retry": "Wiederholen",
+    "previous": "Zurück",
+    "page": "Seite",
+    "sync": "Synchronisieren",
+    "clearAll": "Alle löschen",
+    "fitView": "Ansicht anpassen",
+    "clearSearch": "Suche löschen",
+    "clearFilters": "Filter löschen",
+    "clear": "Leeren",
+    "of": "von",
+    "items": "{{count}} Element",
+    "items_plural": "{{count}} Elemente",
+    "filteredFrom": "gefiltert aus"
   },
   "admin": {
     "users": {
       "title": "Benutzerverwaltung",
       "subtitle": "Systembenutzer",
+      "description": "Systembenutzer und ihre Berechtigungen verwalten",
+      "searchPlaceholder": "Benutzer nach Name, Rolle oder Berechtigungen suchen...",
+      "refresh": "Benutzer aktualisieren",
+      "addUser": "Benutzer hinzufügen",
       "noUsers": "Keine Benutzer gefunden",
-      "noUsersDescription": "Es gibt noch keine Benutzer im System. Klicken Sie auf 'Benutzer hinzufügen', um Ihren ersten Benutzer zu erstellen.",
+      "noUsersDescription": "Es sind noch keine Benutzer im System vorhanden. Klicken Sie auf „Benutzer hinzufügen”, um Ihren ersten Benutzer anzulegen.",
       "noPermissions": "Keine Berechtigungen zugewiesen",
+      "filters": {
+        "title": "Filter",
+        "reset": "Filter zurücksetzen",
+        "role": "Rolle",
+        "allRoles": "Alle Rollen",
+        "permission": "Berechtigung",
+        "anyPermission": "Alle Berechtigungen",
+        "permissionLevel": "Berechtigungsstufe",
+        "anyLevel": "Beliebige Stufe",
+        "sortBy": "Sortieren nach",
+        "created": "Erstellungsdatum",
+        "ascending": "Aufsteigend",
+        "descending": "Absteigend",
+        "active": "Aktive Filter",
+        "roleFilter": "Rolle",
+        "permissionFilter": "Berechtigung",
+        "levelFilter": "Stufe",
+        "searchFilter": "Suchen"
+      },
       "actions": {
         "addUser": "Benutzer hinzufügen",
         "editUser": "Benutzer bearbeiten",
@@ -113,7 +114,7 @@
         "actions": "Aktionen"
       },
       "roles": {
-        "admin": "Administrator",
+        "admin": "Admin",
         "user": "Benutzer"
       },
       "permissions": {
@@ -129,32 +130,32 @@
       },
       "form": {
         "username": "Benutzername",
-        "usernamePlaceholder": "Benutzername eingeben",
+        "usernamePlaceholder": "Benutzernamen eingeben",
         "password": "Passwort",
         "passwordPlaceholder": "Passwort eingeben",
         "passwordOptional": "Passwort (optional)",
         "passwordOptionalPlaceholder": "Neues Passwort eingeben oder leer lassen",
         "confirmPassword": "Passwort bestätigen",
         "confirmPasswordPlaceholder": "Passwort bestätigen",
-        "isAdmin": "Administratorzugriff",
+        "isAdmin": "Adminzugriff",
         "permissions": "Komponentenberechtigungen",
         "cancel": "Abbrechen",
-        "optional": "optional"
+        "optional": "Optional"
       },
       "delete": {
         "title": "Benutzer löschen",
         "confirmTitle": "Löschen bestätigen",
-        "confirmMessage": "Sind Sie sicher, dass Sie den Benutzer \"{{username}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "confirmMessage": "Möchten Sie Benutzer \"{{username}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
         "confirm": "Benutzer löschen"
       },
       "errors": {
         "fetchFailed": "Benutzer konnten nicht abgerufen werden",
-        "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+        "missingFields": "Bitte alle erforderlichen Felder ausfüllen",
         "passwordMismatch": "Passwörter stimmen nicht überein",
         "addFailed": "Benutzer konnte nicht hinzugefügt werden",
         "updateFailed": "Benutzer konnte nicht aktualisiert werden",
         "deleteFailed": "Benutzer konnte nicht gelöscht werden",
-        "invalidUsername": "Der Benutzername darf nur Buchstaben, Zahlen, Unterstriche und Bindestriche enthalten"
+        "invalidUsername": "Benutzername darf nur Buchstaben, Zahlen, Unterstriche und Bindestriche enthalten"
       },
       "success": {
         "userAdded": "Benutzer erfolgreich hinzugefügt",
@@ -163,29 +164,2667 @@
       }
     }
   },
+  "installationPage": {
+    "successSection": {
+      "installed": "ist korrekt installiert und erfüllt die Versionsanforderungen."
+    },
+    "errorSection": {
+      "title": "Installationsanleitung",
+      "viewGuide": "Installationshandbuch anzeigen"
+    },
+    "statusBadge": {
+      "installed": "Installiert",
+      "versionMismatch": "Versionskonflikt",
+      "missing": "Fehlt",
+      "checking": "Prüfen"
+    },
+    "codeBlock": {
+      "bash": "bash"
+    },
+    "title": "Installation",
+    "verification": "Verifizierung",
+    "installCommand": "Zur Installation den folgenden Befehl ausführen",
+    "verifyCommand": "Installation verifizieren mit",
+    "welcome": "Willkommen bei KubeStellar",
+    "gettingStarted": "Starten Sie mit KubeStellar, indem Sie Ihre Entwicklungsumgebung einrichten. Folgen Sie unserem geführten Installationsprozess, um Ihr Demosystem bereitzustellen.",
+    "tabs": {
+      "prerequisites": "Voraussetzungen",
+      "installation": "Installation"
+    },
+    "sidebarSteps": {
+      "title": "Installationsschritte",
+      "description": "Diese Schritte befolgen, um KubeStellar einzurichten",
+      "checkPrerequisites": "Voraussetzungen überprüfen",
+      "checkPrerequisitesDescription": "Stellen Sie sicher, dass alle erforderlichen Tools installiert sind",
+      "installKubestellar": "KubeStellar installieren",
+      "installKubestellarDescription": "KubeStellar mithilfe der CLI-Befehle implementieren",
+      "startUsingKubestellar": "KubeStellar verwenden",
+      "startUsingKubestellarDescription": "Anmelden und Cluster verwalten"
+    },
+    "documentationLink": "Komplette Installationsanleitung anzeigen",
+    "prerequisites": {
+      "prerequisites": "Voraussetzungen",
+      "title": "Systemvoraussetzungen",
+      "description": "Stellen Sie vor dem Fortfahren sicher, dass diese Tools installiert sind",
+      "kubeflexDescription": "KubeFlex CLI Tool (erforderliche Version ≥ 0.8.0)",
+      "ocmDescription": "Cluster Management CLI öffnen (erforderliche Version zwischen 0.7 und 0.11)",
+      "helmDescription": "Kubernetes Package Manager (erforderliche Version ≥ 3.0.0)",
+      "kubectlDescription": "Kubernetes Command-Line Tool (erforderliche Version ≥ 1.27.0)",
+      "kindDescription": "Tool zum Ausführen lokaler Kubernetes-Cluster (erforderliche Version ≥ 0.20.0)",
+      "dockerDescription": "Container Runtime (erforderliche Version ≥ 20.0.0)",
+      "status": {
+        "success": "Erfolg",
+        "warnings": "Warnungen",
+        "missing": "Fehlt",
+        "checking": "Prüfen"
+      },
+      "coreRequirements": "Kernanforderungen",
+      "demoEnvironmentRequirements": "Anforderungen für die Demo-Umgebung",
+      "buttons": {
+        "nextInstallation": "Weiter: Installation",
+        "checking": "Wird geprüft...",
+        "refresh": "Aktualisieren"
+      }
+    },
+    "installation": {
+      "title": "KubeStellar installieren",
+      "description": "Wählen Sie Ihre Plattform und führen Sie das Installationsskript aus",
+      "installPrerequisitesFirst": {
+        "title": "Installieren Sie zuerst die Voraussetzungen",
+        "description": "Bevor Sie das Installationsskript ausführen, stellen Sie sicher, dass alle Voraussetzungen auf Ihrem System installiert sind.",
+        "button": "Installationsvoraussetzungen anzeigen"
+      },
+      "platform": "Plattform",
+      "platforms": {
+        "kind": "kind",
+        "k3d": "k3d"
+      },
+      "installationScript": "Installationskript",
+      "scriptInstructions": "Führen Sie diesen Befehl im Terminal aus, um KubeStellar zu installieren mit",
+      "installationProcess": {
+        "title": "Installationsprozess:",
+        "steps": [
+          "Erstellt und konfiguriert lokale Cluster",
+          "Installiert KubeStellar-Komponenten und Abhängigkeiten",
+          "Richtet die richtige Netzwerkverbindung und Berechtigungen ein",
+          "Konfiguriert eine Demo-Umgebung"
+        ]
+      },
+      "importantNotes": {
+        "title": "Wichtige Hinweise:",
+        "notes": [
+          "Die Installation kann einige Minuten dauern.",
+          "Stellen Sie sicher, dass Sie über ausreichende Systemressourcen verfügen.",
+          "Lassen Sie das Terminalfenster bis zum Abschluss der Installation geöffnet.",
+          "Überprüfen Sie die Terminalausgabe auf Fehlermeldungen."
+        ]
+      },
+      "afterInstallation": {
+        "title": "Nach der Installation:",
+        "steps": [
+          "Überprüfen Sie die Installation, indem Sie den Cluster-Status überprüfen",
+          "Lesen Sie die Einführungsdokumentation",
+          "Beginnen Sie mit der Verwaltung Ihrer KubeStellar-Umgebung"
+        ]
+      },
+      "buttons": {
+        "backPrerequisites": "Zurück: Voraussetzungen",
+        "startInstallation": "Installation starten",
+        "installing": "Wird installiert..."
+      }
+    },
+    "checkingStatus": {
+      "title": "Prüfen Sie den Installationsstatus von KubeStellar...",
+      "description": "Das dauert nur einen Moment. Wir überprüfen, ob KubeStellar bereits auf Ihrem System installiert ist."
+    },
+    "checkError": {
+      "title": "Statusprüfung fehlgeschlagen",
+      "description": "Es kann nicht überprüft werden, ob KubeStellar installiert ist. Dies könnte an einem Verbindungsproblem mit dem Backend-Dienst liegen oder daran, dass der Server vorübergehend nicht verfügbar ist.",
+      "retryButton": "Verbindung erneut versuchen",
+      "persistenceNote": "Wenn das Problem weiterhin besteht, überprüfen Sie bitte Ihre Netzwerkverbindung oder wenden Sie sich an Ihren Systemadministrator."
+    },
+    "footer": {
+      "copyright": "KubeStellar",
+      "documentation": "Dokumentation",
+      "github": "GitHub",
+      "description": "KubeStellar ist ein Open-Source-Projekt. Für Support, Feature-Anfragen oder Fehlermeldungen besuchen Sie bitte unser GitHub-Repository."
+    },
+    "skipPrerequisitesNotice": {
+      "title": "Voraussetzungsprüfung übersprungen",
+      "description": "Die Voraussetzungsprüfung wurde in dieser Umgebung deaktiviert. Sie können direkt mit der Installation fortfahren.",
+      "note": "Hinweis: Stellen Sie sicher, dass Sie alle erforderlichen Tools manuell installiert haben, bevor Sie die Installationsbefehle ausführen."
+    },
+    "toasts": {
+      "alreadyInstalled": "KubeStellar ist bereits installiert! Weiterleitung zur Anmeldung...",
+      "notInstalled": "Kubeflex-Cluster nicht gefunden. Befolgen Sie die Schritte zum Einrichten der KubeStellar-Umgebung.",
+      "checkFailed": "Überprüfung des KubeStellar-Status fehlgeschlagen”",
+      "preparingInstructions": "Installationsanweisungen werden vorbereitet...",
+      "followInstructions": "Befolgen Sie die CLI-Installationsanweisungen, um KubeStellar zu installieren",
+      "loadInstructionsFailed": "Laden der Installationsanweisungen fehlgeschlagen. Bitte aktualisieren Sie die Seite und versuchen Sie es erneut.",
+      "installationDetected": "KubeStellar-Installation erkannt! Weiterleitung zur Anmeldeseite...",
+      "recheckingPrerequisites": "Voraussetzungen werden erneut überprüft...",
+      "prerequisitesRechecked": "Voraussetzungen wurden erfolgreich überprüft",
+      "recheckFailed": "Voraussetzungen konnten nicht erneut überprüft werden"
+    }
+  },
+  "header": {
+    "themeToggle": "Design umschalten",
+    "dashboard": "Dashboard",
+    "clusters": "Cluster",
+    "workloads": "Workloads",
+    "policies": "Richtlinien",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "language": "Sprache",
+    "importCluster": "Cluster importieren",
+    "menu": "Menü",
+    "goToHome": "Zur Startseite",
+    "logoAlt": "KubeStellar Logo",
+    "themeToggleTip": "Alt+Q zum Umschalten des Designs",
+    "switchTheme": "In den {{mode}}-Modus wechseln",
+    "switchLanguage": "Sprache umschalten",
+    "selectLanguage": "Sprache auswählen",
+    "enterFullscreen": "Vollbildmodus aktivieren",
+    "exitFullscreen": "Vollbildmodus verlassen",
+    "fullscreen": "Vollbildmodus umschalten"
+  },
+  "login": {
+    "controlPlane": "Control Plane",
+    "layout": {
+      "logoAlt": "KubeStellar",
+      "tagline": "Nahtloses Multi-Cluster-Management",
+      "taglineEmphasis": "Built for the Future.",
+      "fullscreen": "Vollbildmodus umschalten",
+      "welcomeBack": "Willkommen zurück",
+      "accessDashboard": "Auf Ihr Dashboard zugreifen",
+      "enterCredentials": "Geben Sie unten Ihre Zugangsdaten ein",
+      "needHelp": "Brauchen Sie Hilfe?",
+      "contactSupport": "Support kontaktieren"
+    },
+    "loading": {
+      "logoAlt": "KubeStellar",
+      "initializing": " KubeStellar-Umgebung wird initialisiert..."
+    },
+    "form": {
+      "username": "Benutzername",
+      "password": "Passwort",
+      "rememberMe": "Angemeldet bleiben",
+      "signIn": "Bei KubeStellar anmelden",
+      "signingIn": "Anmeldung läuft...",
+      "showPassword": "Passwort anzeigen",
+      "hidePassword": "Passwort ausblenden",
+      "errors": {
+        "usernameRequired": "Benutzername ist erforderlich",
+        "passwordRequired": "Passwort ist erforderlich"
+      }
+    }
+  },
+  "clusters": {
+    "title": "Cluster verwalten",
+    "subtitle": "Kubernetes-Cluster verwalten und überwachen",
+    "searchPlaceholder": "Cluster nach Namen, Label, Status oder Inhalt suchen...",
+    "importCluster": "Cluster importieren",
+    "activeFilters": "Aktive Filter:",
+    "search": "Suchen",
+    "noClustersFound": "Keine Cluster gefunden",
+    "noClustersMatchBoth": "Keine Cluster entsprechen Ihrem Suchbegriff",
+    "noClustersMatchSearch": "Keine Cluster entsprechen Ihrer Filterauswahl",
+    "noClustersMatchFilter": "Nein clusters match your filter selection",
+    "noClustersAvailable": "Es sind noch keine Cluster verfügbar. Importieren Sie Ihren ersten Cluster, um zu beginnen.",
+    "importYourFirst": "Importieren Sie Ihren ersten Cluster",
+    "filteredByLabel": "Nach Label filtern",
+    "actions": {
+      "viewDetails": "Details anzeigen",
+      "editLabels": "Labels bearbeiten",
+      "copyName": "Namen kopieren",
+      "detachCluster": "Cluster trennen"
+    },
+    "status": {
+      "title": "Status",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "pending": "Ausstehend"
+    },
+    "table": {
+      "name": "Name",
+      "labels": "Label",
+      "creationTime": "Erstellungszeit",
+      "context": "Kontext",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "quickConnect": {
+      "title": "Über Quick Connect verbinden",
+      "description": "Cluster mit Hilfe der Quick-Connect-Funktion importieren",
+      "clusterName": "Clustername",
+      "clusterNamePlaceholder": "Namen für Ihren Cluster eingeben",
+      "token": "Token",
+      "tokenPlaceholder": "Token eingeben",
+      "hubApiServer": "Hub-API-Server",
+      "hubApiServerPlaceholder": "URL des Hub-API-Servers eingeben",
+      "steps": {
+        "step1": {
+          "title": "Wählen Sie Ihren Cluster",
+          "description": "Wählen Sie einen Cluster aus der Dropdown-Liste oben aus."
+        },
+        "step2": {
+          "title": "Onboarding mit einem Klick",
+          "description": "Klicken Sie auf die Schaltfläche \"Onboard Cluster\", um den automatisierten Prozess zu starten."
+        },
+        "step3": {
+          "title": "Sofortige Verbindung",
+          "description": "Ihr Cluster wird automatisch und ohne manuelle Befehle eingebunden."
+        }
+      }
+    },
+    "manualImport": {
+      "title": "Manuelle Cluster-Einrichtung",
+      "subtitle": "Empfohlen",
+      "description": "Befolgen Sie die folgenden Schritte, um Ihren Cluster manuell mit kubectl-Befehlen zu importieren.",
+      "generateCommand": "Befehl generieren",
+      "copyCommand": "Befehl kopieren",
+      "runInTerminal": "Im Terminal ausführen",
+      "commandGenerated": "Befehl erfolgreich generiert",
+      "selectCluster": "Cluster auswählen",
+      "generateImportCommand": "Generate Importieren Command",
+      "importCommand": "Befehl importieren"
+    },
+    "apiUrl": {
+      "title": "Via API/URL verbinden",
+      "description": "Importieren Sie Ihren Cluster, indem Sie den API-Endpunkt und die Authentifizierungsdaten angeben.",
+      "endpoint": "API/UR-Endpunkt",
+      "endpointPlaceholder": "https://kubernetes.example.com:6443",
+      "token": "Authentifizierungstoken (Optional)",
+      "tokenPlaceholder": "Authentifizierungstoken eingeben, falls erforderlich",
+      "connectImport": "Verbinden und Importieren"
+    },
+    "excluded": [
+      "kubestellar-report",
+      "kube-node-lease",
+      "kube-public",
+      "default",
+      "kube-system",
+      "open-cluster-management-hub",
+      "open-cluster-management",
+      "local-path-storage"
+    ],
+    "labels": {
+      "label": "Label",
+      "editvalue": "Sowohl Key als auch Value sind erforderlich",
+      "manage": "Label verwalten",
+      "bulkTooltipDisabled": "Wählen Sie mindestens 2 Cluster aus, um Massenbearbeitung zu aktivieren",
+      "bulkTooltipEnabled": "Labels für ausgewählte Cluster verwalten",
+      "clearFilter": "Filter zurücksetzen",
+      "searchLabelsPlaceholder": "Label suchen...",
+      "bulkEditTitle": "Label für {{count}} Cluster bearbeiten",
+      "editTitle": "Label für {{name}} bearbeiten",
+      "bulkEditDescription": "Sie bearbeiten Labels für {{count}} Cluster. Änderungen werden auf alle ausgewählten Cluster angewendet.",
+      "keyPlaceholder": "z. B. Umgebung",
+      "valuePlaceholder": "z. B. Produktion",
+      "protectedLabelsCannotBeModified": "🔒 Geschützte Label können nicht geändert werden.",
+      "exitSearch": "Suche verlassen",
+      "saveChanges": "Änderungen speichern",
+      "saveChangesButton": "Änderungen speichern",
+      "tooltipTitle": "Cluster:",
+      "noLabelsAvailable": "Keine Cluster-Label verfügbar. Bitte fügen Sie Cluster mit Labels hinzu, um sie in Binding Policies zu verwenden.",
+      "noLabelsMatchSearch": "Keine Label entsprechen Ihrem Suchbegriff.",
+      "noLabelsFound": "Keine Label in verfügbaren Clustern gefunden.",
+      "clickToAdd": "Auf ein Label klicken, um es zum Canvas hinzuzufügen",
+      "edit": "Label bearbeiten",
+      "add": "Label hinzufügen",
+      "for": "für",
+      "bulkEdit": "Massenbearbeitungsmodus",
+      "appendToExisting": "Zu vorhandenen Labels hinzufügen",
+      "key": "Label Key",
+      "value": "Label Value",
+      "noLabels": "Noch keine Label hinzugefügt",
+      "noMatchingLabels": "Keine passenden Label gefunden",
+      "addYourFirst": "Fügen Sie oben Ihr erstes Label hinzu, um diesen Cluster zu organisieren.",
+      "tip": "Tipp: Tippen Sie die Eingabetaste, um zwischen Feldern zu wechseln, oder doppelklicken Sie auf Label, um sie zu bearbeiten.",
+      "tryDifferentSearch": "Versuchen Sie einen anderen Suchbegriff oder löschen Sie die Suche",
+      "count": "{{count}} Label{{count, plural, one {} other {s}}}",
+      "description": "Hinzufügen, Bearbeiten oder Entfernen von Labels, um Ihren Cluster zu organisieren und zu kategorisieren.",
+      "defaultProtected": "Standard-Label – Kann nicht geändert werden",
+      "bindingProtected": "Wird in einer Binding Policy verwendet – kann nicht geändert werden",
+      "manageLabels": "Label verwalten",
+      "bulkLabels": "Bulklabel",
+      "editValue": "Label bearbeiten",
+      "removeLabel": "Label löschen",
+      "cancelEdit": "Bearbeitung abbrechen",
+      "added": "Neues Label hinzugefügt: {{key}}",
+      "updated": "Vorhandenes Label aktualisiert: {{key}}",
+      "removed": "Label entfernt: {{key}}",
+      "updateSuccess": "Label erfolgreich aktualisiert",
+      "duplicate": "Label mit Key \"{{key}}\" ist bereits vorhanden",
+      "protected": "Geschütztes Label kann nicht geändert werden: {{key}}",
+      "finishEditing": "Bearbeiten abgeschlossen",
+      "noClustersToEdit": "Keine Cluster zum Bearbeiten verfügbar",
+      "noClustersSelected": "Keine Cluster ausgewählt",
+      "cannotDeleteUsed": "Label werden in einer Binding Policy verwendet und können nicht gelöscht werden. Entfernen Sie zuerst die Policy.",
+      "bulkUpdateSuccess": "Label für alle {{count}} Cluster aktualisiert",
+      "bulkUpdatePartial": "Label für {{success}} Cluster aktualisiert, {{failures}} Aktualisierungen fehlgeschlagen",
+      "bulkUpdateFail": "Label für alle {{count}} Cluster konnten nicht aktualisiert werden"
+    },
+    "dialog": {
+      "selectMultipleClusters": "Mehrere Cluster auswählen",
+      "selectClusterToEdit": "Mehrere Cluster bearbeiten",
+      "selectedCount": "{{count}} ausgewählt",
+      "editClustersButton": "{{count}} Cluster bearbeiten"
+    },
+    "list": {
+      "more": "mehr",
+      "title": "Cluster verwalten",
+      "subtitle": "Kubernetes-Cluster verwalten und überwachen",
+      "searchPlaceholder": "Cluster nach Name, Bezeichnung, Status oder Inhalt suchen...",
+      "import": "Cluster importieren",
+      "noResults": "Keine cluster gefunden",
+      "name": "Name",
+      "creationTime": "Erstellungszeit",
+      "context": "Kontext",
+      "description": "Kubernetes-Cluster verwalten und überwachen",
+      "filter": "Status Filter",
+      "activeFilters": "Aktive Filter:",
+      "searchFilter": "Suchen: \"{{query}}\"",
+      "statusFilter": "Status: {{value}}",
+      "labelFilter": "Label: {{key}}={{value}}",
+      "clearAll": "Alle löschen",
+      "showingResults": "{{count}} Anzahl{{count, plural, one {} other {s}}}",
+      "clearSearch": "Esc drücken, um die Suche zu löschen",
+      "importCluster": "Cluster importieren",
+      "importYourFirst": "Importieren Sie Ihren ersten Cluster",
+      "searchLabelsPlaceholder": "Label suchen...",
+      "search": "Suchen",
+      "label": "Label",
+      "filteredByLabel": "Nach Label gefiltert:",
+      "filterByLabel": "Klicken Sie hier, um nach diesem Label zu filtern",
+      "noClustersFound": "Keine Cluster gefunden",
+      "noClustersMatchBoth": "Keine Cluster entsprechen sowohl Ihren Such- als auch Ihren Filterkriterien",
+      "noClustersMatchSearch": "Keine Cluster entsprechen Ihrem Suchbegriff",
+      "noClustersMatchFilter": "Keine Cluster entsprechen Ihrer Filterauswahl",
+      "noClustersAvailable": "Noch keine Cluster verfügbar. Importieren Sie Ihren ersten Cluster, um zu beginnen.",
+      "table": {
+        "name": "Name",
+        "labels": "Label",
+        "creationTime": "Erstellungszeit",
+        "context": "Kontext",
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "pending": "Ausstehend"
+      },
+      "actions": {
+        "viewDetails": "Details anzeigen",
+        "editLabels": "Label bearbeiten",
+        "copyName": "Namen kopieren",
+        "detachCluster": "Cluster trennen"
+      },
+      "labels": {
+        "edit": "Label bearbeiten",
+        "add": "Label hinzufügen",
+        "bulkEdit": "Massenbearbeitungsmodus",
+        "appendToExisting": "Zu vorhandenen Labels hinzufügen",
+        "key": "Label Key",
+        "value": "Label Value",
+        "noLabels": "Noch keine Label hinzugefügt",
+        "noMatchingLabels": "Keine passenden Label gefunden",
+        "addYourFirst": "Fügen Sie oben Ihr erstes Label hinzu, um diesen Cluster zu organisieren.",
+        "tip": "Tipp: Tippen Sie die Eingabetaste, um zwischen Feldern zu wechseln, oder doppelklicken Sie auf Label, um sie zu bearbeiten.",
+        "tryDifferentSearch": "Versuchen Sie einen anderen Suchbegriff oder löschen Sie die Suche.",
+        "count": "{{count}} Label{{count, plural, one {} other {s}}}",
+        "description": "Hinzufügen, Bearbeiten oder Entfernen von Labels, um Ihren Cluster zu organisieren und zu kategorisieren",
+        "defaultProtected": "Standard-Label – Kann nicht geändert werden",
+        "bindingProtected": "Wird in einer Binding Policy verwendet – kann nicht geändert werden",
+        "manage": "Label verwalten"
+      }
+    },
+    "details": {
+      "title": "Clusterdetails",
+      "overview": "Überblick",
+      "labels": "Label",
+      "resources": "Ressourcen",
+      "status": "Status",
+      "events": "Ereignisse",
+      "logs": "Logs"
+    },
+    "clusterDetailDialog": {
+      "title": "Clusterdetails",
+      "loading": "Clusterinformationen werden geladen...",
+      "error": {
+        "title": "Clusterdetails konnten nicht geladen werden",
+        "description": "Beim Abrufen der Informationen für diesen Cluster ist ein Fehler aufgetreten."
+      },
+      "status": {
+        "available": "Verfügbar",
+        "unavailable": "Nicht verfügbar"
+      },
+      "kubernetes": "Kubernetes {{version}}",
+      "createdOn": "Erstellt am {{date}}",
+      "labels": "Label",
+      "labelCount": "{{count}} Label",
+      "noLabels": "Diesem Cluster wurden keine Labels zugewiesen",
+      "capacityResources": "Kapazität und Ressourcen",
+      "cpuCores": "CPU-Kerne",
+      "memory": "Arbeitsspeicher",
+      "podCapacity": "Pod-Kapazität",
+      "lastRefreshed": "Zuletzt aktualisiert",
+      "noClusterSelected": "Kein Cluster ausgewählt"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "lastUpdatedJustNow": "Zuletzt aktualisiert: gerade eben",
+      "status": "Status: Optimal",
+      "other": "Sonstiges",
+      "distribution": "Verteilung",
+      "state": "Ausstehend oder inaktiv",
+      "otherClusters": "Weitere Cluster",
+      "hoverFormula": "Zum Anzeigen der Formel mit der Maus darüberfahren",
+      "healthScore": "Health-Score-Formel",
+      "clusterHealth": "Gesamtzustand des Clusters",
+      "clusterStatus": "Clusterstatus",
+      "welcome": "Willkommen im KubeStellar-Management-Dashboard",
+      "errorLoading": "Fehler beim Laden der Clusterinformationen",
+      "addCluster": "Cluster hinzufügen",
+      "notAvailable": "N/V",
+      "invalidDate": "Ungültiges Datum",
+      "managedClusters": "Verwaltete Cluster",
+      "grafana": "Grafana",
+      "total": "Gesamt",
+      "viewAll": "AAlle anzeigen",
+      "cpuCapacity": "CPU-Kapazität",
+      "memoryCapacity": "Speicherkapazität",
+      "podCapacity": "Pod-Kapazität",
+      "podCapacityLabel": "Pod-Kapazität",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "noManagedClusters": "Keine verwalteten Cluster gefunden",
+      "importCluster": "Cluster importieren",
+      "showMoreClusters": "Weitere Cluster anzeigen",
+      "clustersActive": "Aktive Cluster",
+      "systemHealth": "Systemzustand",
+      "refresh": "Aktualisieren",
+      "noRecentActivity": "Keine neuen Aktivitäten gefunden",
+      "recentActivity": "Neueste Aktivitäten",
+      "resourceUtilization": "Ressourcenauslastung",
+      "clusterMetrics": "Basierend auf Cluster-Metriken",
+      "pods": {
+        "formula": "Formel für Pod-Status",
+        "calculation": "Berechnet als Verhältnis gesunder Pods zu allen Pods über alle Namespaces",
+        "status": "Berücksichtigt Pod-Status, Readiness-Probes und Liveness-Checks",
+        "value": "Höhere Werte deuten auf einen besseren Cluster-Status hin",
+        "formulaDesc": "(Laufende Pods / Gesamtzahl der Pods) × 100 %",
+        "health": "Pod-Status"
+      },
+      "cpu": {
+        "usage": "CPU-Auslastung",
+        "formula": "Formel für CPU-Auslastung",
+        "calculation": "Berechnet als Prozentsatz der zugewiesenen CPU-Ressourcen, die derzeit auf allen Nodes im Cluster genutzt werden.",
+        "value": "Niedrigere Werte weisen auf eine bessere Ressourcenverfügbarkeit hin",
+        "formulaDesc": "(Verwendete CPU-Kerne / Gesamtzahl der CPU-Kerne) × 100 %",
+        "health": "Niedrigere Werte weisen auf eine bessere Leistung hin"
+      },
+      "memory": {
+        "usage": "Speicherauslastung",
+        "formula": "Formel für Speicherauslastung",
+        "calculation": "Berechnet als Prozentsatz der zugewiesenen Speicherressourcen, die derzeit auf allen Nodes im Cluster verwendet werden.",
+        "value": "Niedrigere Werte weisen auf eine bessere Ressourcenverfügbarkeit hin",
+        "formulaDesc": "(Verwendeter Speicher / Gesamtspeicher) × 100 %"
+      },
+      "stats": {
+        "running": "Wird ausgeführt und ist verfügbar",
+        "totalClusters": "Gesamtanzahl der Cluster",
+        "activeClusters": "Aktive Cluster",
+        "bindingPolicies": "Binding Policies",
+        "currentContext": "Aktueller Kontext",
+        "none": "Keiner"
+      },
+      "health": {
+        "excellent": "Ausgezeichnet",
+        "good": "Gut",
+        "fair": "Mäßig",
+        "needsAttention": "Handlungsbedarf",
+        "critical": "Kritisch"
+      },
+      "guide": {
+        "title": "Dashboard-Anleitung",
+        "clusterStats": "Cluster-Statistiken",
+        "clusterStatsDesc": "Zeigt die Gesamtzahl und die aktiven Cluster an. Bewegen Sie den Mauszeiger über die Metriken, um detaillierte Informationen zu ihrer Berechnung anzuzeigen.",
+        "healthMetrics": "Zustandsmetriken",
+        "healthMetricsDesc": "Zeigt CPU, Speichernutzung und Pod-Zustand an. Grüne Indikatoren zeigen einen guten Zustand an, gelbe erfordern Aufmerksamkeit.",
+        "recentActivity": "Aktuelle Aktivitäten",
+        "recentActivityDesc": "Zeigt aktuelle Änderungen an Clustern und Richtlinien an. Klicken Sie auf einen Cluster, um detaillierte Informationen anzuzeigen.",
+        "proTip": "Profi-Tip",
+        "proTipDesc": "Bewegen Sie den Mauszeiger über eine Metrik oder ein Diagramm, um detaillierte Informationen zur Berechnung und zu möglichen Maßnahmen anzuzeigen."
+      }
+    },
+    "detach": {
+      "title": "Cluster trennen",
+      "confirmation": "Möchten Sie den folgenden Cluster wirklich trennen?",
+      "context": "Kontext",
+      "warning": "Warnung: Durch diese Aktion wird der Cluster aus der Verwaltung entfernt. Er ist danach über diese Oberfläche nicht mehr sichtbar und kann nicht mehr verwaltet werden.",
+      "detaching": "Wird getrennt...",
+      "detach": "Cluster trennen"
+    }
+  },
+  "webSocket": {
+    "errors": {
+      "notConnected": "WebSocket ist nicht verbunden",
+      "closingError": "Fehler beim Schließen von WebSocket:",
+      "expectedStringData": "Es wurden String-Daten für das JSON-Parsing erwartet",
+      "processingFailed": "Verarbeitung der WebSocket-Nachricht fehlgeschlagen",
+      "connectionError": "WebSocket-Fehler"
+    }
+  },
+  "wdsQueries": {
+    "errors": {
+      "fetchWorkloads": "Workloads konnten nicht abgerufen werden",
+      "errorFetchingWorkloads": "Fehler beim Abrufen der Workloads:",
+      "fetchWorkloadDetails": "Workload-Details konnten nicht abgerufen werden",
+      "errorFetchingWorkloadDetails": "Fehler beim Abrufen der Workload-Details:",
+      "statusFetchFailed": "Status konnte nicht abgerufen werden:",
+      "createWorkloadFailed": "Workload konnte nicht erstellt werden",
+      "errorCreatingWorkload": "Fehler beim Erstellen des Workloads:",
+      "uploadFileFailed": "Datei konnte nicht hochgeladen werden",
+      "errorUploadingFile": "Fehler beim Hochladen der Datei:",
+      "updateWorkloadFailed": "Workload konnte nicht aktualisiert werden",
+      "errorUpdatingWorkload": "Fehler beim Aktualisieren der Workload:",
+      "scaleWorkloadFailed": "Workload konnte nicht skaliert werden",
+      "errorScalingWorkload": "Fehler beim Skalieren der Workload:",
+      "deleteWorkloadFailed": "Workload konnte nicht gelöscht werden",
+      "errorDeletingWorkload": "Fehler beim Löschen der Workload:",
+      "fetchWorkloadLogsFailed": "Workload-Logs konnten nicht abgerufen werden",
+      "errorFetchingWorkloadLogs": "Fehler beim Abrufen der Workload-Logs:"
+    },
+    "success": {
+      "workloadCreated": "Workload erfolgreich erstellt",
+      "fileUploaded": "Datei erfolgreich hochgeladen",
+      "workloadUpdated": "Workload erfolgreich aktualisiert",
+      "workloadScaled": "Workload auf {{replicas}} Replikate skaliert",
+      "workloadDeleted": "Workload erfolgreich gelöscht"
+    },
+    "defaults": {
+      "deploymentKind": "Deployment",
+      "defaultNamespace": "Standard"
+    }
+  },
+  "clusterQueries": {
+    "status": {
+      "available": "Verfügbar",
+      "unavailable": "Nicht verfügbar"
+    },
+    "logging": {
+      "clusterOnboardRequestPayload": "[DEBUG] Cluster-Onboarding: Request-Payload:",
+      "clusterOnboardResponse": "[DEBUG] Cluster-Onboarding: Response:",
+      "onboardSuccessful": "[DEBUG] Onboarding der Cluster-Mutation erfolgreich, Cluster-Abfrage-Cache ungültig",
+      "onboardError": "[DEBUG] Fehler beim Onboarding der Cluster-Mutation:",
+      "mutationStart": "[DEBUG] ========== START DER MUTATION ==========",
+      "context": "[DEBUG] Kontext:",
+      "cluster": "[DEBUG] Cluster:",
+      "originalLabels": "[DEBUG] Originale Label:",
+      "deletedLabels": "[DEBUG] Gelöschte Label:",
+      "processingBulkUpdate": "[DEBUG] Verarbeitung von Bulk-Label-Aktualisierungen für {{count}} Cluster",
+      "addingDeletedLabels": "[DEBUG] Gelöschte Label als leere Werte hinzufügen:",
+      "finalLabels": "[DEBUG] Finale Label, die an das Backend gesendet werden:",
+      "apiPayload": "[DEBUG] API-Payload:",
+      "apiResponse": "[DEBUG] API-Response:",
+      "apiError": "[DEBUG] API-Fehler:",
+      "labelsUpdated": "[DEBUG] Label erfolgreich aktualisiert, Cluster-Abfrage-Cache ungültig",
+      "errorUpdatingLabels": "[DEBUG] Fehler beim Aktualisieren der Labels:",
+      "detachingCluster": "[DEBUG] Cluster wird getrennt:",
+      "detachSuccessful": "[DEBUG] Cluster erfolgreich getrennt, Cluster-Abfrage-Cache ungültig",
+      "detachError": "[DEBUG] Fehler beim Trennen der Cluster-Mutation:",
+      "skippingDetailsFetch": "[DEBUG] Detailabfrage für virtuellen Bulk-Cluster überspringen"
+    },
+    "messages": {
+      "applyLabelsToMultipleClusters": "Label auf {{count}} Cluster anwenden"
+    },
+    "defaults": {
+      "virtualBulkOperationId": "virtual-bulk-operation"
+    }
+  },
+  "bpQueries": {
+    "logging": {
+      "fetchingPolicyDetails": "Rufe vollständige Details für Binding Policy ab: {{policyName}}",
+      "receivedResponses": "Antworten von beiden API-Endpunkten empfangen",
+      "foundPolicyDetails": "Policy-Details in der Haupt-BP-Antwort gefunden:",
+      "receivedStatusData": "Statusdaten empfangen:",
+      "yamlFromResponse": "Verwende YAML direkt aus der Antwort-Root",
+      "yamlFromMetadata": "Verwende YAML aus metadata.annotations.yaml",
+      "yamlAvailable": "Extrahierter YAML-Inhalt für Policy {{policyName}} verfügbar ({{length}} Zeichen)",
+      "noYamlFound": "Kein YAML-Inhalt für Policy {{policyName}} gefunden",
+      "parsedYaml": "YAML geparst:",
+      "errorParsingYaml": "Fehler beim Parsen von YAML:",
+      "usingStatus": "Verwende Status \"{{status}}\" vom Status-API-Endpunkt",
+      "finalPolicyObject": "Finales Policy-Objekt:",
+      "extractedUniqueWorkloads": "{{count}} eindeutige Workloads extrahiert",
+      "rawBindingPolicies": "Rohdaten der Binding Policies:"
+    },
+    "errors": {
+      "policyNotFound": "Policy {{policyName}} wurde in der Hauptantwort nicht gefunden",
+      "errorParsingJson": "Fehler beim Parsen von JSON aus raw fieldsv1:",
+      "resourcesNull": "Resources ist null für Namespace {{namespace}}, Ressourcen-Typ {{resourceType}}",
+      "resourcesNullClusterScoped": "Resources ist null für cluster-scoped Ressourcen-Typ {{resourceType}}"
+    }
+  },
+  "wecsTopology": {
+    "title": "Remote-Cluster-Treeview",
+    "createWorkload": "Workload erstellen",
+    "viewModes": {
+      "tiles": "Kacheln",
+      "list": "Liste"
+    },
+    "note": "Hinweis: Default-, Kubernetes-System- und OpenShift-Namespaces werden in dieser Ansicht ausgeblendet.",
+    "emptyState": {
+      "title": "Keine Workloads gefunden",
+      "description": "Erstellen Sie Ihre erste Workload, um zu beginnen"
+    },
+    "contextMenu": {
+      "details": "Details",
+      "edit": "Bearbeiten",
+      "logs": "Logs",
+      "execPods": "Pods ausführen"
+    },
+    "fullscreen": {
+      "toggle": "Vollbildanzeige umschalten"
+    },
+    "timeAgo": {
+      "today": "Heute",
+      "days": "{{count}} Tag",
+      "days_plural": "{{count}} Tage"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
+    },
+    "zoomControls": {
+      "groupByResource": "Nach Ressource/Kind gruppieren",
+      "expandAll": "Alle Unterknoten einblenden",
+      "collapseAll": "Alle Unterknoten ausblenden",
+      "zoomIn": "Heranzoomen",
+      "zoomOut": "Herauszoomen",
+      "resetZoom": "Zoom zurücksetzen",
+      "edgeStyle": "Kantenstil",
+      "curvy": "Geschwungen",
+      "square": "Gerade",
+      "fullscreen": "Vollbild",
+      "exitFullscreen": "Vollbild verlassen"
+    },
+    "hideControls": {
+      "hide": "Steuerelemente ausblenden",
+      "show": "Steuerelemente einblenden"
+    },
+    "nodeLabel": {
+      "labels": "Label:",
+      "noLabels": "Keine Label"
+    }
+  },
+  "wecsDetailsPanel": {
+    "common": {
+      "update": "Aktualisieren",
+      "sync": "Synchronisieren",
+      "delete": "Löschen",
+      "close": "Schließen",
+      "unknown": "Unbekannt",
+      "na": "N/V",
+      "today": "Heute",
+      "daysAgo": "Vor {{count}} Tagen"
+    },
+    "buttons": {
+      "clearTerminal": "Terminal löschen",
+      "minimize": "Minimieren",
+      "maximize": "Maximieren"
+    },
+    "tabs": {
+      "summary": "ZUSAMMENFASSUNG",
+      "edit": "BEARBEITEN",
+      "logs": "LOGS",
+      "execPods": "PODS AUSFÜHREN"
+    },
+    "terminal": {
+      "connecting": "Verbinde mit der Pod-Shell in Container {{containerName}}...",
+      "connected": "Verbunden mit der Pod-Shell in Container {{containerName}}",
+      "connectionClosed": "Verbindung geschlossen",
+      "connectionNotActive": "Verbindung nicht aktiv. Befehl kann nicht gesendet werden.",
+      "errorConnecting": "Fehler beim Herstellen der Verbindung zum Pod. Bitte erneut versuchen."
+    },
+    "format": {
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "table": {
+      "kind": "KIND",
+      "name": "NAME",
+      "namespace": "NAMESPACE",
+      "createdAt": "ERSTELLT AM",
+      "context": "KONTEXT",
+      "labels": "LABEL"
+    },
+    "containers": {
+      "selectContainer": "Container auswählen",
+      "noContainersFound": "Keine Container gefunden"
+    },
+    "logs": {
+      "previousLogs": "Vorherige Logs",
+      "currentLogs": "Aktuelle Logs",
+      "selectLogsContainer": "Logs-Container auswählen"
+    },
+    "errors": {
+      "failedLoadClusterDetails": "Clusterdetails konnten nicht geladen werden.",
+      "failedLoadDetails": "Details für {{type}} konnten nicht geladen werden.",
+      "apiNotImplemented": "API zum Aktualisieren des Pods „{{resourceName}}“ ist nicht implementiert",
+      "failedFetchContainers": "Containerliste konnte nicht abgerufen werden",
+      "failedFetchLogsContainers": "Containerliste für Logs konnte nicht abgerufen werden",
+      "failedConnectExec": "Exec-Sitzung konnte nicht verbunden werden",
+      "failedInitExec": "Exec-Sitzung konnte nicht initialisiert werden",
+      "failedUpdate": "Manifest konnte nicht aktualisiert werden",
+      "resourceNotFound": "Ressource nicht gefunden",
+      "permissionDenied": "Zugriff verweigert",
+      "invalidManifest": "Ungültiges Manifestformat",
+      "namespaceRequired": "Namespace ist erforderlich"
+    },
+    "success": {
+      "manifestUpdated": "Manifest erfolgreich aktualisiert"
+    },
+    "cluster": {
+      "active": "Aktiv"
+    },
+    "exec": {
+      "connected": "Verbunden"
+    },
+    "noManifest": "Kein Manifest verfügbar"
+  },
+  "treeView": {
+    "title": "Workloads verwalten",
+    "createWorkload": "Workload erstellen",
+    "note": "Hinweis: Default-, Kubernetes-System- und OpenShift-Namespaces werden in dieser Ansicht ausgeblendet.",
+    "filteringContext": "Filter aktiv: Es werden nur Ressourcen aus dem Kontext {{context}} angezeigt.",
+    "unknown": "Unbekannt",
+    "viewModes": {
+      "tiles": "Kacheln",
+      "list": "Liste"
+    },
+    "timeAgo": {
+      "today": "Heute",
+      "days": "{{count}} Tag",
+      "days_plural": "{{count}} Tage"
+    },
+    "emptyState": {
+      "title": "Keine Workloads gefunden",
+      "description": "Erstellen Sie Ihre erste Workload, um zu beginnen"
+    },
+    "fullscreen": {
+      "toggle": "Vollbild umschalten"
+    },
+    "zoomControls": {
+      "groupByResource": "Nach Resource/Kind gruppieren",
+      "expandAll": "Alle Unterknoten einblenden",
+      "collapseAll": "Alle Unterknoten ausblenden",
+      "zoomIn": "Heranzoomen",
+      "zoomOut": "Herauszoomen",
+      "resetZoom": "Zoom zurücksetzen",
+      "edgeStyle": "Kantenstil",
+      "curvy": "Geschwungen",
+      "square": "Gerade",
+      "fullscreen": "Vollbild",
+      "exitFullscreen": "Vollbild verlassen"
+    },
+    "hideControls": {
+      "hide": "Steuerelemente ausblenden",
+      "show": "Steuerelemente einblenden"
+    },
+    "contextMenu": {
+      "details": "Details",
+      "delete": "Löschen",
+      "edit": "Bearbeiten",
+      "logs": "Logs"
+    },
+    "deleteDialog": {
+      "title": "Löschen der Ressource bestätigen",
+      "message": "Möchten Sie \"{{name}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirm": "Ja, löschen"
+    }
+  },
+  "quickConnect": {
+    "title": "One-Click Cluster Setup",
+    "description": "Vereinfachtes, automatisiertes Cluster-Onboarding ohne Befehle. Wählen Sie Ihren Cluster aus und das System erledigt den Rest.",
+    "selectCluster": "Kubernetes-Cluster auswählen",
+    "searchingClusters": "Suche nach verfügbaren Clustern...",
+    "errorLoadingClusters": "Fehler beim Laden der Cluster",
+    "automatedOnboarding": "Automatisiertes Cluster-Onboarding",
+    "new": "Neu",
+    "automatedDescription": "Dies ist der einfachste Weg, Ihren Kubernetes-Cluster zu verbinden. Wählen Sie einen Cluster aus und klicken Sie auf „Onboard Cluster“, um die Verbindung ohne manuelle Befehle herzustellen.",
+    "retry": "Erneut versuchen",
+    "chooseCluster": "Cluster auswählen...",
+    "noClusters": "Keine Cluster verfügbar",
+    "discoveredClusters": {
+      "title": "Gefundene Cluster",
+      "description": "Diese Cluster wurden in Ihrer Umgebung gefunden. Wählen Sie einen aus, um fortzufahren."
+    },
+    "refreshClustersList": "Clusterliste aktualisieren",
+    "howToConnect": "So verbinden Sie Ihren Cluster",
+    "steps": {
+      "step1": {
+        "title": "Cluster auswählen",
+        "description": "Wählen Sie einen Cluster aus dem Dropdown-Menü oben"
+      },
+      "step2": {
+        "title": "One-Click Onboarding",
+        "description": "Klicken Sie auf \"Onboard Cluster\", um den automatisierten Prozess zu starten"
+      },
+      "step3": {
+        "title": "Sofortige Verbindung",
+        "description": "Ihr Cluster wird automatisch und ohne manuelle Befehle integriert"
+      }
+    },
+    "whyUseAutomated": "Warum automatisiertes Onboarding verwenden?",
+    "approaches": {
+      "automated": {
+        "title": "Automatisierter Ansatz (Neu)",
+        "features": [
+          "One-Click Setup",
+          "Keine manuellen Befehle erforderlich",
+          "Vereinfachtes Benutzererlebnis",
+          "Reduzierte Fehleranfälligkeit"
+        ]
+      },
+      "manual": {
+        "title": "Manueller Ansatz (Legacy)",
+        "features": [
+          "Befehle manuell kopieren und ausführen",
+          "Mehrere CLI-Schritte erforderlich",
+          "Komplexerer Prozess",
+          "Erfordert CLI-Kenntnisse"
+        ]
+      }
+    },
+    "buttons": {
+      "onboarding": "Onboarding...",
+      "onboard": "Cluster integrieren",
+      "back": "Zurück",
+      "close": "Schließen",
+      "openDashboard": "Cluster-Dashboard öffnen",
+      "goToDashboard": "Zum Dashboard"
+    },
+    "success": {
+      "title": "Cluster erfolgreich integriert",
+      "clusterAdded": "Cluster erfolgreich hinzugefügt",
+      "clusterAvailable": "Ihr Cluster ist nun in der Plattform verfügbar",
+      "message": "Cluster {{clusterName}} wurde erfolgreich in die Plattform integriert.",
+      "detailMessage": "Ihr Cluster {{clusterName}} wurde erfolgreich integriert. Nächste Schritte:",
+      "nextSteps": {
+        "viewManage": {
+          "title": "Anzeigen & Verwalten",
+          "description": "Öffnen Sie das Dashboard, um Ressourcen und Status einzusehen"
+        },
+        "deployApps": {
+          "title": "Applikationen bereitstellen",
+          "description": "Containerisierte Anwendungen und Services auf dem Cluster bereitstellen"
+        },
+        "configureSettings": {
+          "title": "Einstellungen konfigurieren",
+          "description": "Cluster-Einstellungen und Policies konfigurieren"
+        }
+      }
+    }
+  },
+  "bindingPolicy": {
+    "editPolicy": "Policy bearbeiten",
+    "saveAndCreatePolicy": "Speichern & Policy erstellen",
+    "title": "Binding Policies verwalten",
+    "description": "Binding Policies erstellen und verwalten, um Workloads zu verteilen",
+    "createBindingPolicy": "Binding Policy erstellen",
+    "noBindingPolicies": "Keine Binding Policies gefunden",
+    "noBindingPoliciesDescription": "Keine Binding Policies verfügbar",
+    "noBindingPoliciesWithFilter": "Es gibt keine Binding Policies, die Ihren {{status}}-Filterkriterien entsprechen.",
+    "notifications": {
+      "fetchError": "Binding Policies konnten nicht abgerufen werden",
+      "createSuccess": "Binding Policy erfolgreich erstellt",
+      "createError": "Binding Policy konnte nicht erstellt werden",
+      "deleteSuccess": "Binding Policy \"{{name}}\" erfolgreich gelöscht",
+      "deleteError": "Binding Policy konnte nicht gelöscht werden",
+      "deleteManySuccess": "{{count}} Binding Policies {{count, plural, one {policy} other {policies}}} erfolgreich gelöscht",
+      "deleteManyError": "Binding Policies konnten nicht gelöscht werden",
+      "deploySuccess": "Deployment erfolgreich abgeschlossen",
+      "deployError": "Deployment fehlgeschlagen",
+      "yamlGenerateError": "Binding Policy YAML konnte nicht generiert werden",
+      "quickConnectError": "Binding Policy konnte nicht erstellt werden",
+      "labelsAssignedTitle": "Label zugewiesen",
+      "policyBindingCreatedTitle": "Binding Policy erstellt",
+      "labelsAssignedChip": "Label helfen, Policies gezielt auf Ressourcen anzuwenden",
+      "policyBindingCreatedChip": "Bindung für Policy-Verteilung erstellt"
+    },
+    "tabs": {
+      "selectItems": "Click and Drop",
+      "yaml": "YAML",
+      "uploadFile": "Datei hochladen"
+    },
+    "upload": {
+      "createNamespaceAutomatically": "Namespace automatisch erstellen",
+      "chooseDifferentYaml": "Andere YAML-Datei auswählen",
+      "filePreview": "Dateivorschau",
+      "chooseOrDrag": "YAML-Datei wählen oder per Drag & Drop hinzufügen",
+      "or": "- oder -",
+      "chooseYaml": "YAML-Datei auswählen",
+      "uploadAndDeploy": "Hochladen und bereitstellen",
+      "dropHere": "YAML-Datei hier ablegen",
+      "chooseOrUpload": "YAML-Datei auswählen oder hochladen",
+      "selectFile": "YAML-Datei auswählen",
+      "acceptedFormats": "Akzeptierte Formate: .yaml, .yml",
+      "chooseDifferentFile": "Andere Datei auswählen"
+    },
+    "previewGeneratedYaml": "Vorschau der generierten YAML-Datei",
+    "deployBindingPolicies": "Binding Policies bereitstellen",
+    "deployBindingPolicy": "Binding Policy bereitstellen",
+    "creating": "Wird erstelle...",
+    "loadingResources": "Lade Ressourcen...",
+    "deploying": "Wird bereitgestellt...",
+    "table": {
+      "name": "Name der Binding Policy",
+      "clusters": "Cluster",
+      "workload": "Ressourcen",
+      "creationDate": "Erstellungsdatum",
+      "status": "Status",
+      "actions": "Aktionen",
+      "noClusters": "Keine Ziel-Cluster definiert",
+      "noWorkloads": "Keine Workloads definiert"
+    },
+    "yamlGeneration": {
+      "resourceRequired": "Mindestens ein Ressourcentyp muss angegeben werden",
+      "resourceRequiredYaml": "Für die YAML-Generierung muss mindestens ein Ressourcentyp angegeben werden."
+    },
+    "quickConnect": {
+      "unknownWorkload": "unbekannt",
+      "unknownLocationGroup": "unbekannt"
+    },
+    "loading": "Wird geladen...",
+    "unknown": "Unbekannt",
+    "visualization": {
+      "title": "Binding Policy Netzwerk",
+      "policies": "{{count}} Policies",
+      "targetCluster": "Ziel-Cluster",
+      "clusters": "{{count}} Cluster",
+      "workloads": "{{count}} Workloads",
+      "showWorkloads": "Workloads anzeigen",
+      "highlightActive": "Aktive markieren",
+      "refresh": "Visualisierung aktualisieren",
+      "fitView": "Ansicht einpassen",
+      "search": "Nodes durchsuchen... (⌘+K)",
+      "legend": "Legende",
+      "policyPreview": "Policy-Vorschau",
+      "policyDistribution": "Policy-Verteilung",
+      "previewMode": "Vorschau-Modus",
+      "workloadSource": "Workload-Quelle",
+      "matchingWorkloads": "{{count}} passende Workloads{{count, plural, one {} other {s}}}",
+      "matchRateShort": "{{matchRate}} % Match",
+      "targetClusters": "Ziel-Cluster ({{count}})",
+      "moreClusters": "+{{count}} weitere",
+      "policyInsights": "Policy-Insights",
+      "status": "Status",
+      "lastModified": "Zuletzt geändert",
+      "notModified": "Nicht geändert",
+      "matchRate": "Match-Rate",
+      "matchRateLong": "{{matchRate}} % der verfügbaren Cluster",
+      "legendItems": {
+        "activePolicy": "Aktive Policy",
+        "cluster": "Cluster",
+        "workload": "Workload",
+        "activeConnection": "Aktive Verbindung",
+        "inactiveConnection": "Inaktive Verbindung"
+      },
+      "layout": {
+        "title": "Layout",
+        "horizontal": "Horizontal",
+        "vertical": "Vertikal",
+        "radial": "Strahlenförmig"
+      },
+      "empty": {
+        "title": "Keine Visualisierungsdaten",
+        "description": "Es gibt keine Binding Policies, Cluster oder Workloads zum Visualisieren. Erstellen Sie Ressourcen, um sie hier anzuzeigen."
+      },
+      "error": {
+        "title": "Visualisierungsfehler",
+        "description": "Beim Rendern der Visualisierung ist ein Fehler aufgetreten."
+      },
+      "loading": "Visualisierung wird geladen...",
+      "searchResources": "Ressourcen suchen",
+      "noNodesFound": "Keine Nodes gefunden, die \"{{searchTerm}}\" entsprechen"
+    },
+    "policyName": "Policy Name",
+    "namespace": "Namespace",
+    "propagationMode": "Verbreitungsmodus",
+    "updateStrategy": "Aktualisierungsstrategie",
+    "resources": "Ressourcen",
+    "advanced": "Erweiterte Einstellungen",
+    "basic": "Grundlegende Einstellungen",
+    "scheduling": "Planungsregeln",
+    "yaml": "YAML",
+    "modes": {
+      "downsyncOnly": "Nur Down-Sync",
+      "upsyncOnly": "Nur Up-Sync",
+      "bidirectionalSync": "Bidirektionale Sync"
+    },
+    "strategies": {
+      "serverSideApply": "Server Side Apply",
+      "forceApply": "Force Apply",
+      "rollingUpdate": "Rolling Update",
+      "blueGreenDeployment": "Blue-Green Deployment"
+    },
+    "deploymentType": {
+      "allClusters": "Alle verfügbaren Cluster",
+      "selectedClusters": "Ausgewählte Cluster"
+    },
+    "confirm": {
+      "title": "Binding Policy Deployment bestätigen",
+      "description": "Sie sind dabei, {{count}} Binding Policies bereitzustellen. Bitte prüfen Sie diese bevor Sie fortfahren.",
+      "deploy": "Policies bereitstellen",
+      "deploying": "Wird bereitgestellt...",
+      "viewYaml": "YAML anzeigen"
+    },
+    "emptyState": {
+      "noClusters": {
+        "title": "Keine verfügbaren Cluster",
+        "description": "Es sind aktuell keine Cluster verfügbar. Sie benötigen mindestens einen Cluster im Status „Ready“, um Binding Policies zu erstellen.",
+        "button": "Cluster verwalten"
+      },
+      "noWorkloads": {
+        "title": "Keine Workloads gefunden",
+        "description": "Keine Workloads verfügbar. Bitte stellen Sie sicher, dass Sie Zugriff auf Workloads haben.",
+        "button": "Zu Workloads"
+      },
+      "noResources": {
+        "title": "Keine Cluster oder Workloads gefunden",
+        "description": "Sie benötigen sowohl Cluster als auch Workloads, um Binding Policies zu erstellen.",
+        "button": "Ressourcen anzeigen"
+      },
+      "noPolicies": {
+        "title": "Keine Binding Policies gefunden",
+        "description": "Erstellen Sie Ihre erste Binding Policy, um zu beginnen",
+        "button": "Binding Policy erstellen"
+      }
+    },
+    "loadingCanvas": "Canvas-Daten werden geladen...",
+    "selection": {
+      "infoAlert": "Diese Oberfläche verwendet simulierte Antworten, um Binding Policies zu erstellen. Wählen Sie Cluster und Workloads aus den Listen aus, um sie dem Canvas hinzuzufügen. Klicken Sie anschließend zuerst auf eine Workload und dann auf einen Cluster, um eine Binding-Policy-Verbindung zu erstellen.",
+      "helpDialog": {
+        "title": "Binding Policies durch direkte Verbindungen erstellen",
+        "intro": "Folgen Sie diesen Schritten, um Binding Policies zu erstellen:",
+        "steps": {
+          "selectClusters": "1. Cluster im linken Bereich auswählen, um sie dem Canvas hinzuzufügen",
+          "selectWorkloads": "2. Workloads im rechten Bereich auswählen, um sie dem Canvas hinzuzufügen",
+          "createConnection": "3. Zuerst auf eine Workload klicken, dann auf einen Cluster, um eine direkte Verbindung zu erstellen",
+          "fillDetails": "4. Policy-Details im angezeigten Dialog ausfüllen",
+          "deploy": "5. Mit der Schaltfläche „Deploy Binding Policies“ das Deployment simulieren"
+        },
+        "gotIt": "Verstanden",
+        "helpDialog": {
+          "title": "Wie man Binding Policies erstellt",
+          "intro": "Folgen Sie diesen Schritten, um Binding Policies zu erstellen:",
+          "steps": {
+            "selectLabels": "1. Label auswählen, um sie dem Canvas hinzuzufügen",
+            "selectLabelsDesc": "Klicken Sie auf Cluster im linken Bereich und auf Workloads im rechten Bereich, um sie dem Binding-Policy-Canvas hinzuzufügen",
+            "deploy": "2. Policies bereitstellen",
+            "deployDesc": "Klicken Sie auf „Deploy Binding Policies“, um Binding Policies zu erstellen und bereitzustellen, die Workloads mit Clustern basierend auf den ausgewählten Labels verbinden"
+          },
+          "tip": "Tipp: Der Label-basierte Ansatz ermöglicht leistungsstarke Binding Policies, die automatisch auf alle Ressourcen angewendet werden, die den Labels entsprechen, jetzt und in Zukunft.",
+          "dontShowAgain": "Nicht erneut anzeigen",
+          "tooltip": "Auswahlanleitung anzeigen"
+        }
+      }
+    },
+    "messages": {
+      "noSelectedPolicies": "Keine Policies zum Löschen ausgewählt",
+      "invalidPolicyNames": "Fehler: Einige ausgewählte Policy-Namen sind ungültig",
+      "partialDeleteSuccess": "{{success}} Policies gelöscht, aber {{failures}} Policies konnten nicht gelöscht werden",
+      "deleteError": "Fehler beim Löschen der Binding Policies: {{errorMessage}}",
+      "updateSuccess": "Binding Policy \"{{name}}\" erfolgreich aktualisiert",
+      "updateError": "Fehler beim Aktualisieren der Binding Policy \"{{name}}\"",
+      "simulatedAssignment": "{{policy}} wurde erfolgreich {{targetType}} {{target}} zugewiesen",
+      "policyCreatedSuccess": "Binding Policy erfolgreich erstellt: {{name}}"
+    },
+    "editDialog": {
+      "title": "Binding Policy bearbeiten",
+      "infoTitle": "Info",
+      "info": "Bearbeiten Sie die Konfiguration Ihrer Binding Policy. Änderungen werden nach dem Speichern übernommen.",
+      "name": "Name der Binding Policy",
+      "save": "Änderungen speichern",
+      "unsavedTitle": "Nicht gespeicherte Änderungen",
+      "unsavedWarning": "Warnung",
+      "unsavedInfo": "Sie haben nicht gespeicherte Änderungen. Möchten Sie wirklich schließen, ohne zu speichern?",
+      "continueEditing": "Bearbeitung fortsetzen",
+      "discard": "Änderungen verwerfen"
+    },
+    "deleteDialog": {
+      "title": "Binding Policy löschen",
+      "confirm": "Möchten Sie die Binding Policy \"{{name}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+    },
+    "header": {
+      "searchPlaceholder": "Policies nach Name, Label oder Status suchen",
+      "clearSearch": "Esc drücken, um die Suche zu löschen",
+      "deleteSelected": "Auswahl löschen",
+      "create": "Binding Policy erstellen",
+      "activeFilters": "Aktive Filter:",
+      "search": "Suchen",
+      "status": "Status",
+      "clearAll": "Alles löschen"
+    },
+    "statusFilter": {
+      "all": "Alle Status",
+      "active": "Aktiv",
+      "pending": "Ausstehend",
+      "inactive": "Inaktiv",
+      "label": "Statusfilter"
+    },
+    "availableItems": {
+      "title": "Verfügbare Elemente",
+      "subtitle": "Wählen Sie Policies, Cluster oder Workloads aus und fügen Sie sie dem Canvas hinzu.",
+      "policy-list": "Policies",
+      "cluster-list": "Cluster",
+      "workload-list": "Workloads",
+      "clickToAdd": "Zum Hinzufügen auf ein Element klicken",
+      "none": "Keine {{title}} verfügbar"
+    },
+    "canvas": {
+      "policiesOnCanvas": "Policies auf dem Canvas:",
+      "clusters": "{{count}} Cluster",
+      "workloads": "{{count}} Workloads",
+      "status": "Status:",
+      "namespace": "Namespace:",
+      "namespaces": "Namespaces:",
+      "clustersOnCanvas": "Cluster auf dem Canvas:",
+      "workloadsOnCanvas": "Workloads auf dem Canvas:",
+      "selectClusters": "Cluster hier auswählen",
+      "matches": "Treffer: {{count}} {{resourceType}}"
+    },
+    "labels": {
+      "title": "Labels:",
+      "key": "Key",
+      "value": "Value",
+      "add": "Hinzufügen"
+    },
+    "creatingConnection": "Verbindung wird erstellt:",
+    "previewDialog": {
+      "title": "Vorschau und Einblicke in die Policy",
+      "visualizationTab": "Visualisierung",
+      "detailsTab": "Details",
+      "matchingDetails": "Übereinstimmende Details",
+      "matchedClusters": "Zugeordnete Cluster ({{count}})",
+      "clusterStatus": "{{name}} – {{status}}",
+      "labels": "Labels: {{labels}}",
+      "matchedWorkloads": "Übereinstimmende Workloads ({{count}})",
+      "workloadNamespace": "{{name}} ({{namespace}})"
+    },
+    "policyNameDialog": {
+      "title": "Binding Policy benennen",
+      "policyName": "Name der Policy",
+      "generateNew": "Neuen Namen generieren",
+      "placeholder": "Namen der Binding Policy eingeben...",
+      "invalid": "Name muss Kleinbuchstaben, Zahlen und Bindestriche enthalten, max. 253 Zeichen",
+      "helper": "Nur Kleinbuchstaben, Zahlen und Bindestriche verwenden",
+      "namingTipsTitle": "💡 Tipps für den Namen:",
+      "namingTips": "Verwenden Sie beschreibende Namen wie \"frontend-to-production\" oder \"database-sync-policy\".",
+      "creating": "Wird erstellt...",
+      "createPolicy": "Policy erstellen"
+    },
+    "configureDialog": {
+      "title": "Binding Policy konfigurieren",
+      "creatingFor": "Binding Policy erstellen für:",
+      "creatingForDesc": "Dies erstellt eine Binding Policy, die {{sourceType}} mit {{targetType}} verbindet.",
+      "tabs": {
+        "basic": "Grundlegend",
+        "advanced": "Erweitert",
+        "scheduling": "Planung",
+        "yaml": "YAML"
+      },
+      "nameHelper": "Name der Binding Policy",
+      "namespaceHelper": "Namespace für die Binding Policy",
+      "updateStrategyHelper": "Wählen Sie aus, wie Änderungen an Ressourcen auf Cluster angewendet werden sollen. Fügen Sie Cluster und Workloads hinzu, indem Sie sie aus den Bereichen auswählen.",
+      "addCustomLabels": "Benutzerdefinierte Label hinzufügen",
+      "labelsTooltip": "Label helfen beim Identifizieren und Auswählen von Ressourcen",
+      "tolerationsTitle": "Tolerations (Erweitert)",
+      "tolerationExpression": "Toleration Expression",
+      "tolerationRequired": "Toleration ist erforderlich",
+      "schedulingRules": "Planungsregeln",
+      "schedulingTooltip": "Definieren Sie Bedingungen, die erfüllt sein müssen, damit ein Cluster die Workload erhält",
+      "resource": "Ressource",
+      "resource.cpu": "CPU-Kerne",
+      "resource.memory": "Speicher",
+      "resource.storage": "Speicher",
+      "resource.pods": "Verfügbare Pods",
+      "operator": "Operator",
+      "activeRules": "Aktive Regeln:",
+      "noSchedulingRules": "Keine Planungsregeln hinzugefügt. Die Policy wird auf alle passenden Cluster angewendet, unabhängig von deren Ressourcen.",
+      "yamlPreview": "YAML-Vorschau",
+      "yamlPreviewInfo": "Dies ist eine YAML-Vorschau, die angewendet wird. Sie können Änderungen in den anderen Registerkarten vornehmen, um diese Vorschau zu aktualisieren."
+    }
+  },
+  "workloads": {
+    "label": {
+      "title": "Workload-Label *",
+      "prefix": "kubestellar.io/workload:",
+      "helpTextError": "Label nicht gefunden",
+      "helpText": "Das Workload-Label ist ein Key:Value-Paar. Der Key ist fest und standardmäßig 'kubestellar.io/workload', Sie können nur den Value ändern."
+    },
+    "github": {
+      "repositoryUrlLabel": "Repository-URL *",
+      "pathLabel": "Pfad *",
+      "branchLabel": "Branch (Standard: main) *",
+      "credentialsLabel": "Zugangsdaten",
+      "credentialsTip": "Zugangsdaten für private Repositories auswählen oder hinzufügen",
+      "addCredentials": "Zugangsdaten hinzufügen",
+      "webhooksLabel": "Webhooks",
+      "webhooksTip": "Webhook für automatisches Bereitstellen auswählen oder hinzufügen",
+      "addWebhook": "Webhook hinzufügen",
+      "previousDeploymentsTitle": "Liste früherer Deployments",
+      "loadingPreviousDeployments": "Frühere Deployments werden geladen...",
+      "noPreviousDeployments": "Keine früheren Deployments verfügbar.",
+      "confirmResourceDeletion": "Löschen der Ressource bestätigen",
+      "deleteConfirmation": "Möchten Sie \"{{name}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "yesDelete": "Ja, löschen",
+      "apply": "Anwenden",
+      "deploying": "Wird bereitgestellt...",
+      "createFromYourGitHub": "Aus Ihrem GitHub erstellen",
+      "deployFromPopularRepositories": "Aus beliebten Repositories bereitstellen",
+      "listOfPreviousDeployments": "Liste früherer Deployments",
+      "repositoryUrl": "Repository-URL *",
+      "repositoryUrlPlaceholder": "z. B. https://github.com/username/repo",
+      "repositoryUrlTip": "Gültige GitHub-Repository-URL verwenden",
+      "path": "Pfad *",
+      "pathPlaceholder": "z. B. /path/to/yaml",
+      "pathTip": "Pfad zu Ihren YAML-Dateien im Repository angeben",
+      "branch": "Branch (Standard: main) *",
+      "branchPlaceholder": "z. B. master, dev-branch",
+      "branchTip": "Branch angeben, von dem bereitgestellt wird",
+      "credentials": "Zugangsdaten",
+      "credentialsPlaceholder": "z. B. username-pat",
+      "title": "Aus Ihrem GitHub-Repository erstellen und bereitstellen!",
+      "tab": {
+        "importFromGitHub": "Aus GitHub importieren",
+        "selectRepositorySource": "Repository-Quelle auswählen, um Ihre Applikation zu importieren",
+        "repositorySource": "Repository-Quelle",
+        "selectRepository": "Repository auswählen",
+        "repositoryDetails": "Repository-Details",
+        "selectedRepository": "Ausgewähltes Repository:"
+      },
+      "options": {
+        "yourGitHub": {
+          "title": "Ihr GitHub-Repository",
+          "description": "Aus Ihrem eigenen GitHub-Repository importieren"
+        },
+        "enterprise": {
+          "title": "Enterprise-Repository",
+          "description": "Aus einem GitHub-Enterprise-Repository importieren"
+        },
+        "public": {
+          "title": "Öffentliches Repository",
+          "description": "Aus einem beliebigen öffentlichen GitHub-Repository importieren"
+        },
+        "popular": {
+          "title": "Beliebte Repositories",
+          "description": "Aus unserer Liste ausgewählter Beispiele auswählen"
+        },
+        "placeholder": {
+          "yourGitHub": "Formular für Ihr GitHub-Repository würde hier erscheinen",
+          "enterprise": "Formular für Enterprise-Repository würde hier erscheinen",
+          "public": "Formular für öffentliches Repository würde hier erscheinen"
+        }
+      }
+    },
+    "artifactHub": {
+      "searchPackages": "Pakete suchen",
+      "directDeploy": "Helm-Chart direkt aus Artifact Hub bereitstellen",
+      "listRepositories": "Repositories auflisten",
+      "form": {
+        "packageId": "Package-ID *",
+        "packageIdTooltip": "Format: helm/repository-name/chart-name (z. B. helm/bitnami/nginx)",
+        "packageIdPlaceholder": "helm/bitnami/nginx",
+        "packageIdTip": "Helm-Chart Package-ID angeben (z. B. helm/bitnami/nginx)",
+        "version": "Version (Standard: neueste)",
+        "versionTooltip": "Bereitzustellende Chart-Version (z. B. 13.2.12). Wenn nicht angegeben, wird die neueste Version verwendet.",
+        "versionPlaceholder": "13.2.12 (leer lassen für latest)",
+        "versionTip": "Version angeben, die bereitgestellt werden soll (für die neueste Version leer lassen).",
+        "releaseName": "Release-Name *",
+        "releaseNameTooltip": "Name zur Identifizierung Ihres Helm-Releases",
+        "releaseNamePlaceholder": "my-nginx",
+        "releaseNameTip": "Name des Helm-Releases angeben",
+        "namespace": "Namespace",
+        "namespaceTooltip": "Kubernetes-Namespace, in den bereitgestellt wird",
+        "namespacePlaceholder": "Standard",
+        "namespaceTip": "Namespace angeben (Standard: „Standard“)",
+        "customValues": "Benutzerdefinierte Values",
+        "customValuesTooltip": "Format: key=value,key2=value2 (e.g., service.type=LoadBalancer,service.port=80)",
+        "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
+        "customValuesTip": "Benutzerdefinierte Konfigurationswerte für Ihr Helm-Chart (Key=Value-Format)"
+      },
+      "validation": {
+        "selectPackage": "Bitte zuerst ein Paket auswählen",
+        "enterWorkloadLabel": "Bitte ein Workload-Label eingeben",
+        "enterPackageId": "Bitte eine Package-ID eingeben.",
+        "enterReleaseName": "Bitte einen Release-Namen eingeben."
+      },
+      "buttons": {
+        "close": "Schließen",
+        "apply": "Anwenden"
+      },
+      "searchPackagesForm": {
+        "searchHint": "Tippen, um nach Helm-Paketen auf Artifact Hub zu suchen",
+        "errorMessage": {
+          "enterSearchTerm": "Bitte Suchbegriff eingeben",
+          "noPackagesFound": "Keine Pakete für „{{query}}“ gefunden",
+          "searchFailed": "Suche fehlgeschlagen: {{message}}"
+        },
+        "serviceConfig": {
+          "title": "Service-Konfiguration",
+          "serviceType": "Service-Typ",
+          "servicePort": "Service-Port"
+        },
+        "packageDetails": {
+          "stars": "Sterne",
+          "repository": "Repository:",
+          "verified": "Verifiziert",
+          "namespace": "Namespace"
+        }
+      },
+      "repositoriesList": {
+        "tip": "Repositories sind Quellen für Helm-Charts. Klicken Sie auf eine Karte, um mehr Details zu sehen.",
+        "loading": "Repositories werden geladen...",
+        "noRepositories": "Keine Repositories verfügbar",
+        "official": "Offiziell",
+        "helm": "Helm",
+        "other": "Andere",
+        "organization": "Organisation:",
+        "user": "User:",
+        "url": "URL:"
+      }
+    },
+    "yaml": {
+      "createNamespaceAutomatically": "Namespace automatisch erstellen",
+      "editor": "YAML-Editor",
+      "deploy": "Bereitstellen"
+    },
+    "helm": {
+      "createOwn": "Eigenes Helm-Chart erstellen",
+      "popularCharts": "Aus beliebten Helm-Charts bereitstellen",
+      "prevCharts": "Zuvor bereitgestellte Helm-Charts",
+      "form": {
+        "repositoryName": "Repository-Name *",
+        "repositoryNameTip": "Namen des Helm-Repositories angeben",
+        "repositoryNamePlaceholder": "z. B. my-helm-repo",
+        "repositoryUrl": "Repository-URL *",
+        "repositoryUrlTip": "Gültige Helm-Repository-URL verwenden",
+        "repositoryUrlPlaceholder": "z. B. https://charts.helm.sh/stable",
+        "chartName": "Chart-Name *",
+        "chartNameTip": "Namen des bereitzustellenden Helm-Charts angeben",
+        "chartNamePlaceholder": "z. B. nginx",
+        "releaseName": "Release-Name *",
+        "releaseNameTip": "Release-Name für dieses Helm-Deployment angeben",
+        "releaseNamePlaceholder": "z. B. my-release",
+        "version": "Version (Standard: neueste)",
+        "versionTip": "Bereitzustellende Chart-Version angeben",
+        "versionPlaceholder": "z. B. 1.2.3",
+        "namespace": "Namespace *",
+        "namespaceTip": "Namespace für das Helm-Chart angeben",
+        "namespacePlaceholder": "z. B. Standard, my-namespace",
+        "searchChartLabel": "Helm-Chart suchen"
+      },
+      "userCharts": {
+        "loading": "User-Charts werden geladen...",
+        "noCharts": "Keine vom User erstellten Charts verfügbar.",
+        "delete": "Löschen",
+        "confirmDeletion": "Löschen der Ressource bestätigen",
+        "deleteConfirmation": "Möchten Sie \"{{chartId}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "deleteSuccess": "Chart {{chartId}} erfolgreich gelöscht!",
+        "deleteError": "Chart {{chartId}} nicht gelöscht!"
+      },
+      "buttons": {
+        "cancel": "Abbrechen",
+        "deploying": "Wird bereitgestellt...",
+        "apply": "Anwenden"
+      },
+      "messages": {
+        "selectChart": "Bitte ein Helm-Chart zum Bereitstellen auswählen.",
+        "deploySuccess": "Ausgewähltes {{chartName}} Helm-Chart erfolgreich bereitgestellt!",
+        "deployFailureReuse": "Deployment fehlgeschlagen: Installation des Charts fehlgeschlagen: Ein bereits verwendeter Name kann nicht erneut verwendet werden!",
+        "deployFailure": "Beliebtes Helm-Chart konnte nicht bereitgestellt werden!"
+      }
+    },
+    "list": {
+      "title": "Workloads",
+      "create": "Workload erstellen",
+      "filter": "Workloads filtern",
+      "noWorkloads": "Keine Workloads gefunden",
+      "createFirst": "Erstellen Sie Ihre erste Workload, um zu beginnen"
+    },
+    "tabs": {
+      "yaml": "YAML",
+      "helm": "Helm",
+      "github": "GitHub",
+      "artifactHub": "Artifact Hub"
+    },
+    "createOptions": {
+      "title": "Workload erstellen",
+      "subtitle": "Workloads erstellen",
+      "yaml": {
+        "createNamespaceAutomatically": "Namespace automatisch erstellen",
+        "deploy": "Bereitstellen",
+        "cancel": "Abbrechen"
+      },
+      "file": {
+        "title": "Aus Datei",
+        "dragDrop": "Ziehen Sie Ihre YAML- oder JSON-Datei hierher (Drag & Drop)",
+        "browse": "Durchsuchen",
+        "selectFile": "YAML- oder JSON-Datei auswählen",
+        "fileSelected": "Datei ausgewählt",
+        "fileSize": "Dateigröße",
+        "deploy": "Bereitstellen",
+        "cancel": "Abbrechen",
+        "noFileSelected": "Keine Datei ausgewählt.",
+        "invalidFile": "Bitte eine gültige YAML- oder JSON-Datei hochladen."
+      },
+      "github": {
+        "title": "GitHub",
+        "workloadLabel": "Workload-Label",
+        "workloadLabelPlaceholder": "Wert für Label ‚kubestellar.io/workload‘ eingeben",
+        "repositoryUrl": "Repository-URL",
+        "repositoryUrlPlaceholder": "z. B. https://github.com/username/repo",
+        "path": "Pfad",
+        "pathPlaceholder": "z. B. /path/to/yaml",
+        "branch": "Branch (Standard: main)",
+        "branchPlaceholder": "z. B. master, dev-branch",
+        "credentials": "Zugangsdaten",
+        "webhook": "Webhook",
+        "addCredentials": "Zugangsdaten hinzufügen",
+        "addWebhook": "Webhook hinzufügen",
+        "deploy": "Bereitstellen",
+        "cancel": "Abbrechen"
+      },
+      "helm": {
+        "title": "Helm",
+        "repoName": "Repository-Name",
+        "repoNamePlaceholder": "z. B. bitnami",
+        "repoUrl": "Repository-URL",
+        "repoUrlPlaceholder": "z. B. https://charts.bitnami.com/bitnami",
+        "chartName": "Chart-Name",
+        "chartNamePlaceholder": "z. B. nginx",
+        "releaseName": "Release-Name",
+        "releaseNamePlaceholder": "z. B. my-release",
+        "version": "Version (für die neueste Version leer lassen)",
+        "versionPlaceholder": "z. B. 1.0.0",
+        "namespace": "Namespace",
+        "namespacePlaceholder": "z. B. default",
+        "workloadLabel": "Workload-Label",
+        "workloadLabelPlaceholder": "Wert für Label ‚kubestellar.io/workload‘ eingeben",
+        "deploy": "Bereitstellen",
+        "cancel": "Abbrechen",
+        "userCharts": {
+          "title": "Liste der vom User erstellten Charts",
+          "deleteSuccess": "Chart {{chartId}} erfolgreich gelöscht!",
+          "deleteError": "Chart {{chartId}} nicht gelöscht!",
+          "loading": "User-Charts werden geladen...",
+          "noCharts": "Keine vom User erstellten Charts verfügbar.",
+          "delete": "Löschen",
+          "confirmDeletion": "Löschen der Ressource bestätigen",
+          "deleteConfirmation": "Möchten Sie \"{{chartId}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        }
+      },
+      "artifactHub": {
+        "title": "Artifact Hub",
+        "searchPlaceholder": "Nach Helm-Charts suchen...",
+        "selectPackage": "Bitte ein Paket auswählen.",
+        "enterReleaseName": "Bitte einen Release-Namen eingeben."
+      },
+      "credentials": {
+        "title": "Zugangsdaten hinzufügen",
+        "username": "GitHub-Benutzername",
+        "usernamePlaceholder": "GitHub-Benutzernamen eingeben",
+        "token": "Personal Access Token",
+        "tokenPlaceholder": "GitHub Personal Access Token eingeben",
+        "add": "Hinzufügen",
+        "cancel": "Abbrechen",
+        "fillBoth": "Bitte GitHub-Benutzername und Personal Access Token ausfüllen."
+      },
+      "webhook": {
+        "title": "Webhook hinzufügen",
+        "url": "Webhook-URL",
+        "urlPlaceholder": "Webhook-URL eingeben",
+        "token": "Personal Access Token",
+        "tokenPlaceholder": "Personal Access Token für Webhook eingeben",
+        "add": "Hinzufügen",
+        "cancel": "Abbrechen",
+        "fillBoth": "Bitte Webhook-URL und Personal Access Token ausfüllen."
+      },
+      "cancelConfirmation": {
+        "title": "Änderungen verwerfen?",
+        "message": "Sie haben nicht gespeicherte Änderungen. Möchten Sie wirklich abbrechen?",
+        "confirm": "Ja, verwerfen",
+        "cancel": "Nein, weiter bearbeiten"
+      },
+      "notifications": {
+        "workloadDeploySuccess": "Workload erfolgreich bereitgestellt!",
+        "deploymentSuccess": "Deployment erfolgreich!",
+        "helmDeploySuccess": "Helm-Chart erfolgreich bereitgestellt!",
+        "artifactHubDeploySuccess": "Artifact-Hub-Deployment erfolgreich!",
+        "credentialAddedSuccess": "Zugangsdaten erfolgreich hinzugefügt!",
+        "webhookAddedSuccess": "Webhook erfolgreich hinzugefügt!",
+        "deploymentConflict": "Konfliktfehler: Deployment wird bereits ausgeführt!",
+        "workloadAlreadyExists": "Fehler beim Erstellen von {{kind}} {{name}} im Namespace {{namespace}}, Workload bereits vorhanden oder Namespace {{namespace}} nicht gefunden",
+        "unknownWorkloadExists": "Fehler beim Erstellen von Unbekannt {{name}}, Workload bereits vorhanden",
+        "helmDeployFailed": "Deployment fehlgeschlagen: Installation des Charts fehlgeschlagen: Ein bereits verwendeter Name kann nicht erneut verwendet werden!",
+        "gitRepoError": "Klonen des Repositories fehlgeschlagen. Geben Sie die richtige URL und den richtigen Pfad ein!",
+        "enterWorkloadLabel": "Bitte Workload-Label eingeben.",
+        "invalidWorkloadLabel": "Sie können nur den Value eingeben; der Key ist konstant und standardmäßig auf 'kubestellar.io/workload' gesetzt.",
+        "enterGitRepo": "Bitte Git-Repository eingeben.",
+        "enterPath": "Bitte Pfad eingeben.",
+        "enterRepoName": "Bitte einen Repository-Namen eingeben.",
+        "enterRepoUrl": "Bitte eine Repository-URL eingeben.",
+        "enterChartName": "Bitte einen Chart-Namen eingeben.",
+        "enterReleaseName": "Bitte einen Release-Namen eingeben.",
+        "enterNamespace": "Bitte einen Namespace eingeben.",
+        "enterYamlJson": "Bitte YAML- oder JSON-Inhalt eingeben.",
+        "needMetadataName": "Mindestens ein Dokument muss 'metadata.name' enthalten"
+      }
+    }
+  },
+  "visualization": {
+    "policyDistribution": "{{count}} Verbindungen",
+    "clusters": {
+      "edge": "Edge-Cluster",
+      "aiInference": "KI-Inferencing-Cluster",
+      "aiTraining": "KI-Training-Cluster",
+      "service": "Service-Cluster",
+      "compute": "Compute-Cluster",
+      "descriptions": {
+        "edge": "Edge-Computing-Ressourcen für Verarbeitung mit niedriger Latenz",
+        "aiInference": "Echtzeit-Inferenz und Vorhersagedienste für KI-Modelle",
+        "aiTraining": "Hochleistungsrechner für das Training von KI-Modellen",
+        "service": "Zentrale Microservices und API-Endpunkte",
+        "compute": "Allgemeine Compute-Ressourcen"
+      }
+    },
+    "title": "Visualisierung",
+    "controls": "Steuerung anzeigen",
+    "zoom": "Zoom",
+    "searchResources": "Ressourcen suchen"
+  },
+  "namespaces": {
+    "default": "Standard",
+    "create": "Namespace erstellen",
+    "select": "Namespace auswählen"
+  },
+  "errors": {
+    "policyNameRequired": "Policy-Name erforderlich",
+    "policyNotFound": "Policy {{name}} nicht gefunden",
+    "parseError": "Antwort für Binding Policies konnte nicht geparst werden",
+    "unexpectedFormat": "Unerwartetes API-Antwortformat",
+    "error": "Fehler",
+    "required": "Dieses Feld ist ein Pflichtfeld",
+    "invalidFormat": "Ungültiges Format",
+    "connectionFailed": "Verbindung fehlgeschlagen",
+    "forbidden": "Sie haben keine Berechtigung, auf diese Ressource zuzugreifen",
+    "serverError": "Serverfehler aufgetreten",
+    "notFound": "Ressource nicht gefunden",
+    "timeout": "Zeitüberschreitung bei der Anfrage",
+    "unknown": "Ein unbekannter Fehler ist aufgetreten",
+    "contextNameRequired": "Kontext-Name erforderlich",
+    "versionRequired": "KubeStellar-Version erforderlich",
+    "operationTimeout": "Zeitüberschreitung bei der Ausführung. Der Prozess läuft möglicherweise noch im Hintergrund.",
+    "failedToCreateContext": "Kontext konnte nicht erstellt werden",
+    "creatingContext": "Fehler beim Erstellen des Kontexts:",
+    "websocketConnectionFailed": "Verbindung zum Server nicht möglich. Bitte Netzwerkverbindung prüfen und erneut versuchen.",
+    "websocketClosedUnexpectedly": "WebSocket-Verbindung unerwartet geschlossen",
+    "fetchingContexts": "Fehler beim Abrufen des Kontexts:"
+  },
+  "contexts": {
+    "filterByContext": "Nach Kontext filtern",
+    "allContexts": "Alle Kontexte",
+    "showingAllContexts": "Ressourcen aus allen Kontexten anzeigen",
+    "filteringByContext": "Gefiltert: Es werden nur Ressourcen aus dem Kontext {{context}} angezeigt",
+    "createdSuccessfully": "Kontext erfolgreich erstellt!",
+    "websocketClosed": "WebSocket-Verbindung geschlossen:",
+    "contextCreatedSuccess": "Kontext \"{{contextName}}\" erfolgreich erstellt!",
+    "createNewContext": "Neuen Kontext erstellen",
+    "contextName": "Kontext-Name",
+    "kubestellarVersion": "KubeStellar Version",
+    "creating": "Wird erstellt...",
+    "createContext": "Kontext erstellen"
+  },
+  "policySelectionStore": {
+    "labelsAssigned": "Label automatisch zu {{itemType}} {{itemId}} zugewiesen",
+    "policyAssigned": "{{policyName}} erfolgreich an {{targetType}} {{targetName}} zugewiesen",
+    "clusterAlreadyAssigned": "Cluster {{targetName}} ist der Policy {{policyName}} bereits zugewiesen",
+    "workloadAlreadyAssigned": "Workload {{targetName}} ist der Policy {{policyName}} bereits zugewiesen"
+  },
+  "auth": {
+    "login": {
+      "success": "Login erfolgreich",
+      "error": "Login-Fehler:",
+      "successWithUser": "Login erfolgreich für Benutzer: {{username}}. Weiterleitung zu {{path}}",
+      "invalidCredentials": "Ungültiger Benutzername oder ungültiges Passwort. Bitte erneut versuchen.",
+      "authFailed": "Authentifizierung fehlgeschlagen. Bitte Zugangsdaten prüfen.",
+      "noToken": "Kein Token vom Server erhalten",
+      "invalidRequest": "Ungültige Anfrage. Bitte Eingaben prüfen und erneut versuchen.",
+      "serverError": "Serverfehler. Bitte später erneut versuchen."
+    }
+  },
+  "kubestellarData": {
+    "logging": {
+      "clustersApiResponse": "API-Antwort des Clusters:",
+      "processedClusters": "Verarbeitete Cluster:",
+      "errorFetchingClusters": "Fehler beim Abrufen der Cluster:",
+      "processedWorkloads": "Verarbeitete Workloads:",
+      "errorFetchingWorkloads": "Fehler beim Abrufen der Workloads:",
+      "errorFetchingPolicies": "Fehler beim Abrufen der Policies:",
+      "assigningPolicy": "Zuweisung der Policy {{policyName}} an {{targetType}} {{targetName}}"
+    },
+    "errors": {
+      "failedFetchClusters": "Fehler beim Abrufen der Cluster",
+      "failedFetchWorkloads": "Fehler beim Abrufen der Workloads",
+      "failedFetchPolicies": "Fehler beim Abrufen der Policies",
+      "errorAssigningPolicy": "Fehler beim Zuweisen der Policy:",
+      "failedToAssign": "Zuweisung der Policy {{policyName}} an {{targetType}} {{targetName}} fehlgeschlagen"
+    },
+    "success": {
+      "successfullyAssigned": "{{policyName}} erfolgreich zugewiesen an {{targetType}} {{targetName}}"
+    },
+    "defaults": {
+      "unknown": "Unbekannt",
+      "ready": "Fertig",
+      "deployment": "Deployment",
+      "defaultNamespace": "Standard",
+      "active": "Aktiv",
+      "alwaysMatch": "AlwaysMatch"
+    }
+  },
+  "profileSection": {
+    "logoutMessage": "Sie wurden erfolgreich abgemeldet.",
+    "account": "Konto",
+    "admin": "Admin",
+    "helpSupport": "Hilfe & Support",
+    "raiseIssue": "Problem melden",
+    "signOut": "Abmelden",
+    "changePassword": "Passwort ändern",
+    "changePasswordSubtitle": "Bitte geben Sie Ihr aktuelles Passwort ein und wählen Sie ein neues.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmNewPassword": "Neues Passwort bestätigen",
+    "passwordChangedSuccess": "Passwort erfolgreich geändert.",
+    "passwordChangedError": "Passwort konnte nicht geändert werden.",
+    "passwordsDoNotMatch": "Neue Passwörter stimmen nicht überein.",
+    "passwordRequired": "Passwort ist erforderlich.",
+    "errorCurrentPasswordIncorrect": "Aktuelles Passwort ist falsch",
+    "cancel": "Abbrechen",
+    "changePasswordButton": "Passwort ändern",
+    "passwordsMatch": "Passwörter stimmen überein!"
+  },
+  "onboardingLogs": {
+    "onboarding": "Onboarding",
+    "complete": "Abgeschlossen",
+    "connecting": "Verbinde mit Log-Stream...",
+    "errors": {
+      "websocketFailed": "WebSocket-Verbindung fehlgeschlagen. Bitte erneut versuchen.",
+      "connectionFailed": "Verbindung mit Log-Stream fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "status": {
+      "processing": "Verarbeitung",
+      "verifying": "Verifizierung",
+      "available": "Verfügbar",
+      "completed": "Abgeschlossen",
+      "error": "Fehler"
+    }
+  },
+  "newAppDialog": {
+    "title": "Neue App erstellen",
+    "githubUrl": "GitHub-URL",
+    "path": "Pfad",
+    "deploy": "Bereitstellen"
+  },
+  "navbar": {
+    "generateLog": "Log generieren",
+    "toggleTheme": "Theme umschalten",
+    "brandName": "KubestellarUI",
+    "its": "ITS",
+    "wds": "WDS",
+    "logFilename": "kubestellarui.log",
+    "generateLogError": "Log konnte nicht generiert werden. Bitte erneut versuchen."
+  },
+  "manualImportTab": {
+    "loadingClusters": "Verfügbare Cluster werden geladen...",
+    "errorLoadingClusters": "Fehler beim Laden der Cluster",
+    "title": "Manuelles Cluster-Setup",
+    "recommended": "Empfohlen",
+    "description": "Dies ist der einfachste Weg, Ihren Kubernetes-Cluster zu verbinden. Wählen Sie einen Cluster aus und klicken Sie auf „Onboard Cluster“, um die Verbindung ohne manuelle Befehle herzustellen.",
+    "selectCluster": "Cluster zum Verbinden auswählen",
+    "chooseCluster": "Cluster auswählen...",
+    "noClusters": "Keine Cluster verfügbar",
+    "discoveredClusters": "Diese Cluster wurden in Ihrer Umgebung erkannt. Wählen Sie einen aus, um fortzufahren.",
+    "refreshClustersList": "Clusterliste aktualisieren",
+    "howToConnect": "So verbinden Sie Ihren Cluster",
+    "steps": {
+      "selectCluster": "Einen Cluster aus der obigen Dropdown-Liste auswählen",
+      "clickOnboard": "Klicken Sie auf die Schaltfläche \"Onboard Cluster\", um Ihren Cluster direkt zu verbinden",
+      "autoOnboard": "Ihr Cluster wird automatisch ohne manuelle Befehle integriert"
+    },
+    "connectionError": "Verbindungsfehler",
+    "installationGuide": "Installationsanleitung:",
+    "installCommand": "Um clusteradm zu installieren, folgendes ausführen:",
+    "commandCopied": "Installationsbefehl kopiert!",
+    "onboarding": "Onboarding...",
+    "onboardCluster": "Cluster integrieren",
+    "clusterAddedSuccess": "Cluster wurde der Plattform hinzugefügt",
+    "clusterOnboardedSuccess": "Ihr Cluster {{clusterName}} wurde erfolgreich integriert. Sie können jetzt Folgendes:",
+    "nextSteps": {
+      "viewManage": "Cluster im Dashboard anzeigen und verwalten",
+      "deployApps": "Applikationen und Services auf dem Cluster bereitstellen",
+      "configureSettings": "Cluster-Einstellungen konfigurieren und verwalten"
+    },
+    "viewDashboard": "Cluster im Dashboard anzeigen",
+    "goToDashboard": "Zum Dashboard"
+  },
+  "logModal": {
+    "connectedToStream": "Mit Log-Stream verbunden...",
+    "connectionClosed": "Logs abgeschlossen. Verbindung geschlossen.",
+    "retryConnection": "Verbindung geschlossen. Bitte erneut versuchen.",
+    "logs": "Logs",
+    "loadingLogs": "Logs werden geladen..."
+  },
+  "loadingFallback": {
+    "loadingContent": "Inhalte werden geladen..."
+  },
+  "listView": {
+    "connecting": "Verbindung mit dem Server wird hergestellt...",
+    "receivingWorkloads": "Workloads werden empfangen...",
+    "receivedWorkloadsSoFar": "Bisher wurden {{count}} Workloads empfangen",
+    "allWorkloadsReceived": "Alle {{count}} Workloads empfangen",
+    "connectionLost": "Verbindung verloren. Zeige {{count}} Workloads",
+    "connectionError": "Verbindung zum Server fehlgeschlagen. Alternative Methode wird versucht...",
+    "fetchingFallback": "Workloads werden mit alternativer Methode geladen...",
+    "invalidResponseFormat": "Ungültiges Antwortformat vom Server",
+    "unknownError": "Unbekannter Fehler beim Abrufen der Workloads",
+    "errorLoading": "Fehler beim Laden der Workloads",
+    "namespace": "Namespace",
+    "created": "Erstellt",
+    "downloadLogs": "Logs herunterladen",
+    "pagination": {
+      "showing": "Es werden {{from}}–{{to}} von {{total}} angezeigt",
+      "filtered": " im Kontext {{context}}",
+      "prev": "Zurück",
+      "next": "Weiter"
+    },
+    "resourceStats": "{{raw}} Roh-Ressourcen zu {{processed}} Workloads verarbeitet",
+    "filteredByContext": "Gefiltert nach Kontext: {{context}}",
+    "showingResourceCount": "Zeige {{showing}} von {{total}} Ressourcen an",
+    "noWorkloads": {
+      "title": "Keine Workloads gefunden",
+      "noResourcesForContext": "Keine Ressourcen für Kontext: {{context}} gefunden",
+      "resourcesFilteredOut": "Alle Ressourcen wurden herausgefiltert",
+      "getStarted": "Erstellen Sie Ihren ersten Workload, um zu beginnen",
+      "resourcesAvailable": "{{count}} Ressourcen in anderen Kontexten verfügbar",
+      "noMatchingFilters": "Keine Ressourcen entsprechen den aktuellen Filtereinstellungen"
+    },
+    "troubleshooting": {
+      "title": "Schritte zur Fehlerbehebung:",
+      "step1": "1. Netzwerkverbindung überprüfen",
+      "step2": "2. Sicherstellen, dass der Backend-Server läuft",
+      "step3": "3. Authentifizierungsdaten überprüfen",
+      "step4": "4. Seite neu laden"
+    }
+  },
+  "kubeconfigImport": {
+    "title": "Kubeconfig-Datei hochladen",
+    "description": "Importieren Sie Ihren Cluster, indem Sie eine Kubeconfig-Datei hochladen",
+    "dragAndDrop": "Ziehen Sie Ihre Kubeconfig-Datei hierher (Drag & Drop)",
+    "or": "- oder -",
+    "browseFiles": "Dateien durchsuchen",
+    "importCluster": "Cluster importieren"
+  },
+  "importClusters": {
+    "title": "Cluster importieren",
+    "description": "Verbinden Sie Ihrenn Kubernetes-Cluster mit der Plattform",
+    "tabs": {
+      "quickConnect": "Quick Connect",
+      "kubeconfig": "Kubeconfig",
+      "apiUrl": "API/URL"
+    },
+    "abortDialog": {
+      "title": "Onboarding-Prozess abbrechen",
+      "warning": "Sind Sie sicher, dass Sie den Onboarding-Prozess abbrechen möchten? Alle Fortschritte gehen verloren.",
+      "continue": "Onboarding fortsetzen",
+      "confirm": "Ja, abbrechen"
+    },
+    "fileUpload": {
+      "selected": "Datei \"{{filename}}\" ausgewählt. Upload-Funktion wird noch implementiert."
+    },
+    "icons": {
+      "quickConnect": "Quick Connect",
+      "kubeconfig": "kubeconfig",
+      "apiUrl": "API URL",
+      "ariaLabel": "Import"
+    }
+  },
+  "groupPanel": {
+    "close": "Panel schließen",
+    "tableAriaLabel": "Tabelle der Gruppenelemente",
+    "table": {
+      "name": "Name",
+      "groupKind": "Gruppe/Kind",
+      "syncOrder": "Sync-Reihenfolge",
+      "namespace": "Namespace",
+      "createdAt": "Erstellt am"
+    },
+    "notAvailable": "N/V"
+  },
+  "downloadLogsModal": {
+    "title": "Logs herunterladen",
+    "fileSize": "Dateigröße",
+    "download": "Download"
+  },
+  "footer": {
+    "commit": "Commit",
+    "viewCommit": "Commit-Details auf GitHub anzeigen"
+  },
+  "downloadLogsButton": {
+    "title": "Logs herunterladen",
+    "placeholder": {
+      "header": "Logs für Pod {{podName}} im Namespace {{namespace}} auf Cluster {{cluster}}",
+      "generated": "Erzeugt am: {{date}}",
+      "noContent": "Log-Inhalt nicht direkt verfügbar. Bitte nutzen Sie die Streaming-Logs-Funktion."
+    },
+    "toast": {
+      "success": "Logs für {{podName}} heruntergeladen",
+      "error": "Logs konnten nicht heruntergeladen werden"
+    }
+  },
+  "detachmentLogsDialog": {
+    "title": "Cluster wird getrennt: {{clusterName}}",
+    "logs": "Detachment-Logs",
+    "connected": "Verbunden",
+    "disconnected": "Getrennt",
+    "connecting": "Verbinde mit Detachment-Service...",
+    "completedSuccessfully": "Trennen des Clusters erfolgreich abgeschlossen.",
+    "done": "Fertig"
+  },
+  "addWebhookDialog": {
+    "copiedToClipboard": "In die Zwischenablage kopiert!",
+    "setupWebhook": "Webhook einrichten",
+    "localDevSmee": "Lokale Entwicklung mit Smee.io",
+    "installSmee": "Smee-Client installieren (npm install -g smee-client).",
+    "goToSmee": "Gehen Sie zu Smee.io und erstellen Sie einen neuen Kanal.",
+    "copySmeeUrl": "Kopieren Sie die generierte Smee.io-URL.",
+    "runSmeeClient": "Smee-Client ausführen, um Webhooks an Ihr lokales Go-Backend weiterzuleiten:",
+    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+    "configureWebhookSmee": "Konfigurieren Sie Webhook in Ihrem externen Dienst unter Verwendung der Smee.io-URL.",
+    "startGoBackend": "Starten Sie Ihr Go-Backend und stellen Sie sicher, dass es auf /api/webhook lauscht.",
+    "testWebhook": "Webhook testen.",
+    "vmIp4000": "Webhook auf einer VM über IP:4000",
+    "ensureGoBackend4000": "Sicherstellen, dass Ihr Go-Backend auf Port 4000 läuft und /api/webhook verarbeitet.",
+    "openPort4000": "Port 4000 in Firewall/Sicherheitsgruppe öffnen (UFW, AWS, GCP oder Azure).",
+    "findPublicIp": "Öffentliche IP ermitteln (curl ifconfig.me) und hinzufügen.",
+    "configureWebhookVm": "Webhook in Ihren externen Service wie folgt konfigurieren:",
+    "vmWebhookUrl": "http://your-public-ip:4000/api/webhook",
+    "vmWebhookUrlCopy": "http://your-public-ip:4000/api/webhook",
+    "testWebhookOtherMachine": "Webhook von einer anderen Maschine aus testen.",
+    "keepGoServerRunning": "Go-Server im Hintergrund weiterlaufen lassen (nohup oder systemd)."
+  },
+  "cancelConfirmationDialog": {
+    "title": "Erstellen der Workload abbrechen",
+    "titlePolicy": "Erstellen der Policy abbrechen",
+    "warning": "Warnung",
+    "message": "Möchten Sie wirklich abbrechen? Alle Änderungen gehen verloren.",
+    "continueEditing": "Weiter bearbeiten",
+    "yesCancel": "Ja, abbrechen"
+  },
+  "addCredentialsDialog": {
+    "title": "Anmeldedaten hinzufügen",
+    "usernameLabel": "GitHub-Benutzername *",
+    "usernamePlaceholder": "z. B. onkar717",
+    "usernameTip": "Geben Sie Ihrenn GitHub-Benutzernamen ein",
+    "tokenLabel": "Personal Access Token (PAT) *",
+    "tokenPlaceholder": "z. B. ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tokenTip": "Geben Sie Ihren GitHub Personal Access Token ein"
+  },
+  "commandPalette": {
+    "ariaLabel": "Befehls-Palette öffnen",
+    "title": "Command Palette (Ctrl+K)",
+    "badge": "K",
+    "searchPlaceholder": "Befehle suchen...",
+    "noCommandsFound": "Keine Befehle gefunden. Versuchen Sie es mit einem anderen Suchbegriff.",
+    "footer": {
+      "navigate": "Navigieren",
+      "select": "Auswählen",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "commands": {
+      "home": {
+        "title": "Home",
+        "description": "Zum Dashboard"
+      },
+      "plugin": {
+        "title": "Plugin Manager",
+        "description": "KubeStellar-Plugins verwalten und überwachen"
+      },
+      "managedClusters": {
+        "title": "Managed Clusters",
+        "description": "Kubernetes-Cluster verwalten"
+      },
+      "Grafana": {
+        "title": "Grafana Dashboard",
+        "description": "Grafana Dashboard"
+      },
+      "workloads": {
+        "title": "Workloads",
+        "description": "Workloads über Cluster hinweg verwalten"
+      },
+      "resourceExplorer": {
+        "title": "Objekt-Explorer",
+        "description": "Kubernetes-Objekte suchen und filtern"
+      },
+      "bindingPolicies": {
+        "title": "Binding Policies",
+        "description": "Binding Policies verwalten"
+      },
+      "userManagement": {
+        "title": "User Management",
+        "description": "Systembenutzer und Berechtigungen verwalten"
+      },
+      "wdsTreeview": {
+        "title": "WDS Treeview",
+        "description": "Workload-Verteilung visualisieren"
+      },
+      "wecsTreeview": {
+        "title": "WECS Treeview",
+        "description": "Struktur der bereitgestellten Workloads visualisieren"
+      },
+      "documentation": {
+        "title": "Dokumentation öffnen",
+        "description": "KubeStellar-Dokumentation öffnen"
+      },
+      "logout": {
+        "title": "Abmelden",
+        "description": "Melden Sie sich von Ihrem Konto ab",
+        "infoMessage": "Sie wurden erfolgreich abgemeldet."
+      },
+      "metricsDashboard": {
+        "title": "Metrics Dashboard",
+        "description": "Systemleistung und Metriken überwachen"
+      },
+      "galaxyMarketplace": {
+        "title": "Galaxy Marketplace",
+        "description": "Plugins im Galaxy Marketplace entdecken und installieren"
+      }
+    },
+    "sections": {
+      "navigation": "Navigation",
+      "admin": "Administration",
+      "visualizations": "Visualisierungen",
+      "help": "Hilfe",
+      "account": "Konto"
+    }
+  },
   "menu": {
     "catalogs": {
-      "main": "Hauptmenü",
-      "management": "Verwaltung",
+      "main": "Main",
+      "management": "Management",
       "plugins": "Plugins",
       "admin": "Administration"
     },
     "items": {
-      "home": "Startseite",
-      "managedClusters": "Verwaltete Cluster",
-      "stagedWorkloads": "Vorbereitete Workloads",
-      "bindingPolicies": "Bindungsrichtlinien",
+      "home": "Home",
+      "managedClusters": "Managed Clusters",
+      "Grafana": "Grafana Dashboard",
+      "stagedWorkloads": "Staged Workloads",
+      "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Bereitgestellte Workloads",
-      "pluginManager": "Plugin-Manager",
-      "userManagement": "Benutzerverwaltung",
-      "galaxyMarketplace": "Galaxy-Marktplatz"
+      "resourceExplorer": "Object Explorer",
+      "pluginManager": "Plugin Manager",
+      "userManagement": "User Management",
+      "metricsDashboard": "Metrik-Dashboard",
+      "galaxyMarketplace": "Galaxy Marketplace"
+    }
+  },
+  "plugins": {
+    "title": "Plugin-Manager",
+    "description": "KubeStellar-Plugins verwalten und überwachen",
+    "install": {
+      "title": "Neues Plugin installieren",
+      "methods": {
+        "local": "Lokaler Pfad",
+        "github": "GitHub"
+      },
+      "localPlaceholder": "Bitte wählen Sie eine Datei aus",
+      "githubPlaceholder": "https://github.com/user/plugin-repo",
+      "browse": "Durchsuchen",
+      "installLocal": "Vom lokalen Pfad installieren",
+      "installGithub": "Aus GitHub installieren",
+      "localHelp": "Installieren Sie ein Plugin aus einem lokalen Verzeichnis auf Ihrem System. Klicken Sie auf „Durchsuchen“, um einen Ordner auszuwählen, oder geben Sie den vollständigen Pfad manuell ein.",
+      "githubHelp": "Die GitHub-Installation ist noch nicht implementiert. Verwenden Sie vorerst die Installation über den lokalen Pfad.",
+      "placeholder": "Plugin-URL, GitHub-Repository oder lokaler Pfad",
+      "button": "Installieren",
+      "installing": "Wird installiert...",
+      "success": "Plugin erfolgreich installiert",
+      "error": "Plugin konnte nicht installiert werden"
+    },
+    "list": {
+      "title": "Installierte Plugins",
+      "noPlugins": "Keine Plugins installiert",
+      "noPluginsDescription": "Beginnen Sie, indem Sie Ihr erstes Plugin installieren",
+      "searchPlaceholder": "Plugins nach Name, Autor oder Status suchen...",
+      "total": "Gesamt",
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
+    },
+    "card": {
+      "version": "v{{version}}",
+      "author": "von {{author}}",
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "loading": "Wird geladen",
+        "error": "Fehler"
+      },
+      "actions": {
+        "enable": "Aktivieren",
+        "disable": "Deaktivieren",
+        "details": "Details",
+        "uninstall": "Deinstallieren",
+        "reload": "Neu laden",
+        "settings": "Einstellungen",
+        "feedback": "Feedback"
+      }
+    },
+    "details": {
+      "title": "Plugin-Details",
+      "information": "Informationen",
+      "configuration": "Konfiguration",
+      "routes": "API Routes",
+      "widgets": "Widgets",
+      "assets": "Assets",
+      "noRoutes": "Keine API Routes definiert",
+      "noWidgets": "Keine Widgets verfügbar",
+      "noAssets": "Keine Assets geladen"
+    },
+    "notifications": {
+      "enableSuccess": "Plugin {{name}} erfolgreich aktiviert",
+      "enableError": "Plugin {{name}} konnte nicht aktiviert werden",
+      "disableSuccess": "Plugin {{name}} erfolgreich deaktiviert",
+      "disableError": "Plugin {{name}} konnte nicht deaktiviert werden",
+      "uninstallSuccess": "Plugin {{name}} erfolgreich deinstalliert",
+      "uninstallError": "Plugin {{name}} konnte nicht deinstalliert werden",
+      "reloadSuccess": "Plugin {{name}} erfolgreich neu geladen",
+      "reloadError": "Plugin {{name}} konnte nicht neu geladen werden",
+      "fetchError": "Plugindaten konnten nicht geladen werden"
+    },
+    "confirmations": {
+      "uninstall": {
+        "title": "Deinstallation des Plugins bestätigen",
+        "message": "Möchten Sie \"{{name}}\" wirklich deinstallieren? Diese Aktion kann nicht rückgängig gemacht werden und entfernt alle Plugin-Daten.",
+        "confirm": "Ja, deinstallieren"
+      },
+      "disable": {
+        "title": "Deaktivierung des Plugins bestätigen",
+        "message": "Durch das Deaktivieren von „{{name}}“ werden alle Plugin-Funktionen deaktiviert. Sie können es später wieder aktivieren.",
+        "confirm": "Ja, deaktivieren"
+      },
+      "enable": {
+        "title": "Aktivierung des Plugins bestätigen",
+        "message": "Durch das Aktivieren von \"{{name}}\" werden alle Plugin-Funktionen aktiviert und stehen zur Verwendung bereit.",
+        "confirm": "Ja, aktivieren"
+      }
+    },
+    "marketplace": {
+      "title": "KubeStellar Galaxy Marketplace",
+      "subtitle": "Entdecken und installieren Sie Plugins, um Ihr KubeStellar-Erlebnis zu erweitern",
+      "browse": "Verfügbare Plugins durchsuchen",
+      "featured": "Empfohlene Plugins",
+      "categories": "Kategorien",
+      "search": "Marketplace durchsuchen..."
+    },
+    "development": {
+      "title": "Plugin-Entwicklung",
+      "createNew": "Neues Plugin erstellen",
+      "template": "Vorlage verwenden",
+      "documentation": "Dokumentation anzeigen",
+      "examples": "Beispiele"
+    },
+    "feedback": {
+      "title": "Ihr Feedback teilen",
+      "rate": "Dieses Plugin bewerten",
+      "comment": {
+        "title": "Ihr Kommentar",
+        "placeholder": "Teilen Sie uns Ihre Erfahrungen mit"
+      },
+      "suggestion": {
+        "title": "Vorschläge zur Verbesserung",
+        "placeholder": "Haben Sie Vorschläge zur Verbesserung?"
+      }
     }
   },
   "marketplace": {
-    "title": "KubeStellar Galaxy Marktplatz",
-    "description": "Entdecken und installieren Sie Plugins zur Verbesserung Ihrer KubeStellar-Erfahrung"
+    "title": "KubeStellar Galaxy Marketplace",
+    "subtitle": "Entdecken und installieren Sie Plugins, um Ihr KubeStellar-Erlebnis zu erweitern",
+    "searchPlaceholder": "Plugins, Autoren, Kategorien suchen...",
+    "filters": "Filter",
+    "sortPopular": "Am beliebtesten",
+    "sortRating": "Am besten bewertet",
+    "sortNewest": "Kürzlich hinzugefügt",
+    "searchResults": "Suchergebnisse",
+    "allPlugins": "Alle Plugins",
+    "clearFilters": "Filter zurücksetzen",
+    "loadMore": "Weitere Plugins laden",
+    "adminPanel": "Admin-Panel",
+    "categories": {
+      "all": "Alle Plugins",
+      "management": "Verwaltung",
+      "monitoring": "Überwachung",
+      "security": "Sicherheit",
+      "networking": "Networking",
+      "storage": "Speicher",
+      "database": "Datenbank",
+      "ai": "KI & Machine Learning",
+      "devops": "DevOps",
+      "automation": "Automatisierung",
+      "integration": "Integration",
+      "analytics": "Analytik",
+      "backup": "Sicherung & Wiederherstellung",
+      "compliance": "Compliance",
+      "testing": "Testen",
+      "development": "Entwicklertools"
+    },
+    "plugin": {
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "loading": "Wird geladen",
+        "error": "Fehler",
+        "installed": "Installiert",
+        "notInstalled": "Nicht installiert"
+      },
+      "actions": {
+        "install": "Installieren",
+        "uninstall": "Deinstallieren",
+        "enable": "Aktivieren",
+        "disable": "Deaktivieren",
+        "update": "Aktualisieren",
+        "viewDetails": "Details anzeigen",
+        "download": "Download",
+        "rate": "Bewerten",
+        "review": "Rezension",
+        "share": "Teilen",
+        "report": "Problem melden"
+      },
+      "details": {
+        "overview": "Übersicht",
+        "details": "Details",
+        "feedback": "Feedback",
+        "documentation": "Dokumentation",
+        "dependencies": "Abhängigkeiten",
+        "reviews": "Rezensionen",
+        "changelog": "Changelog",
+        "license": "Lizenz",
+        "author": "Autor",
+        "version": "Version",
+        "lastUpdated": "Zuletzt aktualisiert",
+        "createdAt": "Erstellt am",
+        "downloads": "Downloads",
+        "rating": "Bewertung",
+        "category": "Kategorie",
+        "tags": "Tags",
+        "size": "Größe",
+        "compatibility": "Kompatibilität",
+        "requirements": "Voraussetzungen",
+        "installation": "Installation",
+        "configuration": "Konfiguration",
+        "usage": "Verwendung",
+        "troubleshooting": "Fehlerbehebung"
+      },
+      "feedback": {
+        "title": "Plugin-Feedback",
+        "rating": "Bewertung",
+        "comment": "Kommentar",
+        "submit": "Feedback senden",
+        "submitting": "Wird gesendet...",
+        "success": "Feedback erfolgreich gesendet",
+        "error": "Feedback konnte nicht gesendet werden",
+        "placeholder": "Teilen Sie uns Ihre Erfahrungen mit diesem Plugin mit...",
+        "ratingRequired": "Bitte bewerten",
+        "commentRequired": "Bitte kommentieren"
+      },
+      "installation": {
+        "title": "Installation",
+        "installing": "Wird installiert...",
+        "success": "Plugin erfolgreich installiert",
+        "error": "Plugin konnte nicht installiert werden",
+        "confirm": "Sind Sie sicher, dass Sie dieses Plugin installieren möchten?",
+        "requirements": "Voraussetzungen",
+        "dependencies": "Abhängigkeiten",
+        "steps": "Installationsschritte",
+        "verification": "Verifikation"
+      }
+    },
+    "featured": {
+      "title": "Empfohlene Plugins",
+      "subtitle": "Susgewählte Plugins für das beste Erlebnis",
+      "viewAll": "Alle Empfehlungen anzeigen",
+      "noFeatured": "Keine empfohlenen Plugins verfügbar",
+      "loading": "Empfohlene Plugins werden geladen..."
+    },
+    "admin": {
+      "title": "Marketplace Administration",
+      "overview": "Übersicht",
+      "plugins": "Plugins",
+      "users": "Benutzer",
+      "settings": "Einstellungen",
+      "stats": {
+        "totalPlugins": "Gesamtzahl der Plugins",
+        "pendingReviews": "Ausstehende Rezensionen",
+        "totalDownloads": "Gesamtzahl der Downloads",
+        "activeUsers": "Aktive Benutzer"
+      },
+      "actions": {
+        "uploadPlugin": "Plugin hochladen",
+        "deletePlugin": "Plugin löschen",
+        "approvePlugin": "Plugin freigeben",
+        "rejectPlugin": "Plugin ablehnen",
+        "featurePlugin": "Plugin empfehlen",
+        "unfeaturePlugin": "Plugin nicht empfehlen"
+      },
+      "upload": {
+        "title": "Neues Plugin hochladen",
+        "selectFile": "Plugin-Datei auswählen",
+        "dragDrop": "Drag & Drop Plugin-Datei",
+        "supportedFormats": "Unterstützte Formate: .tar.gz, .zip",
+        "maxSize": "Maximale Dateigröße: 100 MB",
+        "uploading": "Wird hochgeladen...",
+        "success": "Plugin erfolgreich hochgeladen",
+        "error": "Plugin konnte nicht hochgeladen werden"
+      },
+      "delete": {
+        "title": "Plugin löschen",
+        "confirm": "Möchten Sie \"{{name}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "deleting": "Wird gelöscht...",
+        "success": "Plugin erfolgreich gelöscht",
+        "error": "Plugin konnte nicht gelöscht werden"
+      },
+      "quickActions": "Quick Actions",
+      "uploadNewPlugin": "Neues Plugin hochladen",
+      "reviewPlugins": "Plugins prüfen",
+      "searchPlugins": "Plugins suchen...",
+      "allStatus": "Alle Status",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "loadingPlugins": "Plugins werden geladen...",
+      "noPluginsFound": "Keine Plugins gefunden.",
+      "userManagement": "Benutzerverwaltung",
+      "userManagementComingSoon": "Funktionen zur Benutzerverwaltung in Kürze verfügbar.",
+      "adminSettings": "Admin-Einstellungen",
+      "settingsComingSoon": "Einstellungsbereich in Kürze verfügbar.",
+      "marketplaceManagement": "Marketplace-Verwaltung",
+      "adminPanel": "Admin-Panel"
+    },
+    "search": {
+      "noResults": "Keine Plugins gefunden",
+      "noResultsDescription": "Passen Sie Ihre Suchbegriffe an oder durchsuchen Sie alle Plugins",
+      "clearSearch": "Suche löschen",
+      "searching": "Wird gesuch...",
+      "resultsCount": "{{count}} Plugin{{count, plural, one {} other {s}}} gefunden"
+    },
+    "errors": {
+      "failedToLoad": "Marketplace-Daten konnten nicht geladen werden",
+      "failedToInstall": "Plugin konnte nicht installiert werden",
+      "failedToUninstall": "Plugin konnte nicht deinstalliert werden",
+      "failedToEnable": "Plugin konnte nicht aktiviert werden",
+      "failedToDisable": "Plugin konnte nicht deaktiviert werden",
+      "failedToSubmitFeedback": "Feedback konnte nicht gesendet werden",
+      "pluginNotFound": "Plugin nicht gefunden",
+      "installationFailed": "Installation fehlgeschlagen",
+      "networkError": "Netzwerkfehler aufgetreten",
+      "serverError": "Serverfehler aufgetreten"
+    },
+    "success": {
+      "pluginInstalled": "Plugin erfolgreich installiert",
+      "pluginUninstalled": "Plugin erfolgreich deinstalliert",
+      "pluginEnabled": "Plugin erfolgreich aktiviert",
+      "pluginDisabled": "Plugin erfolgreich deaktiviert",
+      "feedbackSubmitted": "Feedback erfolgreich gesendet",
+      "pluginUpdated": "Plugin erfolgreich aktualisiert"
+    },
+    "loading": {
+      "loadingPlugins": "Leistungsstarke Plugins werden geladen...",
+      "discoveringGalaxy": "Neue Möglichkeiten entdecken",
+      "loadingMarketplace": "Marketplace wird geladen...",
+      "loadingPlugin": "Plugindetails werden geladen...",
+      "installingPlugin": "Plugin wird installiert...",
+      "uninstallingPlugin": "Plugin wird deinstalliert..."
+    },
+    "empty": {
+      "noPlugins": "Keine Plugins gefunden",
+      "noPluginsDescription": "Es gibt keine Plugins, die Ihren aktuellen Filtern entsprechen.",
+      "showAllPlugins": "Alle Plugins anzeigen",
+      "noFeaturedPlugins": "Keine empfohlenen Plugins verfügbar",
+      "noCategories": "Keine Kategorien verfügbar",
+      "noSearchResults": "Keine Suchergebnisse gefunden"
+    },
+    "backToMarketplace": "Zurück zum Marketplace",
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren",
+    "install": "Installieren",
+    "uninstall": "Deinstallieren",
+    "by": "von",
+    "overview": "Übersicht",
+    "details": "Details",
+    "feedback": "Feedback",
+    "docSection": "Dokumentation",
+    "description": "Beschreibung",
+    "dependencies": "Abhängigkeiten",
+    "keyFeatures": "Wichtige Funktionen",
+    "technicalDetails": "Technische Details",
+    "generalInfo": "Allgemeine Informationen",
+    "version": "Version",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "author": "Autor",
+    "license": "Lizenz",
+    "category": "Kategorie",
+    "requirements": "Voraussetzungen",
+    "kubestellarVersion": "KubeStellar Version",
+    "platforms": "Plattformen",
+    "fileSize": "Dateigröße",
+    "pluginIdentifiers": "Plugin-Identifikatoren",
+    "tags": "Tags",
+    "userFeedback": "Nutzerfeedback",
+    "leaveFeedback": "Feedback hinterlassen",
+    "yourFeedback": "Ihr Feedback",
+    "rating": "Bewertung",
+    "comments": "Kommentare",
+    "delete": {
+      "confirmTitle": "Plugin löschen",
+      "confirmLabel": "Geben Sie zur Bestätigung den Plugin-Namen ein:",
+      "confirmPlaceholder": "Plugin-Namen hier eingeben",
+      "mismatch": "Plugin-Name stimmt nicht überein",
+      "confirmed": "Plugin-Name bestätigt",
+      "deleteButton": "Plugin löschen",
+      "deleting": "Plugin wird gelöscht...",
+      "deletingMessage": "Bitte warten Sie, während wir Ihr Plugin entfernen.",
+      "success": "Plugin erfolgreich gelöscht!",
+      "error": "Löschen fehlgeschlagen",
+      "tryAgain": "Erneut versuchen",
+      "title": "Plugin löschen"
+    },
+    "upload": {
+      "dragDrop": "Drag & Drop Plugin hier",
+      "browseFiles": "Dateien durchsuchen",
+      "requirements": "Upload-Anforderungen:",
+      "reviewFile": "Plugin prüfen",
+      "uploadPlugin": "Plugin hochladen",
+      "uploading": "Plugin wird hochgeladen...",
+      "success": "Plugin erfolgreich hochgeladen!",
+      "error": "Upload fehlgeschlagen",
+      "tryAgain": "Erneut versuchen",
+      "title": "Plugin hochladen",
+      "supportedFormat": "oder klicken Sie zum Durchsuchen. Unterstütztes Format: .tar.gz",
+      "confirmUpload": "Bitte bestätigen Sie die folgenden Details vor dem Upload",
+      "processingFile": "Ihre Plugin-Datei wird verarbeitet. Dies kann einen Moment dauern.",
+      "successMessage": "Ihr Plugin wurde hochgeladen und ist nun im Marketplace verfügbar.",
+      "errorMessage": "Beim Hochladen Ihres Plugins ist ein Fehler aufgetreten..",
+      "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie eine .tar.gz-Datei hoch.",
+      "fileTooLarge": "Datei zu groß. Die maximale Größe beträgt 50 MB."
+    },
+    "common": {
+      "featured": "EMPFOHLEN",
+      "viewDetails": "Details anzeigen",
+      "installNow": "Jetzt installieren",
+      "installing": "Wird installiert...",
+      "installed": "Installiert",
+      "uninstalling": "Wird deinstalliert...",
+      "rating": "Bewertung",
+      "downloads": "Downloads",
+      "updated": "Aktualisiert",
+      "recently": "kürzlich",
+      "by": "von",
+      "unknownAuthor": "Unbekannter Autor",
+      "noDescription": "Keine Beschreibung verfügbar",
+      "premiumPlugins": "Premium-Plugins entdecken",
+      "enhanceWorkflow": "Optimieren Sie Ihren Workflow mit leistungsstarken Plugins, die speziell für Kubernetes- und Cloud-native-Umgebungen entwickelt wurden.",
+      "exploreMarketplace": "Marketplace erkunden",
+      "suggestedCategories": ["Monitoring", "Security", "Development", "Deployment", "Storage"],
+      "noPluginsFound": "Keine Plugins gefunden",
+      "tryAdjustingSearch": "Passen Sie Ihre Suchbegriffe an oder durchsuchen Sie alle Plugins",
+      "noMatchingFilters": "Es gibt keine Plugins, die Ihren aktuellen Filtern entsprechen.",
+      "showAllPlugins": "Alle Plugins anzeigen",
+      "remaining": "verbleibend",
+      "allPlugins": "Alle Plugins",
+      "plugin": "Plugin",
+      "plugins": "Plugins",
+      "tags": "Tags:",
+      "license": "Lizenz",
+      "created": "Erstellt",
+      "routes": "Routes",
+      "loadTime": "Ladezeit",
+      "endpoints": "Endpunkt",
+      "endpoints_plural": "Endpunkte",
+      "seconds": "s",
+      "misc": "Sonstiges",
+      "installPlugin": "Plugin installieren",
+      "noRoutes": "Keine API-Routes definiert",
+      "noWidgets": "Keine Widgets verfügbar",
+      "noAssets": "Keine Assets geladen",
+      "unnamedPlugin": "Unbenanntes Plugin",
+      "defaultVersion": "1.0.0",
+      "versionPrefix": "v"
+    },
+    "documentation": {
+      "title": "Dokumentation",
+      "overview": "Übersicht",
+      "installation": "Installation",
+      "apiReference": "API-Referenz",
+      "codeExamples": "Codebeispiele",
+      "practicalExamples": "Praktische Beispiele, die Ihnen den Einstieg erleichtern",
+      "tutorials": "Tutorials",
+      "faq": "FAQ",
+      "troubleshooting": "Fehlerbehebung",
+      "installationGuide": "Installationsanleitung",
+      "followSteps": "Befolgen Sie diese Schritte zum Durchführen der Installation und Konfiguration",
+      "inEnvironment": "in Ihrer KubeStellar-Umgebung.",
+      "keyFeatures": "Wichtigste Funktionen",
+      "requirements": "Voraussetzungen",
+      "welcomeMessage": "Willkommen bei der umfassenden Dokumentation für",
+      "extendsCapabilities": "erweitert die Fähigkeiten von KubeStellar mit fortgeschrittenen Funktionen für ein verbessertes Multi-Cluster-Management.",
+      "powerfulPlugin": "Dieses leistungsstarke Plugin bietet essenzielle Funktionen für moderne Kubernetes-Umgebungen, nahtlose Integration in bestehende Workflows und robuste Performance-Überwachung.",
+      "advancedMultiCluster": "Erweitertes Multi-Cluster-Sync",
+      "realTimeMonitoring": "Überwachung und Warnung in Echtzeit",
+      "automatedScaling": "Automatisches Skalieren und Optimieren",
+      "securityPolicy": "Durchsetzung von Sicherheitsrichtlinien",
+      "comprehensiveAPI": "Umfassende API-Abdeckung",
+      "kubestellarVersion": "KubeStellar v1.0.0 oder höher",
+      "kubernetesVersion": "Kubernetes 1.19+",
+      "ramMinimum": "Mindestens 512 MB RAM (1 GB empfohlen)",
+      "networkConnectivity": "Netzwerkverbindung zu Ziel-Clustern",
+      "validCredentials": "Gültige Authentifizierungsdaten",
+      "copy": "Kopieren",
+      "copied": "Kopiert!",
+      "fileFormat": "Dateiformat: nur .tar.gz",
+      "maxFileSize": "Maximale Dateigröße: 50 MB",
+      "mustContain": "Muss eine plugin.yml-Datei enthalten",
+      "validStructure": "Gültige Plugin-Struktur erforderlich"
+    }
+  },
+  "notFoundPage": {
+    "logoAlt": "KubeStellar Logo",
+    "mainTitle": "404 - Seite nicht gefunden",
+    "description": "Die von Ihnen gesuchte Seite wurde möglicherweise entfernt, umbenannt oder ist vorübergehend nicht verfügbar.",
+    "returnHomeButton": "Zur Startseite",
+    "tryAgainButton": "Erneut versuchen",
+    "quotes": [
+      {
+        "text": "Im riesigen Code-Universum verirrt man sich schon mal zwischen den Sternen.",
+        "author": "Anonymer Entwickler"
+      },
+      {
+        "text": "Der selten genutzte Pfad ist oft deshalb nicht zu finden, weil niemand jemals dorthin wollte.",
+        "author": "Web Explorer"
+      },
+      {
+        "text": "Man kann suchen, ohne verloren zu sein. Nur diese Seite, die ist wirklich weg.",
+        "author": "J.R.R. Token"
+      },
+      {
+        "text": "404 ist keine Katastrophe. Einfach neu routen — weiter deployen",
+        "author": "Winston Codehill"
+      },
+      {
+        "text": "Wer korrekt routet, braucht keine Zukunftsprognose. Er kommt einfach an.",
+        "author": "Alan Turning"
+      }
+    ]
+  },
+  "resources": {
+    "search": "Objekte suchen...",
+    "kind": "Kind",
+    "namespace": "Namespace",
+    "labels": "Labels",
+    "labels_plural": "{{count}} Labels",
+    "filterByKind": "Nach Object Kind filtern",
+    "filterByNamespace": "Nach Namespace filtern",
+    "filterByStatus": "Nach Status filtern",
+    "filterByLabel": "Nach Label filtern",
+    "clearFilters": "Filter zurücksetzen",
+    "noLabelsFound": "Keine Label gefunden",
+    "noMatchingFilters": "Es gibt keine Objekte, die den aktuellen Filtern entsprechen.",
+    "title": "Object Explorer",
+    "selectKind": "Kind / Object auswählen",
+    "selectNamespace": "Namespace auswählen",
+    "applyFilters": "Filter anwenden",
+    "results": "Ergebnisse",
+    "created": "Erstellt",
+    "noResourcesFound": "Keine passenden Objekte gefunden",
+    "selectResourceAndNamespace": "Wählen Sie ein Object Kind und einen Namespace, um zu beginnen",
+    "refresh": "Aktualisieren",
+    "toggleFilters": "Filter ein-/ausblenden",
+    "description": "Kubernetes-Objekte in Ihren Clustern erkunden und verwalten",
+    "autoRefresh": "Automatisch aktualisieren",
+    "viewMode": {
+      "grid": "Rasteransicht",
+      "list": "Listenansicht",
+      "table": "Tabellenansicht",
+      "gridLabel": "Rasteransicht",
+      "listLabel": "Listenansicht",
+      "tableLabel": "Tabellenansicht"
+    },
+    "objectSelection": "Objektauswahl & Filter",
+    "searchPlaceholder": "Object Kinds suchen...",
+    "quickSearchPlaceholder": "Schnellsuche für Objects...",
+    "bulkActions": {
+      "resourcesSelected": "{{count}} {{objectText}} ausgewählt",
+      "clearSelection": "Auswahl aufheben",
+      "viewDetails": "Details anzeigen",
+      "export": "Exportieren"
+    },
+    "sorting": {
+      "sortBy": "Sortieren nach",
+      "name": "Nach Name sortieren",
+      "kind": "Nach Kind sortieren",
+      "namespace": "Nach Namespace sortieren",
+      "createdAt": "Nach Erstellungszeit sortieren"
+    },
+    "emptyState": {
+      "readyToExplore": "Bereit zum Erkunden",
+      "noResourcesFound": "Keine Objekte gefunden",
+      "noResourcesDescription": "Es gibt keine Objekte, die Ihren aktuellen Filtern entsprechen. Passen Sie Ihre Suchkriterien an oder setzen Sie die Filter zurück.",
+      "getStartedDescription": "Wählen Sie ein Object Kind und einen Namespace, um mit der Erkundung Ihrer Kubernetes-Objekte zu beginnen.",
+      "getStarted": "Loslegen",
+      "clearFilters": "Filter zurücksetzen"
+    },
+    "actions": {
+      "view": "Anzeigen",
+      "viewDetails": "Details anzeigen",
+      "editYaml": "YAML bearbeiten",
+      "delete": "Löschen",
+      "more": "Mehr"
+    },
+    "filters": {
+      "activeFilters": "Aktive Filter:",
+      "kindFilter": "Kind: {{kind}}",
+      "namespaceFilter": "Namespace: {{namespace}}",
+      "labelFilter": "{{key}}: {{value}}",
+      "clear": "Löschen ({{count}})"
+    },
+    "menus": {
+      "resourceKinds": "Object Kinds ({{count}})",
+      "namespaces": "Namespaces ({{count}})",
+      "labels": "Label ({{count}} Schlüssel)",
+      "noLabelsFound": "Keine Label in den aktuellen Objekten gefunden",
+      "active": "Aktiv"
+    },
+    "stats": {
+      "resourceOverview": "Objektübersicht",
+      "topResourceKinds": "Top Object Kinds",
+      "topNamespaces": "Top Namespaces"
+    },
+    "table": {
+      "name": "Name",
+      "kind": "Kind",
+      "namespace": "Namespace",
+      "status": "Status",
+      "age": "Alter",
+      "createdAt": "Erstellt",
+      "labels": "Labels",
+      "actions": "Aktionen"
+    },
+    "preview": {
+      "objectDetails": "Objektdetails",
+      "namespace": "Namespace",
+      "createdAt": "Erstellt",
+      "uid": "UID",
+      "noLabels": "Keine Labels",
+      "labels": "Labels"
+    },
+    "time": {
+      "justNow": "Gerade eben",
+      "hoursAgo": "vor {{count}}h",
+      "daysAgo": "vor {{count}}d"
+    },
+    "loading": {
+      "resources": "Ressourcen werden geladen...",
+      "applying": "Filter werden angewendet...",
+      "refreshing": "Wird aktualisiert..."
+    },
+    "errors": {
+      "loadFailed": "Ressourcen konnten nicht geladen werden",
+      "filterFailed": "Filter konnten nicht angewendet werden",
+      "actionFailed": "Aktion fehlgeschlagen"
+    },
+    "notifications": {
+      "filtersApplied": "Filter erfolgreich angewendet",
+      "resourcesRefreshed": "Ressourcen erfolgreich aktualisiert"
+    },
+    "subtitle": "Kubernetes-Ressourcen erkunden und verwalten",
+    "status": {
+      "healthy": "In Ordnung",
+      "warning": "Warnung",
+      "error": "Fehler",
+      "active": "Aktiv",
+      "unknown": "Unbekannt",
+      "running": "Läuft",
+      "pending": "Ausstehend",
+      "failed": "Fehlgeschlagen",
+      "progressing": "Progressing",
+      "scheduled": "Scheduled",
+      "waiting": "Waiting",
+      "ready": "Ready",
+      "notReady": "Not Ready",
+      "succeeded": "Succeeded",
+      "outOfSync": "Out of Sync",
+      "missing": "Missing",
+      "synced": "Synced"
+    },
+    "unknown": "Unbekannt"
   },
   "validation": {
-    "missingRequiredFields": "Fehlende Pflichtfelder"
+    "missingRequiredFields": "Erforderliche Felder fehlen"
   }
 }
