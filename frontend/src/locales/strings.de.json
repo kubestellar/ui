@@ -2187,7 +2187,7 @@
       "metricsDashboard": "Metrik-Dashboard",
       "galaxyMarketplace": "Galaxy Marketplace"
     }
-   },
+  },
   "plugins": {
     "title": "Plugin-Manager",
     "description": "KubeStellar-Plugins verwalten und überwachen",
@@ -2668,7 +2668,7 @@
         "text": "Der selten genutzte Pfad ist oft deshalb nicht zu finden, weil niemand jemals dorthin wollte.",
         "author": "Web Explorer"
       },
-      {  
+      {
         "text": "Man kann suchen, ohne verloren zu sein. Nur diese Seite, die ist wirklich weg.",
         "author": "J.R.R. Token"
       },
