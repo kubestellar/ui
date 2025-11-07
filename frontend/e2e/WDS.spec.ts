@@ -4,23 +4,8 @@ const BASE = 'http://localhost:5173';
 
 test.describe('WDS Page - Base Foundation Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Ensure install guard never redirects before any navigation
-    await page.route('**/api/kubestellar/status', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ allReady: true }),
-      });
-    });
-    await page.route('http://localhost:4000/api/kubestellar/status', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ allReady: true }),
-      });
-    });
-
     await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // Apply MSW scenario which includes kubestellar status handlers
     await page.evaluate(() => {
       window.__msw?.applyScenarioByName('wdsSuccess');
     });
@@ -63,21 +48,7 @@ test.describe('WDS Page - Base Foundation Tests', () => {
         });
       }
     }
-    // Ensure install guard does not redirect before navigating
-    await page.route('**/api/kubestellar/status', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ allReady: true }),
-      });
-    });
-    await page.route('http://localhost:4000/api/kubestellar/status', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ allReady: true }),
-      });
-    });
+    // MSW wdsSuccess scenario already handles kubestellar status
     try {
       await page.goto(`${BASE}/workloads/manage`, { waitUntil: 'domcontentloaded' });
     } catch {
@@ -251,22 +222,7 @@ test.describe('WDS Page - Base Foundation Tests', () => {
   });
 
   test('page handles empty state when no workloads exist', async ({ page }) => {
-    // Ensure install guard does not redirect before navigating
-    await page.route('**/api/kubestellar/status', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ allReady: true }),
-      });
-    });
-    await page.route('http://localhost:4000/api/kubestellar/status', route => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ allReady: true }),
-      });
-    });
-
+    // MSW wdsSuccess scenario already handles kubestellar status
     // Mock empty workloads response
     await page.route('**/api/wds/workloads', route => {
       route.fulfill({
