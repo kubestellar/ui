@@ -46,7 +46,7 @@ func RequireAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		isAdmin, exists := c.Get("is_admin")
 		if !exists || !isAdmin.(bool) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
+				c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
 			c.Abort()
 			return
 		}

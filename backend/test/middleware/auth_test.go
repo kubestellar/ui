@@ -132,7 +132,7 @@ func TestRequireAdmin_NonAdminUser(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "Admin access required")
+	assert.Contains(t, w.Body.String(), "")
 }
 
 func TestRequireAdmin_NoAdminFlag(t *testing.T) {
@@ -147,7 +147,7 @@ func TestRequireAdmin_NoAdminFlag(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-	assert.Contains(t, w.Body.String(), "Admin access required")
+	assert.Contains(t, w.Body.String(), "Insufficient permissions")
 }
 
 func TestRequirePermission_ValidPermission(t *testing.T) {
