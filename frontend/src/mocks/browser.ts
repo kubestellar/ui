@@ -129,6 +129,20 @@ export const scenarios: Record<string, HttpHandler[]> = {
     h.wdsGetContextAbs,
     h.wdsGetContextRel,
   ],
+
+  // WDS context filtering scenario
+  wdsContextFiltering: [
+    h.statusReady,
+    h.statusReadyRel,
+    h.me,
+    h.workloads,
+    h.workloadsRel,
+    h.workloadStatus,
+    h.workloadStatusRel,
+    h.wdsGetContextAbsMultiple,
+    h.wdsGetContextMultiple,
+    h.wdsCreateContext,
+  ],
 };
 
 export function applyScenarioByName(name: string) {

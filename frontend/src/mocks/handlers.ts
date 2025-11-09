@@ -599,6 +599,46 @@ export const wdsGetContextRel: HttpHandler = http.get('/wds/get/context', () =>
   })
 );
 
+// Context handlers with multiple contexts for filtering tests
+export const wdsGetContextMultiple: HttpHandler = http.get('/wds/get/context', () =>
+  HttpResponse.json({
+    'ui-wds-context': 'wds1',
+    'system-context': 'wds1',
+    'other-wds-context': ['wds1', 'wds2', 'wds3'],
+  })
+);
+
+export const wdsGetContextAbsMultiple: HttpHandler = http.get(
+  'http://localhost:4000/wds/get/context',
+  () =>
+    HttpResponse.json({
+      'ui-wds-context': 'wds1',
+      'system-context': 'wds1',
+      'other-wds-context': ['wds1', 'wds2', 'wds3'],
+    })
+);
+
+// Context creation success handler (WebSocket will be mocked in Playwright)
+export const wdsCreateContext: HttpHandler = http.get(
+  'http://localhost:4000/api/wds/context',
+  ({ request }) => {
+    const url = new URL(request.url);
+    const contextName = url.searchParams.get('context');
+    const version = url.searchParams.get('version') || '0.27.0';
+
+    if (!contextName) {
+      return HttpResponse.json({ error: 'Context name is required' }, { status: 400 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      message: `Context ${contextName} created successfully`,
+      context: contextName,
+      version: version,
+    });
+  }
+);
+
 // Relative status for Kubestellar install check
 export const statusReadyRel: HttpHandler = http.get('/api/kubestellar/status', () =>
   HttpResponse.json({ allReady: true })
@@ -740,4 +780,7 @@ export const defaultHandlers: HttpHandler[] = [
   detachCluster,
   wdsGetContextAbs,
   wdsGetContextRel,
+  wdsGetContextMultiple,
+  wdsGetContextAbsMultiple,
+  wdsCreateContext,
 ];
