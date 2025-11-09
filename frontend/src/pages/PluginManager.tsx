@@ -39,6 +39,15 @@ interface Plugin {
   id: number;
 }
 
+interface Stat {
+  label: string;
+  value: number;
+  color: string;
+  iconBg: string;
+  iconColor: string;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+}
+
 export const PluginManager: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -272,32 +281,34 @@ export const PluginManager: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            {
-              label: t('plugins.list.total'),
-              value: availablePlugins.length,
-              color: themeStyles.colors.text.primary,
-              iconBg: themeStyles.colors.text.secondary + '15',
-              iconColor: themeStyles.colors.text.primary,
-              Icon: HiOutlinePuzzlePiece,
-            },
-            {
-              label: t('plugins.list.active'),
-              value: availablePlugins.filter(p => p.enabled).length,
-              color: themeStyles.colors.status.success,
-              iconBg: themeStyles.colors.status.success + '20',
-              iconColor: themeStyles.colors.status.success,
-              Icon: HiOutlineCheckCircle,
-            },
-            {
-              label: t('plugins.list.inactive'),
-              value: availablePlugins.filter(p => !p.enabled).length,
-              color: themeStyles.colors.text.secondary,
-              iconBg: themeStyles.colors.text.secondary + '20',
-              iconColor: themeStyles.colors.text.secondary,
-              Icon: HiOutlinePause,
-            },
-          ].map((stat, index) => (
+          {(
+            [
+              {
+                label: t('plugins.list.total'),
+                value: availablePlugins.length,
+                color: themeStyles.colors.text.primary,
+                iconBg: themeStyles.colors.text.secondary + '15',
+                iconColor: themeStyles.colors.text.primary,
+                Icon: HiOutlinePuzzlePiece,
+              },
+              {
+                label: t('plugins.list.active'),
+                value: availablePlugins.filter(p => p.enabled).length,
+                color: themeStyles.colors.status.success,
+                iconBg: themeStyles.colors.status.success + '20',
+                iconColor: themeStyles.colors.status.success,
+                Icon: HiOutlineCheckCircle,
+              },
+              {
+                label: t('plugins.list.inactive'),
+                value: availablePlugins.filter(p => !p.enabled).length,
+                color: themeStyles.colors.text.secondary,
+                iconBg: themeStyles.colors.text.secondary + '20',
+                iconColor: themeStyles.colors.text.secondary,
+                Icon: HiOutlinePause,
+              },
+            ] as Stat[]
+          ).map((stat, index) => (
             <motion.div
               key={stat.label}
               className="flex flex-col gap-1 rounded-xl p-4"
@@ -312,9 +323,9 @@ export const PluginManager: React.FC = () => {
             >
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-lg"
-                style={{ background: (stat as any).iconBg }}
+                style={{ background: stat.iconBg }}
               >
-                <stat.Icon className="h-5 w-5" style={{ color: (stat as any).iconColor }} />
+                <stat.Icon className="h-5 w-5" style={{ color: stat.iconColor }} />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold" style={{ color: stat.color }}>
