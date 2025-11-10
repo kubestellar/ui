@@ -16,7 +16,7 @@ RUN git rev-parse HEAD | cut -c1-7 > commit_hash.txt 2>/dev/null || echo "unknow
 # Copy package files for caching
 COPY frontend/package.json frontend/package-lock.json ./
 RUN rm -rf node_modules package-lock.json || true
-RUN npm install --legacy-peer-deps
+RUN for i in 1 2 3; do npm install --legacy-peer-deps && break || (echo "npm install failed, retrying..." && sleep 5); done
 
 # Accept build arguments
 ARG VITE_APP_VERSION=0.1.0

@@ -987,10 +987,24 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		zap.String("repo_name", req.RepoName))
 
 	go func() {
-		chartPath, err := install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
+		var chartPath string
+		var err error
+		for i := 0; i < 3; i++ {
+			chartPath, err = install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
+			if err == nil {
+				break
+			}
+			log.LogWarn("Failed to locate Helm chart, retrying...",
+				zap.String("chart_name", req.ChartName),
+				zap.String("repo_name", req.RepoName),
+				zap.Error(err),
+				zap.Int("attempt", i+1))
+			time.Sleep(5 * time.Second)
+		}
+
 		if err != nil {
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "locate_chart", "500").Inc()
-			log.LogError("Failed to locate Helm chart",
+			log.LogError("Failed to locate Helm chart after multiple retries",
 				zap.String("chart_name", req.ChartName),
 				zap.String("repo_name", req.RepoName),
 				zap.Error(err))

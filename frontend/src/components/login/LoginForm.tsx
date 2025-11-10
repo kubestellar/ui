@@ -70,6 +70,9 @@ const LoginForm = () => {
             }
             // We don't need to manually remove credentials as the decryptData function
             // will handle this for expired credentials
+            setUsername('');
+            setPassword('');
+            setRememberMe(false);
           }
         }
       };

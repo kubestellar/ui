@@ -33,7 +33,15 @@ export const useAuthActions = () => {
 
   return {
     logout: () => {
-      localStorage.removeItem('jwtToken');
+      const theme = localStorage.getItem('theme');
+      const donot_show_again = localStorage.getItem('donot_show_again');
+      localStorage.clear();
+      if (theme) {
+        localStorage.setItem('theme', theme);
+      }
+      if (donot_show_again) {
+        localStorage.setItem('donot_show_again', donot_show_again);
+      }
       localStorage.setItem('tokenRemovalTime', Date.now().toString());
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
     },
@@ -44,7 +52,15 @@ export const useAuthActions = () => {
 };
 
 export const logout = () => {
-  localStorage.removeItem('jwtToken');
+  const theme = localStorage.getItem('theme');
+  const donot_show_again = localStorage.getItem('donot_show_again');
+  localStorage.clear();
+  if (theme) {
+    localStorage.setItem('theme', theme);
+  }
+  if (donot_show_again) {
+    localStorage.setItem('donot_show_again', donot_show_again);
+  }
   localStorage.setItem('tokenRemovalTime', Date.now().toString());
   window.dispatchEvent(new Event('storage'));
 };
