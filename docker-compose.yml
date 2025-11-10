@@ -67,7 +67,7 @@ services:
       
       # Performance Configuration
       - MEMORY_THRESHOLD=${MEMORY_THRESHOLD:-85.0}
-      - DISK_THRESHOLD=${DISK_THRESHOLD:-98.0}
+      - DISK_THRESHOLD=${DISK_THRESHOLD:-90.0}
       - DISK_PATH=${DISK_PATH:-/}
       
       # CORS Configuration
