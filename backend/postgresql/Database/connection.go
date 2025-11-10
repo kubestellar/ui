@@ -14,7 +14,6 @@ var DB *sql.DB
 func InitDatabase(databaseURL string) error {
 	var err error
 
-
 	// Retry connection logic for Docker environment
 	maxRetries := 30
 	retryInterval := 2 * time.Second
@@ -52,7 +51,6 @@ func InitDatabase(databaseURL string) error {
 	log.Println("Database connected successfully")
 	return nil
 }
-
 
 // CloseDatabase closes the database connection
 func CloseDatabase() error {
