@@ -311,30 +311,62 @@ export const PluginManager: React.FC = () => {
           ).map((stat, index) => (
             <motion.div
               key={stat.label}
-              className="flex flex-col gap-1 rounded-xl p-4"
+              className="group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-2xl p-5"
               style={{
                 background: themeStyles.effects.glassMorphism.background,
                 border: `1px solid ${themeStyles.card.borderColor}`,
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
               }}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, delay: index * 0.05 }}
-              whileHover={{ y: -2 }}
+              whileHover={{
+                y: -4,
+                boxShadow:
+                  '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              }}
             >
+              {/* Gradient overlay on hover */}
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-lg"
-                style={{ background: stat.iconBg }}
+                className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                style={{
+                  background: `linear-gradient(135deg, ${stat.iconColor}05 0%, ${stat.iconColor}10 100%)`,
+                }}
+              />
+
+              <div
+                className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-105"
+                style={{
+                  background: stat.iconBg,
+                  boxShadow: '0 0 0 0 transparent',
+                }}
               >
-                <stat.Icon className="h-5 w-5" style={{ color: stat.iconColor }} />
+                <stat.Icon
+                  className="h-6 w-6 transition-transform duration-300 group-hover:scale-110"
+                  style={{ color: stat.iconColor }}
+                />
               </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold" style={{ color: stat.color }}>
+
+              <div className="relative z-10 flex flex-col gap-1">
+                <span
+                  className="origin-left text-3xl font-bold tracking-tight transition-transform duration-300 group-hover:scale-105"
+                  style={{ color: stat.color }}
+                >
                   {stat.value}
                 </span>
-                <span className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: themeStyles.colors.text.secondary }}
+                >
                   {stat.label}
                 </span>
               </div>
+
+              {/* Bottom accent line */}
+              <div
+                className="absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full"
+                style={{ background: stat.iconColor }}
+              />
             </motion.div>
           ))}
         </div>
