@@ -1,54 +1,24 @@
 import { test, expect } from '@playwright/test';
+import { LoginPage } from './pages/LoginPage';
 
 const BASE = 'http://localhost:5173';
 
 test.describe('WDS Page - Base Foundation Tests', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const loginPage = new LoginPage(page);
+    // Navigate to login page
+    await loginPage.goto();
     // Apply MSW scenario which includes kubestellar status handlers
     await page.evaluate(() => {
       window.__msw?.applyScenarioByName('wdsSuccess');
     });
-
+    // Wait for page to load before logging in
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForFunction(
-      () => {
-        const usernameInput = document.querySelector(
-          'input[placeholder="Username"]'
-        ) as HTMLInputElement;
-        const passwordInput = document.querySelector(
-          'input[placeholder="Password"]'
-        ) as HTMLInputElement;
-        const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-        return (
-          usernameInput &&
-          passwordInput &&
-          submitButton &&
-          !usernameInput.disabled &&
-          !passwordInput.disabled &&
-          !submitButton.disabled
-        );
-      },
-      { timeout: 10000 }
-    );
 
-    // Login
-    await page.locator('input[placeholder="Username"]').fill('admin');
-    await page.locator('input[placeholder="Password"]').fill('admin');
-    await page.locator('button[type="submit"]').click();
+    // Login using POM
+    await loginPage.login();
 
-    // Navigate with fallback
-    try {
-      await page.waitForURL('/', { timeout: 15000 });
-    } catch {
-      const currentUrl = page.url();
-      if (!(currentUrl.includes('/') && !currentUrl.includes('/login'))) {
-        await page.waitForFunction(() => !window.location.href.includes('/login'), {
-          timeout: 5000,
-        });
-      }
-    }
-    // MSW wdsSuccess scenario already handles kubestellar status
+    // Navigate to WDS page
     try {
       await page.goto(`${BASE}/workloads/manage`, { waitUntil: 'domcontentloaded' });
     } catch {
@@ -222,7 +192,6 @@ test.describe('WDS Page - Base Foundation Tests', () => {
   });
 
   test('page handles empty state when no workloads exist', async ({ page }) => {
-    // MSW wdsSuccess scenario already handles kubestellar status
     // Mock empty workloads response
     await page.route('**/api/wds/workloads', route => {
       route.fulfill({
@@ -298,12 +267,10 @@ test.describe('WDS Page - Base Foundation Tests', () => {
 
     // Refresh page
     await page.reload();
-    // Avoid networkidle in Firefox (websockets keep it busy); use domcontentloaded
     await page.waitForLoadState('domcontentloaded');
 
     // Should still show a valid render state after refresh
     if (browserName === 'firefox') {
-      // Firefox: avoid additional waits that may race with WS; treat as pass
       expect(true).toBeTruthy();
     } else {
       await page.waitForFunction(

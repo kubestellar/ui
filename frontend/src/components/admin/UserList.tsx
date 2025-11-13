@@ -64,7 +64,7 @@ const UserList: React.FC<UserListProps> = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full table-auto">
+      <table className="w-full table-auto" data-testid="user-table">
         <thead
           style={{
             background: isDark ? 'rgba(31, 41, 55, 0.6)' : 'rgba(243, 244, 246, 0.6)',
@@ -115,6 +115,8 @@ const UserList: React.FC<UserListProps> = ({
                   isDark ? 'rgba(75, 85, 99, 0.2)' : 'rgba(226, 232, 240, 0.5)'
                 }`,
               }}
+              data-testid="user-row"
+              data-username={user.username}
             >
               <td className="whitespace-nowrap px-6 py-4 text-sm">
                 <div className="flex items-center gap-3">
@@ -155,6 +157,7 @@ const UserList: React.FC<UserListProps> = ({
                           : '#3b82f6'
                         : themeStyles.colors.text.primary,
                     }}
+                    data-testid="user-name"
                   >
                     {user.username}
                   </span>
@@ -168,6 +171,7 @@ const UserList: React.FC<UserListProps> = ({
                       background: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)',
                       color: isDark ? '#60a5fa' : '#3b82f6',
                     }}
+                    data-testid="user-role-badge"
                   >
                     <FiShield size={12} />
                     {t('admin.users.roles.admin')}
@@ -179,6 +183,7 @@ const UserList: React.FC<UserListProps> = ({
                       background: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.08)',
                       color: isDark ? '#a5b4fc' : '#6366f1',
                     }}
+                    data-testid="user-role-badge"
                   >
                     <FiUser size={12} />
                     {t('admin.users.roles.user')}
@@ -209,6 +214,9 @@ const UserList: React.FC<UserListProps> = ({
                               ? '#60a5fa'
                               : '#3b82f6',
                       }}
+                      data-testid="user-permission-badge"
+                      data-permission={permission}
+                      data-component={component}
                     >
                       <FiKey size={10} />
                       {component}:{' '}
@@ -239,6 +247,8 @@ const UserList: React.FC<UserListProps> = ({
                       color: isDark ? '#60a5fa' : '#3b82f6',
                     }}
                     title={t('admin.users.actions.edit')}
+                    aria-label={t('admin.users.actions.edit')}
+                    data-testid="edit-user-button"
                   >
                     <FiEdit size={16} />
                   </motion.button>
@@ -252,6 +262,8 @@ const UserList: React.FC<UserListProps> = ({
                       color: isDark ? '#f87171' : '#ef4444',
                     }}
                     title={t('admin.users.actions.delete')}
+                    aria-label={t('admin.users.actions.delete')}
+                    data-testid="delete-user-button"
                   >
                     <FiTrash2 size={16} />
                   </motion.button>

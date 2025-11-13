@@ -143,6 +143,30 @@ export const scenarios: Record<string, HttpHandler[]> = {
     h.wdsGetContextMultiple,
     h.wdsCreateContext,
   ],
+
+  // User Management specific scenario
+  userManagement: [
+    h.login,
+    h.me,
+    h.userActivities,
+    h.createUser,
+    h.updateUser,
+    h.updateUserPermissions,
+    h.getUserPermissions,
+    h.deleteUser,
+  ],
+
+  // Object Explorer specific scenario
+  objectExplorerSuccess: [
+    h.login,
+    h.me,
+    h.getResourceKinds,
+    h.getNamespaces,
+    h.getPods,
+    h.getDeployments,
+    h.getServices,
+    h.getClusterNamespaces,
+  ],
 };
 
 export function applyScenarioByName(name: string) {

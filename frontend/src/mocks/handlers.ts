@@ -403,30 +403,195 @@ export const podHealth: HttpHandler = http.get(
   }
 );
 
-// User activities endpoint
+type MockUser = {
+  id: number;
+  username: string;
+  is_admin: boolean;
+  permissions: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+};
+
+const mockUsers: MockUser[] = [
+  {
+    id: 1,
+    username: 'admin',
+    is_admin: true,
+    permissions: {
+      dashboard: 'write',
+      resources: 'write',
+      system: 'write',
+      users: 'write',
+    },
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 2,
+    username: 'testuser',
+    is_admin: false,
+    permissions: {
+      dashboard: 'read',
+      resources: 'read',
+    },
+    created_at: new Date(Date.now() - 60000).toISOString(),
+    updated_at: new Date(Date.now() - 60000).toISOString(),
+  },
+  {
+    id: 3,
+    username: 'poweruser',
+    is_admin: false,
+    permissions: {
+      dashboard: 'write',
+      resources: 'write',
+      system: 'read',
+    },
+    created_at: new Date(Date.now() - 120000).toISOString(),
+    updated_at: new Date(Date.now() - 120000).toISOString(),
+  },
+];
+
 export const userActivities: HttpHandler = http.get('http://localhost:4000/api/admin/users', () =>
   HttpResponse.json({
-    users: [
-      {
-        username: 'admin',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        username: 'user1',
-        created_at: new Date(Date.now() - 60000).toISOString(),
-        updated_at: new Date(Date.now() - 60000).toISOString(),
-      },
-      {
-        username: 'user2',
-        created_at: new Date(Date.now() - 120000).toISOString(),
-        updated_at: new Date(Date.now() - 120000).toISOString(),
-      },
-    ],
+    users: mockUsers,
   })
 );
 
-// Deleted user activities endpoint
+export const createUser: HttpHandler = http.post(
+  'http://localhost:4000/api/admin/users',
+  async ({ request }) => {
+    const body = (await request.json()) as {
+      username: string;
+      password: string;
+      is_admin: boolean;
+      permissions: Record<string, string>;
+    };
+
+    // Check if user already exists
+    if (mockUsers.some(u => u.username === body.username)) {
+      return HttpResponse.json({ error: 'User already exists' }, { status: 400 });
+    }
+
+    const newUser = {
+      id: mockUsers.length + 1,
+      username: body.username,
+      is_admin: body.is_admin,
+      permissions: body.permissions,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    mockUsers.push(newUser);
+
+    return HttpResponse.json({
+      success: true,
+      user: newUser,
+    });
+  }
+);
+
+export const updateUser: HttpHandler = http.put(
+  'http://localhost:4000/api/admin/users/:username',
+  async ({ params, request }) => {
+    const { username } = params;
+    const body = (await request.json()) as {
+      username?: string;
+      password?: string;
+      is_admin?: boolean;
+    };
+
+    const userIndex = mockUsers.findIndex(u => u.username === username);
+    if (userIndex === -1) {
+      return HttpResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if new username already exists (if username is being changed)
+    if (body.username && body.username !== username) {
+      if (mockUsers.some(u => u.username === body.username)) {
+        return HttpResponse.json({ error: 'Username already exists' }, { status: 400 });
+      }
+    }
+
+    mockUsers[userIndex] = {
+      ...mockUsers[userIndex],
+      ...(body.username && { username: body.username }),
+      ...(body.is_admin !== undefined && { is_admin: body.is_admin }),
+      updated_at: new Date().toISOString(),
+    };
+
+    return HttpResponse.json({
+      success: true,
+      user: mockUsers[userIndex],
+    });
+  }
+);
+
+export const updateUserPermissions: HttpHandler = http.put(
+  'http://localhost:4000/api/admin/users/:username/permissions',
+  async ({ params, request }) => {
+    const { username } = params;
+    const body = (await request.json()) as {
+      permissions: Record<string, string>;
+    };
+
+    const userIndex = mockUsers.findIndex(u => u.username === username);
+    if (userIndex === -1) {
+      return HttpResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    mockUsers[userIndex] = {
+      ...mockUsers[userIndex],
+      permissions: body.permissions,
+      updated_at: new Date().toISOString(),
+    };
+
+    return HttpResponse.json({
+      success: true,
+      permissions: mockUsers[userIndex].permissions,
+    });
+  }
+);
+
+export const getUserPermissions: HttpHandler = http.get(
+  'http://localhost:4000/api/admin/users/:username/permissions',
+  ({ params }) => {
+    const { username } = params;
+    const user = mockUsers.find(u => u.username === username);
+
+    if (!user) {
+      return HttpResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      permissions: user.permissions,
+    });
+  }
+);
+
+export const deleteUser: HttpHandler = http.delete(
+  'http://localhost:4000/api/admin/users/:username',
+  ({ params }) => {
+    const { username } = params;
+    const userIndex = mockUsers.findIndex(u => u.username === username);
+
+    if (userIndex === -1) {
+      return HttpResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Prevent deleting admin user
+    if (mockUsers[userIndex].username === 'admin') {
+      return HttpResponse.json({ error: 'Cannot delete admin user' }, { status: 403 });
+    }
+
+    mockUsers.splice(userIndex, 1);
+
+    return HttpResponse.json({
+      success: true,
+      message: 'User deleted successfully',
+    });
+  }
+);
+
 export const deletedUserActivities: HttpHandler = http.get(
   'http://localhost:4000/api/admin/users/deleted',
   () =>
@@ -751,6 +916,174 @@ export const detachCluster: HttpHandler = http.post(
   }
 );
 
+// Object Explorer - Get resource kinds
+export const getResourceKinds: HttpHandler = http.get(
+  'http://localhost:4000/api/resources/kinds',
+  () =>
+    HttpResponse.json([
+      { kind: 'Pod', name: 'pods', group: '', version: 'v1', namespaced: true },
+      { kind: 'Deployment', name: 'deployments', group: 'apps', version: 'v1', namespaced: true },
+      { kind: 'Service', name: 'services', group: '', version: 'v1', namespaced: true },
+      { kind: 'ConfigMap', name: 'configmaps', group: '', version: 'v1', namespaced: true },
+      { kind: 'Secret', name: 'secrets', group: '', version: 'v1', namespaced: true },
+      { kind: 'Namespace', name: 'namespaces', group: '', version: 'v1', namespaced: false },
+      {
+        kind: 'StatefulSet',
+        name: 'statefulsets',
+        group: 'apps',
+        version: 'v1',
+        namespaced: true,
+      },
+      { kind: 'DaemonSet', name: 'daemonsets', group: 'apps', version: 'v1', namespaced: true },
+      { kind: 'Job', name: 'jobs', group: 'batch', version: 'v1', namespaced: true },
+      { kind: 'CronJob', name: 'cronjobs', group: 'batch', version: 'v1', namespaced: true },
+    ])
+);
+
+// Object Explorer - Get namespaces
+export const getNamespaces: HttpHandler = http.get(
+  'http://localhost:4000/api/resources/namespaces',
+  () =>
+    HttpResponse.json([
+      { name: 'default', createdAt: '2024-01-01T00:00:00Z', status: 'Active' },
+      { name: 'kube-system', createdAt: '2024-01-01T00:00:00Z', status: 'Active' },
+      { name: 'test-namespace', createdAt: '2024-01-15T00:00:00Z', status: 'Active' },
+      { name: 'production', createdAt: '2024-01-20T00:00:00Z', status: 'Active' },
+      { name: 'staging', createdAt: '2024-01-25T00:00:00Z', status: 'Active' },
+    ])
+);
+
+// Object Explorer - Get pods
+export const getPods: HttpHandler = http.get(
+  'http://localhost:4000/api/pods/:namespace',
+  ({ params }) => {
+    const { namespace } = params;
+    return HttpResponse.json({
+      items: [
+        {
+          apiVersion: 'v1',
+          kind: 'Pod',
+          metadata: {
+            name: `nginx-pod-${namespace}`,
+            namespace: namespace as string,
+            uid: `pod-uid-${namespace}-1`,
+            creationTimestamp: '2024-01-15T10:30:00Z',
+            labels: { app: 'nginx', env: 'production' },
+          },
+          status: { phase: 'Running' },
+          spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] },
+        },
+        {
+          apiVersion: 'v1',
+          kind: 'Pod',
+          metadata: {
+            name: `redis-pod-${namespace}`,
+            namespace: namespace as string,
+            uid: `pod-uid-${namespace}-2`,
+            creationTimestamp: '2024-01-16T11:00:00Z',
+            labels: { app: 'redis', env: 'staging' },
+          },
+          status: { phase: 'Pending' },
+          spec: { containers: [{ name: 'redis', image: 'redis:latest' }] },
+        },
+      ],
+    });
+  }
+);
+
+// Object Explorer - Get deployments
+export const getDeployments: HttpHandler = http.get(
+  'http://localhost:4000/api/deployments/:namespace',
+  ({ params }) => {
+    const { namespace } = params;
+    return HttpResponse.json({
+      items: [
+        {
+          apiVersion: 'apps/v1',
+          kind: 'Deployment',
+          metadata: {
+            name: `web-deployment-${namespace}`,
+            namespace: namespace as string,
+            uid: `deployment-uid-${namespace}-1`,
+            creationTimestamp: '2024-01-10T09:00:00Z',
+            labels: { app: 'web', tier: 'frontend' },
+          },
+          status: { replicas: 3, readyReplicas: 3, availableReplicas: 3 },
+          spec: { replicas: 3 },
+        },
+        {
+          apiVersion: 'apps/v1',
+          kind: 'Deployment',
+          metadata: {
+            name: `api-deployment-${namespace}`,
+            namespace: namespace as string,
+            uid: `deployment-uid-${namespace}-2`,
+            creationTimestamp: '2024-01-12T10:00:00Z',
+            labels: { app: 'api', tier: 'backend' },
+          },
+          status: { replicas: 2, readyReplicas: 1, availableReplicas: 1 },
+          spec: { replicas: 2 },
+        },
+      ],
+    });
+  }
+);
+
+// Object Explorer - Get services
+export const getServices: HttpHandler = http.get(
+  'http://localhost:4000/api/services/:namespace',
+  ({ params }) => {
+    const { namespace } = params;
+    return HttpResponse.json({
+      items: [
+        {
+          apiVersion: 'v1',
+          kind: 'Service',
+          metadata: {
+            name: `web-service-${namespace}`,
+            namespace: namespace as string,
+            uid: `service-uid-${namespace}-1`,
+            creationTimestamp: '2024-01-10T09:30:00Z',
+            labels: { app: 'web' },
+          },
+          status: 'Active',
+          spec: { type: 'ClusterIP', ports: [{ port: 80 }] },
+        },
+      ],
+    });
+  }
+);
+
+// Object Explorer - Get cluster-scoped resources (namespaces)
+export const getClusterNamespaces: HttpHandler = http.get(
+  'http://localhost:4000/api/cluster/namespaces',
+  () =>
+    HttpResponse.json({
+      items: [
+        {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: {
+            name: 'default',
+            uid: 'namespace-uid-1',
+            creationTimestamp: '2024-01-01T00:00:00Z',
+          },
+          status: { phase: 'Active' },
+        },
+        {
+          apiVersion: 'v1',
+          kind: 'Namespace',
+          metadata: {
+            name: 'test-namespace',
+            uid: 'namespace-uid-2',
+            creationTimestamp: '2024-01-15T00:00:00Z',
+          },
+          status: { phase: 'Active' },
+        },
+      ],
+    })
+);
+
 export const defaultHandlers: HttpHandler[] = [
   statusReady,
   statusReadyRel,
@@ -766,6 +1099,11 @@ export const defaultHandlers: HttpHandler[] = [
   clusterMetrics,
   podHealth,
   userActivities,
+  createUser,
+  updateUser,
+  updateUserPermissions,
+  getUserPermissions,
+  deleteUser,
   deletedUserActivities,
   clusterDetails,
   clusterStatus,
@@ -783,4 +1121,10 @@ export const defaultHandlers: HttpHandler[] = [
   wdsGetContextMultiple,
   wdsGetContextAbsMultiple,
   wdsCreateContext,
+  getResourceKinds,
+  getNamespaces,
+  getPods,
+  getDeployments,
+  getServices,
+  getClusterNamespaces,
 ];
