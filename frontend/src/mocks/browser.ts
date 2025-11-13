@@ -141,6 +141,18 @@ export const scenarios: Record<string, HttpHandler[]> = {
     h.getUserPermissions,
     h.deleteUser,
   ],
+
+  // Object Explorer specific scenario
+  objectExplorerSuccess: [
+    h.login,
+    h.me,
+    h.getResourceKinds,
+    h.getNamespaces,
+    h.getPods,
+    h.getDeployments,
+    h.getServices,
+    h.getClusterNamespaces,
+  ],
 };
 
 export function applyScenarioByName(name: string) {
