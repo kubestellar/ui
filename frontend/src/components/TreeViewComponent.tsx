@@ -143,7 +143,6 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     setActiveOption('option1');
   }, []);
 
-
   const handleExpandAll = useCallback(() => {
     setIsExpanded(true);
   }, []);
