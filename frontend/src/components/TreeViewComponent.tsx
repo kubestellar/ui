@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, memo } from 'react';
 import { Box, Alert, Snackbar } from '@mui/material';
 import useTheme from '../stores/themeStore';
+import { useTreeViewSidebar } from './Layout';
 import ContextDropdown from './ContextDropdown';
 import CreateOptions from './CreateOptions';
 import TreeViewHeader from './treeView/TreeViewHeader';
@@ -24,6 +25,7 @@ interface TreeViewComponentProps {
 
 const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const theme = useTheme(state => state.theme);
+  const { isTreeViewSidebarCollapsed, toggleTreeViewSidebar } = useTreeViewSidebar();
 
   // State management
   const [showCreateOptions, setShowCreateOptions] = useState(false);
@@ -37,11 +39,6 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     groupItems?: TreeResourceItem[];
     initialTab?: number;
   } | null>(null);
-  // Initialize sidebar collapsed state with persistence
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    const saved = localStorage.getItem('treeViewSidebarCollapsed');
-    return saved !== null ? JSON.parse(saved) : true; // Default to collapsed
-  });
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [filteredContext, setFilteredContext] = useState<string>('all');
@@ -86,7 +83,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     getDescendantEdges,
   } = useTreeViewData({
     filteredContext,
-    isCollapsed,
+    isCollapsed: isTreeViewSidebarCollapsed,
     isExpanded,
     onNodeSelect: handleNodeSelect,
     onMenuOpen: handleMenuOpen || (() => {}),
@@ -146,14 +143,6 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     setActiveOption('option1');
   }, []);
 
-  // Collapse/Expand handlers
-  const handleToggleCollapse = useCallback(() => {
-    setIsCollapsed(prev => {
-      const newState = !prev;
-      localStorage.setItem('treeViewSidebarCollapsed', JSON.stringify(newState));
-      return newState;
-    });
-  }, []);
 
   const handleExpandAll = useCallback(() => {
     setIsExpanded(true);
@@ -253,10 +242,10 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             filteredContext={filteredContext}
             onCreateWorkload={handleCreateWorkloadClick}
             onResourceDataChange={handleResourceDataChange}
-            onToggleCollapse={handleToggleCollapse}
+            onToggleCollapse={toggleTreeViewSidebar}
             onExpandAll={handleExpandAll}
             onCollapseAll={handleCollapseAll}
-            isCollapsed={isCollapsed}
+            isCollapsed={isTreeViewSidebarCollapsed}
             containerRef={containerRef}
             resourceFilters={resourceFilters}
             onResourceFiltersChange={handleResourceFiltersChange}

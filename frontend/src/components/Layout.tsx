@@ -1,10 +1,26 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState, useCallback, createContext, useContext } from 'react';
 import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { Tooltip } from '@mui/material';
 import Header from './Header';
 import useTheme from '../stores/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import getThemeStyles from '../lib/theme-utils';
+
+// Context for tree view sidebar state
+interface TreeViewSidebarContextType {
+  isTreeViewSidebarCollapsed: boolean;
+  toggleTreeViewSidebar: () => void;
+}
+
+const TreeViewSidebarContext = createContext<TreeViewSidebarContextType | undefined>(undefined);
+
+export const useTreeViewSidebar = () => {
+  const context = useContext(TreeViewSidebarContext);
+  if (!context) {
+    throw new Error('useTreeViewSidebar must be used within a TreeViewSidebarProvider');
+  }
+  return context;
+};
 
 // Lazy load less critical components
 const Menu = lazy(() => import('./menu/Menu'));
@@ -62,6 +78,7 @@ export function Layout() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTreeViewSidebarCollapsed, setIsTreeViewSidebarCollapsed] = useState(true);
   const location = useLocation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -89,6 +106,11 @@ export function Layout() {
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
+
+  // Toggle tree view sidebar collapsed state
+  const toggleTreeViewSidebar = useCallback(() => {
+    setIsTreeViewSidebarCollapsed(prev => !prev);
+  }, []);
 
   // Toggle mobile menu state
   const toggleMobileMenu = () => {
@@ -266,9 +288,16 @@ export function Layout() {
           >
             <Suspense fallback={<LoadingPlaceholder />}>
               <PageTransition>
-                <div className="mx-auto max-w-full">
-                  <Outlet />
-                </div>
+                <TreeViewSidebarContext.Provider
+                  value={{
+                    isTreeViewSidebarCollapsed,
+                    toggleTreeViewSidebar,
+                  }}
+                >
+                  <div className="mx-auto max-w-full">
+                    <Outlet />
+                  </div>
+                </TreeViewSidebarContext.Provider>
               </PageTransition>
             </Suspense>
           </motion.main>
