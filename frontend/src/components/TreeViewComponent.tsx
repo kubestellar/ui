@@ -37,7 +37,11 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     groupItems?: TreeResourceItem[];
     initialTab?: number;
   } | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  // Initialize sidebar collapsed state with persistence
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    const saved = localStorage.getItem('treeViewSidebarCollapsed');
+    return saved !== null ? JSON.parse(saved) : true; // Default to collapsed
+  });
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [filteredContext, setFilteredContext] = useState<string>('all');
@@ -144,7 +148,11 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
 
   // Collapse/Expand handlers
   const handleToggleCollapse = useCallback(() => {
-    setIsCollapsed(prev => !prev);
+    setIsCollapsed(prev => {
+      const newState = !prev;
+      localStorage.setItem('treeViewSidebarCollapsed', JSON.stringify(newState));
+      return newState;
+    });
   }, []);
 
   const handleExpandAll = useCallback(() => {
