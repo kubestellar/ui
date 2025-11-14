@@ -45,12 +45,6 @@ export const useMenuData = (): MenuItemData[] => {
         },
         {
           isLink: true,
-          url: '/grafana',
-          icon: SiGrafana,
-          label: t('menu.items.Grafana'),
-        },
-        {
-          isLink: true,
           url: '/workloads/manage',
           icon: HiOutlineCommandLine,
           label: t('menu.items.stagedWorkloads'),
@@ -72,6 +66,12 @@ export const useMenuData = (): MenuItemData[] => {
           url: '/resources',
           icon: HiOutlineViewfinderCircle,
           label: t('menu.items.resourceExplorer'),
+        },
+        {
+          isLink: true,
+          url: '/grafana',
+          icon: SiGrafana,
+          label: t('menu.items.Grafana'),
         },
       ],
     },
