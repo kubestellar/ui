@@ -73,10 +73,17 @@ export const ZoomControls = memo<ZoomControlsProps>(
     const [zoomLevel, setZoomLevel] = useState<number>(120);
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
-    const [showControls, setShowControls] = useState<boolean>(true);
+    const [showControls, setShowControls] = useState<boolean>(() => {
+      const saved = localStorage.getItem('wds-show-controls');
+      return saved ? JSON.parse(saved) : false; // Default to false (controls hidden)
+    });
 
     const toggleControls = () => {
-      setShowControls(prev => !prev);
+      setShowControls(prev => {
+        const newValue = !prev;
+        localStorage.setItem('wds-show-controls', JSON.stringify(newValue));
+        return newValue;
+      });
     };
     const { setZoom } = useZoomStore();
     const { edgeType, setEdgeType } = useEdgeTypeStore();

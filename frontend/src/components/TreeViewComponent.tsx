@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, memo } from 'react';
 import { Box, Alert, Snackbar } from '@mui/material';
 import useTheme from '../stores/themeStore';
-import { useTreeViewSidebar } from './Layout';
 import ContextDropdown from './ContextDropdown';
 import CreateOptions from './CreateOptions';
 import TreeViewHeader from './treeView/TreeViewHeader';
@@ -25,7 +24,6 @@ interface TreeViewComponentProps {
 
 const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const theme = useTheme(state => state.theme);
-  const { isTreeViewSidebarCollapsed, toggleTreeViewSidebar } = useTreeViewSidebar();
 
   // State management
   const [showCreateOptions, setShowCreateOptions] = useState(false);
@@ -39,6 +37,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     groupItems?: TreeResourceItem[];
     initialTab?: number;
   } | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [filteredContext, setFilteredContext] = useState<string>('all');
@@ -83,7 +82,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     getDescendantEdges,
   } = useTreeViewData({
     filteredContext,
-    isCollapsed: isTreeViewSidebarCollapsed,
+    isCollapsed,
     isExpanded,
     onNodeSelect: handleNodeSelect,
     onMenuOpen: handleMenuOpen || (() => {}),
@@ -141,6 +140,11 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const handleCreateWorkloadClick = useCallback(() => {
     setShowCreateOptions(true);
     setActiveOption('option1');
+  }, []);
+
+  // Collapse/Expand handlers
+  const handleToggleCollapse = useCallback(() => {
+    setIsCollapsed(prev => !prev);
   }, []);
 
   const handleExpandAll = useCallback(() => {
@@ -241,10 +245,10 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             filteredContext={filteredContext}
             onCreateWorkload={handleCreateWorkloadClick}
             onResourceDataChange={handleResourceDataChange}
-            onToggleCollapse={toggleTreeViewSidebar}
+            onToggleCollapse={handleToggleCollapse}
             onExpandAll={handleExpandAll}
             onCollapseAll={handleCollapseAll}
-            isCollapsed={isTreeViewSidebarCollapsed}
+            isCollapsed={isCollapsed}
             containerRef={containerRef}
             resourceFilters={resourceFilters}
             onResourceFiltersChange={handleResourceFiltersChange}
