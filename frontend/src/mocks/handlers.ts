@@ -1118,8 +1118,6 @@ export const defaultHandlers: HttpHandler[] = [
   detachCluster,
   wdsGetContextAbs,
   wdsGetContextRel,
-  wdsGetContextMultiple,
-  wdsGetContextAbsMultiple,
   wdsCreateContext,
   getResourceKinds,
   getNamespaces,
