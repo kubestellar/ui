@@ -239,6 +239,10 @@ const getNodeConfig = (type: string) => {
       icon = cluster;
       dynamicText = 'cluster';
       break;
+    case 'control-plane':
+      icon = cluster; // Use cluster icon for control plane
+      dynamicText = 'control';
+      break;
     case 'namespace':
       icon = ns;
       dynamicText = 'ns';
@@ -576,17 +580,6 @@ const WecsTreeview = () => {
           };
         });
       });
-
-      // Update edge styles for the current theme
-      setEdges(currentEdges => {
-        return currentEdges.map(edge => ({
-          ...edge,
-          style: {
-            ...edge.style,
-            stroke: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
-          },
-        }));
-      });
     }
   }, [nodes.length, currentZoom, theme, getScaledNodeStyle]);
 
@@ -653,7 +646,6 @@ const WecsTreeview = () => {
   }, []);
 
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
-    console.log('handleMenuOpen called:', { event, nodeId }); // Debug log
     event.preventDefault();
     event.stopPropagation();
 
@@ -661,8 +653,6 @@ const WecsTreeview = () => {
     const rect = event.currentTarget.getBoundingClientRect();
     const x = event.clientX || rect.left + rect.width / 2;
     const y = event.clientY || rect.top + rect.height / 2;
-
-    console.log('Menu position:', { x, y, clientX: event.clientX, clientY: event.clientY }); // Debug log
 
     let nodeType: string | null = null;
     if (nodeId.includes(':')) {
@@ -832,10 +822,17 @@ const WecsTreeview = () => {
             target: id,
             type: edgeType,
             animated: true,
-            style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
+            style: {
+              stroke: theme === 'dark' ? '#64748b' : '#94a3b8',
+              strokeWidth: 2,
+              opacity: 0.8,
+              strokeDasharray: '2,2',
+            },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: theme === 'dark' ? '#ccc' : '#a3a3a3',
+              width: 12,
+              height: 12,
+              color: theme === 'dark' ? '#64748b' : '#94a3b8',
             },
           };
           newEdges.push(edge);
@@ -844,12 +841,19 @@ const WecsTreeview = () => {
           // Update cached edge styles for the current theme
           const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
             type: cachedEdge.markerEnd?.type || MarkerType.ArrowClosed,
-            color: theme === 'dark' ? '#ccc' : '#a3a3a3',
+            width: 12,
+            height: 12,
+            color: theme === 'dark' ? '#64748b' : '#94a3b8',
           };
 
           const updatedEdge = {
             ...cachedEdge,
-            style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
+            style: {
+              stroke: theme === 'dark' ? '#64748b' : '#94a3b8',
+              strokeWidth: 2,
+              opacity: 0.8,
+              strokeDasharray: '2,2',
+            },
             markerEnd,
             type: edgeType,
           };
@@ -1266,6 +1270,39 @@ const WecsTreeview = () => {
         });
       }
 
+      // If no edges were created but we have nodes, create placeholder edges between clusters
+      if (newEdges.length === 0 && newNodes.length > 1) {
+        const clusterNodes = newNodes.filter(node => node.id.startsWith('cluster:'));
+        if (clusterNodes.length > 1) {
+          // Create edges connecting clusters in a chain
+          for (let i = 1; i < clusterNodes.length; i++) {
+            const sourceNode = clusterNodes[i - 1];
+            const targetNode = clusterNodes[i];
+            const edgeId = `edge-${sourceNode.id}-${targetNode.id}-placeholder`;
+            const edge = {
+              id: edgeId,
+              source: sourceNode.id,
+              target: targetNode.id,
+              type: edgeType,
+              animated: false,
+              style: {
+                stroke: theme === 'dark' ? '#64748b' : '#94a3b8',
+                strokeWidth: 2,
+                opacity: 0.6,
+                strokeDasharray: '5,5',
+              },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 12,
+                height: 12,
+                color: theme === 'dark' ? '#64748b' : '#94a3b8',
+              },
+            };
+            newEdges.push(edge);
+          }
+        }
+      }
+
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         newNodes,
         newEdges,
@@ -1273,6 +1310,7 @@ const WecsTreeview = () => {
         prevNodes,
         currentZoom
       );
+
       if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
       if (!isEqual(edges, layoutedEdges)) setEdges(layoutedEdges);
       prevNodes.current = layoutedNodes;

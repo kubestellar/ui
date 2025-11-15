@@ -66,7 +66,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
    * Adjusts the container height based on the content and sets proper zoom level for optimal viewing.
    */
   useEffect(() => {
-    if (nodes.length > 0 && !initializedRef.current) {
+    if ((nodes.length > 0 || edges.length > 0) && !initializedRef.current) {
       const { minX, minY, maxY } = positions;
       const treeHeight = maxY - minY;
       const reactFlowContainer = reactFlowContainerRef.current;
@@ -85,7 +85,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       viewportRef.current = { x: centerX, y: centerY, zoom: initialZoom };
       initializedRef.current = true;
     }
-  }, [nodes, positions, setViewport, currentZoom]);
+  }, [nodes, edges, positions, setViewport, currentZoom]);
 
   /**
    * Saves the current viewport position and zoom level when user stops panning or zooming.
@@ -274,10 +274,8 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         onWheel={handleWheel}
         defaultEdgeOptions={{ type: edgeType }}
       >
-        {/* Enhanced edge gradients for beautiful connections */}
-        <svg style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0 }}>
-          {edgeGradients}
-        </svg>
+        {/* Enhanced edge gradients for beautiful connections - must be inside ReactFlow */}
+        {edgeGradients}
 
         <Background
           variant={BackgroundVariant.Dots}
@@ -330,7 +328,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         /* Ensure edge paths remain visible */
         .react-flow__edge-path {
           stroke-width: 2;
-          stroke-dasharray: none;
+          /* Let individual edges control their own stroke-dasharray */
         }
 
         /* Ensure menu buttons are always clickable */
