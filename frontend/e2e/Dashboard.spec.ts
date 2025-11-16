@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { DashboardPage, LoginPage } from './pages';
-
-const BASE = 'http://localhost:5173';
+import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
 
 test.describe('Dashboard Page', () => {
   let dashboardPage: DashboardPage;
@@ -98,7 +97,7 @@ test.describe('Dashboard Page', () => {
   });
 
   test.describe('Statistics Cards', () => {
-    test('all statistics cards are visible', async ({ page }) => {
+    test('all statistics cards are visible', async () => {
       await expect(dashboardPage.getTotalClustersCard()).toBeVisible();
       await expect(dashboardPage.getActiveClustersCard()).toBeVisible();
       await expect(dashboardPage.getBindingPoliciesCard()).toBeVisible();
@@ -126,7 +125,7 @@ test.describe('Dashboard Page', () => {
       await expect(page).toHaveURL(/bp/, { timeout: 3000 });
     });
 
-    test('statistics cards have proper visual indicators', async ({ page }) => {
+    test('statistics cards have proper visual indicators', async () => {
       const firstCard = dashboardPage.getTotalClustersCard();
       const icons = firstCard.locator('svg');
       const iconCount = await icons.count();
@@ -144,7 +143,7 @@ test.describe('Dashboard Page', () => {
   });
 
   test.describe('Health Overview Section', () => {
-    test('health overview section is visible', async ({ page }) => {
+    test('health overview section is visible', async () => {
       await expect(dashboardPage.clusterHealthHeading).toBeVisible();
       await expect(dashboardPage.systemHealthText).toBeVisible();
     });
@@ -169,7 +168,7 @@ test.describe('Dashboard Page', () => {
       expect(iconCount).toBeGreaterThan(0);
     });
 
-    test('progress bars display correct values from MSW', async ({ page }) => {
+    test('progress bars display correct values from MSW', async () => {
       const percentageElements = dashboardPage.progressPercentages;
       const percentageCount = await percentageElements.count();
       expect(percentageCount).toBeGreaterThan(0);
@@ -201,7 +200,7 @@ test.describe('Dashboard Page', () => {
       expect(groupCount).toBeGreaterThan(0);
     });
 
-    test('cluster status distribution is visible', async ({ page }) => {
+    test('cluster status distribution is visible', async () => {
       await expect(dashboardPage.clusterStatusHeading).toBeVisible();
       await expect(dashboardPage.activeClustersText).toBeVisible();
       await expect(dashboardPage.otherClustersText).toBeVisible();
@@ -209,7 +208,7 @@ test.describe('Dashboard Page', () => {
   });
 
   test.describe('Cluster List Section', () => {
-    test('managed clusters section is visible', async ({ page }) => {
+    test('managed clusters section is visible', async () => {
       await expect(dashboardPage.managedClustersHeading).toBeVisible();
       const clusterCount = await dashboardPage.getClusterCount();
       expect(clusterCount).toBe(2);
@@ -226,7 +225,7 @@ test.describe('Dashboard Page', () => {
       expect(cluster1Status).toBeTruthy();
     });
 
-    test('cluster items show capacity information', async ({ page }) => {
+    test('cluster items show capacity information', async () => {
       const cluster1Capacity = await dashboardPage.getClusterCapacity('cluster1');
       const cluster2Capacity = await dashboardPage.getClusterCapacity('cluster2');
 
@@ -250,7 +249,7 @@ test.describe('Dashboard Page', () => {
   });
 
   test.describe('Recent Activity Section', () => {
-    test('recent activity section is visible', async ({ page }) => {
+    test('recent activity section is visible', async () => {
       await expect(dashboardPage.recentActivityHeading).toBeVisible();
       await expect(dashboardPage.refreshButton).toBeVisible();
     });
