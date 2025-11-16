@@ -153,6 +153,17 @@ export const scenarios: Record<string, HttpHandler[]> = {
     h.getServices,
     h.getClusterNamespaces,
   ],
+
+  // Binding Policy specific scenario
+  bindingPolicy: [
+    h.login,
+    h.me,
+    h.clusters,
+    h.workloads,
+    h.workloadsRel,
+    h.bindingPolicies,
+    h.k8sInfo,
+  ],
 };
 
 export function applyScenarioByName(name: string) {
