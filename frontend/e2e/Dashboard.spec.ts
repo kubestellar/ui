@@ -1,15 +1,21 @@
 import { test, expect } from '@playwright/test';
+import { DashboardPage, LoginPage } from './pages';
 
 const BASE = 'http://localhost:5173';
 
 test.describe('Dashboard Page', () => {
+  let dashboardPage: DashboardPage;
+  let loginPage: LoginPage;
+
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    dashboardPage = new DashboardPage(page);
+    loginPage = new LoginPage(page);
+
+    // Navigate to login page
+    await loginPage.goto();
 
     // Apply MSW scenario first
-    await page.evaluate(() => {
-      window.__msw?.applyScenarioByName('dashboard');
-    });
+    await dashboardPage.applyMSWScenario('dashboard');
 
     await page.waitForLoadState('domcontentloaded');
 
@@ -36,11 +42,11 @@ test.describe('Dashboard Page', () => {
     );
 
     // Fill login form
-    await page.locator('input[placeholder="Username"]').fill('admin');
-    await page.locator('input[placeholder="Password"]').fill('admin');
+    await loginPage.fillUsername('admin');
+    await loginPage.fillPassword('admin');
 
     // Click submit button
-    await page.locator('button[type="submit"]').click();
+    await loginPage.clickSignIn();
 
     // Wait for navigation with fallback
     try {
@@ -58,28 +64,22 @@ test.describe('Dashboard Page', () => {
       }
     }
 
-    // Wait for dashboard to load - use waitForFunction for better Chromium compatibility
-    await page.waitForFunction(
-      () => {
-        const heading = document.querySelector('h1');
-        return heading && heading.textContent?.includes('Dashboard');
-      },
-      { timeout: 10000 }
-    );
+    // Wait for dashboard to load using page object
+    await dashboardPage.waitForLoad();
   });
 
   test.describe('Dashboard Layout and Structure', () => {
     test('dashboard page loads successfully', async ({ page }) => {
       await expect(page).toHaveURL('/');
-      await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+      await expect(dashboardPage.dashboardHeading).toBeVisible();
 
-      const dashboardContainer = page.locator('main, [data-testid="dashboard"]').first();
+      const dashboardContainer = dashboardPage.dashboardContainer;
       await expect(dashboardContainer).toBeVisible();
     });
 
     test('dashboard header is visible with navigation buttons', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Manage Clusters' })).toBeVisible();
+      await expect(dashboardPage.dashboardHeading).toBeVisible();
+      await expect(dashboardPage.manageClustersLink).toBeVisible();
 
       const navLinks = page.locator('main a, [class*="dashboard"] a');
       const linkCount = await navLinks.count();
@@ -99,34 +99,35 @@ test.describe('Dashboard Page', () => {
 
   test.describe('Statistics Cards', () => {
     test('all statistics cards are visible', async ({ page }) => {
-      await expect(page.getByRole('link', { name: 'Total Clusters' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Active Clusters' })).toBeVisible();
-      await expect(page.getByText(/Binding Policies/i).first()).toBeVisible();
-      await expect(page.getByText(/Current Context/i).first()).toBeVisible();
+      await expect(dashboardPage.getTotalClustersCard()).toBeVisible();
+      await expect(dashboardPage.getActiveClustersCard()).toBeVisible();
+      await expect(dashboardPage.getBindingPoliciesCard()).toBeVisible();
+      await expect(dashboardPage.getCurrentContextCard()).toBeVisible();
     });
 
     test('statistics cards display correct data from MSW', async ({ page }) => {
-      await expect(page.getByRole('link', { name: 'Total Clusters' })).toContainText('2');
-      await expect(page.getByRole('link', { name: 'Active Clusters' })).toContainText('2');
+      const totalClustersValue = await dashboardPage.getStatCardValue('Total Clusters');
+      expect(totalClustersValue).toContain('2');
+
+      const activeClustersValue = await dashboardPage.getStatCardValue('Active Clusters');
+      expect(activeClustersValue).toContain('2');
+
       await expect(page.getByText('its1-kubeflex')).toBeVisible();
     });
 
     test('statistics cards are clickable and navigate correctly', async ({ page }) => {
-      await page.getByRole('link', { name: 'Total Clusters' }).click();
+      await dashboardPage.clickStatCard('Total Clusters');
       await expect(page).toHaveURL(/its/, { timeout: 3000 });
 
       await page.goBack();
       await page.waitForURL('/', { timeout: 3000 });
 
-      await page
-        .getByText(/Binding Policies/i)
-        .first()
-        .click();
+      await dashboardPage.clickStatCard('Binding Policies');
       await expect(page).toHaveURL(/bp/, { timeout: 3000 });
     });
 
     test('statistics cards have proper visual indicators', async ({ page }) => {
-      const firstCard = page.getByRole('link', { name: 'Total Clusters' });
+      const firstCard = dashboardPage.getTotalClustersCard();
       const icons = firstCard.locator('svg');
       const iconCount = await icons.count();
       expect(iconCount).toBeGreaterThan(0);
@@ -144,14 +145,12 @@ test.describe('Dashboard Page', () => {
 
   test.describe('Health Overview Section', () => {
     test('health overview section is visible', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'Cluster Health' })).toBeVisible();
-      await expect(page.getByText('System Health')).toBeVisible();
+      await expect(dashboardPage.clusterHealthHeading).toBeVisible();
+      await expect(dashboardPage.systemHealthText).toBeVisible();
     });
 
     test('resource utilization progress bars are visible', async ({ page }) => {
-      const progressBars = page.locator(
-        'div[class*="h-4"][class*="w-full"][class*="rounded-full"][class*="bg-gray-100"]'
-      );
+      const progressBars = dashboardPage.getProgressBars();
       const progressCount = await progressBars.count();
       expect(progressCount).toBeGreaterThan(0);
 
@@ -161,7 +160,7 @@ test.describe('Dashboard Page', () => {
       const fillCount = await progressFills.count();
       expect(fillCount).toBeGreaterThan(0);
 
-      const percentageTexts = page.locator('span:has-text("/ 100%")');
+      const percentageTexts = dashboardPage.progressPercentages;
       const percentageCount = await percentageTexts.count();
       expect(percentageCount).toBeGreaterThan(0);
 
@@ -171,19 +170,23 @@ test.describe('Dashboard Page', () => {
     });
 
     test('progress bars display correct values from MSW', async ({ page }) => {
-      const percentageElements = page.locator('span:has-text("/ 100%")');
+      const percentageElements = dashboardPage.progressPercentages;
       const percentageCount = await percentageElements.count();
       expect(percentageCount).toBeGreaterThan(0);
 
-      const hasCpuValue = (await page.locator('text=/45(\\.2)?% \\/ 100%/').count()) > 0;
-      const hasMemoryValue = (await page.locator('text=/67(\\.8)?% \\/ 100%/').count()) > 0;
-      const hasPodValue = (await page.locator('text=/92% \\/ 100%/').count()) > 0;
+      const cpuValue = await dashboardPage.getProgressBarValue('CPU');
+      const memoryValue = await dashboardPage.getProgressBarValue('Memory');
+      const podValue = await dashboardPage.getProgressBarValue('Pod');
+
+      const hasCpuValue = cpuValue && cpuValue.includes('45');
+      const hasMemoryValue = memoryValue && memoryValue.includes('67');
+      const hasPodValue = podValue && podValue.includes('92');
 
       expect(hasCpuValue || hasMemoryValue || hasPodValue).toBeTruthy();
     });
 
     test('progress bars have tooltips with detailed information', async ({ page }) => {
-      const tooltipTriggers = page.locator('svg[width="12"][height="12"]');
+      const tooltipTriggers = dashboardPage.tooltipTriggers;
       const triggerCount = await tooltipTriggers.count();
       expect(triggerCount).toBeGreaterThan(0);
 
@@ -199,41 +202,46 @@ test.describe('Dashboard Page', () => {
     });
 
     test('cluster status distribution is visible', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'Cluster Status' })).toBeVisible();
-      await expect(page.locator('text=Active Clusters').first()).toBeVisible();
-      await expect(page.locator('text=Other Clusters').first()).toBeVisible();
+      await expect(dashboardPage.clusterStatusHeading).toBeVisible();
+      await expect(dashboardPage.activeClustersText).toBeVisible();
+      await expect(dashboardPage.otherClustersText).toBeVisible();
     });
   });
 
   test.describe('Cluster List Section', () => {
     test('managed clusters section is visible', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'Managed Clusters' })).toBeVisible();
-      await expect(page.locator('text=2 total').first()).toBeVisible();
+      await expect(dashboardPage.managedClustersHeading).toBeVisible();
+      const clusterCount = await dashboardPage.getClusterCount();
+      expect(clusterCount).toBe(2);
     });
 
     test('cluster list displays mock cluster data', async ({ page }) => {
+      await dashboardPage.clickCluster('cluster1'); // This should make it visible if not already
+      await page.keyboard.press('Escape'); // Close any dialog
+
       await expect(page.getByRole('heading', { name: 'cluster1' }).first()).toBeVisible();
       await expect(page.getByRole('heading', { name: 'cluster2' }).first()).toBeVisible();
-      await expect(page.locator('text=Active').first()).toBeVisible();
+
+      const cluster1Status = await dashboardPage.getClusterStatus('cluster1');
+      expect(cluster1Status).toBeTruthy();
     });
 
     test('cluster items show capacity information', async ({ page }) => {
-      const capacityElements = page.locator(
-        'text=/\\d+\\s*(GB|MB|Ki|Mi|Gi)|\\d+\\s*cpu|\\d+\\s*pods/i'
-      );
-      const capacityCount = await capacityElements.count();
-      expect(capacityCount).toBeGreaterThan(0);
+      const cluster1Capacity = await dashboardPage.getClusterCapacity('cluster1');
+      const cluster2Capacity = await dashboardPage.getClusterCapacity('cluster2');
 
-      const hasCpuValue = (await page.locator('text=/16/').count()) > 0;
-      const hasMemoryValue = (await page.locator('text=/\\d+\\s*GB/').count()) > 0;
-      const hasPodValue = (await page.locator('text=/110/').count()) > 0;
+      const totalCapacityInfo = [...cluster1Capacity, ...cluster2Capacity];
+      expect(totalCapacityInfo.length).toBeGreaterThan(0);
+
+      const hasCpuValue = totalCapacityInfo.some(cap => cap.includes('16'));
+      const hasMemoryValue = totalCapacityInfo.some(cap => /\d+\s*GB/.test(cap));
+      const hasPodValue = totalCapacityInfo.some(cap => cap.includes('110'));
 
       expect(hasCpuValue || hasMemoryValue || hasPodValue).toBeTruthy();
     });
 
     test('cluster items are clickable and open detail dialog', async ({ page }) => {
-      const firstCluster = page.getByRole('heading', { name: 'cluster1' }).first();
-      await firstCluster.click();
+      await dashboardPage.clickCluster('cluster1');
 
       await expect(page.locator('[role="dialog"], .modal')).toBeVisible({ timeout: 2000 });
 
@@ -243,11 +251,14 @@ test.describe('Dashboard Page', () => {
 
   test.describe('Recent Activity Section', () => {
     test('recent activity section is visible', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible();
-      await expect(page.getByRole('button', { name: /Refresh/i })).toBeVisible();
+      await expect(dashboardPage.recentActivityHeading).toBeVisible();
+      await expect(dashboardPage.refreshButton).toBeVisible();
     });
 
     test('recent activity displays mock data', async ({ page }) => {
+      const activityCount = await dashboardPage.getActivityCount();
+      expect(activityCount).toBeGreaterThan(0);
+
       // Check for various user patterns that might exist in the activity data
       const adminVisible = (await page.locator('text=admin').count()) > 0;
       const user1Visible = (await page.locator('text=user1').count()) > 0;
@@ -261,12 +272,6 @@ test.describe('Dashboard Page', () => {
         'text=/Created|Active|Deleted|Updated|Synced|created|active|deleted|updated|synced/i'
       );
       const statusCount = await statusElements.count();
-
-      // Check for activity items structure
-      const activityItems = page.locator(
-        '[class*="h-16"][class*="items-center"], [class*="activity"], [class*="recent"]'
-      );
-      const activityCount = await activityItems.count();
 
       // Test passes if we have either user data OR activity structure OR status indicators
       const hasUserData = adminVisible || user1Visible || user2Visible || anyUserVisible;
@@ -312,8 +317,7 @@ test.describe('Dashboard Page', () => {
     });
 
     test('refresh button updates activity data', async ({ page }) => {
-      const refreshButton = page.getByRole('button', { name: /Refresh/i });
-      await refreshButton.click();
+      await dashboardPage.refreshActivity();
 
       await expect(page.locator('text=admin').first()).toBeVisible();
     });
@@ -333,12 +337,10 @@ test.describe('Dashboard Page', () => {
     });
 
     test('dashboard handles API errors gracefully', async ({ page }) => {
-      await page.evaluate(() => {
-        window.__msw?.worker?.resetHandlers();
-      });
+      await dashboardPage.mswHelper.resetHandlers();
 
       await page.reload();
-      await page.waitForLoadState('domcontentloaded');
+      await dashboardPage.waitForLoad();
 
       const hasErrorIcon =
         (await page

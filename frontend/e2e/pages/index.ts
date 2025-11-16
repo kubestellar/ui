@@ -2,6 +2,7 @@
 export { BasePage } from './base/BasePage';
 export { LoginPage } from './LoginPage';
 export { UserManagementPage } from './UserManagementPage';
+export { DashboardPage } from './DashboardPage';
 
 // Export utilities
 export { MSWHelper } from './utils/MSWHelper';
