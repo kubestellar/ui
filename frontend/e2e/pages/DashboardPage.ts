@@ -75,9 +75,21 @@ export class DashboardPage extends BasePage {
     this.progressBars = page.locator(
       'div[class*="h-4"][class*="w-full"][class*="rounded-full"][class*="bg-gray-100"]'
     );
-    this.cpuProgress = page.locator('div').filter({ hasText: /CPU|cpu/i }).locator('xpath=ancestor::div[contains(@class, "progress")]').first();
-    this.memoryProgress = page.locator('div').filter({ hasText: /Memory|memory/i }).locator('xpath=ancestor::div[contains(@class, "progress")]').first();
-    this.podProgress = page.locator('div').filter({ hasText: /Pod|pod/i }).locator('xpath=ancestor::div[contains(@class, "progress")]').first();
+    this.cpuProgress = page
+      .locator('div')
+      .filter({ hasText: /CPU|cpu/i })
+      .locator('xpath=ancestor::div[contains(@class, "progress")]')
+      .first();
+    this.memoryProgress = page
+      .locator('div')
+      .filter({ hasText: /Memory|memory/i })
+      .locator('xpath=ancestor::div[contains(@class, "progress")]')
+      .first();
+    this.podProgress = page
+      .locator('div')
+      .filter({ hasText: /Pod|pod/i })
+      .locator('xpath=ancestor::div[contains(@class, "progress")]')
+      .first();
     this.progressPercentages = page.locator('span:has-text("/ 100%")');
     this.tooltipTriggers = page.locator('svg[width="12"][height="12"]');
 
@@ -90,7 +102,9 @@ export class DashboardPage extends BasePage {
     this.managedClustersSection = page.locator('[class*="managed"], [class*="cluster"]').first();
     this.managedClustersHeading = page.getByRole('heading', { name: 'Managed Clusters' });
     this.clusterCountText = page.locator('text=/\\d+ total/').first();
-    this.clusterItems = page.locator('[class*="h-16"][class*="items-center"], [class*="cluster"], [class*="item"]');
+    this.clusterItems = page.locator(
+      '[class*="h-16"][class*="items-center"], [class*="cluster"], [class*="item"]'
+    );
 
     // Recent Activity Section
     this.recentActivitySection = page.locator('[class*="activity"], [class*="recent"]').first();
@@ -240,9 +254,9 @@ export class DashboardPage extends BasePage {
    */
   async getProgressBarValue(resourceType: string): Promise<string | null> {
     const resourceMap: Record<string, Locator> = {
-      'CPU': this.cpuProgress,
-      'Memory': this.memoryProgress,
-      'Pod': this.podProgress,
+      CPU: this.cpuProgress,
+      Memory: this.memoryProgress,
+      Pod: this.podProgress,
     };
 
     const resourceElement = resourceMap[resourceType];
@@ -287,7 +301,9 @@ export class DashboardPage extends BasePage {
    * Get cluster status
    */
   async getClusterStatus(clusterName: string): Promise<string | null> {
-    const clusterItem = this.page.locator(`[class*="cluster"], [class*="item"]`).filter({ hasText: clusterName });
+    const clusterItem = this.page
+      .locator(`[class*="cluster"], [class*="item"]`)
+      .filter({ hasText: clusterName });
     const statusElement = clusterItem.locator('text=/Active|Inactive|Pending|Error/i').first();
     return await statusElement.textContent();
   }
@@ -296,7 +312,9 @@ export class DashboardPage extends BasePage {
    * Get cluster capacity info
    */
   async getClusterCapacity(clusterName: string): Promise<string[]> {
-    const clusterItem = this.page.locator(`[class*="cluster"], [class*="item"]`).filter({ hasText: clusterName });
+    const clusterItem = this.page
+      .locator(`[class*="cluster"], [class*="item"]`)
+      .filter({ hasText: clusterName });
     const capacityElements = clusterItem.locator(
       'text=/\\d+\\s*(GB|MB|Ki|Mi|Gi)|\\d+\\s*cpu|\\d+\\s*pods/i'
     );
