@@ -188,10 +188,10 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
             className="text-center"
           >
             <div
-              className={`relative rounded-xl border-2 border-dashed p-8 transition-all duration-300 ${
+              className={`relative rounded-xl border-2 border-dashed p-6 sm:p-8 transition-all duration-300 ${
                 dragActive
-                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600'
+                  ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 shadow-lg shadow-blue-500/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -204,26 +204,28 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
                   scale: dragActive ? 1.1 : 1,
                   rotate: dragActive ? 5 : 0,
                 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
-                <HiCloudArrowUp
-                  className="h-16 w-16"
-                  style={{
-                    color: dragActive
-                      ? themeStyles.colors.brand.primary
-                      : themeStyles.colors.text.secondary,
-                  }}
-                />
+                <div className={`rounded-full p-2 sm:p-3 ${dragActive ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  <HiCloudArrowUp
+                    className="h-12 w-12 sm:h-14 sm:w-14"
+                    style={{
+                      color: dragActive
+                        ? themeStyles.colors.brand.primary
+                        : themeStyles.colors.text.secondary,
+                    }}
+                  />
+                </div>
               </motion.div>
 
               <h3
-                className="mb-2 text-lg font-medium"
+                className="mb-2 text-lg sm:text-xl font-bold"
                 style={{ color: themeStyles.colors.text.primary }}
               >
                 {t('marketplace.upload.dragDrop', 'Drag and drop your plugin here')}
               </h3>
 
-              <p className="mb-4 text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+              <p className="mb-4 text-sm sm:text-base px-2" style={{ color: themeStyles.colors.text.secondary }}>
                 {t(
                   'marketplace.upload.supportedFormat',
                   'or click to browse. Supported format: .tar.gz'
@@ -232,10 +234,11 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
 
               <motion.button
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-lg px-6 py-2 text-sm font-medium transition-transform hover:scale-105"
+                className="rounded-lg px-5 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base font-semibold shadow-md transition-all hover:shadow-lg"
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  background: themeStyles.colors.brand.primary,
+                  background: `linear-gradient(135deg, ${themeStyles.colors.brand.primary} 0%, #1d4ed8 100%)`,
                   color: '#ffffff',
                 }}
               >
@@ -252,28 +255,45 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
             </div>
 
             <div
-              className="mt-6 rounded-lg p-4"
+              className="mt-5 sm:mt-6 rounded-lg p-4 sm:p-5 shadow-sm"
               style={{
-                background: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.05) 100%)' 
+                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 197, 253, 0.05) 100%)',
+                border: `1px solid ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
               }}
             >
               <div className="flex items-start gap-3">
-                <HiInformationCircle
-                  className="mt-0.5 h-5 w-5 flex-shrink-0"
-                  style={{ color: themeStyles.colors.brand.primary }}
-                />
-                <div className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+                <div className="rounded-full p-1.5 sm:p-2" style={{ background: themeStyles.colors.brand.primary + '20' }}>
+                  <HiInformationCircle
+                    className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
+                    style={{ color: themeStyles.colors.brand.primary }}
+                  />
+                </div>
+                <div className="text-left flex-1">
                   <p
-                    className="mb-1 font-medium"
+                    className="mb-2 text-sm sm:text-base font-semibold"
                     style={{ color: themeStyles.colors.text.primary }}
                   >
                     {t('marketplace.upload.requirements', 'Upload Requirements:')}
                   </p>
-                  <ul className="list-inside list-disc space-y-1">
-                    <li>{t('marketplace.documentation.fileFormat')}</li>
-                    <li>{t('marketplace.documentation.maxFileSize')}</li>
-                    <li>{t('marketplace.documentation.mustContain')}</li>
-                    <li>{t('marketplace.documentation.validStructure')}</li>
+                  <ul className="space-y-1.5 text-xs sm:text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1 h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full flex-shrink-0" style={{ background: themeStyles.colors.brand.primary }}></span>
+                      <span>{t('marketplace.documentation.fileFormat')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1 h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full flex-shrink-0" style={{ background: themeStyles.colors.brand.primary }}></span>
+                      <span>{t('marketplace.documentation.maxFileSize')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1 h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full flex-shrink-0" style={{ background: themeStyles.colors.brand.primary }}></span>
+                      <span>{t('marketplace.documentation.mustContain')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1 h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full flex-shrink-0" style={{ background: themeStyles.colors.brand.primary }}></span>
+                      <span>{t('marketplace.documentation.validStructure')}</span>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -287,20 +307,28 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
+            className="space-y-5 sm:space-y-6"
           >
             <div className="text-center">
-              <HiDocumentArrowUp
-                className="mx-auto mb-4 h-16 w-16"
-                style={{ color: themeStyles.colors.brand.primary }}
-              />
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 200 }}
+              >
+                <div className="mx-auto mb-4 w-fit rounded-full p-2 sm:p-3" style={{ background: themeStyles.colors.brand.primary + '15' }}>
+                  <HiDocumentArrowUp
+                    className="h-12 w-12 sm:h-14 sm:w-14"
+                    style={{ color: themeStyles.colors.brand.primary }}
+                  />
+                </div>
+              </motion.div>
               <h3
-                className="mb-2 text-lg font-medium"
+                className="mb-2 text-lg sm:text-xl font-bold px-2"
                 style={{ color: themeStyles.colors.text.primary }}
               >
                 {t('marketplace.upload.reviewFile', 'Review Your Plugin')}
               </h3>
-              <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+              <p className="text-sm sm:text-base px-4" style={{ color: themeStyles.colors.text.secondary }}>
                 {t(
                   'marketplace.upload.confirmUpload',
                   'Please confirm the details below before uploading'
@@ -309,53 +337,61 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
             </div>
 
             <div
-              className="rounded-xl p-4"
+              className="rounded-xl p-4 sm:p-5 shadow-md transition-all hover:shadow-lg"
               style={{
-                background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(249, 250, 251, 0.8)',
-                border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.7)'}`,
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(31, 41, 55, 0.6) 0%, rgba(17, 24, 39, 0.4) 100%)' 
+                  : 'linear-gradient(135deg, rgba(249, 250, 251, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%)',
+                border: `2px solid ${isDark ? 'rgba(55, 65, 81, 0.4)' : 'rgba(226, 232, 240, 0.8)'}`,
               }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div
-                    className="rounded-lg p-2"
+                    className="rounded-lg p-2 sm:p-2.5 shadow-sm flex-shrink-0"
                     style={{ background: themeStyles.colors.brand.primary + '20' }}
                   >
                     <HiDocumentArrowUp
-                      className="h-5 w-5"
+                      className="h-5 w-5 sm:h-6 sm:w-6"
                       style={{ color: themeStyles.colors.brand.primary }}
                     />
                   </div>
-                  <div>
-                    <p className="font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm sm:text-base mb-0.5 truncate" style={{ color: themeStyles.colors.text.primary }}>
                       {selectedFile?.name}
                     </p>
-                    <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+                    <p className="text-xs sm:text-sm font-medium" style={{ color: themeStyles.colors.text.secondary }}>
                       {selectedFile && formatFileSize(selectedFile.size)}
                     </p>
                   </div>
                 </div>
-                <button
+                <motion.button
                   onClick={handleReset}
-                  className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="rounded-lg p-1.5 sm:p-2 transition-all flex-shrink-0"
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  style={{
+                    background: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+                  }}
                 >
                   <HiXMark
-                    className="h-4 w-4"
-                    style={{ color: themeStyles.colors.text.secondary }}
+                    className="h-4 w-4 sm:h-5 sm:w-5"
+                    style={{ color: isDark ? '#fca5a5' : '#dc2626' }}
                   />
-                </button>
+                </motion.button>
               </div>
             </div>
 
             <div className="flex gap-3">
               <motion.button
                 onClick={handleReset}
-                className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-transform hover:scale-105"
-                whileTap={{ scale: 0.95 }}
+                className="flex-1 rounded-lg px-4 py-2 sm:px-5 sm:py-2.5 text-sm sm:text-base font-semibold shadow-md transition-all hover:shadow-lg"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 style={{
-                  background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(249, 250, 251, 0.8)',
+                  background: isDark ? 'rgba(55, 65, 81, 0.6)' : 'rgba(249, 250, 251, 0.9)',
                   color: themeStyles.colors.text.primary,
-                  border: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.7)'}`,
+                  border: `2px solid ${isDark ? 'rgba(75, 85, 99, 0.5)' : 'rgba(209, 213, 219, 0.8)'}`,
                 }}
               >
                 {t('common.cancel', 'Cancel')}
@@ -363,10 +399,11 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
 
               <motion.button
                 onClick={handleUpload}
-                className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-transform hover:scale-105"
-                whileTap={{ scale: 0.95 }}
+                className="flex-1 rounded-lg px-4 py-2 sm:px-5 sm:py-2.5 text-sm sm:text-base font-semibold shadow-md transition-all hover:shadow-xl"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 style={{
-                  background: themeStyles.colors.brand.primary,
+                  background: `linear-gradient(135deg, ${themeStyles.colors.brand.primary} 0%, #1d4ed8 100%)`,
                   color: '#ffffff',
                 }}
               >
@@ -381,43 +418,47 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="py-8 text-center"
+            className="py-6 sm:py-8 text-center"
           >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              className="mb-4 flex justify-center"
+              className="mb-5 sm:mb-6 flex justify-center"
             >
-              <HiOutlineArrowPath
-                className="h-16 w-16"
-                style={{ color: themeStyles.colors.brand.primary }}
-              />
+              <div className="rounded-full p-2 sm:p-3" style={{ background: themeStyles.colors.brand.primary + '15' }}>
+                <HiOutlineArrowPath
+                  className="h-12 w-12 sm:h-14 sm:w-14"
+                  style={{ color: themeStyles.colors.brand.primary }}
+                />
+              </div>
             </motion.div>
 
             <h3
-              className="mb-2 text-lg font-medium"
+              className="mb-2 text-lg sm:text-xl font-bold px-2"
               style={{ color: themeStyles.colors.text.primary }}
             >
               {t('marketplace.upload.uploading', 'Uploading Plugin...')}
             </h3>
 
-            <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+            <p className="text-sm sm:text-base mb-5 sm:mb-6 px-4" style={{ color: themeStyles.colors.text.secondary }}>
               {t(
                 'marketplace.upload.processingFile',
                 'Processing your plugin file. This may take a moment.'
               )}
             </p>
 
-            <div className="mt-6">
+            <div className="mt-6 max-w-md mx-auto px-4">
               <div
-                className="h-2 w-full rounded-full"
+                className="h-2 sm:h-2.5 w-full rounded-full shadow-inner"
                 style={{
-                  background: isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.5)',
+                  background: isDark ? 'rgba(55, 65, 81, 0.4)' : 'rgba(226, 232, 240, 0.6)',
                 }}
               >
                 <motion.div
-                  className="h-2 rounded-full"
-                  style={{ background: themeStyles.colors.brand.primary }}
+                  className="h-2 sm:h-2.5 rounded-full shadow-lg"
+                  style={{ 
+                    background: `linear-gradient(90deg, ${themeStyles.colors.brand.primary} 0%, #60a5fa 100%)`,
+                  }}
                   initial={{ width: 0 }}
                   animate={{ width: '100%' }}
                   transition={{ duration: 3, ease: 'easeInOut' }}
@@ -432,25 +473,27 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="py-8 text-center"
+            className="py-6 sm:py-8 text-center"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
-              className="mb-4 flex justify-center"
+              className="mb-5 sm:mb-6 flex justify-center"
             >
-              <HiCheckCircle className="h-16 w-16 text-green-500" />
+              <div className="rounded-full p-2 sm:p-3 bg-green-100 dark:bg-green-900/30 shadow-lg shadow-green-500/20">
+                <HiCheckCircle className="h-14 w-14 sm:h-16 sm:w-16 text-green-500" />
+              </div>
             </motion.div>
 
             <h3
-              className="mb-2 text-lg font-medium"
+              className="mb-2 text-lg sm:text-xl font-bold px-2"
               style={{ color: themeStyles.colors.text.primary }}
             >
               {t('marketplace.upload.success', 'Plugin Uploaded Successfully!')}
             </h3>
 
-            <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+            <p className="text-sm sm:text-base max-w-md mx-auto px-4" style={{ color: themeStyles.colors.text.secondary }}>
               {t(
                 'marketplace.upload.successMessage',
                 'Your plugin has been uploaded and is now available in the marketplace.'
@@ -464,28 +507,33 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="py-8 text-center"
+            className="py-12 text-center"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
-              className="mb-4 flex justify-center"
+              className="mb-8 flex justify-center"
             >
-              <HiExclamationTriangle
-                className="h-16 w-16"
-                style={{ color: isDark ? '#fca5a5' : '#dc2626' }}
-              />
+              <div className="rounded-full p-4 shadow-lg" style={{ 
+                background: isDark ? 'rgba(252, 165, 165, 0.15)' : 'rgba(220, 38, 38, 0.1)',
+                boxShadow: isDark ? '0 0 40px rgba(252, 165, 165, 0.2)' : '0 0 40px rgba(220, 38, 38, 0.15)',
+              }}>
+                <HiExclamationTriangle
+                  className="h-24 w-24"
+                  style={{ color: isDark ? '#fca5a5' : '#dc2626' }}
+                />
+              </div>
             </motion.div>
 
             <h3
-              className="mb-2 text-lg font-medium"
+              className="mb-3 text-2xl font-bold"
               style={{ color: themeStyles.colors.text.primary }}
             >
               {t('marketplace.upload.error', 'Upload Failed')}
             </h3>
 
-            <p className="mb-6 text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+            <p className="mb-8 text-base max-w-md mx-auto" style={{ color: themeStyles.colors.text.secondary }}>
               {errorMessage ||
                 t(
                   'marketplace.upload.errorMessage',
@@ -495,10 +543,11 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
 
             <motion.button
               onClick={handleReset}
-              className="rounded-lg px-6 py-2 text-sm font-medium transition-transform hover:scale-105"
+              className="rounded-xl px-8 py-3 text-base font-semibold shadow-lg transition-all hover:shadow-xl"
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               style={{
-                background: themeStyles.colors.brand.primary,
+                background: `linear-gradient(135deg, ${themeStyles.colors.brand.primary} 0%, #1d4ed8 100%)`,
                 color: '#ffffff',
               }}
             >
@@ -548,7 +597,7 @@ export const PluginUploadModal: React.FC<PluginUploadModalProps> = ({ isOpen, on
             {uploadStep !== 'uploading' && (
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="rounded-lg p-2 bg-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <HiXMark className="h-5 w-5" style={{ color: themeStyles.colors.text.secondary }} />
               </button>
