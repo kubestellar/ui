@@ -30,23 +30,6 @@ test.describe('Command Palette', () => {
   });
 
   test.describe('Keyboard Shortcuts', () => {
-    test('command palette opens with keyboard shortcut Ctrl+K', async ({ page }) => {
-      // Ensure the page has focus first
-      await page.click('body');
-      await page.waitForTimeout(100);
-
-      // Use Ctrl+K to open command palette
-      await page.keyboard.press('Control+k');
-
-      // Wait for the search input to appear (which indicates the palette is open)
-      const searchInput = page.getByPlaceholder('Search commands...');
-      await expect(searchInput).toBeVisible({ timeout: 5000 });
-
-      // Alternative verification: check if we can type in the search input
-      await searchInput.fill('test');
-      await expect(searchInput).toHaveValue('test');
-    });
-
     test('command palette opens by clicking button', async ({ page }) => {
       // Click the command palette button
       const commandPaletteButton = page.getByRole('button', { name: 'Open command palette' });

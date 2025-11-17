@@ -382,16 +382,16 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 1. **Backend API**: [http://localhost:4000](http://localhost:4000) (or custom port if `BACKEND_PORT` is set)
 2. **Frontend UI**: [http://localhost:5173](http://localhost:5173) (or custom port if `FRONTEND_PORT` is set)
-3. **Grafana Dashboard**: [http://localhost:13000](http://localhost:13000) (when monitoring profile is enabled)
-4. **Prometheus Metrics**: [http://localhost:19090](http://localhost:19090) (when monitoring profile is enabled)
+3. **Grafana Dashboard**: [http://localhost:13000](http://localhost:13000)
+4. **Prometheus Metrics**: [http://localhost:19090](http://localhost:19090)
 
 #### Accessing Grafana Dashboard
 
 To access the Grafana monitoring dashboard:
 
-1. **Start services with monitoring profile**:
+1. **Start services**:
    ```bash
-   docker compose --profile monitoring up
+   docker compose up
    ```
 
 2. **Access Grafana**:

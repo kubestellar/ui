@@ -179,8 +179,6 @@ services:
       - '--web.enable-lifecycle'
       - '--web.listen-address=0.0.0.0:19090'
     restart: unless-stopped
-    profiles:
-      - monitoring
 
   # Grafana - for visualization
   grafana:
@@ -192,6 +190,7 @@ services:
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     environment:
+      - GF_DATASOURCES_DEFAULT_URL=http://localhost:19090
       - GF_SECURITY_ALLOW_EMBEDDING=true
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
@@ -200,8 +199,6 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
-    profiles:
-      - monitoring
 
   # Node Exporter for system metrics (optional)
   node-exporter:
@@ -217,36 +214,30 @@ services:
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
     restart: unless-stopped
-    profiles:
-      - monitoring
 
   # PostgreSQL Exporter for database metrics (optional)
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
+    network_mode: host
     environment:
       DATA_SOURCE_NAME: "postgresql://authuser:authpass123@localhost:5400/authdbui?sslmode=disable"
-    network_mode: host
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    profiles:
-      - monitoring
 
   # Redis Exporter for Redis metrics (optional)
   redis-exporter:
     image: oliver006/redis_exporter:latest
     container_name: redis-exporter
+    network_mode: host
     environment:
       REDIS_ADDR: "redis://localhost:6379"
-    network_mode: host
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    profiles:
-      - monitoring
 
 volumes:
   postgres_data: {}

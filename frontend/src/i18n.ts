@@ -8,6 +8,7 @@ import de from './locales/strings.de.json';
 import fr from './locales/strings.fr.json';
 import it from './locales/strings.it.json';
 import hi from './locales/strings.hi.json';
+import pt from './locales/strings.pt.json';
 import zh_Hans from './locales/strings.zh-Hans.json';
 import zh_Hant from './locales/strings.zh-Hant.json';
 
@@ -23,6 +24,7 @@ i18next
       fr: { translation: fr },
       it: { translation: it },
       hi: { translation: hi },
+      pt: { translation: pt },
       'zh-Hans': { translation: zh_Hans },
       'zh-Hant': { translation: zh_Hant },
     },
