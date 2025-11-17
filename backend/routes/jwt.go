@@ -598,10 +598,17 @@ func CreateUserHandler(c *gin.Context) {
 	// Create user
 	user, err := models.CreateUser(userData.Username, userData.Password, userData.IsAdmin)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to create user",
-			"details": err.Error(),
-		})
+		if strings.Contains(err.Error(), "already exists") {
+			c.JSON(http.StatusConflict, gin.H{
+				"error":   "User already exists",
+				"details": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to create user",
+				"details": err.Error(),
+			})
+		}
 		return
 	}
 
