@@ -140,6 +140,7 @@ const ObjectFilterPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
+  const [namespaceSelectOpen, setNamespaceSelectOpen] = useState(false);
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
@@ -896,18 +897,32 @@ const ObjectFilterPage: React.FC = () => {
                     value={selectedNamespaces}
                     label={t('resources.selectNamespace')}
                     onChange={handleNamespacesChange}
+                    open={namespaceSelectOpen}
+                    onClose={() => setNamespaceSelectOpen(false)}
+                    onOpen={() => setNamespaceSelectOpen(true)}
+                    onMouseDown={e => {
+                      // Prevent Select from toggling when clicking on chips
+                      const target = e.target as HTMLElement;
+                      if (target.closest('.MuiChip-root, .MuiChip-deleteIcon') !== null) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                      }
+                    }}
                     renderValue={selected => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(selected as string[]).map(ns => (
+                        {(selected as string[]).map((ns: string) => (
                           <Chip
                             key={ns}
                             label={ns}
-                            size="small"
                             sx={filterChipStyles}
                             onDelete={e => {
+                              e.preventDefault();
                               e.stopPropagation();
-                              setSelectedNamespaces(selectedNamespaces.filter(n => n !== ns));
+                              setSelectedNamespaces(prev => prev.filter(n => n !== ns));
                             }}
+                            onClick={e => e.stopPropagation()}
+                            onMouseDown={e => e.stopPropagation()}
                             deleteIcon={<CloseIcon />}
                           />
                         ))}
