@@ -71,7 +71,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
               );
 
               const res = await api.get(
-                `/api/plugins/${manifest.metadata.name}~${manifest.metadata.author}~${manifest.metadata.version}/frontend/dist/${navItem.icon}`
+                `/api/plugins/${manifest.metadata.name}~${manifest.metadata.author}~${manifest.metadata.version}/frontend/dist/${navItem.icon}?_=${Date.now()}`
               );
               const iconBlob = new Blob([res.data], { type: res.headers['content-type'] });
               const iconUrl = URL.createObjectURL(iconBlob);
@@ -182,7 +182,8 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
         // remove plugin routes
         setPluginRoutes(prev => {
           const pluginRoutePaths = plugin.manifest.spec.frontend.navigation.map(
-            item => `${item.path}-${pluginID}`
+            item =>
+              `${item.path}~${plugin.manifest.metadata.author}~${plugin.manifest.metadata.version}`
           );
 
           const newRoutes = prev.filter(item => !pluginRoutePaths.includes(item.path as string));
@@ -192,7 +193,8 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
         // remove plugin menu items
         setPluginMenuItems(prev => {
           const pluginRoutePaths = plugin.manifest.spec.frontend.navigation.map(
-            item => `${item.path}-${pluginID}`
+            item =>
+              `${item.path}~${plugin.manifest.metadata.author}~${plugin.manifest.metadata.version}`
           );
           const newMenuItems = prev.filter(item => !pluginRoutePaths.includes(item.url));
           return newMenuItems;

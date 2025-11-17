@@ -533,7 +533,11 @@ const UserManagement = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6 flex flex-col gap-2">
-        <h1 className="text-2xl font-bold" style={{ color: themeStyles.colors.text.primary }}>
+        <h1
+          className="text-2xl font-bold"
+          style={{ color: themeStyles.colors.text.primary }}
+          data-testid="user-management-title"
+        >
           {t('admin.users.title')}
         </h1>
         <p style={{ color: themeStyles.colors.text.secondary }}>{t('admin.users.description')}</p>
@@ -581,6 +585,7 @@ const UserManagement = () => {
               placeholder={t('admin.users.searchPlaceholder')}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
+              data-testid="user-search-input"
             />
             {searchTerm && (
               <motion.button
@@ -629,6 +634,7 @@ const UserManagement = () => {
             onHoverStart={() => setIsFilterHovered(true)}
             onHoverEnd={() => setIsFilterHovered(false)}
             onClick={toggleFilters}
+            data-testid="filter-toggle-button"
           >
             <FiFilter className="h-5 w-5" />
             <span>{t('admin.users.filters.title')}</span>
@@ -665,6 +671,7 @@ const UserManagement = () => {
             disabled={isRefreshing}
             onHoverStart={() => setIsRefreshHovered(true)}
             onHoverEnd={() => setIsRefreshHovered(false)}
+            data-testid="refresh-users-button"
           >
             <FiRefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{t('admin.users.refresh')}</span>
@@ -680,6 +687,7 @@ const UserManagement = () => {
               color: isDark ? '#60a5fa' : '#3b82f6',
             }}
             onClick={openAddModal}
+            data-testid="add-user-button"
           >
             <FiUserPlus className="h-5 w-5" />
             <span>{t('admin.users.addUser')}</span>
@@ -695,6 +703,7 @@ const UserManagement = () => {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
               className=""
+              data-testid="filter-panel"
             >
               <div
                 className="mb-4 rounded-lg p-4"
@@ -743,6 +752,7 @@ const UserManagement = () => {
                       onChange={v => handleFilterChange('role', v)}
                       placeholder={t('admin.users.filters.role')}
                       isDark={isDark}
+                      data-testid="role-filter"
                     />
                   </div>
 
@@ -764,6 +774,7 @@ const UserManagement = () => {
                       onChange={v => handleFilterChange('permission', v || null)}
                       placeholder={t('admin.users.filters.permission')}
                       isDark={isDark}
+                      data-testid="permission-filter"
                     />
                   </div>
 
@@ -782,6 +793,7 @@ const UserManagement = () => {
                       placeholder={t('admin.users.filters.permissionLevel')}
                       isDark={isDark}
                       disabled={!filters.permission}
+                      data-testid="permission-level-filter"
                     />
                   </div>
 
@@ -805,6 +817,7 @@ const UserManagement = () => {
                         placeholder={t('admin.users.filters.sortBy')}
                         isDark={isDark}
                         style={{ minWidth: '140px' }}
+                        data-testid="sort-by-filter"
                       />
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -823,6 +836,7 @@ const UserManagement = () => {
                             ? t('admin.users.filters.ascending')
                             : t('admin.users.filters.descending')
                         }
+                        data-testid="sort-direction-button"
                       >
                         {filters.sortDirection === 'asc' ? (
                           <FiArrowUp className="h-5 w-5" />

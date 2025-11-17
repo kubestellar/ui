@@ -19,16 +19,16 @@ const LanguageSwitcher = () => {
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
 
   const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'hi', name: 'हिन्दी' },
-    { code: 'ja', name: '日本語' },
-    { code: 'es', name: 'Español' },
-    { code: 'de', name: 'Deutsch' },
-    { code: 'fr', name: 'Français' },
-    { code: 'it', name: 'Italiano' },
-    { code: 'SC', name: '简体中文' }, // zh-Hans
-    { code: 'TC', name: '繁體中文' }, // zh-Hant
-    { code: 'pt', name: 'Português' },
+    { code: 'en', name: 'English', abbr: 'EN' },
+    { code: 'hi', name: 'हिन्दी', abbr: 'HI' },
+    { code: 'ja', name: '日本語', abbr: 'JA' },
+    { code: 'es', name: 'Español', abbr: 'ES' },
+    { code: 'de', name: 'Deutsch', abbr: 'DE' },
+    { code: 'fr', name: 'Français', abbr: 'FR' },
+    { code: 'it', name: 'Italiano', abbr: 'IT' },
+    { code: 'zh-Hans', name: '简体中文', abbr: 'SC' },
+    { code: 'zh-Hant', name: '繁體中文', abbr: 'TC' },
+    { code: 'pt', name: 'Português', abbr: 'PT' },
   ];
 
   const closeDropdown = () => {
@@ -43,6 +43,10 @@ const LanguageSwitcher = () => {
   };
 
   const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const getAbbr = (langCode?: string) => {
+    const lang = languages.find(item => item.code === langCode);
+    return lang?.abbr || lang?.code?.slice(0, 2).toUpperCase() || 'EN';
+  };
   const isLoginPage = window.location.pathname.includes('login');
 
   // Icon animation variants
@@ -219,7 +223,7 @@ const LanguageSwitcher = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
           >
-            {currentLang.code.toUpperCase()}
+            {getAbbr(currentLang.code)}
           </motion.div>
         </motion.div>
       )}
@@ -349,7 +353,7 @@ const LanguageSwitcher = () => {
                                       : 'text-gray-400'
                               }`}
                             >
-                              {lang.code.substring(0, 2)}
+                              {lang.abbr || lang.code.substring(0, 2).toUpperCase()}
                             </span>
                             <span>{lang.name}</span>
                           </div>

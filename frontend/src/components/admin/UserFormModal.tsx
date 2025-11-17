@@ -146,7 +146,10 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden p-4">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden p-4"
+        data-testid="modal-container"
+      >
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -169,6 +172,9 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
               ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)'
               : '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           }}
+          role="dialog"
+          aria-modal="true"
+          data-testid="user-form-modal"
         >
           {/* Header with gradient background - fixed at top */}
           <div
@@ -508,6 +514,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                           : undefined,
                         transition: { duration: 0.2 },
                       }}
+                      data-component={component.id}
                     >
                       <div className="flex items-center justify-between">
                         <p
@@ -537,6 +544,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                                 onChange={() => setPermissionChange(component.id, level.id)}
                                 className="h-4 w-4 cursor-pointer border-gray-300 text-blue-600 focus:ring-blue-500"
                                 disabled={isAdmin}
+                                data-permission-level={level.id}
                               />
                               <label
                                 htmlFor={`${component.id}-${level.id}`}

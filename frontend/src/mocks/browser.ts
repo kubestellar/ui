@@ -116,6 +116,54 @@ export const scenarios: Record<string, HttpHandler[]> = {
     h.updateClusterLabels,
     h.detachCluster,
   ],
+
+  // WDS specific success scenario
+  wdsSuccess: [
+    h.statusReady,
+    h.statusReadyRel,
+    h.me,
+    h.workloads,
+    h.workloadsRel,
+    h.workloadStatus,
+    h.workloadStatusRel,
+    h.wdsGetContextAbs,
+    h.wdsGetContextRel,
+  ],
+
+  // User Management specific scenario
+  userManagement: [
+    h.login,
+    h.me,
+    h.userActivities,
+    h.createUser,
+    h.updateUser,
+    h.updateUserPermissions,
+    h.getUserPermissions,
+    h.deleteUser,
+  ],
+
+  // Object Explorer specific scenario
+  objectExplorerSuccess: [
+    h.login,
+    h.me,
+    h.getResourceKinds,
+    h.getNamespaces,
+    h.getPods,
+    h.getDeployments,
+    h.getServices,
+    h.getClusterNamespaces,
+  ],
+
+  // Binding Policy specific scenario
+  bindingPolicy: [
+    h.login,
+    h.me,
+    h.clusters,
+    h.workloads,
+    h.workloadsRel,
+    h.bindingPolicies,
+    h.k8sInfo,
+  ],
 };
 
 export function applyScenarioByName(name: string) {
