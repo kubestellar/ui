@@ -33,8 +33,8 @@ func ValidateUsername(username string) error {
 
 // ValidatePassword checks password requirements
 func ValidatePassword(password string) error {
-	if len(password) < 6 {
-		return errors.New("password must be at least 6 characters long")
+	if len(password) < 5 {
+		return errors.New("password must be at least 5 characters long")
 	}
 
 	return nil

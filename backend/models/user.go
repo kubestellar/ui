@@ -45,6 +45,16 @@ func CheckPasswordHash(password, hash string) bool {
 
 // CreateUser creates a new user in the database
 func CreateUser(username, password string, isAdmin bool) (*User, error) {
+	// Check if user already exists
+	var existingID int
+	err := database.DB.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&existingID)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to check for existing user: %v", err)
+	}
+	if err == nil {
+		return nil, fmt.Errorf("user with username '%s' already exists", username)
+	}
+
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %v", err)
