@@ -4,10 +4,7 @@ import {
   Typography,
   Paper,
   FormControl,
-  InputLabel,
-  Select,
   MenuItem,
-  SelectChangeEvent,
   CircularProgress,
   Alert,
   Button,
@@ -35,7 +32,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Checkbox,
+  Select,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../stores/themeStore';
@@ -140,7 +137,6 @@ const ObjectFilterPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
-  const [namespaceSelectOpen, setNamespaceSelectOpen] = useState(false);
   const [selectedResourceForAction, setSelectedResourceForAction] = useState<Resource | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
@@ -446,12 +442,6 @@ const ObjectFilterPage: React.FC = () => {
   ) => {
     const filteredKinds = value.filter(kind => kind.kind.toLowerCase() !== 'binding');
     setSelectedKinds(filteredKinds);
-    setSelectedResources([]);
-  };
-
-  const handleNamespacesChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value as string[];
-    setSelectedNamespaces(value);
     setSelectedResources([]);
   };
 
@@ -864,98 +854,94 @@ const ObjectFilterPage: React.FC = () => {
               </Grid>
 
               <Grid item xs={12} sm={6} md={4}>
-                <FormControl
-                  fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: isDark ? darkTheme.element.input : lightTheme.element.input,
-                      color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-                      borderRadius: '12px',
-                      transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: `0 0 0 3px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'}`,
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
-                    },
+                <Autocomplete<string, true, false, false>
+                  multiple
+                  options={filteredNamespaces.map(ns => ns.name)}
+                  value={selectedNamespaces}
+                  onChange={(_event, value) => {
+                    setSelectedNamespaces(value);
+                    setSelectedResources([]);
                   }}
-                >
-                  <InputLabel id="namespace-label">{t('resources.selectNamespace')}</InputLabel>
-                  <Select
-                    labelId="namespace-label"
-                    multiple
-                    value={selectedNamespaces}
-                    label={t('resources.selectNamespace')}
-                    onChange={handleNamespacesChange}
-                    open={namespaceSelectOpen}
-                    onClose={() => setNamespaceSelectOpen(false)}
-                    onOpen={() => setNamespaceSelectOpen(true)}
-                    onMouseDown={e => {
-                      // Prevent Select from toggling when clicking on chips
-                      const target = e.target as HTMLElement;
-                      if (target.closest('.MuiChip-root, .MuiChip-deleteIcon') !== null) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
-                      }
-                    }}
-                    renderValue={selected => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(selected as string[]).map((ns: string) => (
-                          <Chip
-                            key={ns}
-                            label={ns}
-                            sx={filterChipStyles}
-                            onDelete={e => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setSelectedNamespaces(prev => prev.filter(n => n !== ns));
-                            }}
-                            onClick={e => e.stopPropagation()}
-                            onMouseDown={e => e.stopPropagation()}
-                            deleteIcon={<CloseIcon />}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                    MenuProps={{
-                      PaperProps: {
-                        component: Paper,
-                        elevation: 8,
-                        sx: {
-                          backgroundColor: isDark ? '#1f2937' : '#fff',
+                  renderTags={(value: string[], getTagProps) =>
+                    value.map((ns: string, index: number) => (
+                      <Chip
+                        label={ns}
+                        {...getTagProps({ index })}
+                        sx={filterChipStyles}
+                        deleteIcon={<CloseIcon />}
+                      />
+                    ))
+                  }
+                  PaperComponent={props => (
+                    <Paper
+                      elevation={8}
+                      {...props}
+                      sx={{
+                        backgroundColor: isDark ? '#1f2937' : '#fff',
+                        color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
+                        boxShadow: isDark
+                          ? '0px 8px 25px rgba(0, 0, 0, 0.4)'
+                          : '0px 8px 25px rgba(0, 0, 0, 0.15)',
+                        maxHeight: 300,
+                        borderRadius: '12px',
+                        border: isDark
+                          ? '1px solid rgba(255, 255, 255, 0.1)'
+                          : '1px solid rgba(0, 0, 0, 0.05)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option, { selected }) => (
+                    <li
+                      {...props}
+                      key={option}
+                      style={{
+                        ...props.style,
+                        backgroundColor: selected
+                          ? isDark
+                            ? 'rgba(59, 130, 246, 0.2)'
+                            : 'rgba(59, 130, 246, 0.1)'
+                          : undefined,
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        margin: '4px 8px',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {option}
+                      </Typography>
+                    </li>
+                  )}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      label={t('resources.selectNamespace')}
+                      placeholder={t('resources.searchPlaceholder')}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: isDark
+                            ? darkTheme.element.input
+                            : lightTheme.element.input,
                           color: isDark ? darkTheme.text.primary : lightTheme.text.primary,
-                          boxShadow: isDark
-                            ? '0px 8px 25px rgba(0, 0, 0, 0.4)'
-                            : '0px 8px 25px rgba(0, 0, 0, 0.15)',
-                          maxHeight: 300,
                           borderRadius: '12px',
-                          border: isDark
-                            ? '1px solid rgba(255, 255, 255, 0.1)'
-                            : '1px solid rgba(0, 0, 0, 0.05)',
-                          backdropFilter: 'blur(10px)',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            boxShadow: isDark ? darkTheme.shadow.md : lightTheme.shadow.md,
+                          },
+                          '&.Mui-focused': {
+                            boxShadow: `0 0 0 3px ${isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'}`,
+                          },
                         },
-                      },
-                    }}
-                  >
-                    {filteredNamespaces.map((ns: { name: string }) => (
-                      <MenuItem key={ns.name} value={ns.name}>
-                        <Checkbox checked={selectedNamespaces.indexOf(ns.name) > -1} />
-                        <ListItemText primary={ns.name} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                        '& .MuiInputLabel-root': {
+                          color: isDark ? darkTheme.text.secondary : lightTheme.text.secondary,
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                        },
+                      }}
+                    />
+                  )}
+                />
               </Grid>
 
               <Grid item xs={12} md={4}>
