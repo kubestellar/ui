@@ -933,9 +933,19 @@ spec:
               label={t('workloads.tabs.github')}
               value="option3"
               icon={
-                <Suspense fallback={<span />}>
-                  <GitHubIcon />
-                </Suspense>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    width: '24px',
+                    height: '24px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Suspense fallback={<span />}>
+                    <GitHubIcon />
+                  </Suspense>
+                </span>
               }
               iconPosition="start"
             />
