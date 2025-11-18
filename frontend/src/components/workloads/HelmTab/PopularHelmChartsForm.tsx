@@ -135,10 +135,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
               slotProps={{
                 popper: {
                   sx: {
-                    zIndex: 20000,
-                    '& .MuiAutocomplete-paper': {
-                      zIndex: 20000,
-                    },
+                    zIndex: 1500,
                   },
                 },
                 popupIndicator: {
@@ -155,11 +152,14 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                   sx: {
                     backgroundColor: theme === 'dark' ? '#1e1e1e' : '#fff',
                     color: theme === 'dark' ? '#d4d4d4' : '#333',
-                    zIndex: 20000,
-                    boxShadow: theme === 'dark' 
-                      ? '0px 8px 24px rgba(0, 0, 0, 0.5), 0px 0px 1px rgba(255, 255, 255, 0.1)'
-                      : '0px 8px 24px rgba(0, 0, 0, 0.15), 0px 0px 1px rgba(0, 0, 0, 0.1)',
-                    border: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+                    boxShadow:
+                      theme === 'dark'
+                        ? '0px 8px 24px rgba(0, 0, 0, 0.5), 0px 0px 1px rgba(255, 255, 255, 0.1)'
+                        : '0px 8px 24px rgba(0, 0, 0, 0.15), 0px 0px 1px rgba(0, 0, 0, 0.1)',
+                    border:
+                      theme === 'dark'
+                        ? '1px solid rgba(255, 255, 255, 0.1)'
+                        : '1px solid rgba(0, 0, 0, 0.1)',
                     '& .MuiAutocomplete-option': {
                       '&:hover': {
                         backgroundColor: theme === 'dark' ? '#333' : 'rgba(25, 118, 210, 0.08)',
