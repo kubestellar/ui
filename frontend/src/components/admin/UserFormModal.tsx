@@ -64,8 +64,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
       permissionComponents.forEach(component => {
         setPermissionChange(component.id, 'write');
       });
+    } else {
+      // Reset permissions to their unselected state
+      permissionComponents.forEach(component => {
+        setPermissionChange(component.id, null);
+      });
     }
-  }, [isAdmin]);
+  }, [isAdmin, permissionComponents, setPermissionChange]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -208,22 +213,6 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
 
           <div className="custom-scrollbar flex-1 overflow-y-auto px-6 py-5">
-            {formError && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-5 flex items-center gap-2.5 rounded-lg border px-4 py-3 text-sm"
-                style={{
-                  color: isDark ? '#f87171' : '#ef4444',
-                  borderColor: isDark ? 'rgba(248, 113, 113, 0.2)' : 'rgba(239, 68, 68, 0.1)',
-                  background: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(254, 226, 226, 0.5)',
-                }}
-              >
-                <FiAlertCircle size={18} />
-                <span>{formError}</span>
-              </motion.div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Username field */}
               <div>

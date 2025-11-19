@@ -50,8 +50,13 @@ api.interceptors.response.use(
     }
 
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const responseData = error.response?.data as {
+      details?: string;
+      message?: string;
+      error?: string;
+    };
     const errorMessage =
-      error.response?.data?.message || error.response?.data?.error || error.message;
+      responseData?.details || responseData?.message || responseData?.error || error.message;
     const isAuthCheck = error.config?.url?.includes('/api/me');
 
     const isLoginEndpoint = error.config?.url?.includes('/login');
