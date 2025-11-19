@@ -19,8 +19,8 @@ import {
   ViewQuilt,
   Fullscreen,
   FullscreenExit,
-  ChevronLeft,
-  ChevronRight,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { useReactFlow } from 'reactflow';
 import { useTranslation } from 'react-i18next';
@@ -33,11 +33,15 @@ const pulseGlow = keyframes`
   50% { transform: scale3d(1, 1, 1); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
 `;
 
-const bounceIn = keyframes`
-  0% { transform: scale3d(0.3, 0.3, 1); opacity: 0; }
-  50% { transform: scale3d(1.05, 1.05, 1); }
-  70% { transform: scale3d(0.9, 0.9, 1); }
-  100% { transform: scale3d(1, 1, 1); opacity: 1; }
+const slideDown = keyframes`
+  from { 
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
 `;
 
 const wiggle = keyframes`
@@ -191,7 +195,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
           minWidth: '40px',
           height: '40px',
           borderRadius: '12px',
-          margin: '0 2px',
+          margin: '2px 0',
           background: isActive
             ? theme === 'dark'
               ? 'linear-gradient(135deg, #3b82f6, #6366f1)'
@@ -219,7 +223,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             hoveredButton === buttonId ? 'translateY(-2px) scale(1.05)' : 'translateY(0) scale(1)',
           animation: isActive ? `${pulseGlow} 2s infinite` : 'none',
           backdropFilter: 'blur(10px)',
-          willChange: hoveredButton === buttonId || isActive ? 'transform' : 'auto', // Optimize for animations
+          willChange: hoveredButton === buttonId || isActive ? 'transform' : 'auto',
           '&:hover': {
             background: isActive
               ? 'linear-gradient(135deg, #2563eb, #4f46e5)'
@@ -252,8 +256,9 @@ export const ZoomControls = memo<ZoomControlsProps>(
         sx={{
           position: 'absolute',
           top: 20,
-          left: 20,
+          right: 20,
           display: 'flex',
+          flexDirection: 'column',
           gap: 1,
           background:
             theme === 'dark'
@@ -271,15 +276,36 @@ export const ZoomControls = memo<ZoomControlsProps>(
             theme === 'dark'
               ? '1px solid rgba(148, 163, 184, 0.1)'
               : '1px solid rgba(148, 163, 184, 0.2)',
-          animation: `${bounceIn} 0.6s ease-out`,
+          animation: `${slideDown} 0.6s ease-out`,
         }}
       >
+        {/* Button to show or hide the control panel */}
+        <Tooltip
+          title={
+            showControls
+              ? t(`${translationPrefix}.hideControls.hide`)
+              : t(`${translationPrefix}.hideControls.show`)
+          }
+          placement="left"
+          arrow
+        >
+          <Button
+            variant="text"
+            onClick={toggleControls}
+            sx={getButtonStyles('toggleControls', !showControls)}
+            onMouseEnter={handleMouseEnter('toggleControls')}
+            onMouseLeave={handleMouseLeave}
+          >
+            {showControls ? <ExpandLess fontSize="medium" /> : <ExpandMore fontSize="medium" />}
+          </Button>
+        </Tooltip>
+
         {/* Group/Collapse Controls */}
         {showControls && (
           <>
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.groupByResource`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
@@ -295,7 +321,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
 
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.expandAll`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
@@ -311,7 +337,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
 
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.collapseAll`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
@@ -328,17 +354,17 @@ export const ZoomControls = memo<ZoomControlsProps>(
             {/* Separator */}
             <Box
               sx={{
-                width: '1px',
-                height: '32px',
+                width: '32px',
+                height: '1px',
                 background:
                   theme === 'dark'
-                    ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                    : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-                margin: '0 8px',
+                    ? 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                    : 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                margin: '8px 0',
               }}
             />
             {/* Zoom Controls */}
-            <Tooltip title={t(`${translationPrefix}.zoomControls.zoomIn`)} placement="bottom" arrow>
+            <Tooltip title={t(`${translationPrefix}.zoomControls.zoomIn`)} placement="left" arrow>
               <Button
                 variant="text"
                 onClick={handleZoomIn}
@@ -349,11 +375,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 <ZoomIn />
               </Button>
             </Tooltip>
-            <Tooltip
-              title={t(`${translationPrefix}.zoomControls.zoomOut`)}
-              placement="bottom"
-              arrow
-            >
+            <Tooltip title={t(`${translationPrefix}.zoomControls.zoomOut`)} placement="left" arrow>
               <Button
                 variant="text"
                 onClick={handleZoomOut}
@@ -366,7 +388,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             </Tooltip>
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.resetZoom`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
@@ -466,19 +488,19 @@ export const ZoomControls = memo<ZoomControlsProps>(
             {/* Separator */}
             <Box
               sx={{
-                width: '1px',
-                height: '32px',
+                width: '32px',
+                height: '1px',
                 background:
                   theme === 'dark'
-                    ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                    : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-                margin: '0 8px',
+                    ? 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                    : 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                margin: '8px 0',
               }}
             />
             {/* Edge Type Controls */}
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.edgeStyle`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <ToggleButtonGroup
@@ -486,6 +508,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 exclusive
                 onChange={handleEdgeTypeChange}
                 size="small"
+                orientation="vertical"
                 aria-label="Edge Type"
                 sx={{
                   borderRadius: '10px',
@@ -511,10 +534,10 @@ export const ZoomControls = memo<ZoomControlsProps>(
                       transform: 'scale(1.02)',
                     },
                     '&:first-of-type': {
-                      borderRadius: '10px 0 0 10px',
+                      borderRadius: '10px 10px 0 0',
                     },
                     '&:last-of-type': {
-                      borderRadius: '0 10px 10px 0',
+                      borderRadius: '0 0 10px 10px',
                     },
                   },
                 }}
@@ -551,13 +574,13 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 {/* Separator */}
                 <Box
                   sx={{
-                    width: '1px',
-                    height: '32px',
+                    width: '32px',
+                    height: '1px',
                     background:
                       theme === 'dark'
-                        ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                        : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-                    margin: '0 8px',
+                        ? 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                        : 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                    margin: '8px 0',
                   }}
                 />
                 <Tooltip
@@ -566,7 +589,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
                       ? t(`${translationPrefix}.zoomControls.exitFullscreen`)
                       : t(`${translationPrefix}.zoomControls.fullscreen`)
                   }
-                  placement="bottom"
+                  placement="left"
                   arrow
                 >
                   <Button
@@ -583,27 +606,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
             )}
           </>
         )}
-        {/* Button to show or hide the control panel */}
-
-        <Tooltip
-          title={
-            showControls
-              ? t(`${translationPrefix}.hideControls.hide`)
-              : t(`${translationPrefix}.hideControls.show`)
-          }
-          placement="bottom"
-          arrow
-        >
-          <Button
-            variant="text"
-            onClick={toggleControls}
-            sx={getButtonStyles('toggleControls', !showControls)}
-            onMouseEnter={handleMouseEnter('toggleControls')}
-            onMouseLeave={handleMouseLeave}
-          >
-            {showControls ? <ChevronLeft fontSize="medium" /> : <ChevronRight fontSize="medium" />}
-          </Button>
-        </Tooltip>
       </Box>
     );
   }
