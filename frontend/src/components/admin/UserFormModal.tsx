@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiX,
@@ -34,6 +34,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   submitLabel,
   showPasswordFields = true,
   passwordOptional = false,
+  existingUsernames = [],
   isDark,
   themeStyles,
 }) => {
@@ -42,21 +43,51 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  const validateUsername = (value: string) => {
-    if (!value.trim()) {
-      return null; // Don't show error for empty field until form submission
-    }
-    if (!/^[a-zA-Z0-9_-]+$/.test(value.trim())) {
-      return 'Username can only contain letters, numbers, underscore, and hyphen';
-    }
-    return null;
-  };
+  const validateUsername = useCallback(
+    (value: string) => {
+      if (!value.trim()) {
+        return null;
+      }
+      if (!/^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+        return 'Username can only contain letters, numbers, underscore, and hyphen';
+      }
+      if (existingUsernames.includes(value.trim())) {
+        return 'Username is already taken';
+      }
+      return null;
+    },
+    [existingUsernames]
+  );
+
+  const validatePassword = useCallback(
+    (value: string) => {
+      if (passwordOptional && !value) {
+        return null;
+      }
+      if (!value) {
+        return null;
+      }
+      if (value.length < 5) {
+        return 'Password must be at least 5 characters long';
+      }
+      return null;
+    },
+    [passwordOptional]
+  );
 
   useEffect(() => {
     const error = validateUsername(username);
     setUsernameError(error);
-  }, [username]);
+  }, [username, validateUsername]);
+
+  useEffect(() => {
+    if (showPasswordFields) {
+      const error = validatePassword(password);
+      setPasswordError(error);
+    }
+  }, [password, showPasswordFields, validatePassword]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -70,7 +101,6 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
         setPermissionChange(component.id, null);
       });
     }
-    // Note: permissionComponents is memoized with useMemo in parent, setPermissionChange is useCallback - both are stable
   }, [isAdmin, permissionComponents, setPermissionChange]);
 
   useEffect(() => {
@@ -101,10 +131,18 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     if (!username.trim()) {
       return { isValid: false, error: 'Username is required' };
     }
+    // Check format first
     if (!/^[a-zA-Z0-9_-]+$/.test(username.trim())) {
       return {
         isValid: false,
         error: 'Username can only contain letters, numbers, underscore, and hyphen',
+      };
+    }
+    // Check for duplicate username
+    if (existingUsernames.includes(username.trim())) {
+      return {
+        isValid: false,
+        error: 'Username is already taken',
       };
     }
     if (showPasswordFields) {
@@ -278,7 +316,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                     className="mt-1 flex items-center gap-1 text-xs text-red-500"
                   >
                     <FiAlertCircle size={12} />
-                    {t('admin.users.errors.invalidUsername')}
+                    {usernameError}
                   </motion.p>
                 )}
                 {username && !usernameError && (
@@ -316,12 +354,22 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         id="password"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                        className={`w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                          passwordError
+                            ? 'border-red-500 focus:ring-red-500'
+                            : password && !passwordError && password.length >= 5
+                              ? 'border-green-500 focus:ring-green-500'
+                              : 'focus:ring-blue-500'
+                        }`}
                         style={{
                           background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(255, 255, 255, 0.8)',
-                          borderColor: isDark
-                            ? 'rgba(75, 85, 99, 0.3)'
-                            : 'rgba(226, 232, 240, 0.8)',
+                          borderColor: passwordError
+                            ? '#ef4444'
+                            : password && !passwordError && password.length >= 5
+                              ? '#10b981'
+                              : isDark
+                                ? 'rgba(75, 85, 99, 0.3)'
+                                : 'rgba(226, 232, 240, 0.8)',
                           color: themeStyles.colors.text.primary,
                           boxShadow: isDark ? 'none' : 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
                         }}
@@ -348,6 +396,26 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         )}
                       </button>
                     </div>
+                    {password && passwordError && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-1 flex items-center gap-1 text-xs text-red-500"
+                      >
+                        <FiAlertCircle size={12} />
+                        {passwordError}
+                      </motion.p>
+                    )}
+                    {password && !passwordError && password.length >= 5 && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-1 flex items-center gap-1 text-xs text-green-500"
+                      >
+                        <FiCheck size={12} />
+                        Password length is valid
+                      </motion.p>
+                    )}
                   </div>
 
                   {/* Confirm Password field */}
@@ -394,7 +462,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         )}
                       </button>
                     </div>
-                    {password && confirmPassword && password !== confirmPassword && (
+                    {password && confirmPassword && password !== confirmPassword && !passwordError && (
                       <motion.p
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -404,7 +472,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         {t('admin.users.errors.passwordMismatch')}
                       </motion.p>
                     )}
-                    {password && confirmPassword && password === confirmPassword && (
+                    {password && confirmPassword && !passwordError && password === confirmPassword && (
                       <motion.p
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}

@@ -505,7 +505,6 @@ const UserManagement = () => {
 
   const handlePermissionChange = useCallback((component: string, permission: PermissionValue) => {
     setUserPermissions(prev => {
-      // Early return if permission hasn't changed (optimization)
       if (prev[component] === permission) {
         return prev;
       }
@@ -1076,6 +1075,7 @@ const UserManagement = () => {
         permissionComponents={permissionComponents}
         permissionLevels={permissionLevels}
         submitLabel={t('admin.users.actions.add')}
+        existingUsernames={users.map(u => u.username)}
         isDark={isDark}
         themeStyles={themeStyles}
       />
@@ -1102,6 +1102,7 @@ const UserManagement = () => {
         submitLabel={t('admin.users.actions.update')}
         showPasswordFields={true}
         passwordOptional={passwordOptional}
+        existingUsernames={users.map(u => u.username).filter(u => u !== currentUser?.username)}
         isDark={isDark}
         themeStyles={themeStyles}
       />

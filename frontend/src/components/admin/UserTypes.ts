@@ -69,6 +69,7 @@ export interface UserFormModalProps {
   submitLabel: string;
   showPasswordFields?: boolean;
   passwordOptional?: boolean;
+  existingUsernames?: string[]; // For checking username availability (only needed for add mode)
   isDark: boolean;
   themeStyles: ThemeStyles;
 }
