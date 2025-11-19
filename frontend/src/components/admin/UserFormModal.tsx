@@ -462,26 +462,32 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         )}
                       </button>
                     </div>
-                    {password && confirmPassword && password !== confirmPassword && !passwordError && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-1 flex items-center gap-1 text-xs text-red-500"
-                      >
-                        <FiAlertCircle size={12} />
-                        {t('admin.users.errors.passwordMismatch')}
-                      </motion.p>
-                    )}
-                    {password && confirmPassword && !passwordError && password === confirmPassword && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-1 flex items-center gap-1 text-xs text-green-500"
-                      >
-                        <FiCheck size={12} />
-                        Passwords match
-                      </motion.p>
-                    )}
+                    {password &&
+                      confirmPassword &&
+                      password !== confirmPassword &&
+                      !passwordError && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 flex items-center gap-1 text-xs text-red-500"
+                        >
+                          <FiAlertCircle size={12} />
+                          {t('admin.users.errors.passwordMismatch')}
+                        </motion.p>
+                      )}
+                    {password &&
+                      confirmPassword &&
+                      !passwordError &&
+                      password === confirmPassword && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-1 flex items-center gap-1 text-xs text-green-500"
+                        >
+                          <FiCheck size={12} />
+                          Passwords match
+                        </motion.p>
+                      )}
                   </div>
                 </>
               )}
