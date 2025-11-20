@@ -299,10 +299,11 @@ export const ZoomControls = memo<ZoomControlsProps>(
           backdropFilter: 'blur(10px)',
           willChange: hoveredButton === buttonId || isActive ? 'transform' : 'auto', // Optimize for animations
           '&:focus': {
-            outline: 'none',
+            outline: 'none', // Remove outline for mouse clicks
           },
           '&:focus-visible': {
-            outline: 'none',
+            outline: '2px solid #2563eb', // Show outline for keyboard navigation
+            outlineOffset: '2px',
           },
           '&:hover': {
             background: isActive
@@ -388,10 +389,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             >
               <Button
                 variant="text"
-                onClick={e => {
-                  onToggleCollapse();
-                  e.currentTarget.blur();
-                }}
+                onClick={onToggleCollapse}
                 sx={getButtonStyles('collapse', isCollapsed)}
                 onMouseEnter={handleMouseEnter('collapse')}
                 onMouseLeave={handleMouseLeave}
@@ -407,10 +405,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             >
               <Button
                 variant="text"
-                onClick={e => {
-                  onExpandAll();
-                  e.currentTarget.blur();
-                }}
+                onClick={onExpandAll}
                 sx={getButtonStyles('expand')}
                 onMouseEnter={handleMouseEnter('expand')}
                 onMouseLeave={handleMouseLeave}
@@ -426,10 +421,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             >
               <Button
                 variant="text"
-                onClick={e => {
-                  onCollapseAll();
-                  e.currentTarget.blur();
-                }}
+                onClick={onCollapseAll}
                 sx={getButtonStyles('collapseAll')}
                 onMouseEnter={handleMouseEnter('collapseAll')}
                 onMouseLeave={handleMouseLeave}
@@ -454,10 +446,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             <Tooltip title={t(`${translationPrefix}.zoomControls.zoomIn`)} placement="left" arrow>
               <Button
                 variant="text"
-                onClick={e => {
-                  handleZoomIn();
-                  e.currentTarget.blur();
-                }}
+                onClick={handleZoomIn}
                 sx={getButtonStyles('zoomIn')}
                 onMouseEnter={handleMouseEnter('zoomIn')}
                 onMouseLeave={handleMouseLeave}
@@ -468,10 +457,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             <Tooltip title={t(`${translationPrefix}.zoomControls.zoomOut`)} placement="left" arrow>
               <Button
                 variant="text"
-                onClick={e => {
-                  handleZoomOut();
-                  e.currentTarget.blur();
-                }}
+                onClick={handleZoomOut}
                 sx={getButtonStyles('zoomOut')}
                 onMouseEnter={handleMouseEnter('zoomOut')}
                 onMouseLeave={handleMouseLeave}
@@ -486,10 +472,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             >
               <Button
                 variant="text"
-                onClick={e => {
-                  handleResetZoom();
-                  e.currentTarget.blur();
-                }}
+                onClick={handleResetZoom}
                 sx={getButtonStyles('reset')}
                 onMouseEnter={handleMouseEnter('reset')}
                 onMouseLeave={handleMouseLeave}
@@ -701,10 +684,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 >
                   <Button
                     variant="text"
-                    onClick={e => {
-                      onToggleFullscreen?.();
-                      e.currentTarget.blur();
-                    }}
+                    onClick={onToggleFullscreen}
                     sx={getButtonStyles('fullscreen', isFullscreen)}
                     onMouseEnter={handleMouseEnter('fullscreen')}
                     onMouseLeave={handleMouseLeave}
@@ -733,19 +713,17 @@ export const ZoomControls = memo<ZoomControlsProps>(
         >
           <Button
             variant="text"
-            onClick={e => {
-              toggleControls();
-              // Remove focus after click to prevent blue outline from persisting
-              e.currentTarget.blur();
-            }}
+            onClick={toggleControls}
             sx={{
               ...getButtonStyles('toggleControls', !showControls),
               pointerEvents: 'auto',
+              // Only remove outline for mouse users, keep visible outline for keyboard users
               '&:focus': {
                 outline: 'none',
               },
               '&:focus-visible': {
-                outline: 'none',
+                outline: '2px solid #2563eb',
+                outlineOffset: '2px',
               },
             }}
             onMouseEnter={handleMouseEnter('toggleControls')}
