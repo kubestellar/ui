@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useCallback, useMemo } from 'react';
+import { memo, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Box,
   Button,
@@ -19,8 +19,8 @@ import {
   ViewQuilt,
   Fullscreen,
   FullscreenExit,
-  ChevronLeft,
-  ChevronRight,
+  ExpandLess,
+  ExpandMore,
 } from '@mui/icons-material';
 import { useReactFlow } from 'reactflow';
 import { useTranslation } from 'react-i18next';
@@ -74,9 +74,87 @@ export const ZoomControls = memo<ZoomControlsProps>(
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
     const [showControls, setShowControls] = useState<boolean>(true);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const storageKey = useMemo(
+      () => `zoomControlsVisibility-${translationPrefix}`,
+      [translationPrefix]
+    );
+    // Use viewport height to calculate a proportional scale factor
+    // Base scale: 1.0 at 800px viewport height
+    // Scales proportionally: smaller screens = smaller scale, larger screens = larger scale
+    const [viewportHeight, setViewportHeight] = useState<number>(800);
+
+    useEffect(() => {
+      const updateViewportHeight = () => {
+        setViewportHeight(window.innerHeight);
+      };
+
+      updateViewportHeight();
+      window.addEventListener('resize', updateViewportHeight);
+
+      return () => window.removeEventListener('resize', updateViewportHeight);
+    }, []);
+
+    // Calculate proportional scale factor based on viewport height
+    // Minimum scale: 0.75 (for very small screens ~400px)
+    // Maximum scale: 1.4 (for very tall screens ~1600px+)
+    // Base: 1.0 at 800px viewport height
+    const scaleFactor = useMemo(() => {
+      const baseHeight = 800;
+      const minScale = 0.75;
+      const maxScale = 1.4;
+      const calculatedScale = Math.max(minScale, Math.min(maxScale, viewportHeight / baseHeight));
+      return calculatedScale;
+    }, [viewportHeight]);
+
+    // Calculate sizes based on scale factor to maintain proportions
+    const controlSizes = useMemo(
+      () => ({
+        // Button sizes scale proportionally (base: 32px at 800px viewport)
+        buttonSize: Math.round(32 * scaleFactor),
+        // Gaps scale proportionally (base: 0.7 at 800px viewport)
+        panelGap: Math.max(0.3, Math.min(1.2, 0.7 * scaleFactor)),
+        // Padding scales proportionally using calc
+        panelPadding: `${Math.round(6 * scaleFactor)}px ${Math.round(6 * scaleFactor)}px ${Math.round(6 * scaleFactor)}px`,
+        // Separator width scales proportionally (base: 26px)
+        separatorWidth: `${Math.round(26 * scaleFactor)}px`,
+        // Typography padding scales proportionally
+        typographyPadding: `${Math.round(5 * scaleFactor)}px ${Math.round(8 * scaleFactor)}px`,
+        // Font size uses clamp for smooth scaling
+        typographyFontSize: `clamp(9px, ${10 * scaleFactor}px, 14px)`,
+        // Toggle height scales proportionally (base: 30px)
+        toggleHeight: Math.round(30 * scaleFactor),
+        // Icon font size scales with button size
+        iconFontSize: (scaleFactor < 0.85 ? 'small' : scaleFactor > 1.2 ? 'medium' : 'small') as
+          | 'inherit'
+          | 'large'
+          | 'medium'
+          | 'small',
+      }),
+      [scaleFactor]
+    );
+
+    useEffect(() => {
+      try {
+        const storedValue = localStorage.getItem(storageKey);
+        if (storedValue !== null) {
+          setShowControls(storedValue === 'expanded');
+        }
+      } catch (error) {
+        console.warn('Unable to read zoom control state:', error);
+      }
+    }, [storageKey]);
 
     const toggleControls = () => {
-      setShowControls(prev => !prev);
+      setShowControls(prev => {
+        const nextState = !prev;
+        try {
+          localStorage.setItem(storageKey, nextState ? 'expanded' : 'collapsed');
+        } catch (error) {
+          console.warn('Unable to persist zoom control state:', error);
+        }
+        return nextState;
+      });
     };
     const { setZoom } = useZoomStore();
     const { edgeType, setEdgeType } = useEdgeTypeStore();
@@ -188,8 +266,8 @@ export const ZoomControls = memo<ZoomControlsProps>(
     const getButtonStyles = useMemo(
       () =>
         (buttonId: string, isActive = false) => ({
-          minWidth: '40px',
-          height: '40px',
+          minWidth: `${controlSizes.buttonSize}px`,
+          height: `${controlSizes.buttonSize}px`,
           borderRadius: '12px',
           margin: '0 2px',
           background: isActive
@@ -220,6 +298,12 @@ export const ZoomControls = memo<ZoomControlsProps>(
           animation: isActive ? `${pulseGlow} 2s infinite` : 'none',
           backdropFilter: 'blur(10px)',
           willChange: hoveredButton === buttonId || isActive ? 'transform' : 'auto', // Optimize for animations
+          '&:focus': {
+            outline: 'none',
+          },
+          '&:focus-visible': {
+            outline: 'none',
+          },
           '&:hover': {
             background: isActive
               ? 'linear-gradient(135deg, #2563eb, #4f46e5)'
@@ -235,7 +319,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             animation: `${wiggle} 0.5s ease-in-out`,
           },
         }),
-      [theme, hoveredButton]
+      [controlSizes.buttonSize, theme, hoveredButton]
     );
 
     // Optimize event handlers
@@ -249,134 +333,168 @@ export const ZoomControls = memo<ZoomControlsProps>(
 
     return (
       <Box
+        ref={panelRef}
         sx={{
           position: 'absolute',
           top: 20,
-          left: 20,
+          right: 20,
+          left: 'auto',
+          bottom: 'auto',
           display: 'flex',
-          gap: 1,
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          gap: controlSizes.panelGap,
           background:
             theme === 'dark'
               ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))'
               : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95))',
-          padding: '12px',
+          padding: controlSizes.panelPadding,
           borderRadius: '16px',
           boxShadow:
             theme === 'dark'
               ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
               : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-          alignItems: 'center',
           backdropFilter: 'blur(20px)',
           border:
             theme === 'dark'
               ? '1px solid rgba(148, 163, 184, 0.1)'
               : '1px solid rgba(148, 163, 184, 0.2)',
           animation: `${bounceIn} 0.6s ease-out`,
+          width: 'fit-content',
+          zIndex: 5,
+          maxHeight: 'calc(100% - 16px)',
+          overflow: 'visible',
+          overscrollBehavior: 'contain',
+          pointerEvents: 'none',
         }}
       >
         {/* Group/Collapse Controls */}
         {showControls && (
-          <>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: controlSizes.panelGap,
+              mt: Math.max(0.5, Math.min(1.5, 1 * scaleFactor)),
+              pointerEvents: 'auto',
+            }}
+          >
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.groupByResource`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
                 variant="text"
-                onClick={onToggleCollapse}
+                onClick={e => {
+                  onToggleCollapse();
+                  e.currentTarget.blur();
+                }}
                 sx={getButtonStyles('collapse', isCollapsed)}
                 onMouseEnter={handleMouseEnter('collapse')}
                 onMouseLeave={handleMouseLeave}
               >
-                <ViewQuilt />
+                <ViewQuilt fontSize={controlSizes.iconFontSize} />
               </Button>
             </Tooltip>
 
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.expandAll`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
                 variant="text"
-                onClick={onExpandAll}
+                onClick={e => {
+                  onExpandAll();
+                  e.currentTarget.blur();
+                }}
                 sx={getButtonStyles('expand')}
                 onMouseEnter={handleMouseEnter('expand')}
                 onMouseLeave={handleMouseLeave}
               >
-                <Add />
+                <Add fontSize={controlSizes.iconFontSize} />
               </Button>
             </Tooltip>
 
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.collapseAll`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
                 variant="text"
-                onClick={onCollapseAll}
+                onClick={e => {
+                  onCollapseAll();
+                  e.currentTarget.blur();
+                }}
                 sx={getButtonStyles('collapseAll')}
                 onMouseEnter={handleMouseEnter('collapseAll')}
                 onMouseLeave={handleMouseLeave}
               >
-                <Remove />
+                <Remove fontSize={controlSizes.iconFontSize} />
               </Button>
             </Tooltip>
 
             {/* Separator */}
             <Box
               sx={{
-                width: '1px',
-                height: '32px',
+                width: controlSizes.separatorWidth,
+                height: '1px',
                 background:
                   theme === 'dark'
-                    ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                    : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-                margin: '0 8px',
+                    ? 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                    : 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                margin: `${Math.round(8 * scaleFactor)}px 0`,
               }}
             />
             {/* Zoom Controls */}
-            <Tooltip title={t(`${translationPrefix}.zoomControls.zoomIn`)} placement="bottom" arrow>
+            <Tooltip title={t(`${translationPrefix}.zoomControls.zoomIn`)} placement="left" arrow>
               <Button
                 variant="text"
-                onClick={handleZoomIn}
+                onClick={e => {
+                  handleZoomIn();
+                  e.currentTarget.blur();
+                }}
                 sx={getButtonStyles('zoomIn')}
                 onMouseEnter={handleMouseEnter('zoomIn')}
                 onMouseLeave={handleMouseLeave}
               >
-                <ZoomIn />
+                <ZoomIn fontSize={controlSizes.iconFontSize} />
               </Button>
             </Tooltip>
-            <Tooltip
-              title={t(`${translationPrefix}.zoomControls.zoomOut`)}
-              placement="bottom"
-              arrow
-            >
+            <Tooltip title={t(`${translationPrefix}.zoomControls.zoomOut`)} placement="left" arrow>
               <Button
                 variant="text"
-                onClick={handleZoomOut}
+                onClick={e => {
+                  handleZoomOut();
+                  e.currentTarget.blur();
+                }}
                 sx={getButtonStyles('zoomOut')}
                 onMouseEnter={handleMouseEnter('zoomOut')}
                 onMouseLeave={handleMouseLeave}
               >
-                <ZoomOut />
+                <ZoomOut fontSize={controlSizes.iconFontSize} />
               </Button>
             </Tooltip>
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.resetZoom`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <Button
                 variant="text"
-                onClick={handleResetZoom}
+                onClick={e => {
+                  handleResetZoom();
+                  e.currentTarget.blur();
+                }}
                 sx={getButtonStyles('reset')}
                 onMouseEnter={handleMouseEnter('reset')}
                 onMouseLeave={handleMouseLeave}
               >
-                <Refresh />
+                <Refresh fontSize={controlSizes.iconFontSize} />
               </Button>
             </Tooltip>
             {/* Zoom Level Display */}
@@ -388,14 +506,15 @@ export const ZoomControls = memo<ZoomControlsProps>(
                     ? 'linear-gradient(135deg, #1e293b, #334155)'
                     : 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
                 color: theme === 'dark' ? '#f1f5f9' : '#1e293b',
-                padding: '8px 12px',
+                padding: controlSizes.typographyPadding,
                 borderRadius: '10px',
                 textAlign: 'center',
-                minWidth: '60px',
+                minWidth: `${Math.round(56 * scaleFactor)}px`,
+                maxWidth: `${Math.round(66 * scaleFactor)}px`,
                 cursor: 'pointer',
                 userSelect: 'none',
                 fontWeight: '600',
-                fontSize: '13px',
+                fontSize: controlSizes.typographyFontSize,
                 border: `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
                 transition: 'all 0.3s ease',
                 '&:hover': {
@@ -466,19 +585,19 @@ export const ZoomControls = memo<ZoomControlsProps>(
             {/* Separator */}
             <Box
               sx={{
-                width: '1px',
-                height: '32px',
+                width: controlSizes.separatorWidth,
+                height: '1px',
                 background:
                   theme === 'dark'
-                    ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                    : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-                margin: '0 8px',
+                    ? 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                    : 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                margin: `${Math.round(8 * scaleFactor)}px 0`,
               }}
             />
             {/* Edge Type Controls */}
             <Tooltip
               title={t(`${translationPrefix}.zoomControls.edgeStyle`)}
-              placement="bottom"
+              placement="left"
               arrow
             >
               <ToggleButtonGroup
@@ -487,6 +606,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 onChange={handleEdgeTypeChange}
                 size="small"
                 aria-label="Edge Type"
+                orientation="vertical"
                 sx={{
                   borderRadius: '10px',
                   overflow: 'hidden',
@@ -511,10 +631,10 @@ export const ZoomControls = memo<ZoomControlsProps>(
                       transform: 'scale(1.02)',
                     },
                     '&:first-of-type': {
-                      borderRadius: '10px 0 0 10px',
+                      borderRadius: '10px 10px 0 0',
                     },
                     '&:last-of-type': {
-                      borderRadius: '0 10px 10px 0',
+                      borderRadius: '0 0 10px 10px',
                     },
                   },
                 }}
@@ -523,25 +643,35 @@ export const ZoomControls = memo<ZoomControlsProps>(
                   value="step"
                   aria-label={t(`${translationPrefix}.zoomControls.square`)}
                   sx={{
-                    px: 2,
-                    py: 1,
-                    minWidth: '44px',
-                    height: '36px',
+                    px: 1.6,
+                    py: 0.4,
+                    minWidth: `${Math.round(36 * scaleFactor)}px`,
+                    height: controlSizes.toggleHeight,
                   }}
                 >
-                  <i className="fa fa-project-diagram" style={{ fontSize: '14px' }} />
+                  <i
+                    className="fa fa-project-diagram"
+                    style={{
+                      fontSize: `clamp(11px, ${13 * scaleFactor}px, 16px)`,
+                    }}
+                  />
                 </ToggleButton>
                 <ToggleButton
                   value="bezier"
                   aria-label={t(`${translationPrefix}.zoomControls.curvy`)}
                   sx={{
-                    px: 2,
-                    py: 1,
-                    minWidth: '44px',
-                    height: '36px',
+                    px: 1.6,
+                    py: 0.4,
+                    minWidth: `${Math.round(36 * scaleFactor)}px`,
+                    height: controlSizes.toggleHeight,
                   }}
                 >
-                  <i className="fa fa-bezier-curve" style={{ fontSize: '14px' }} />
+                  <i
+                    className="fa fa-bezier-curve"
+                    style={{
+                      fontSize: `clamp(11px, ${13 * scaleFactor}px, 16px)`,
+                    }}
+                  />
                 </ToggleButton>
               </ToggleButtonGroup>
             </Tooltip>
@@ -551,13 +681,13 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 {/* Separator */}
                 <Box
                   sx={{
-                    width: '1px',
-                    height: '32px',
+                    width: controlSizes.separatorWidth,
+                    height: '1px',
                     background:
                       theme === 'dark'
-                        ? 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.3), transparent)'
-                        : 'linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent)',
-                    margin: '0 8px',
+                        ? 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.3), transparent)'
+                        : 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.4), transparent)',
+                    margin: `${Math.round(8 * scaleFactor)}px 0`,
                   }}
                 />
                 <Tooltip
@@ -566,22 +696,29 @@ export const ZoomControls = memo<ZoomControlsProps>(
                       ? t(`${translationPrefix}.zoomControls.exitFullscreen`)
                       : t(`${translationPrefix}.zoomControls.fullscreen`)
                   }
-                  placement="bottom"
+                  placement="left"
                   arrow
                 >
                   <Button
                     variant="text"
-                    onClick={onToggleFullscreen}
+                    onClick={e => {
+                      onToggleFullscreen?.();
+                      e.currentTarget.blur();
+                    }}
                     sx={getButtonStyles('fullscreen', isFullscreen)}
                     onMouseEnter={handleMouseEnter('fullscreen')}
                     onMouseLeave={handleMouseLeave}
                   >
-                    {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+                    {isFullscreen ? (
+                      <FullscreenExit fontSize={controlSizes.iconFontSize} />
+                    ) : (
+                      <Fullscreen fontSize={controlSizes.iconFontSize} />
+                    )}
                   </Button>
                 </Tooltip>
               </>
             )}
-          </>
+          </Box>
         )}
         {/* Button to show or hide the control panel */}
 
@@ -591,17 +728,34 @@ export const ZoomControls = memo<ZoomControlsProps>(
               ? t(`${translationPrefix}.hideControls.hide`)
               : t(`${translationPrefix}.hideControls.show`)
           }
-          placement="bottom"
+          placement="left"
           arrow
         >
           <Button
             variant="text"
-            onClick={toggleControls}
-            sx={getButtonStyles('toggleControls', !showControls)}
+            onClick={e => {
+              toggleControls();
+              // Remove focus after click to prevent blue outline from persisting
+              e.currentTarget.blur();
+            }}
+            sx={{
+              ...getButtonStyles('toggleControls', !showControls),
+              pointerEvents: 'auto',
+              '&:focus': {
+                outline: 'none',
+              },
+              '&:focus-visible': {
+                outline: 'none',
+              },
+            }}
             onMouseEnter={handleMouseEnter('toggleControls')}
             onMouseLeave={handleMouseLeave}
           >
-            {showControls ? <ChevronLeft fontSize="medium" /> : <ChevronRight fontSize="medium" />}
+            {showControls ? (
+              <ExpandLess fontSize={controlSizes.iconFontSize} />
+            ) : (
+              <ExpandMore fontSize={controlSizes.iconFontSize} />
+            )}
           </Button>
         </Tooltip>
       </Box>
