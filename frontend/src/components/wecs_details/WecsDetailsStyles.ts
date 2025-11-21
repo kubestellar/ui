@@ -38,10 +38,11 @@ export const StyledTab = styled(Tab)(({ theme }) => {
 
 export const getPanelStyles = (theme: string, isOpen: boolean) => ({
   position: 'fixed' as const,
-  right: isOpen ? 0 : '-80vw',
+  right: isOpen ? 0 : '-100vw', // Use -100vw instead of -80vw to ensure it's completely off-screen
   top: 0,
   bottom: 0,
   width: '80vw',
+  maxWidth: '600px', // Limit max width on larger screens
   bgcolor: theme === 'dark' ? '#1F2937' : '#eff3f5',
   boxShadow: '-2px 0 10px rgba(0,0,0,0.2)',
   transition: 'right 0.4s ease-in-out',
@@ -49,6 +50,9 @@ export const getPanelStyles = (theme: string, isOpen: boolean) => ({
   overflowY: 'auto' as const,
   borderTopLeftRadius: '8px',
   borderBottomLeftRadius: '8px',
+  // Ensure panel doesn't interfere when closed
+  pointerEvents: isOpen ? 'auto' : 'none',
+  visibility: isOpen ? 'visible' : 'hidden',
 });
 
 export const getContentBoxStyles = (theme: string) => ({
