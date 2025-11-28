@@ -38,11 +38,11 @@ export const StyledTab = styled(Tab)(({ theme }) => {
 
 export const getPanelStyles = (theme: string, isOpen: boolean) => ({
   position: 'fixed' as const,
-  right: isOpen ? 0 : '-100vw', 
+  right: isOpen ? 0 : '-100vw',
   top: 0,
   bottom: 0,
   width: '80vw',
-  maxWidth: '600px', 
+  maxWidth: '600px',
   bgcolor: theme === 'dark' ? '#1F2937' : '#eff3f5',
   boxShadow: '-2px 0 10px rgba(0,0,0,0.2)',
   transition: isOpen ? 'right 0.4s ease-in-out' : 'right 0.4s ease-in-out, visibility 0s 0.4s',
