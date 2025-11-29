@@ -28,22 +28,11 @@ import useZoomStore, { zoomPresets } from '../../stores/zoomStore';
 import useEdgeTypeStore from '../../stores/edgeTypeStore';
 
 // Optimized animations with GPU acceleration
-const pulseGlow = keyframes`
-  0%, 100% { transform: scale3d(1, 1, 1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-  50% { transform: scale3d(1, 1, 1); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
-`;
-
 const bounceIn = keyframes`
   0% { transform: scale3d(0.3, 0.3, 1); opacity: 0; }
   50% { transform: scale3d(1.05, 1.05, 1); }
   70% { transform: scale3d(0.9, 0.9, 1); }
   100% { transform: scale3d(1, 1, 1); opacity: 1; }
-`;
-
-const wiggle = keyframes`
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(1deg); }
-  75% { transform: rotate(-1deg); }
 `;
 
 interface ZoomControlsProps {
@@ -69,7 +58,8 @@ export const ZoomControls = memo<ZoomControlsProps>(
     translationPrefix = 'wecsTopology',
   }) => {
     const { t } = useTranslation();
-    const { getZoom, setViewport, getViewport } = useReactFlow();
+    const rf = useReactFlow();
+    const { getZoom, setViewport, getViewport } = rf;
     const [zoomLevel, setZoomLevel] = useState<number>(120);
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
@@ -165,48 +155,77 @@ export const ZoomControls = memo<ZoomControlsProps>(
     }, []);
 
     useEffect(() => {
-      const updateZoomLevel = () => {
-        const currentZoom = getZoom() * 100;
-        const snappedZoom = snapToStep(currentZoom);
-        setZoomLevel(Math.min(Math.max(snappedZoom, 10), 200));
-        setZoom(getZoom());
+      // Try to use ReactFlow's event system if available, otherwise fall back to RAF
+      const rfInstance = rf as typeof rf & {
+        on?: (
+          event: string,
+          handler: (data: { viewport: { zoom: number; x: number; y: number } }) => void
+        ) => void;
+        off?: (
+          event: string,
+          handler: (data: { viewport: { zoom: number; x: number; y: number } }) => void
+        ) => void;
       };
 
-      updateZoomLevel();
+      if (
+        rfInstance &&
+        typeof rfInstance.on === 'function' &&
+        typeof rfInstance.off === 'function'
+      ) {
+        const handleMove = ({ viewport }: { viewport: { zoom: number; x: number; y: number } }) => {
+          const snapped = snapToStep(viewport.zoom * 100);
+          setZoomLevel(Math.min(Math.max(snapped, 10), 200));
+          setZoom(viewport.zoom);
+        };
 
-      const interval = setInterval(updateZoomLevel, 100);
+        rfInstance.on('move', handleMove);
 
-      return () => clearInterval(interval);
-    }, [getZoom, snapToStep, setViewport, setZoom]);
+        return () => {
+          if (rfInstance && typeof rfInstance.off === 'function') {
+            rfInstance.off('move', handleMove);
+          }
+        };
+      } else {
+        // Fallback to requestAnimationFrame for efficient updates
+        let rafId: number | null = null;
+        let lastZoom = getZoom();
+
+        const updateZoomLevel = () => {
+          const currentViewport = getViewport();
+          const currentZoom = currentViewport.zoom;
+
+          if (Math.abs(currentZoom - lastZoom) > 0.001) {
+            const snapped = snapToStep(currentZoom * 100);
+            setZoomLevel(Math.min(Math.max(snapped, 10), 200));
+            setZoom(currentZoom);
+            lastZoom = currentZoom;
+          }
+
+          rafId = requestAnimationFrame(updateZoomLevel);
+        };
+
+        const initialViewport = getViewport();
+        const snapped = snapToStep(initialViewport.zoom * 100);
+        setZoomLevel(Math.min(Math.max(snapped, 10), 200));
+        setZoom(initialViewport.zoom);
+        lastZoom = initialViewport.zoom;
+
+        rafId = requestAnimationFrame(updateZoomLevel);
+
+        return () => {
+          if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+          }
+        };
+      }
+    }, [rf, getZoom, getViewport, snapToStep, setZoom]);
 
     const animateZoom = useCallback(
       (targetZoom: number, duration: number = 200) => {
-        const startZoom = getZoom();
         const currentViewport = getViewport();
-        const startTime = performance.now();
-
-        const step = (currentTime: number) => {
-          const elapsed = currentTime - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const newZoom = startZoom + (targetZoom - startZoom) * progress;
-
-          setViewport({
-            zoom: newZoom,
-            x: currentViewport.x,
-            y: currentViewport.y,
-          });
-
-          if (progress < 1) {
-            requestAnimationFrame(step);
-          } else {
-            setZoomLevel(snapToStep(newZoom * 100));
-            setZoom(newZoom);
-          }
-        };
-
-        requestAnimationFrame(step);
+        setViewport({ ...currentViewport, zoom: targetZoom }, { duration });
       },
-      [getZoom, getViewport, setViewport, snapToStep, setZoom]
+      [setViewport, getViewport]
     );
 
     const handleZoomIn = useCallback(() => {
@@ -285,17 +304,9 @@ export const ZoomControls = memo<ZoomControlsProps>(
           border: isActive
             ? 'none'
             : `1px solid ${theme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'}`,
-          boxShadow: isActive
-            ? '0 4px 20px rgba(59, 130, 246, 0.4)'
-            : hoveredButton === buttonId
-              ? theme === 'dark'
-                ? '0 4px 20px rgba(0, 0, 0, 0.3)'
-                : '0 4px 20px rgba(0, 0, 0, 0.1)'
-              : 'none',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'transform 0.18s ease',
           transform:
             hoveredButton === buttonId ? 'translateY(-2px) scale(1.05)' : 'translateY(0) scale(1)',
-          animation: isActive ? `${pulseGlow} 2s infinite` : 'none',
           backdropFilter: 'blur(10px)',
           willChange: hoveredButton === buttonId || isActive ? 'transform' : 'auto', // Optimize for animations
           '&:focus': {
@@ -312,12 +323,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
                 ? 'linear-gradient(135deg, #475569, #64748b)'
                 : 'linear-gradient(135deg, #e2e8f0, #cbd5e1)',
             transform: 'translateY(-2px) scale(1.05)',
-            boxShadow: isActive
-              ? '0 6px 25px rgba(59, 130, 246, 0.5)'
-              : theme === 'dark'
-                ? '0 6px 25px rgba(0, 0, 0, 0.4)'
-                : '0 6px 25px rgba(0, 0, 0, 0.15)',
-            animation: `${wiggle} 0.5s ease-in-out`,
           },
         }),
       [controlSizes.buttonSize, theme, hoveredButton]
@@ -367,7 +372,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
           maxHeight: 'calc(100% - 16px)',
           overflow: 'visible',
           overscrollBehavior: 'contain',
-          pointerEvents: 'none',
+          pointerEvents: 'auto',
         }}
       >
         {/* Group/Collapse Controls */}
