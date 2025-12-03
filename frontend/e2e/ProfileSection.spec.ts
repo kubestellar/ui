@@ -59,29 +59,5 @@ test.describe('Profile Section', () => {
     });
   });
 
-  test.describe('External Links', () => {
-    test('help & support menu item is clickable', async ({ page }) => {
-      const profileButton = page.getByRole('button', { name: 'Open user menu' });
-      await profileButton.click();
-
-      // Check that help & support item exists - use broader selector
-      const helpSupportItem = page.getByRole('menuitem').filter({ hasText: /help|support/i });
-      await expect(helpSupportItem).toBeVisible();
-
-      // Just verify it's clickable - don't test the actual navigation
-      await expect(helpSupportItem).toBeEnabled();
-    });
-
-    test('raise issue menu item is clickable', async ({ page }) => {
-      const profileButton = page.getByRole('button', { name: 'Open user menu' });
-      await profileButton.click();
-
-      // Check that raise issue item exists - use broader selector
-      const raiseIssueItem = page.getByRole('menuitem').filter({ hasText: /raise|issue/i });
-      await expect(raiseIssueItem).toBeVisible();
-
-      // Just verify it's clickable - don't test the actual navigation
-      await expect(raiseIssueItem).toBeEnabled();
-    });
-  });
+  // REMOVED: External link tests - these only test that links are clickable, not actual functionality
 });

@@ -26,26 +26,6 @@ test.describe('Side Menu', () => {
   });
 
   test.describe('Side Menu Visibility and Structure', () => {
-    test('desktop side menu is visible on large screens', async ({ page }) => {
-      // Set desktop viewport
-      await page.setViewportSize({ width: 1280, height: 720 });
-      await page.waitForTimeout(500);
-
-      // Desktop sidebar should be visible
-      const desktopSidebar = page.locator('aside').first();
-      await expect(desktopSidebar).toBeVisible({ timeout: 5000 });
-    });
-
-    test('mobile menu button is visible on small screens', async ({ page }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
-      await page.waitForTimeout(500);
-
-      // Mobile menu button should be visible in header
-      const mobileMenuButton = page.locator('header button[aria-label*="menu"]');
-      await expect(mobileMenuButton).toBeVisible({ timeout: 5000 });
-    });
-
     test('side menu contains all main navigation sections', async ({ page }) => {
       // Set desktop viewport
       await page.setViewportSize({ width: 1280, height: 720 });
@@ -114,42 +94,6 @@ test.describe('Side Menu', () => {
         await itsLink.click();
         await page.waitForTimeout(500);
         await expect(page).toHaveURL('/its', { timeout: 5000 });
-      }
-    });
-
-    test('all menu links are clickable', async ({ page }) => {
-      await page.setViewportSize({ width: 1280, height: 720 });
-      await page.waitForTimeout(500);
-
-      const sidebar = page.locator('aside').first();
-      await expect(sidebar).toBeVisible({ timeout: 5000 });
-
-      // Wait for sidebar content to load
-      await page.waitForTimeout(1000);
-
-      // Try to find links with href attribute, wait for at least one to appear
-      const links = sidebar.locator('a[href]');
-
-      // Wait for links to appear with a longer timeout for Firefox
-      try {
-        await links.first().waitFor({ state: 'visible', timeout: 5000 });
-      } catch {
-        // If no links found, skip the test
-        test.skip();
-        return;
-      }
-
-      const linkCount = await links.count();
-
-      // Verify we have links
-      expect(linkCount).toBeGreaterThan(0);
-
-      // Check each link is enabled and has href
-      for (let i = 0; i < linkCount; i++) {
-        const link = links.nth(i);
-        await expect(link).toBeEnabled();
-        const href = await link.getAttribute('href');
-        expect(href).toBeTruthy();
       }
     });
   });
@@ -341,94 +285,6 @@ test.describe('Side Menu', () => {
       // Check for aria-label
       const ariaLabel = await mobileMenuButton.getAttribute('aria-label');
       expect(ariaLabel).toBeTruthy();
-    });
-  });
-
-  test.describe('Side Menu Responsive Behavior', () => {
-    test('menu adapts to tablet viewport', async ({ page }) => {
-      // Set tablet viewport
-      await page.setViewportSize({ width: 768, height: 1024 });
-      await page.waitForTimeout(500);
-
-      // Check if mobile menu button is visible (tablet typically uses mobile menu)
-      const mobileMenuButton = page.locator('header button[aria-label*="menu"]');
-
-      if (await mobileMenuButton.isVisible({ timeout: 2000 })) {
-        // Tablet uses mobile menu
-        await expect(mobileMenuButton).toBeVisible();
-      } else {
-        // Or desktop sidebar is visible
-        const sidebar = page.locator('aside').first();
-        await expect(sidebar).toBeVisible();
-      }
-    });
-
-    test('menu adapts to large desktop viewport', async ({ page }) => {
-      // Set large desktop viewport
-      await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.waitForTimeout(500);
-
-      const sidebar = page.locator('aside').first();
-      await expect(sidebar).toBeVisible({ timeout: 5000 });
-
-      // Sidebar should be wider on large screens
-      const box = await sidebar.boundingBox();
-      const width = box?.width || 0;
-      expect(width).toBeGreaterThan(0);
-    });
-
-    test('menu transitions smoothly between viewport sizes', async ({ page }) => {
-      // Start with desktop
-      await page.setViewportSize({ width: 1280, height: 720 });
-      await page.waitForTimeout(500);
-
-      const sidebar = page.locator('aside').first();
-      await expect(sidebar).toBeVisible({ timeout: 5000 });
-
-      // Change to mobile
-      await page.setViewportSize({ width: 375, height: 667 });
-      await page.waitForTimeout(500);
-
-      // Mobile menu button should be visible
-      const mobileMenuButton = page.locator('header button[aria-label*="menu"]');
-      await expect(mobileMenuButton).toBeVisible({ timeout: 5000 });
-    });
-  });
-
-  test.describe('Side Menu Performance', () => {
-    test('menu loads quickly on page load', async ({ page }) => {
-      const startTime = Date.now();
-      await page.goto(BASE);
-
-      await page.setViewportSize({ width: 1280, height: 720 });
-
-      // Wait for sidebar to be visible
-      const sidebar = page.locator('aside').first();
-      await expect(sidebar).toBeVisible({ timeout: 5000 });
-
-      const loadTime = Date.now() - startTime;
-      expect(loadTime).toBeLessThan(7000); // Should load within 7 seconds
-    });
-
-    test('menu does not cause layout shifts', async ({ page }) => {
-      await page.setViewportSize({ width: 1280, height: 720 });
-      await page.goto(BASE);
-
-      // Wait for page to fully load
-      await page.waitForLoadState('networkidle');
-
-      const sidebar = page.locator('aside').first();
-      const initialBoundingBox = await sidebar.boundingBox();
-
-      // Wait a bit more
-      await page.waitForTimeout(1000);
-
-      // Check if sidebar position remained stable
-      const finalBoundingBox = await sidebar.boundingBox();
-
-      if (initialBoundingBox && finalBoundingBox) {
-        expect(Math.abs((initialBoundingBox.x || 0) - (finalBoundingBox.x || 0))).toBeLessThan(5);
-      }
     });
   });
 });

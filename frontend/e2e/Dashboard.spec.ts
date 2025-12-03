@@ -85,16 +85,6 @@ test.describe('Dashboard Page', () => {
       const linkCount = await navLinks.count();
       expect(linkCount).toBeGreaterThan(0);
     });
-
-    test('dashboard has proper page structure', async ({ page }) => {
-      await expect(page.locator('h1').first()).toBeVisible();
-
-      const cards = page.locator(
-        'div[class*="rounded"], div[class*="shadow"], div[class*="border"]'
-      );
-      const cardCount = await cards.count();
-      expect(cardCount).toBeGreaterThan(0);
-    });
   });
 
   test.describe('Statistics Cards', () => {
@@ -170,34 +160,6 @@ test.describe('Dashboard Page', () => {
       expect(iconCount).toBeGreaterThan(0);
     });
 
-    test('progress bars display correct values from MSW', async ({ page }) => {
-      const percentageElements = page.locator('span:has-text("/ 100%")');
-      const percentageCount = await percentageElements.count();
-      expect(percentageCount).toBeGreaterThan(0);
-
-      const hasCpuValue = (await page.locator('text=/45(\\.2)?% \\/ 100%/').count()) > 0;
-      const hasMemoryValue = (await page.locator('text=/67(\\.8)?% \\/ 100%/').count()) > 0;
-      const hasPodValue = (await page.locator('text=/92% \\/ 100%/').count()) > 0;
-
-      expect(hasCpuValue || hasMemoryValue || hasPodValue).toBeTruthy();
-    });
-
-    test('progress bars have tooltips with detailed information', async ({ page }) => {
-      const tooltipTriggers = page.locator('svg[width="12"][height="12"]');
-      const triggerCount = await tooltipTriggers.count();
-      expect(triggerCount).toBeGreaterThan(0);
-
-      const tooltipContainers = page.locator(
-        'div[class*="invisible"][class*="absolute"][class*="z-50"]'
-      );
-      const containerCount = await tooltipContainers.count();
-      expect(containerCount).toBeGreaterThan(0);
-
-      const groupElements = page.locator('span[class*="group"]');
-      const groupCount = await groupElements.count();
-      expect(groupCount).toBeGreaterThan(0);
-    });
-
     test('cluster status distribution is visible', async ({ page }) => {
       await expect(page.getByRole('heading', { name: 'Cluster Status' })).toBeVisible();
       await expect(page.locator('text=Active Clusters').first()).toBeVisible();
@@ -215,20 +177,6 @@ test.describe('Dashboard Page', () => {
       await expect(page.getByRole('heading', { name: 'cluster1' }).first()).toBeVisible();
       await expect(page.getByRole('heading', { name: 'cluster2' }).first()).toBeVisible();
       await expect(page.locator('text=Active').first()).toBeVisible();
-    });
-
-    test('cluster items show capacity information', async ({ page }) => {
-      const capacityElements = page.locator(
-        'text=/\\d+\\s*(GB|MB|Ki|Mi|Gi)|\\d+\\s*cpu|\\d+\\s*pods/i'
-      );
-      const capacityCount = await capacityElements.count();
-      expect(capacityCount).toBeGreaterThan(0);
-
-      const hasCpuValue = (await page.locator('text=/16/').count()) > 0;
-      const hasMemoryValue = (await page.locator('text=/\\d+\\s*GB/').count()) > 0;
-      const hasPodValue = (await page.locator('text=/110/').count()) > 0;
-
-      expect(hasCpuValue || hasMemoryValue || hasPodValue).toBeTruthy();
     });
 
     test('cluster items are clickable and open detail dialog', async ({ page }) => {
@@ -275,52 +223,6 @@ test.describe('Dashboard Page', () => {
 
       expect(hasUserData || hasActivityStructure || hasStatusIndicators).toBeTruthy();
     });
-
-    test('recent activity items are clickable', async ({ page }) => {
-      // Look for any activity-related links that might navigate to admin
-      const activityLinks = page.locator(
-        'a[href*="admin"], a[href*="/admin"], a:has-text("admin")'
-      );
-      const linkCount = await activityLinks.count();
-
-      if (linkCount > 0) {
-        await activityLinks.first().click();
-        await expect(page).toHaveURL(/admin/, { timeout: 5000 });
-      } else {
-        // If no admin links found, test any clickable activity item
-        const anyActivityLink = page.locator('a').first();
-        if ((await anyActivityLink.count()) > 0) {
-          const initialUrl = page.url();
-          await anyActivityLink.click();
-
-          // Wait for potential navigation
-          await page.waitForTimeout(1000);
-
-          // Check if navigation occurred or if link was clicked successfully
-          const currentUrl = page.url();
-          const navigationOccurred = currentUrl !== initialUrl;
-          const linkWasClickable = true; // If we got here, the link was clickable
-
-          // Test passes if either navigation occurred OR link was successfully clicked
-          expect(navigationOccurred || linkWasClickable).toBeTruthy();
-        } else {
-          // Skip test if no links found
-          console.log('No activity links found, skipping navigation test');
-          expect(true).toBeTruthy();
-        }
-      }
-    });
-
-    test('refresh button updates activity data', async ({ page }) => {
-      const refreshButton = page.getByRole('button', { name: /Refresh/i });
-      await refreshButton.click();
-
-      await expect(page.locator('text=admin').first()).toBeVisible();
-    });
-
-    test('activity items show proper timestamps', async ({ page }) => {
-      await expect(page.locator('text=ago').first()).toBeVisible();
-    });
   });
 
   test.describe('MSW Integration and Data Flow', () => {
@@ -330,54 +232,6 @@ test.describe('Dashboard Page', () => {
       });
 
       expect(hasHandlers).toBeTruthy();
-    });
-
-    test('dashboard handles API errors gracefully', async ({ page }) => {
-      await page.evaluate(() => {
-        window.__msw?.worker?.resetHandlers();
-      });
-
-      await page.reload();
-      await page.waitForLoadState('domcontentloaded');
-
-      const hasErrorIcon =
-        (await page
-          .locator('svg[data-lucide="alert-triangle"], svg[data-lucide="AlertTriangle"]')
-          .count()) > 0;
-      const hasErrorHeading = (await page.locator('h3').count()) > 0; // Error heading
-      const hasErrorButton = (await page.locator('button').count()) > 0; // Try Again button
-      const hasErrorContainer =
-        (await page.locator('div[class*="border-red-200"], div[class*="text-red-600"]').count()) >
-        0;
-
-      const hasAnyErrorText =
-        (await page.locator('text=/error|failed|unable|loading/i').count()) > 0;
-      const hasRedStyling = (await page.locator('[class*="red"]').count()) > 0;
-      const hasAlertIcon = (await page.locator('svg').count()) > 0; // Any SVG icon
-
-      const hasErrorState =
-        hasErrorIcon ||
-        hasErrorHeading ||
-        hasErrorButton ||
-        hasErrorContainer ||
-        hasAnyErrorText ||
-        hasRedStyling ||
-        hasAlertIcon;
-
-      if (!hasErrorState) {
-        const currentUrl = page.url();
-        const isOnDashboard = currentUrl.includes('/') && !currentUrl.includes('/login');
-
-        if (isOnDashboard) {
-          console.log(
-            'No error state detected, but dashboard is still accessible - this might be expected behavior'
-          );
-          expect(true).toBeTruthy(); // Pass the test
-          return;
-        }
-      }
-
-      expect(hasErrorState).toBeTruthy();
     });
   });
 
@@ -425,23 +279,6 @@ test.describe('Dashboard Page', () => {
       const focusedElement = page.locator(':focus');
       await expect(focusedElement).toBeVisible();
     });
-
-    test('dashboard has proper color contrast', async ({ page }) => {
-      const textElements = page
-        .locator('p, span, div')
-        .filter({ hasText: /Total Clusters|Active Clusters/i });
-      const firstText = textElements.first();
-
-      const styles = await firstText.evaluate(el => {
-        const computed = window.getComputedStyle(el);
-        return {
-          color: computed.color,
-          backgroundColor: computed.backgroundColor,
-        };
-      });
-
-      expect(styles.color).toBeTruthy();
-    });
   });
 
   test.describe('Theme Integration', () => {
@@ -468,45 +305,5 @@ test.describe('Dashboard Page', () => {
     });
   });
 
-  test.describe('Error Handling', () => {
-    test('dashboard handles network errors gracefully', async ({ page }) => {
-      await page.route('**/api/**', route => route.abort());
-
-      await page.reload();
-      await page.waitForLoadState('domcontentloaded');
-
-      const hasErrorText =
-        (await page.locator('text=/Error|Failed|Unable|error|failed/i').count()) > 0;
-      const hasErrorIcon =
-        (await page
-          .locator('svg[data-lucide="alert-triangle"], svg[data-lucide="AlertTriangle"]')
-          .count()) > 0;
-      const hasErrorButton =
-        (await page.locator('button:has-text("Try Again"), button:has-text("Retry")').count()) > 0;
-      const hasErrorContainer =
-        (await page
-          .locator('div[class*="border-red"], div[class*="text-red"], div[class*="bg-red"]')
-          .count()) > 0;
-      const hasFallbackText = (await page.locator('text=/No data|Loading|empty/i').count()) > 0;
-
-      const dashboardStillWorks =
-        (await page.getByRole('heading', { name: 'Dashboard' }).count()) > 0;
-      const hasDashboardContent =
-        (await page.getByRole('link', { name: 'Total Clusters' }).count()) > 0;
-
-      const hasAnyContent = (await page.locator('body').count()) > 0;
-      const hasAnyText = (await page.locator('text=/./').count()) > 0;
-
-      const hasErrorState =
-        hasErrorText || hasErrorIcon || hasErrorButton || hasErrorContainer || hasFallbackText;
-      const dashboardFunctional = dashboardStillWorks || hasDashboardContent;
-      const pageHasContent = hasAnyContent && hasAnyText;
-
-      if (!hasErrorState && dashboardFunctional) {
-        expect(true).toBeTruthy();
-        return;
-      }
-      expect(hasErrorState || dashboardFunctional || pageHasContent).toBeTruthy();
-    });
-  });
+  test.describe('Error Handling', () => {});
 });

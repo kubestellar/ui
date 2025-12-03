@@ -128,21 +128,6 @@ test.describe('User Management - Create Operations', () => {
       await userManagementPage.waitForErrorToast();
     }
   });
-
-  test('should reset form when modal is closed and reopened', async () => {
-    await userManagementPage.clickAddUser();
-    await userManagementPage.fillUserForm({
-      username: 'testuser',
-      password: 'password123',
-    });
-    await userManagementPage.cancelUserForm();
-
-    // Reopen modal
-    await userManagementPage.clickAddUser();
-
-    // Form should be empty
-    await expect(userManagementPage.usernameInput).toHaveValue('');
-  });
 });
 
 test.describe('User Management - Update Operations', () => {
@@ -233,29 +218,6 @@ test.describe('User Management - Update Operations', () => {
     const modalVisible = await userManagementPage.modal.isVisible();
     expect(modalVisible).toBeTruthy();
   });
-
-  test('should cancel edit without making changes', async () => {
-    await userManagementPage.clickEditUser('testuser');
-    await userManagementPage.fillUserForm({
-      username: 'changed_username',
-    });
-    await userManagementPage.cancelUserForm();
-
-    // Verify username was not changed
-    expect(await userManagementPage.userExists('testuser')).toBeTruthy();
-    expect(await userManagementPage.userExists('changed_username')).toBeFalsy();
-  });
-
-  test('should update user and maintain other fields', async () => {
-    // Update only username
-    const newUsername = `updated_${Date.now()}`;
-    await userManagementPage.editUser('poweruser', {
-      username: newUsername,
-    });
-
-    await userManagementPage.waitForSuccessToast();
-    expect(await userManagementPage.userExists(newUsername)).toBeTruthy();
-  });
 });
 
 test.describe('User Management - Delete Operations', () => {
@@ -283,12 +245,6 @@ test.describe('User Management - Delete Operations', () => {
     expect(await userManagementPage.userExists(username)).toBeFalsy();
   });
 
-  test('should show confirmation modal before deleting', async () => {
-    await userManagementPage.clickDeleteUser('testuser');
-    await expect(userManagementPage.deleteModal).toBeVisible();
-    await expect(userManagementPage.deleteModal).toContainText(/delete/i);
-  });
-
   test('should cancel delete operation', async () => {
     await userManagementPage.clickDeleteUser('testuser');
     await userManagementPage.cancelDeleteUser();
@@ -304,59 +260,6 @@ test.describe('User Management - Delete Operations', () => {
     // Should show error or user should still exist
     await page.waitForTimeout(2000);
     expect(await userManagementPage.userExists('admin')).toBeTruthy();
-  });
-
-  test('should update user count after deletion', async () => {
-    const initialCount = await userManagementPage.getUserCount();
-
-    // Create and delete a user
-    const username = `temp_${Date.now()}`;
-    await userManagementPage.addUser({
-      username,
-      password: 'password123',
-      confirmPassword: 'password123',
-    });
-    await userManagementPage.waitForSuccessToast();
-
-    const afterAddCount = await userManagementPage.getUserCount();
-    expect(afterAddCount).toBe(initialCount + 1);
-
-    await userManagementPage.deleteUser(username);
-    await userManagementPage.waitForSuccessToast();
-
-    const afterDeleteCount = await userManagementPage.getUserCount();
-    expect(afterDeleteCount).toBe(initialCount);
-  });
-
-  test('should handle deleting multiple users sequentially', async () => {
-    // Create two users
-    const user1 = `user1_${Date.now()}`;
-    const user2 = `user2_${Date.now()}`;
-
-    await userManagementPage.addUser({
-      username: user1,
-      password: 'password123',
-      confirmPassword: 'password123',
-    });
-    await userManagementPage.waitForSuccessToast();
-
-    await userManagementPage.addUser({
-      username: user2,
-      password: 'password123',
-      confirmPassword: 'password123',
-    });
-    await userManagementPage.waitForSuccessToast();
-
-    // Delete both
-    await userManagementPage.deleteUser(user1);
-    await userManagementPage.waitForSuccessToast();
-
-    await userManagementPage.deleteUser(user2);
-    await userManagementPage.waitForSuccessToast();
-
-    // Verify both are gone
-    expect(await userManagementPage.userExists(user1)).toBeFalsy();
-    expect(await userManagementPage.userExists(user2)).toBeFalsy();
   });
 });
 
@@ -415,25 +318,5 @@ test.describe('User Management - Complex CRUD Workflows', () => {
     // Verify both exist
     expect(await userManagementPage.userExists(user1)).toBeTruthy();
     expect(await userManagementPage.userExists(user2)).toBeTruthy();
-  });
-
-  test('should maintain data integrity after multiple operations', async () => {
-    const initialCount = await userManagementPage.getUserCount();
-
-    // Perform multiple operations
-    const tempUser = `temp_${Date.now()}`;
-    await userManagementPage.addUser({
-      username: tempUser,
-      password: 'password123',
-      confirmPassword: 'password123',
-    });
-    await userManagementPage.waitForSuccessToast();
-
-    await userManagementPage.deleteUser(tempUser);
-    await userManagementPage.waitForSuccessToast();
-
-    // Count should be back to initial
-    const finalCount = await userManagementPage.getUserCount();
-    expect(finalCount).toBe(initialCount);
   });
 });

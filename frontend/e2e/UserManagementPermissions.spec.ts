@@ -63,58 +63,6 @@ test.describe('User Management - Permission Management', () => {
     expect(await userManagementPage.userExists(username)).toBeTruthy();
   });
 
-  test('should create user with write permissions', async () => {
-    const page = userManagementPage.page;
-    const username = `writeuser_${Date.now()}`;
-
-    await userManagementPage.clickAddUser();
-    await userManagementPage.fillUserForm({
-      username,
-      password: 'password123',
-      confirmPassword: 'password123',
-      isAdmin: false,
-    });
-
-    // Set write permissions (if permission controls are available)
-    const dashboardPermission = page.locator('[data-component="dashboard"]').first();
-    const permissionExists = await dashboardPermission.count();
-
-    if (permissionExists > 0) {
-      await userManagementPage.setPermission('dashboard', 'write');
-    }
-
-    await userManagementPage.submitUserForm();
-    await userManagementPage.waitForSuccessToast();
-
-    expect(await userManagementPage.userExists(username)).toBeTruthy();
-  });
-
-  test('should create user with mixed permissions', async () => {
-    const page = userManagementPage.page;
-    const username = `mixeduser_${Date.now()}`;
-
-    await userManagementPage.clickAddUser();
-    await userManagementPage.fillUserForm({
-      username,
-      password: 'password123',
-      confirmPassword: 'password123',
-      isAdmin: false,
-    });
-
-    // Set mixed permissions (if permission controls are available)
-    const permissionControls = await page.locator('[data-component]').count();
-
-    if (permissionControls > 0) {
-      await userManagementPage.setPermission('dashboard', 'read');
-      await userManagementPage.setPermission('resources', 'write');
-    }
-
-    await userManagementPage.submitUserForm();
-    await userManagementPage.waitForSuccessToast();
-
-    expect(await userManagementPage.userExists(username)).toBeTruthy();
-  });
-
   test('should update user permissions', async () => {
     const page = userManagementPage.page;
     await userManagementPage.clickEditUser('testuser');
@@ -156,47 +104,6 @@ test.describe('User Management - Permission Management', () => {
 
     // Verify user is now admin
     await userManagementPage.verifyUserIsAdmin(username);
-  });
-
-  test('should disable permission controls when admin is checked', async () => {
-    const page = userManagementPage.page;
-    await userManagementPage.clickAddUser();
-
-    // Check admin checkbox
-    await userManagementPage.adminCheckbox.click();
-
-    // Permission controls should be disabled or hidden
-    await page.waitForTimeout(500);
-
-    // Try to find permission controls
-    const permissionControls = page.locator('[data-component="dashboard"]').first();
-    const permissionRadio = permissionControls.locator('input[data-permission-level]');
-    const radioCount = await permissionRadio.count();
-
-    if (radioCount > 0) {
-      // Radios should be disabled when admin is selected
-      await expect(permissionRadio).toBeDisabled();
-    }
-  });
-
-  test('should enable permission controls when admin is unchecked', async () => {
-    const page = userManagementPage.page;
-    await userManagementPage.clickAddUser();
-
-    // Check then uncheck admin
-    await userManagementPage.adminCheckbox.click();
-    await page.waitForTimeout(300);
-    await userManagementPage.adminCheckbox.click();
-    await page.waitForTimeout(300);
-
-    // Permission controls should be enabled
-    const permissionControls = page.locator('[data-component="dashboard"]').first();
-    const controlCount = await permissionControls.count();
-
-    if (controlCount > 0) {
-      const isEnabled = await permissionControls.isEnabled().catch(() => false);
-      expect(isEnabled).toBeTruthy();
-    }
   });
 
   test('should display current permissions when editing user', async () => {

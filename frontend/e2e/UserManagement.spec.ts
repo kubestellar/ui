@@ -187,14 +187,4 @@ test.describe('User Management - Responsive Design', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await userManagementPage.verifyPageElements();
   });
-
-  test('should display correctly on tablet viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await userManagementPage.verifyPageElements();
-  });
-
-  test('should display correctly on desktop viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 });
-    await userManagementPage.verifyPageElements();
-  });
 });

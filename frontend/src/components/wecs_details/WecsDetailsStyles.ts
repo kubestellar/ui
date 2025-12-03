@@ -38,17 +38,20 @@ export const StyledTab = styled(Tab)(({ theme }) => {
 
 export const getPanelStyles = (theme: string, isOpen: boolean) => ({
   position: 'fixed' as const,
-  right: isOpen ? 0 : '-80vw',
+  right: isOpen ? 0 : '-100vw',
   top: 0,
   bottom: 0,
   width: '80vw',
+  maxWidth: '600px',
   bgcolor: theme === 'dark' ? '#1F2937' : '#eff3f5',
   boxShadow: '-2px 0 10px rgba(0,0,0,0.2)',
-  transition: 'right 0.4s ease-in-out',
+  transition: isOpen ? 'right 0.4s ease-in-out' : 'right 0.4s ease-in-out, visibility 0s 0.4s',
   zIndex: 1001,
   overflowY: 'auto' as const,
   borderTopLeftRadius: '8px',
   borderBottomLeftRadius: '8px',
+  pointerEvents: isOpen ? 'auto' : 'none',
+  visibility: isOpen ? 'visible' : 'hidden',
 });
 
 export const getContentBoxStyles = (theme: string) => ({
