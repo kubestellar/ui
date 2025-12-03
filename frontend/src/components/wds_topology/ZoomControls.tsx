@@ -69,39 +69,30 @@ export const ZoomControls = memo<ZoomControlsProps>(
       () => `zoomControlsVisibility-${translationPrefix}`,
       [translationPrefix]
     );
-    // Use viewport height to calculate a proportional scale factor
-    // Base scale: 1.0 at 800px viewport height
-    // Scales proportionally: smaller screens = smaller scale, larger screens = larger scale
-    const [viewportHeight, setViewportHeight] = useState<number>(800);
+    const [containerHeight, setContainerHeight] = useState<number>(800);
 
     useEffect(() => {
-      const updateViewportHeight = () => {
-        setViewportHeight(window.innerHeight);
-      };
+      const element = panelRef.current?.parentElement ?? panelRef.current;
+      if (!element) return;
 
-      updateViewportHeight();
-      window.addEventListener('resize', updateViewportHeight);
-
-      return () => window.removeEventListener('resize', updateViewportHeight);
+      // Measure container height once on mount to avoid continuous resizes causing lag.
+      const height = element.clientHeight || 800;
+      setContainerHeight(height);
     }, []);
 
-    // Calculate proportional scale factor based on viewport height
-    // Minimum scale: 0.75 (for very small screens ~400px)
-    // Maximum scale: 1.4 (for very tall screens ~1600px+)
-    // Base: 1.0 at 800px viewport height
     const scaleFactor = useMemo(() => {
-      const baseHeight = 800;
-      const minScale = 0.75;
-      const maxScale = 1.4;
-      const calculatedScale = Math.max(minScale, Math.min(maxScale, viewportHeight / baseHeight));
+      const baseHeight = 700;
+      const minScale = 0.85;
+      const maxScale = 1.5;
+      const calculatedScale = Math.max(minScale, Math.min(maxScale, containerHeight / baseHeight));
       return calculatedScale;
-    }, [viewportHeight]);
+    }, [containerHeight]);
 
     // Calculate sizes based on scale factor to maintain proportions
     const controlSizes = useMemo(
       () => ({
-        // Button sizes scale proportionally (base: 32px at 800px viewport)
-        buttonSize: Math.round(32 * scaleFactor),
+        // Button sizes scale proportionally (base: 36px at 700px container)
+        buttonSize: Math.round(36 * scaleFactor),
         // Gaps scale proportionally (base: 0.7 at 800px viewport)
         panelGap: Math.max(0.3, Math.min(1.2, 0.7 * scaleFactor)),
         // Padding scales proportionally using calc
@@ -112,8 +103,8 @@ export const ZoomControls = memo<ZoomControlsProps>(
         typographyPadding: `${Math.round(5 * scaleFactor)}px ${Math.round(8 * scaleFactor)}px`,
         // Font size uses clamp for smooth scaling
         typographyFontSize: `clamp(9px, ${10 * scaleFactor}px, 14px)`,
-        // Toggle height scales proportionally (base: 30px)
-        toggleHeight: Math.round(30 * scaleFactor),
+        // Toggle height scales proportionally (base: 34px)
+        toggleHeight: Math.round(34 * scaleFactor),
         // Icon font size scales with button size
         iconFontSize: (scaleFactor < 0.85 ? 'small' : scaleFactor > 1.2 ? 'medium' : 'small') as
           | 'inherit'
@@ -188,10 +179,13 @@ export const ZoomControls = memo<ZoomControlsProps>(
       } else {
         // Fallback to requestAnimationFrame for efficient updates
         let rafId: number | null = null;
-        let lastZoom = getZoom();
+        let lastZoom = rf.getZoom();
+        let isCancelled = false;
 
         const updateZoomLevel = () => {
-          const currentViewport = getViewport();
+          if (isCancelled) return;
+
+          const currentViewport = rf.getViewport();
           const currentZoom = currentViewport.zoom;
 
           if (Math.abs(currentZoom - lastZoom) > 0.001) {
@@ -204,7 +198,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
           rafId = requestAnimationFrame(updateZoomLevel);
         };
 
-        const initialViewport = getViewport();
+        const initialViewport = rf.getViewport();
         const snapped = snapToStep(initialViewport.zoom * 100);
         setZoomLevel(Math.min(Math.max(snapped, 10), 200));
         setZoom(initialViewport.zoom);
@@ -213,12 +207,13 @@ export const ZoomControls = memo<ZoomControlsProps>(
         rafId = requestAnimationFrame(updateZoomLevel);
 
         return () => {
+          isCancelled = true;
           if (rafId !== null) {
             cancelAnimationFrame(rafId);
           }
         };
       }
-    }, [rf, getZoom, getViewport, snapToStep, setZoom]);
+    }, [rf, snapToStep, setZoom]);
 
     const animateZoom = useCallback(
       (targetZoom: number, duration: number = 200) => {
@@ -369,8 +364,12 @@ export const ZoomControls = memo<ZoomControlsProps>(
           animation: `${bounceIn} 0.6s ease-out`,
           width: 'fit-content',
           zIndex: 5,
-          maxHeight: 'calc(100% - 16px)',
-          overflow: 'visible',
+          // Keep the panel fully visible within the viewport (even up to ~125% zoom)
+          // while still allowing scrolling if the content is taller.
+          maxHeight: 'calc(100vh - 40px)',
+          maxWidth: 'calc(100vw - 40px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           overscrollBehavior: 'contain',
           pointerEvents: 'auto',
         }}
