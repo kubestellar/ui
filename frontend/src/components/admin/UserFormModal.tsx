@@ -44,18 +44,27 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordTouched, setPasswordTouched] = useState(false);
 
   const validateUsername = useCallback(
     (value: string) => {
-      if (!value.trim()) {
+      const trimmed = value.trim();
+
+      if (!trimmed) {
         return null;
       }
-      if (!/^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+
+      if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
         return 'Username can only contain letters, numbers, underscore, and hyphen';
       }
-      if (existingUsernames.includes(value.trim())) {
+
+      const normalized = trimmed.toLowerCase();
+      const isTaken = existingUsernames.some(existing => existing.toLowerCase() === normalized);
+
+      if (isTaken) {
         return 'Username is already taken';
       }
+
       return null;
     },
     [existingUsernames]
@@ -63,15 +72,16 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
 
   const validatePassword = useCallback(
     (value: string) => {
-      if (passwordOptional && !value) {
-        return null;
+      const trimmed = value.trim();
+
+      if (!trimmed) {
+        return passwordOptional ? null : 'Password is required';
       }
-      if (!value) {
-        return null;
-      }
-      if (value.length < 5) {
+
+      if (trimmed.length < 5) {
         return 'Password must be at least 5 characters long';
       }
+
       return null;
     },
     [passwordOptional]
@@ -83,11 +93,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   }, [username, validateUsername]);
 
   useEffect(() => {
-    if (showPasswordFields) {
+    if (showPasswordFields && passwordTouched) {
       const error = validatePassword(password);
       setPasswordError(error);
+    } else {
+      setPasswordError(null);
     }
-  }, [password, showPasswordFields, validatePassword]);
+  }, [password, showPasswordFields, passwordTouched, validatePassword]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -106,6 +118,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   useEffect(() => {
     if (!isOpen) {
       setFormSubmitted(false);
+      setPasswordTouched(false);
     }
   }, [isOpen]);
 
@@ -128,18 +141,23 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   }, [isOpen]);
 
   const validateForm = () => {
-    if (!username.trim()) {
+    const trimmedUsername = username.trim();
+    const normalized = trimmedUsername.toLowerCase();
+
+    if (!trimmedUsername) {
       return { isValid: false, error: 'Username is required' };
     }
     // Check format first
-    if (!/^[a-zA-Z0-9_-]+$/.test(username.trim())) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
       return {
         isValid: false,
         error: 'Username can only contain letters, numbers, underscore, and hyphen',
       };
     }
     // Check for duplicate username
-    if (existingUsernames.includes(username.trim())) {
+    const isTaken = existingUsernames.some(existing => existing.toLowerCase() === normalized);
+
+    if (isTaken) {
       return {
         isValid: false,
         error: 'Username is already taken',
@@ -148,19 +166,25 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     if (showPasswordFields) {
       // For Add User mode: password is required
       if (!passwordOptional) {
-        if (!password) {
+        const trimmedPassword = password.trim();
+        const trimmedConfirm = confirmPassword.trim();
+
+        if (!trimmedPassword) {
           return { isValid: false, error: 'Password is required' };
         }
 
-        if (password !== confirmPassword) {
+        if (trimmedPassword !== trimmedConfirm) {
           return { isValid: false, error: 'Passwords do not match' };
         }
       }
       // For Edit User mode: password is optional, but if provided, must match
       else {
         // If user provides password in edit mode, both fields must match
-        if (password || confirmPassword) {
-          if (password !== confirmPassword) {
+        const trimmedPassword = password.trim();
+        const trimmedConfirm = confirmPassword.trim();
+
+        if (trimmedPassword || trimmedConfirm) {
+          if (trimmedPassword !== trimmedConfirm) {
             return { isValid: false, error: 'Passwords do not match' };
           }
         }
@@ -353,7 +377,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         type={showPassword ? 'text' : 'password'}
                         id="password"
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
+                        onChange={e => {
+                          if (!passwordTouched) {
+                            setPasswordTouched(true);
+                          }
+                          // Trim spaces so leading/trailing spaces are not stored or sent
+                          setPassword(e.target.value.trim());
+                        }}
                         className={`w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
                           passwordError
                             ? 'border-red-500 focus:ring-red-500'
@@ -433,7 +463,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         type={showConfirmPassword ? 'text' : 'password'}
                         id="confirmPassword"
                         value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
+                        onChange={e => setConfirmPassword(e.target.value.trim())}
                         className="w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         style={{
                           background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(255, 255, 255, 0.8)',
@@ -637,12 +667,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                 )}
               </div>
 
-              <div
-                className="sticky bottom-0 mt-6 flex justify-end gap-3 bg-opacity-80 pt-2 backdrop-blur-sm"
-                style={{
-                  background: isDark ? 'rgba(17, 24, 39, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-                }}
-              >
+              <div className="mt-6 flex justify-end gap-3">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
