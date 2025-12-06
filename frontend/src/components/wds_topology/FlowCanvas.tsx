@@ -325,17 +325,6 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         /* Keep edges visible and interactive */
         .react-flow__edge {
           pointer-events: all !important;
-          opacity: 0;
-          animation: fadeInEdge 0.3s ease-in forwards;
-        }
-        
-        @keyframes fadeInEdge {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
         }
 
         /* Ensure edge paths remain visible */
