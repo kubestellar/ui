@@ -280,9 +280,9 @@ const getLayoutedElements = (
   const newNodes: CustomNode[] = [];
 
   // recalculate only if node count changes significantly or if this is first render
-  const shouldRecalculate = prevNodes.current.length === 0 || 
-    Math.abs(nodes.length - prevNodes.current.length) > 0;
-  
+  const shouldRecalculate =
+    prevNodes.current.length === 0 || Math.abs(nodes.length - prevNodes.current.length) > 0;
+
   if (!shouldRecalculate) {
     prevNodes.current.forEach(node => nodeMap.set(node.id, node));
   }
@@ -568,7 +568,7 @@ const WecsTreeview = () => {
   const updateNodeStyles = useCallback(() => {
     setNodes(currentNodes => {
       if (currentNodes.length === 0) return currentNodes;
-      
+
       return currentNodes.map(node => {
         return {
           ...node,
@@ -860,7 +860,7 @@ const WecsTreeview = () => {
         setIsTransforming(false);
         return;
       }
-      
+
       requestAnimationFrame(async () => {
         const clusterTimestampMap = await fetchAllClusterTimestamps(data);
 
@@ -871,196 +871,222 @@ const WecsTreeview = () => {
         const newNodes: CustomNode[] = [];
         const newEdges: CustomEdge[] = [];
 
-      if (!stateRef.current.isExpanded) {
-        data.forEach(cluster => {
-          const clusterId = `cluster:${cluster.cluster}`;
-          const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
+        if (!stateRef.current.isExpanded) {
+          data.forEach(cluster => {
+            const clusterId = `cluster:${cluster.cluster}`;
+            const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
 
-          createNode(
-            clusterId,
-            cluster.cluster,
-            'cluster',
-            'Active',
-            timestamp,
-            undefined,
-            {
-              apiVersion: 'v1',
-              kind: 'Cluster',
-              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
-              status: { phase: 'Active' },
-            },
-            null,
-            newNodes,
-            newEdges
-          );
-        });
-      } else {
-        data.forEach(cluster => {
-          const clusterId = `cluster:${cluster.cluster}`;
-          const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
+            createNode(
+              clusterId,
+              cluster.cluster,
+              'cluster',
+              'Active',
+              timestamp,
+              undefined,
+              {
+                apiVersion: 'v1',
+                kind: 'Cluster',
+                metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
+                status: { phase: 'Active' },
+              },
+              null,
+              newNodes,
+              newEdges
+            );
+          });
+        } else {
+          data.forEach(cluster => {
+            const clusterId = `cluster:${cluster.cluster}`;
+            const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
 
-          createNode(
-            clusterId,
-            cluster.cluster,
-            'cluster',
-            'Active',
-            timestamp,
-            undefined,
-            {
-              apiVersion: 'v1',
-              kind: 'Cluster',
-              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
-              status: { phase: 'Active' },
-            },
-            null,
-            newNodes,
-            newEdges
-          );
+            createNode(
+              clusterId,
+              cluster.cluster,
+              'cluster',
+              'Active',
+              timestamp,
+              undefined,
+              {
+                apiVersion: 'v1',
+                kind: 'Cluster',
+                metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
+                status: { phase: 'Active' },
+              },
+              null,
+              newNodes,
+              newEdges
+            );
 
-          if (cluster.namespaces && Array.isArray(cluster.namespaces)) {
-            cluster.namespaces.forEach(namespace => {
-              const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
-              createNode(
-                namespaceId,
-                namespace.namespace,
-                'namespace',
-                'Active',
-                '',
-                namespace.namespace,
-                {
-                  apiVersion: 'v1',
-                  kind: 'Namespace',
-                  metadata: {
-                    name: namespace.namespace,
-                    namespace: namespace.namespace,
-                    creationTimestamp: '',
+            if (cluster.namespaces && Array.isArray(cluster.namespaces)) {
+              cluster.namespaces.forEach(namespace => {
+                const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
+                createNode(
+                  namespaceId,
+                  namespace.namespace,
+                  'namespace',
+                  'Active',
+                  '',
+                  namespace.namespace,
+                  {
+                    apiVersion: 'v1',
+                    kind: 'Namespace',
+                    metadata: {
+                      name: namespace.namespace,
+                      namespace: namespace.namespace,
+                      creationTimestamp: '',
+                    },
+                    status: { phase: 'Active' },
                   },
-                  status: { phase: 'Active' },
-                },
-                clusterId,
-                newNodes,
-                newEdges
-              );
+                  clusterId,
+                  newNodes,
+                  newEdges
+                );
 
-              if (namespace.resourceTypes && Array.isArray(namespace.resourceTypes)) {
-                if (stateRef.current.isCollapsed) {
-                  const resourceGroups: Record<string, ResourceItem[]> = {};
+                if (namespace.resourceTypes && Array.isArray(namespace.resourceTypes)) {
+                  if (stateRef.current.isCollapsed) {
+                    const resourceGroups: Record<string, ResourceItem[]> = {};
 
-                  namespace.resourceTypes.forEach(resourceType => {
-                    // Skip Event type resources
-                    if (resourceType.kind.toLowerCase() === 'event') return;
+                    namespace.resourceTypes.forEach(resourceType => {
+                      // Skip Event type resources
+                      if (resourceType.kind.toLowerCase() === 'event') return;
 
-                    resourceType.resources.forEach(resource => {
-                      const kindLower = resourceType.kind.toLowerCase();
-                      if (!resourceGroups[kindLower]) {
-                        resourceGroups[kindLower] = [];
-                      }
-                      resourceGroups[kindLower].push(resource.raw);
-                    });
-                  });
-
-                  Object.entries(resourceGroups).forEach(([kindLower, items]) => {
-                    const count = items.length;
-                    const groupId = `ns:${cluster.cluster}:${namespace.namespace}:${kindLower}:group`;
-                    const status = items.some(item => item.status?.phase === 'Running')
-                      ? 'Active'
-                      : 'Inactive';
-                    const label = `${count} ${kindLower}${count !== 1 ? 's' : ''}`;
-
-                    createNode(
-                      groupId,
-                      label,
-                      kindLower,
-                      status,
-                      items[0]?.metadata.creationTimestamp,
-                      namespace.namespace,
-                      items[0],
-                      namespaceId,
-                      newNodes,
-                      newEdges
-                    );
-                  });
-                } else {
-                  // Process all resource types for the expanded view
-                  // First collect all ReplicaSet names that are children of deployments
-                  const childReplicaSets = new Set<string>();
-
-                  namespace.resourceTypes.forEach(resourceType => {
-                    if (resourceType.kind.toLowerCase() === 'deployment') {
                       resourceType.resources.forEach(resource => {
-                        if (
-                          resource &&
-                          resource.replicaSets &&
-                          Array.isArray(resource.replicaSets)
-                        ) {
-                          resource.replicaSets.forEach(rs => {
-                            if (rs && rs.name) {
-                              childReplicaSets.add(rs.name);
-                            }
-                          });
+                        const kindLower = resourceType.kind.toLowerCase();
+                        if (!resourceGroups[kindLower]) {
+                          resourceGroups[kindLower] = [];
                         }
+                        resourceGroups[kindLower].push(resource.raw);
                       });
-                    }
-                  });
+                    });
 
-                  // Now process all resources while filtering ReplicaSets that are children
-                  namespace.resourceTypes.forEach(resourceType => {
-                    // Skip Event type resources
-                    if (resourceType.kind.toLowerCase() === 'event') return;
+                    Object.entries(resourceGroups).forEach(([kindLower, items]) => {
+                      const count = items.length;
+                      const groupId = `ns:${cluster.cluster}:${namespace.namespace}:${kindLower}:group`;
+                      const status = items.some(item => item.status?.phase === 'Running')
+                        ? 'Active'
+                        : 'Inactive';
+                      const label = `${count} ${kindLower}${count !== 1 ? 's' : ''}`;
 
-                    const kindLower = resourceType.kind.toLowerCase();
-
-                    resourceType.resources.forEach((resource, index) => {
-                      if (!resource || typeof resource !== 'object' || !resource.raw) return;
-                      const rawResource = resource.raw;
-                      if (
-                        !rawResource.metadata ||
-                        typeof rawResource.metadata !== 'object' ||
-                        !rawResource.metadata.name
-                      )
-                        return;
-
-                      // Skip ReplicaSets that are already children of Deployments
-                      if (
-                        kindLower === 'replicaset' &&
-                        childReplicaSets.has(rawResource.metadata.name)
-                      ) {
-                        return;
-                      }
-
-                      const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
-                      const status = rawResource.status?.phase || 'Active';
                       createNode(
-                        resourceId,
-                        rawResource.metadata.name,
+                        groupId,
+                        label,
                         kindLower,
                         status,
-                        rawResource.metadata.creationTimestamp,
+                        items[0]?.metadata.creationTimestamp,
                         namespace.namespace,
-                        rawResource,
+                        items[0],
                         namespaceId,
                         newNodes,
                         newEdges
                       );
+                    });
+                  } else {
+                    // Process all resource types for the expanded view
+                    // First collect all ReplicaSet names that are children of deployments
+                    const childReplicaSets = new Set<string>();
 
-                      if (kindLower === 'deployment' && rawResource.spec) {
-                        if (resource.replicaSets && Array.isArray(resource.replicaSets)) {
-                          resource.replicaSets.forEach((rs, rsIndex) => {
-                            const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rs.name}:${rsIndex}`;
-                            createNode(
-                              replicaSetId,
-                              rs.name,
-                              'replicaset',
-                              rs.raw.status?.phase || status,
-                              rs.raw.metadata.creationTimestamp,
-                              namespace.namespace,
-                              rs.raw,
-                              resourceId,
-                              newNodes,
-                              newEdges
-                            );
-                            if (rs.pods && Array.isArray(rs.pods)) {
-                              rs.pods.forEach((pod, podIndex) => {
+                    namespace.resourceTypes.forEach(resourceType => {
+                      if (resourceType.kind.toLowerCase() === 'deployment') {
+                        resourceType.resources.forEach(resource => {
+                          if (
+                            resource &&
+                            resource.replicaSets &&
+                            Array.isArray(resource.replicaSets)
+                          ) {
+                            resource.replicaSets.forEach(rs => {
+                              if (rs && rs.name) {
+                                childReplicaSets.add(rs.name);
+                              }
+                            });
+                          }
+                        });
+                      }
+                    });
+
+                    // Now process all resources while filtering ReplicaSets that are children
+                    namespace.resourceTypes.forEach(resourceType => {
+                      // Skip Event type resources
+                      if (resourceType.kind.toLowerCase() === 'event') return;
+
+                      const kindLower = resourceType.kind.toLowerCase();
+
+                      resourceType.resources.forEach((resource, index) => {
+                        if (!resource || typeof resource !== 'object' || !resource.raw) return;
+                        const rawResource = resource.raw;
+                        if (
+                          !rawResource.metadata ||
+                          typeof rawResource.metadata !== 'object' ||
+                          !rawResource.metadata.name
+                        )
+                          return;
+
+                        // Skip ReplicaSets that are already children of Deployments
+                        if (
+                          kindLower === 'replicaset' &&
+                          childReplicaSets.has(rawResource.metadata.name)
+                        ) {
+                          return;
+                        }
+
+                        const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
+                        const status = rawResource.status?.phase || 'Active';
+                        createNode(
+                          resourceId,
+                          rawResource.metadata.name,
+                          kindLower,
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          rawResource,
+                          namespaceId,
+                          newNodes,
+                          newEdges
+                        );
+
+                        if (kindLower === 'deployment' && rawResource.spec) {
+                          if (resource.replicaSets && Array.isArray(resource.replicaSets)) {
+                            resource.replicaSets.forEach((rs, rsIndex) => {
+                              const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rs.name}:${rsIndex}`;
+                              createNode(
+                                replicaSetId,
+                                rs.name,
+                                'replicaset',
+                                rs.raw.status?.phase || status,
+                                rs.raw.metadata.creationTimestamp,
+                                namespace.namespace,
+                                rs.raw,
+                                resourceId,
+                                newNodes,
+                                newEdges
+                              );
+                              if (rs.pods && Array.isArray(rs.pods)) {
+                                rs.pods.forEach((pod, podIndex) => {
+                                  const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                                  createNode(
+                                    podId,
+                                    pod.name,
+                                    'pod',
+                                    pod.raw.status?.phase || status,
+                                    pod.raw.metadata.creationTimestamp,
+                                    namespace.namespace,
+                                    pod.raw,
+                                    replicaSetId,
+                                    newNodes,
+                                    newEdges
+                                  );
+                                });
+                              }
+                            });
+                          }
+                        } else if (kindLower === 'replicaset' && rawResource.spec) {
+                          if (
+                            resource.replicaSets &&
+                            Array.isArray(resource.replicaSets) &&
+                            resource.replicaSets.length > 0
+                          ) {
+                            const pods = resource.replicaSets[0].pods;
+                            if (pods && Array.isArray(pods)) {
+                              pods.forEach((pod, podIndex) => {
                                 const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                                 createNode(
                                   podId,
@@ -1070,23 +1096,17 @@ const WecsTreeview = () => {
                                   pod.raw.metadata.creationTimestamp,
                                   namespace.namespace,
                                   pod.raw,
-                                  replicaSetId,
+                                  resourceId,
                                   newNodes,
                                   newEdges
                                 );
                               });
                             }
-                          });
-                        }
-                      } else if (kindLower === 'replicaset' && rawResource.spec) {
-                        if (
-                          resource.replicaSets &&
-                          Array.isArray(resource.replicaSets) &&
-                          resource.replicaSets.length > 0
-                        ) {
-                          const pods = resource.replicaSets[0].pods;
-                          if (pods && Array.isArray(pods)) {
-                            pods.forEach((pod, podIndex) => {
+                          }
+                        } else if (kindLower === 'statefulset' && rawResource.spec) {
+                          // Display actual pods from the data
+                          if (resource.pods && Array.isArray(resource.pods)) {
+                            resource.pods.forEach((pod, podIndex) => {
                               const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                               createNode(
                                 podId,
@@ -1102,162 +1122,142 @@ const WecsTreeview = () => {
                               );
                             });
                           }
+                        } else if (kindLower === 'daemonset' && rawResource.spec) {
+                          // Display actual pods from the data
+                          if (resource.pods && Array.isArray(resource.pods)) {
+                            resource.pods.forEach((pod, podIndex) => {
+                              const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                              createNode(
+                                podId,
+                                pod.name,
+                                'pod',
+                                pod.raw.status?.phase || status,
+                                pod.raw.metadata.creationTimestamp,
+                                namespace.namespace,
+                                pod.raw,
+                                resourceId,
+                                newNodes,
+                                newEdges
+                              );
+                            });
+                          }
+                        } else if (kindLower === 'replicationcontroller' && rawResource.spec) {
+                          // Display actual pods from the data
+                          if (resource.pods && Array.isArray(resource.pods)) {
+                            resource.pods.forEach((pod, podIndex) => {
+                              const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                              createNode(
+                                podId,
+                                pod.name,
+                                'pod',
+                                pod.raw.status?.phase || status,
+                                pod.raw.metadata.creationTimestamp,
+                                namespace.namespace,
+                                pod.raw,
+                                resourceId,
+                                newNodes,
+                                newEdges
+                              );
+                            });
+                          }
+                        } else if (kindLower === 'cronjob' && rawResource.spec) {
+                          // Display actual jobs and pods from the data if they exist
+                          // No hardcoding
+                        } else if (kindLower === 'job' && rawResource.spec) {
+                          // Display actual pods from the data
+                          if (resource.pods && Array.isArray(resource.pods)) {
+                            resource.pods.forEach((pod, podIndex) => {
+                              const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                              createNode(
+                                podId,
+                                pod.name,
+                                'pod',
+                                pod.raw.status?.phase || status,
+                                pod.raw.metadata.creationTimestamp,
+                                namespace.namespace,
+                                pod.raw,
+                                resourceId,
+                                newNodes,
+                                newEdges
+                              );
+                            });
+                          }
+                        } else if (kindLower === 'service' && rawResource.spec) {
+                          // Create Endpoints node for the Service
+                          createNode(
+                            `${resourceId}:endpoints`,
+                            `endpoints-${rawResource.metadata.name}`,
+                            'endpoints',
+                            status,
+                            undefined,
+                            namespace.namespace,
+                            rawResource,
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        } else if (kindLower === 'ingress' && rawResource.spec) {
+                          // Only show the Ingress without creating services automatically
+                          // Services will be shown if they exist in the actual data
+                        } else if (kindLower === 'configmap') {
+                          // Create Volume nodes for ConfigMap
+                          createNode(
+                            `${resourceId}:volume`,
+                            `volume-${rawResource.metadata.name}`,
+                            'volume',
+                            status || 'Unknown',
+                            undefined,
+                            namespace.namespace,
+                            rawResource,
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        } else if (kindLower === 'secret') {
+                          createNode(
+                            `${resourceId}:envvar`,
+                            `envvar-${rawResource.metadata.name}`,
+                            'envvar',
+                            status,
+                            undefined,
+                            namespace.namespace,
+                            rawResource,
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        } else if (kindLower === 'persistentvolumeclaim' && rawResource.spec) {
+                          // Only show the PVC without creating a PV automatically
+                        } else if (kindLower === 'storageclass' && rawResource.spec) {
+                          // Only show the StorageClass without creating a PV automatically
+                        } else if (kindLower === 'horizontalpodautoscaler' && rawResource.spec) {
+                          // Only show the HPA without creating target resources automatically
+                          // Target resources will be shown if they exist in the actual data
+                        } else if (kindLower === 'rolebinding' && rawResource.roleRef) {
+                          // Only show the RoleBinding without creating roles automatically
+                          // Roles will be shown if they exist in the actual data
+                        } else if (kindLower === 'clusterrolebinding' && rawResource.roleRef) {
+                          // Only show the ClusterRoleBinding without creating cluster roles automatically
+                          // ClusterRoles will be shown if they exist in the actual data
+                        } else if (kindLower === 'poddisruptionbudget' && rawResource.spec) {
+                          // Intentionally empty
+                        } else if (kindLower === 'networkpolicy' && rawResource.spec) {
+                          // Intentionally empty
+                        } else if (
+                          kindLower === 'ingressclass' ||
+                          kindLower === 'mutatingwebhookconfiguration' ||
+                          kindLower === 'validatingwebhookconfiguration'
+                        ) {
+                          // Intentionally empty
                         }
-                      } else if (kindLower === 'statefulset' && rawResource.spec) {
-                        // Display actual pods from the data
-                        if (resource.pods && Array.isArray(resource.pods)) {
-                          resource.pods.forEach((pod, podIndex) => {
-                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                            createNode(
-                              podId,
-                              pod.name,
-                              'pod',
-                              pod.raw.status?.phase || status,
-                              pod.raw.metadata.creationTimestamp,
-                              namespace.namespace,
-                              pod.raw,
-                              resourceId,
-                              newNodes,
-                              newEdges
-                            );
-                          });
-                        }
-                      } else if (kindLower === 'daemonset' && rawResource.spec) {
-                        // Display actual pods from the data
-                        if (resource.pods && Array.isArray(resource.pods)) {
-                          resource.pods.forEach((pod, podIndex) => {
-                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                            createNode(
-                              podId,
-                              pod.name,
-                              'pod',
-                              pod.raw.status?.phase || status,
-                              pod.raw.metadata.creationTimestamp,
-                              namespace.namespace,
-                              pod.raw,
-                              resourceId,
-                              newNodes,
-                              newEdges
-                            );
-                          });
-                        }
-                      } else if (kindLower === 'replicationcontroller' && rawResource.spec) {
-                        // Display actual pods from the data
-                        if (resource.pods && Array.isArray(resource.pods)) {
-                          resource.pods.forEach((pod, podIndex) => {
-                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                            createNode(
-                              podId,
-                              pod.name,
-                              'pod',
-                              pod.raw.status?.phase || status,
-                              pod.raw.metadata.creationTimestamp,
-                              namespace.namespace,
-                              pod.raw,
-                              resourceId,
-                              newNodes,
-                              newEdges
-                            );
-                          });
-                        }
-                      } else if (kindLower === 'cronjob' && rawResource.spec) {
-                        // Display actual jobs and pods from the data if they exist
-                        // No hardcoding
-                      } else if (kindLower === 'job' && rawResource.spec) {
-                        // Display actual pods from the data
-                        if (resource.pods && Array.isArray(resource.pods)) {
-                          resource.pods.forEach((pod, podIndex) => {
-                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                            createNode(
-                              podId,
-                              pod.name,
-                              'pod',
-                              pod.raw.status?.phase || status,
-                              pod.raw.metadata.creationTimestamp,
-                              namespace.namespace,
-                              pod.raw,
-                              resourceId,
-                              newNodes,
-                              newEdges
-                            );
-                          });
-                        }
-                      } else if (kindLower === 'service' && rawResource.spec) {
-                        // Create Endpoints node for the Service
-                        createNode(
-                          `${resourceId}:endpoints`,
-                          `endpoints-${rawResource.metadata.name}`,
-                          'endpoints',
-                          status,
-                          undefined,
-                          namespace.namespace,
-                          rawResource,
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
-                      } else if (kindLower === 'ingress' && rawResource.spec) {
-                        // Only show the Ingress without creating services automatically
-                        // Services will be shown if they exist in the actual data
-                      } else if (kindLower === 'configmap') {
-                        // Create Volume nodes for ConfigMap
-                        createNode(
-                          `${resourceId}:volume`,
-                          `volume-${rawResource.metadata.name}`,
-                          'volume',
-                          status || 'Unknown',
-                          undefined,
-                          namespace.namespace,
-                          rawResource,
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
-                      } else if (kindLower === 'secret') {
-                        createNode(
-                          `${resourceId}:envvar`,
-                          `envvar-${rawResource.metadata.name}`,
-                          'envvar',
-                          status,
-                          undefined,
-                          namespace.namespace,
-                          rawResource,
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
-                      } else if (kindLower === 'persistentvolumeclaim' && rawResource.spec) {
-                        // Only show the PVC without creating a PV automatically
-                      } else if (kindLower === 'storageclass' && rawResource.spec) {
-                        // Only show the StorageClass without creating a PV automatically
-                      } else if (kindLower === 'horizontalpodautoscaler' && rawResource.spec) {
-                        // Only show the HPA without creating target resources automatically
-                        // Target resources will be shown if they exist in the actual data
-                      } else if (kindLower === 'rolebinding' && rawResource.roleRef) {
-                        // Only show the RoleBinding without creating roles automatically
-                        // Roles will be shown if they exist in the actual data
-                      } else if (kindLower === 'clusterrolebinding' && rawResource.roleRef) {
-                        // Only show the ClusterRoleBinding without creating cluster roles automatically
-                        // ClusterRoles will be shown if they exist in the actual data
-                      } else if (kindLower === 'poddisruptionbudget' && rawResource.spec) {
-                        // Intentionally empty
-                      } else if (kindLower === 'networkpolicy' && rawResource.spec) {
-                        // Intentionally empty
-                      } else if (
-                        kindLower === 'ingressclass' ||
-                        kindLower === 'mutatingwebhookconfiguration' ||
-                        kindLower === 'validatingwebhookconfiguration'
-                      ) {
-                        // Intentionally empty
-                      }
+                      });
                     });
-                  });
+                  }
                 }
-              }
-            });
-          }
-        });
-      }
+              });
+            }
+          });
+        }
 
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
           newNodes,
@@ -1265,7 +1265,7 @@ const WecsTreeview = () => {
           'LR',
           prevNodes
         );
-        
+
         if (!isEqual(nodes, layoutedNodes)) {
           setNodes(layoutedNodes);
           requestAnimationFrame(() => {
@@ -1274,7 +1274,7 @@ const WecsTreeview = () => {
         } else if (!isEqual(edges, layoutedEdges)) {
           setEdges(layoutedEdges);
         }
-        
+
         prevNodes.current = layoutedNodes;
         setIsTransforming(false);
       });
@@ -1290,7 +1290,7 @@ const WecsTreeview = () => {
     if (nodes.length === 0) return [];
     return nodes;
   }, [nodes]);
-  
+
   const memoizedEdges = useMemo(() => {
     if (edges.length === 0) return [];
     return edges;
