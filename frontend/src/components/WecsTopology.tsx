@@ -573,7 +573,7 @@ const WecsTreeview = () => {
         return {
           ...node,
           style: {
-            ...getScaledNodeStyle(currentZoom),
+            ...node.style,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -585,11 +585,23 @@ const WecsTreeview = () => {
         };
       });
     });
-  }, [currentZoom, theme, getScaledNodeStyle]);
+  }, [theme]);
 
   useEffect(() => {
     updateNodeStyles();
   }, [updateNodeStyles]);
+
+  // Update edge types when edgeType changes
+  useEffect(() => {
+    if (edges.length > 0) {
+      setEdges(currentEdges =>
+        currentEdges.map(edge => ({
+          ...edge,
+          type: edgeType,
+        }))
+      );
+    }
+  }, [edgeType]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -741,6 +753,21 @@ const WecsTreeview = () => {
         ].includes(parentType);
       }
 
+      // Fixed node styles
+      const nodeStyle = {
+        padding: '2px 12px',
+        fontSize: '6px',
+        width: '146px',
+        height: '30px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
+        color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+        border: '1px solid rgba(0, 0, 0, 0)',
+        transition: 'all 0.2s ease-in-out',
+      };
+
       const node =
         cachedNode ||
         ({
@@ -788,31 +815,13 @@ const WecsTreeview = () => {
             isDeploymentOrJobPod,
           },
           position: { x: 0, y: 0 },
-          style: {
-            ...getScaledNodeStyle(currentZoom),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
-            color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
-            border: '1px solid rgba(0, 0, 0, 0)',
-            transition: 'all 0.2s ease-in-out',
-          },
+          style: nodeStyle,
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
         } as CustomNode);
 
       if (cachedNode) {
-        node.style = {
-          ...getScaledNodeStyle(currentZoom),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
-          color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
-          border: '1px solid rgba(0, 0, 0, 0)',
-          transition: 'all 0.2s ease-in-out',
-        };
+        node.style = nodeStyle;
       }
 
       if (!cachedNode) nodeCache.current.set(id, node);
@@ -845,11 +854,15 @@ const WecsTreeview = () => {
             height: 12,
             color: theme === 'dark' ? '#64748b' : '#94a3b8',
           },
+          data: {
+            status: 'default' as 'default' | 'active' | 'success' | 'warning' | 'error',
+            animated: true,
+          },
         };
         newEdges.push(edge);
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, currentZoom, getScaledNodeStyle, edgeType]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, edgeType]
   );
 
   const transformDataToTree = useCallback(
@@ -1279,22 +1292,17 @@ const WecsTreeview = () => {
         setIsTransforming(false);
       });
     },
-    [createNode, fetchAllClusterTimestamps, edgeType]
+    [createNode, fetchAllClusterTimestamps]
   );
 
   // Memoize the data processing to avoid unnecessary re-renders
   const memoizedWecsData = useMemo(() => wecsData, [wecsData]);
 
-  // Memoize node and edge rendering to prevent unnecessary re-renders
+  // Memoize node rendering to prevent unnecessary re-renders
   const memoizedNodes = useMemo(() => {
     if (nodes.length === 0) return [];
     return nodes;
   }, [nodes]);
-
-  const memoizedEdges = useMemo(() => {
-    if (edges.length === 0) return [];
-    return edges;
-  }, [edges]);
 
   useEffect(() => {
     if (memoizedWecsData !== null && !isEqual(memoizedWecsData, prevWecsData.current)) {
@@ -1629,7 +1637,7 @@ const WecsTreeview = () => {
               <ReactFlowProvider>
                 <FlowCanvas
                   nodes={memoizedNodes}
-                  edges={memoizedEdges}
+                  edges={edges}
                   renderStartTime={renderStartTime}
                   theme={theme}
                 />
