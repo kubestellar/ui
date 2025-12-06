@@ -91,21 +91,13 @@ export const ZoomControls = memo<ZoomControlsProps>(
     // Calculate sizes based on scale factor to maintain proportions
     const controlSizes = useMemo(
       () => ({
-        // Button sizes scale proportionally (base: 36px at 700px container)
         buttonSize: Math.round(36 * scaleFactor),
-        // Gaps scale proportionally (base: 0.7 at 800px viewport)
         panelGap: Math.max(0.3, Math.min(1.2, 0.7 * scaleFactor)),
-        // Padding scales proportionally using calc
         panelPadding: `${Math.round(6 * scaleFactor)}px ${Math.round(6 * scaleFactor)}px ${Math.round(6 * scaleFactor)}px`,
-        // Separator width scales proportionally (base: 26px)
         separatorWidth: `${Math.round(26 * scaleFactor)}px`,
-        // Typography padding scales proportionally
         typographyPadding: `${Math.round(5 * scaleFactor)}px ${Math.round(8 * scaleFactor)}px`,
-        // Font size uses clamp for smooth scaling
         typographyFontSize: `clamp(9px, ${10 * scaleFactor}px, 14px)`,
-        // Toggle height scales proportionally (base: 34px)
         toggleHeight: Math.round(34 * scaleFactor),
-        // Icon font size scales with button size
         iconFontSize: (scaleFactor < 0.85 ? 'small' : scaleFactor > 1.2 ? 'medium' : 'small') as
           | 'inherit'
           | 'large'
