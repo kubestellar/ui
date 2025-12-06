@@ -75,7 +75,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
       const element = panelRef.current?.parentElement ?? panelRef.current;
       if (!element) return;
 
-      // Measure container height once on mount to avoid continuous resizes causing lag.
       const height = element.clientHeight || 800;
       setContainerHeight(height);
     }, []);
@@ -88,7 +87,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
       return calculatedScale;
     }, [containerHeight]);
 
-    // Calculate sizes based on scale factor to maintain proportions
     const controlSizes = useMemo(
       () => ({
         buttonSize: Math.round(36 * scaleFactor),
@@ -138,7 +136,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
     }, []);
 
     useEffect(() => {
-      // Try to use ReactFlow's event system if available, otherwise fall back to RAF
       const rfInstance = rf as typeof rf & {
         on?: (
           event: string,
@@ -169,7 +166,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
           }
         };
       } else {
-        // Fallback to requestAnimationFrame for efficient updates
         let rafId: number | null = null;
         let lastZoom = rf.getZoom();
         let isCancelled = false;
@@ -297,10 +293,10 @@ export const ZoomControls = memo<ZoomControlsProps>(
           backdropFilter: 'blur(10px)',
           willChange: hoveredButton === buttonId || isActive ? 'transform' : 'auto', // Optimize for animations
           '&:focus': {
-            outline: 'none', // Remove outline for mouse clicks
+            outline: 'none',
           },
           '&:focus-visible': {
-            outline: '2px solid #2563eb', // Show outline for keyboard navigation
+            outline: '2px solid #2563eb',
             outlineOffset: '2px',
           },
           '&:hover': {
@@ -356,8 +352,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
           animation: `${bounceIn} 0.6s ease-out`,
           width: 'fit-content',
           zIndex: 5,
-          // Keep the panel fully visible within the viewport (even up to ~125% zoom)
-          // while still allowing scrolling if the content is taller.
+
           maxHeight: 'calc(100vh - 40px)',
           maxWidth: 'calc(100vw - 40px)',
           overflowY: 'auto',
@@ -713,7 +708,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
             sx={{
               ...getButtonStyles('toggleControls', !showControls),
               pointerEvents: 'auto',
-              // Only remove outline for mouse users, keep visible outline for keyboard users
               '&:focus': {
                 outline: 'none',
               },
