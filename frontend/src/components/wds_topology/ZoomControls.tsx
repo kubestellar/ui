@@ -325,8 +325,8 @@ export const ZoomControls = memo<ZoomControlsProps>(
         ref={panelRef}
         sx={{
           position: 'absolute',
-          top: 20,
-          right: 20,
+          top: 'clamp(10px, 20px, 2vh)',
+          right: 'clamp(10px, 20px, 2vw)',
           left: 'auto',
           bottom: 'auto',
           display: 'flex',
@@ -351,14 +351,22 @@ export const ZoomControls = memo<ZoomControlsProps>(
               : '1px solid rgba(148, 163, 184, 0.2)',
           animation: `${bounceIn} 0.6s ease-out`,
           width: 'fit-content',
+          minWidth: 'fit-content',
+          maxWidth: 'calc(100vw - clamp(20px, 40px, 4vw))',
           zIndex: 5,
-
-          maxHeight: 'calc(100vh - 40px)',
-          maxWidth: 'calc(100vw - 40px)',
+          maxHeight: 'calc(100vh - clamp(20px, 40px, 4vh))',
           overflowY: 'auto',
           overflowX: 'hidden',
           overscrollBehavior: 'contain',
           pointerEvents: 'auto',
+          transform: 'translateZ(0)',
+          willChange: 'auto',
+          boxSizing: 'border-box',
+          '@media (max-width: 600px)': {
+            right: 'clamp(5px, 10px, 1vw)',
+            maxWidth: 'calc(100vw - clamp(10px, 20px, 2vw))',
+          },
+          contain: 'layout style paint',
         }}
       >
         {/* Group/Collapse Controls */}
