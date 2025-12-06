@@ -44,7 +44,6 @@ import { isEqual } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
-import useZoomStore from '../stores/zoomStore';
 import WecsDetailsPanel from './wecs_details/WecsDetailsPanel';
 import { FlowCanvas } from './wds_topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
@@ -535,7 +534,6 @@ const getLayoutedElements = (
 const WecsTreeview = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
-  const { currentZoom, getScaledNodeStyle } = useZoomStore();
   const { edgeType } = useEdgeTypeStore();
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
