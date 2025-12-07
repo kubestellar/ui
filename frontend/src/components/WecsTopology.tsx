@@ -262,8 +262,8 @@ const getLayoutedElements = (
   // Use fixed layout values - let ReactFlow handle zoom visually
   const NODE_WIDTH = 146;
   const NODE_HEIGHT = 30;
-  const NODE_SEP = 40;
-  const RANK_SEP = 100;
+  const NODE_SEP = 60;
+  const RANK_SEP = 150;
   const CHILD_SPACING = NODE_HEIGHT + 30;
 
   if (nodes.length === 0) {
