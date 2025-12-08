@@ -44,7 +44,7 @@ interface QuickConnectProps {
     message: string;
     severity: 'success' | 'error' | 'warning' | 'info';
   }) => void;
-  successAlertRef: RefObject<HTMLDivElement>;
+  successAlertRef: RefObject<HTMLDivElement | null>;
   setManualCommand: (command: CommandResponse | null) => void;
   showLogs: boolean;
   setShowLogs: (show: boolean) => void;
@@ -400,7 +400,7 @@ const SuccessView: React.FC<{
   textColor: string;
   manualCommand: CommandResponse;
   cardStyle: SxProps<Theme>;
-  successAlertRef: RefObject<HTMLDivElement>;
+  successAlertRef: RefObject<HTMLDivElement | null>;
   onCancel: () => void;
   clearManualCommand: () => void;
   primaryButtonStyles: SxProps<Theme>;

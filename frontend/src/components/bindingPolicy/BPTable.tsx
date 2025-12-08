@@ -45,7 +45,7 @@ const BPTable: React.FC<BPTableProps> = ({
   setActiveFilters,
   selectedPolicies,
   onSelectionChange,
-}): JSX.Element => {
+}) => {
   // Add debug log to see the policies structure
   console.log('BPTable - Received Policies:', policies);
 

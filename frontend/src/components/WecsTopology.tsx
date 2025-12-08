@@ -52,43 +52,6 @@ import { api } from '../lib/api';
 import useEdgeTypeStore from '../stores/edgeTypeStore';
 
 // Updated Interfaces
-export interface NodeData {
-  label: JSX.Element;
-  isDeploymentOrJobPod?: boolean;
-}
-
-export interface BaseNode {
-  id: string;
-  data: NodeData;
-  position: { x: number; y: number };
-  style?: React.CSSProperties;
-}
-
-export interface CustomNode extends BaseNode {
-  sourcePosition?: Position;
-  targetPosition?: Position;
-  collapsed?: boolean;
-  showMenu?: boolean;
-}
-
-export interface BaseEdge {
-  id: string;
-  source: string;
-  target: string;
-}
-
-export interface CustomEdge extends BaseEdge {
-  type?: string;
-  animated?: boolean;
-  style?: React.CSSProperties;
-  markerEnd?: {
-    type: MarkerType;
-    width?: number;
-    height?: number;
-    color?: string;
-  };
-}
-
 export interface ResourceItem {
   apiVersion: string;
   kind: string;
@@ -131,6 +94,49 @@ export interface ResourceItem {
     resources?: string[];
   }>;
   [key: string]: unknown; // Add index signature to make compatible with TreeViewComponent
+}
+
+export interface NodeLabelProps {
+  label: string;
+  resourceData?: ResourceItem;
+  [key: string]: unknown;
+}
+
+export interface NodeData {
+  label: React.ReactElement<NodeLabelProps>;
+  isDeploymentOrJobPod?: boolean;
+}
+
+export interface BaseNode {
+  id: string;
+  data: NodeData;
+  position: { x: number; y: number };
+  style?: React.CSSProperties;
+}
+
+export interface CustomNode extends BaseNode {
+  sourcePosition?: Position;
+  targetPosition?: Position;
+  collapsed?: boolean;
+  showMenu?: boolean;
+}
+
+export interface BaseEdge {
+  id: string;
+  source: string;
+  target: string;
+}
+
+export interface CustomEdge extends BaseEdge {
+  type?: string;
+  animated?: boolean;
+  style?: React.CSSProperties;
+  markerEnd?: {
+    type: MarkerType;
+    width?: number;
+    height?: number;
+    color?: string;
+  };
 }
 
 export interface WecsResource {

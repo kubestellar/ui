@@ -25,8 +25,8 @@ interface LabelsListProps {
   onEditKeyChange: (value: string) => void;
   onEditValueChange: (value: string) => void;
   onEditKeyDown: (e: React.KeyboardEvent) => void;
-  editKeyInputRef: React.RefObject<HTMLInputElement>;
-  editValueInputRef: React.RefObject<HTMLInputElement>;
+  editKeyInputRef: React.RefObject<HTMLInputElement | null>;
+  editValueInputRef: React.RefObject<HTMLInputElement | null>;
   t: (key: string, options?: Record<string, string | number>) => string;
 }
 
