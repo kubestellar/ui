@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom';
 
 interface TooltipProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   position: { top: number; left: number };
 }
 

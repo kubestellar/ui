@@ -293,7 +293,7 @@ const StatCard = ({
   };
 
   interface CardLinkWrapperProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     link?: string;
   }
 

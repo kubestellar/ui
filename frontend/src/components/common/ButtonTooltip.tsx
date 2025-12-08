@@ -3,7 +3,7 @@ import React from 'react';
 interface TooltipProps {
   tooltip: string;
   disabled: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   placement?: 'top' | 'bottom' | 'left' | 'right';
 }
