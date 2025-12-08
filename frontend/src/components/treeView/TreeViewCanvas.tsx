@@ -42,7 +42,7 @@ interface TreeViewCanvasProps {
   onExpandAll: () => void;
   onCollapseAll: () => void;
   isCollapsed: boolean;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   resourceFilters?: ObjectFilter;
   onResourceFiltersChange?: (filters: ObjectFilter) => void;
   onToggleFullscreen?: () => void;
