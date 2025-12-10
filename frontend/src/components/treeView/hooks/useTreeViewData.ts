@@ -125,14 +125,27 @@ export const useTreeViewData = ({
   const getLayoutedElements = useCallback(
     (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
       const { currentZoom } = useZoomStore.getState();
-      const scaleFactor = Math.max(0.5, Math.min(2.0, currentZoom));
+      const clampedZoom = Math.max(0.5, Math.min(2.0, currentZoom));
+      const BASE_NODE_WIDTH = 146;
+      const BASE_NODE_HEIGHT = 30;
+      const BASE_NODE_SEP = 60;
+      const BASE_RANK_SEP = 150;
+
+      const isCompressedZoom = clampedZoom <= 0.6;
+      const spacingScaleX = isCompressedZoom ? 3 : 1;
+      const spacingScaleY = isCompressedZoom ? 2 : 1;
+
+      const effectiveNodeWidth = BASE_NODE_WIDTH * clampedZoom;
+      const effectiveNodeHeight = BASE_NODE_HEIGHT * clampedZoom;
+      const nodeSep = BASE_NODE_SEP * clampedZoom * spacingScaleX;
+      const rankSep = BASE_RANK_SEP * clampedZoom * spacingScaleY;
 
       const dagreGraph = new dagre.graphlib.Graph();
       dagreGraph.setDefaultEdgeLabel(() => ({}));
       dagreGraph.setGraph({
         rankdir: direction,
-        nodesep: 50 * scaleFactor, // Increased from 30
-        ranksep: 130 * scaleFactor, // Increased from 60
+        nodesep: nodeSep,
+        ranksep: rankSep,
       });
 
       const nodeMap = new Map<string, CustomNode>();
@@ -147,8 +160,8 @@ export const useTreeViewData = ({
         const cachedNode = nodeMap.get(node.id);
         if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
           dagreGraph.setNode(node.id, {
-            width: 146 * scaleFactor,
-            height: 30 * scaleFactor, // Match the actual node height from zoom store
+            width: effectiveNodeWidth,
+            height: effectiveNodeHeight, // Match the actual node height from zoom store
           });
           newNodes.push(node);
         } else {
@@ -168,8 +181,8 @@ export const useTreeViewData = ({
           ? {
               ...node,
               position: {
-                x: dagreNode.x - 73 * scaleFactor + 50 * scaleFactor,
-                y: dagreNode.y - 15 * scaleFactor + 50 * scaleFactor, // This is correct: 30/2 = 15
+                x: dagreNode.x - effectiveNodeWidth / 2 + 50,
+                y: dagreNode.y - effectiveNodeHeight / 2 + 50, // Keep padding consistent while using scaled height
               },
             }
           : node;
