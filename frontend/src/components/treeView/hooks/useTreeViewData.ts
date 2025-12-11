@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useWebSocket } from '../../../context/webSocketExports';
 import { useLocation } from 'react-router-dom';
 import * as dagre from 'dagre';
-import { isEqual } from 'lodash';
 import useTheme from '../../../stores/themeStore';
 import useZoomStore from '../../../stores/zoomStore';
 import {
@@ -15,6 +14,10 @@ import {
 } from '../types';
 import { useTreeViewNodes } from '../TreeViewNodes';
 import { useTreeViewEdges } from '../TreeViewEdges';
+export const TREE_VIEW_NODE_WIDTH = 146;
+export const TREE_VIEW_NODE_HEIGHT = 30;
+export const TREE_VIEW_NODE_SEP = 60;
+export const TREE_VIEW_RANK_SEP = 150;
 
 interface UseTreeViewDataProps {
   filteredContext: string;
@@ -50,9 +53,12 @@ export const useTreeViewData = ({
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
 
   const prevNodes = useRef<CustomNode[]>([]);
+  const rawNodesRef = useRef<CustomNode[]>([]);
+  const rawEdgesRef = useRef<CustomEdge[]>([]);
   const renderStartTime = useRef<number>(0);
   const isInitialRender = useRef(true);
 
+  const currentZoom = useZoomStore(state => state.currentZoom);
   const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ['namespaces'];
 
@@ -122,77 +128,80 @@ export const useTreeViewData = ({
     }
   }, [location.search]);
 
-  const getLayoutedElements = useCallback(
-    (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
-      const { currentZoom } = useZoomStore.getState();
-      const clampedZoom = Math.max(0.5, Math.min(2.0, currentZoom));
-      const BASE_NODE_WIDTH = 146;
-      const BASE_NODE_HEIGHT = 30;
-      const BASE_NODE_SEP = 60;
-      const BASE_RANK_SEP = 150;
+  const getLayoutedElements = useMemo(
+    () =>
+      (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
+        const clampedZoom = Math.max(0.5, Math.min(2.0, currentZoom));
 
-      const isCompressedZoom = clampedZoom <= 0.6;
-      const spacingScaleX = isCompressedZoom ? 3 : 1;
-      const spacingScaleY = isCompressedZoom ? 2 : 1;
+        let spacingScaleX = 1;
+        let spacingScaleY = 1;
 
-      const effectiveNodeWidth = BASE_NODE_WIDTH * clampedZoom;
-      const effectiveNodeHeight = BASE_NODE_HEIGHT * clampedZoom;
-      const nodeSep = BASE_NODE_SEP * clampedZoom * spacingScaleX;
-      const rankSep = BASE_RANK_SEP * clampedZoom * spacingScaleY;
+        if (clampedZoom <= 0.6) {
+          const zoomRange = 0.6 - 0.5;
+          const zoomProgress = (0.6 - clampedZoom) / zoomRange;
+          spacingScaleX = 1 + zoomProgress * 2;
+          spacingScaleY = 1 + zoomProgress * 1;
+        }
 
-      const dagreGraph = new dagre.graphlib.Graph();
-      dagreGraph.setDefaultEdgeLabel(() => ({}));
-      dagreGraph.setGraph({
-        rankdir: direction,
-        nodesep: nodeSep,
-        ranksep: rankSep,
-      });
+        const effectiveNodeWidth = TREE_VIEW_NODE_WIDTH * clampedZoom;
+        const effectiveNodeHeight = TREE_VIEW_NODE_HEIGHT * clampedZoom;
+        const nodeSep = TREE_VIEW_NODE_SEP * clampedZoom * spacingScaleX;
+        const rankSep = TREE_VIEW_RANK_SEP * clampedZoom * spacingScaleY;
 
-      const nodeMap = new Map<string, CustomNode>();
-      const newNodes: CustomNode[] = [];
+        const dagreGraph = new dagre.graphlib.Graph();
+        dagreGraph.setDefaultEdgeLabel(() => ({}));
+        dagreGraph.setGraph({
+          rankdir: direction,
+          nodesep: nodeSep,
+          ranksep: rankSep,
+        });
 
-      const shouldRecalculate = true;
-      if (!shouldRecalculate && Math.abs(nodes.length - prevNodes.current.length) <= 5) {
-        prevNodes.current.forEach(node => nodeMap.set(node.id, node));
-      }
-
-      nodes.forEach(node => {
-        const cachedNode = nodeMap.get(node.id);
-        if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
+        nodes.forEach(node => {
           dagreGraph.setNode(node.id, {
             width: effectiveNodeWidth,
-            height: effectiveNodeHeight, // Match the actual node height from zoom store
+            height: effectiveNodeHeight,
           });
-          newNodes.push(node);
-        } else {
-          newNodes.push({ ...cachedNode, ...node });
-        }
-      });
+        });
 
-      edges.forEach(edge => {
-        dagreGraph.setEdge(edge.source, edge.target);
-      });
+        edges.forEach(edge => {
+          dagreGraph.setEdge(edge.source, edge.target);
+        });
 
-      dagre.layout(dagreGraph);
+        dagre.layout(dagreGraph);
 
-      const layoutedNodes = newNodes.map(node => {
-        const dagreNode = dagreGraph.node(node.id);
-        return dagreNode
-          ? {
-              ...node,
-              position: {
-                x: dagreNode.x - effectiveNodeWidth / 2 + 50,
-                y: dagreNode.y - effectiveNodeHeight / 2 + 50, // Keep padding consistent while using scaled height
-              },
-            }
-          : node;
-      });
+        const layoutedNodes = nodes.map(node => {
+          const dagreNode = dagreGraph.node(node.id);
+          return dagreNode
+            ? {
+                ...node,
+                position: {
+                  x: dagreNode.x - effectiveNodeWidth / 2 + 50,
+                  y: dagreNode.y - effectiveNodeHeight / 2 + 50,
+                },
+              }
+            : node;
+        });
 
-      return { nodes: layoutedNodes, edges };
-    },
-    // Include dependencies for useZoomStore.getState() and any other external values
-    [prevNodes]
+        return { nodes: layoutedNodes, edges };
+      },
+    [currentZoom]
   );
+
+  const [rawDataVersion, setRawDataVersion] = useState(0);
+
+  const layoutedElements = useMemo(() => {
+    if (rawNodesRef.current.length === 0 && rawEdgesRef.current.length === 0) {
+      return { nodes: [], edges: [] };
+    }
+    return getLayoutedElements(rawNodesRef.current, rawEdgesRef.current, 'LR');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawDataVersion, getLayoutedElements]);
+
+  useEffect(() => {
+    setNodes(layoutedElements.nodes);
+    setEdges(layoutedElements.edges);
+    prevNodes.current = layoutedElements.nodes;
+  }, [layoutedElements]);
 
   const transformDataToTree = useCallback(
     (data: NamespaceResource[]) => {
@@ -340,18 +349,11 @@ export const useTreeViewData = ({
           }
         }
 
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-          newNodes,
-          newEdges,
-          'LR'
-        );
+        rawNodesRef.current = newNodes;
+        rawEdgesRef.current = newEdges;
+        setRawDataVersion(v => v + 1);
 
-        // React 18 automatically batches updates, no need for unstable_batchedUpdates
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
         setIsTransforming(false);
-
-        prevNodes.current = layoutedNodes;
 
         // Calculate resource counts
         const tempContextCounts: Record<string, number> = {};
@@ -380,7 +382,7 @@ export const useTreeViewData = ({
         setIsTransforming(false);
       }
     },
-    [filteredContext, isCollapsed, isExpanded, createNode, clearNodeCache, getLayoutedElements]
+    [filteredContext, isCollapsed, isExpanded, createNode, clearNodeCache]
   );
 
   useEffect(() => {

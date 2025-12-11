@@ -44,9 +44,16 @@ import { isEqual } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
+import useZoomStore from '../stores/zoomStore';
 import WecsDetailsPanel from './wecs_details/WecsDetailsPanel';
 import { FlowCanvas } from './wds_topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
+import {
+  TREE_VIEW_NODE_WIDTH,
+  TREE_VIEW_NODE_HEIGHT,
+  TREE_VIEW_NODE_SEP,
+  TREE_VIEW_RANK_SEP,
+} from './treeView/hooks/useTreeViewData';
 
 import { api } from '../lib/api';
 import useEdgeTypeStore from '../stores/edgeTypeStore';
@@ -257,14 +264,26 @@ const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
   direction = 'LR',
-  prevNodes: React.MutableRefObject<CustomNode[]>
+  prevNodes: React.MutableRefObject<CustomNode[]>,
+  currentZoom: number
 ) => {
-  // Use fixed layout values - let ReactFlow handle zoom visually
-  const NODE_WIDTH = 146;
-  const NODE_HEIGHT = 30;
-  const NODE_SEP = 60;
-  const RANK_SEP = 150;
-  const CHILD_SPACING = NODE_HEIGHT + 30;
+  const clampedZoom = Math.max(0.5, Math.min(2.0, currentZoom));
+
+  let spacingScaleX = 1;
+  let spacingScaleY = 1;
+
+  if (clampedZoom <= 0.6) {
+    const zoomRange = 0.6 - 0.5;
+    const zoomProgress = (0.6 - clampedZoom) / zoomRange;
+    spacingScaleX = 1 + zoomProgress * 2;
+    spacingScaleY = 1 + zoomProgress * 1;
+  }
+
+  const effectiveNodeWidth = TREE_VIEW_NODE_WIDTH * clampedZoom;
+  const effectiveNodeHeight = TREE_VIEW_NODE_HEIGHT * clampedZoom;
+  const nodeSep = TREE_VIEW_NODE_SEP * clampedZoom * spacingScaleX;
+  const rankSep = TREE_VIEW_RANK_SEP * clampedZoom * spacingScaleY;
+  const CHILD_SPACING = effectiveNodeHeight + 30;
 
   if (nodes.length === 0) {
     return { nodes: [], edges: [] };
@@ -273,47 +292,26 @@ const getLayoutedElements = (
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction, nodesep: NODE_SEP, ranksep: RANK_SEP });
-
-  const nodeMap = new Map<string, CustomNode>();
-  const newNodes: CustomNode[] = [];
-
-  // recalculate only if node count changes significantly or if this is first render
-  const shouldRecalculate =
-    prevNodes.current.length === 0 || Math.abs(nodes.length - prevNodes.current.length) > 5;
-
-  if (!shouldRecalculate) {
-    prevNodes.current.forEach(node => nodeMap.set(node.id, node));
-  }
+  dagreGraph.setGraph({ rankdir: direction, nodesep: nodeSep, ranksep: rankSep });
 
   nodes.forEach(node => {
-    const cachedNode = nodeMap.get(node.id);
-    if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
-      dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
-      newNodes.push(node);
-    } else {
-      newNodes.push({ ...cachedNode, ...node });
-    }
+    dagreGraph.setNode(node.id, { width: effectiveNodeWidth, height: effectiveNodeHeight });
   });
 
-  if (shouldRecalculate) {
-    edges.forEach(edge => {
-      dagreGraph.setEdge(edge.source, edge.target);
-    });
+  edges.forEach(edge => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
 
-    dagre.layout(dagreGraph);
-  } else {
-    return { nodes: prevNodes.current, edges };
-  }
+  dagre.layout(dagreGraph);
 
-  const layoutedNodes = newNodes.map(node => {
+  const layoutedNodes = nodes.map(node => {
     const dagreNode = dagreGraph.node(node.id);
     return dagreNode
       ? {
           ...node,
           position: {
-            x: dagreNode.x - NODE_WIDTH / 2 + 50,
-            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
+            x: dagreNode.x - effectiveNodeWidth / 2 + 50,
+            y: dagreNode.y - effectiveNodeHeight / 2 + 50,
           },
         }
       : node;
@@ -390,7 +388,7 @@ const getLayoutedElements = (
     const totalHeight = (children.length - 1) * CHILD_SPACING;
 
     // Center children around the parent
-    const parentY = parentNode.position.y + NODE_HEIGHT / 2;
+    const parentY = parentNode.position.y + effectiveNodeHeight / 2;
     const topY = parentY - totalHeight / 2;
 
     // Update positions of aligned children
@@ -502,8 +500,8 @@ const getLayoutedElements = (
     const currentNode = layoutedNodes[i];
     const prevNode = layoutedNodes[i - 1];
 
-    if (Math.abs(currentNode.position.x - prevNode.position.x) < NODE_WIDTH / 2) {
-      const minSpacing = NODE_HEIGHT + 10; // Reduced minimum spacing (was 10)
+    if (Math.abs(currentNode.position.x - prevNode.position.x) < effectiveNodeWidth / 2) {
+      const minSpacing = effectiveNodeHeight + 10; // Reduced minimum spacing (was 10)
       if (currentNode.position.y - prevNode.position.y < minSpacing) {
         layoutedNodes[i] = {
           ...currentNode,
@@ -550,14 +548,18 @@ const WecsTreeview = () => {
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeIdCounter = useRef<number>(0);
   const prevNodes = useRef<CustomNode[]>([]);
+  const rawNodesRef = useRef<CustomNode[]>([]);
+  const rawEdgesRef = useRef<CustomEdge[]>([]);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevWecsData = useRef<WecsCluster[] | null>(null);
   const stateRef = useRef({ isCollapsed, isExpanded });
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
   const containerRef = useRef<HTMLDivElement>(null);
+  const [rawDataVersion, setRawDataVersion] = useState(0);
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
+  const currentZoom = useZoomStore(state => state.currentZoom);
 
   useEffect(() => {
     renderStartTime.current = performance.now();
@@ -599,7 +601,7 @@ const WecsTreeview = () => {
         }))
       );
     }
-  }, [edgeType]);
+  }, [edgeType, edges.length]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1269,25 +1271,34 @@ const WecsTreeview = () => {
         });
       }
 
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        newNodes,
-        newEdges,
-        'LR',
-        prevNodes
-      );
+      rawNodesRef.current = newNodes;
+      rawEdgesRef.current = newEdges;
+      setRawDataVersion(v => v + 1);
 
-      if (!isEqual(nodes, layoutedNodes)) {
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-      } else if (!isEqual(edges, layoutedEdges)) {
-        setEdges(layoutedEdges);
-      }
-
-      prevNodes.current = layoutedNodes;
       setIsTransforming(false);
     },
     [createNode, fetchAllClusterTimestamps]
   );
+
+  const layoutedElements = useMemo(() => {
+    if (rawNodesRef.current.length === 0 && rawEdgesRef.current.length === 0) {
+      return { nodes: [], edges: [] };
+    }
+    return getLayoutedElements(
+      rawNodesRef.current,
+      rawEdgesRef.current,
+      'LR',
+      prevNodes,
+      currentZoom
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawDataVersion, currentZoom]);
+
+  useEffect(() => {
+    setNodes(layoutedElements.nodes);
+    setEdges(layoutedElements.edges);
+    prevNodes.current = layoutedElements.nodes;
+  }, [layoutedElements]);
 
   // Memoize the data processing to avoid unnecessary re-renders
   const memoizedWecsData = useMemo(() => wecsData, [wecsData]);
