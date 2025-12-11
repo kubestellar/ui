@@ -48,16 +48,14 @@ const CosmicDust = ({ isActive = true }: CosmicDustProps) => {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
+          args={[positions, 3]}
           count={count}
-          array={positions}
-          itemSize={3}
           usage={THREE.StaticDrawUsage}
         />
         <bufferAttribute
           attach="attributes-size"
+          args={[sizes, 1]}
           count={count}
-          array={sizes}
-          itemSize={1}
           usage={THREE.StaticDrawUsage}
         />
       </bufferGeometry>
