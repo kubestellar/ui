@@ -24,8 +24,8 @@ jobs:
     
     env:
       WARMUP_BROWSER: ${{ matrix.browser }}
-      # Enable parallelization within each shard
-      PLAYWRIGHT_WORKERS: 4
+      # Use 2 workers for stability
+      PLAYWRIGHT_WORKERS: 2
     
     steps:
     - uses: actions/checkout@v4

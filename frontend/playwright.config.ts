@@ -18,8 +18,8 @@ const getWorkerCount = (): number | string => {
     if (!isNaN(workers) && workers > 0) return workers;
   }
 
-  // Default: 50% of CPUs in CI for stability (can be increased based on CI resources)
-  return '50%';
+  // Default: 2 workers in CI for stability
+  return 2;
 };
 
 /**
