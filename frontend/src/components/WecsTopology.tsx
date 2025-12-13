@@ -566,10 +566,18 @@ const WecsTreeview = () => {
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
   const currentZoom = useZoomStore(state => state.currentZoom);
+  const [debouncedZoom, setDebouncedZoom] = useState(currentZoom);
 
   useEffect(() => {
     renderStartTime.current = performance.now();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedZoom(currentZoom);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [currentZoom]);
 
   const updateNodeStyles = useCallback(() => {
     setNodes(currentNodes => {
@@ -1295,10 +1303,10 @@ const WecsTreeview = () => {
       rawEdgesRef.current,
       'LR',
       prevNodes,
-      currentZoom
+      debouncedZoom
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawDataVersion, currentZoom]);
+  }, [rawDataVersion, debouncedZoom]);
 
   useEffect(() => {
     setNodes(layoutedElements.nodes);

@@ -59,6 +59,7 @@ export const useTreeViewData = ({
   const isInitialRender = useRef(true);
 
   const currentZoom = useZoomStore(state => state.currentZoom);
+  const [debouncedZoom, setDebouncedZoom] = useState(currentZoom);
   const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ['namespaces'];
 
@@ -128,63 +129,69 @@ export const useTreeViewData = ({
     }
   }, [location.search]);
 
-  const getLayoutedElements = useMemo(
-    () =>
-      (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
-        const clampedZoom = Math.max(0.5, Math.min(2.0, currentZoom));
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedZoom(currentZoom);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [currentZoom]);
 
-        let spacingScaleX = 1;
-        let spacingScaleY = 1;
+  const getLayoutedElements = useCallback(
+    (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
+      const clampedZoom = Math.max(0.5, Math.min(2.0, debouncedZoom));
 
-        if (clampedZoom <= 0.6) {
-          const zoomRange = 0.6 - 0.5;
-          const zoomProgress = (0.6 - clampedZoom) / zoomRange;
-          spacingScaleX = 1 + zoomProgress * 2;
-          spacingScaleY = 1 + zoomProgress * 1;
-        }
+      let spacingScaleX = 1;
+      let spacingScaleY = 1;
 
-        const effectiveNodeWidth = TREE_VIEW_NODE_WIDTH * clampedZoom;
-        const effectiveNodeHeight = TREE_VIEW_NODE_HEIGHT * clampedZoom;
-        const nodeSep = TREE_VIEW_NODE_SEP * clampedZoom * spacingScaleX;
-        const rankSep = TREE_VIEW_RANK_SEP * clampedZoom * spacingScaleY;
+      if (clampedZoom <= 0.6) {
+        const zoomRange = 0.6 - 0.5;
+        const zoomProgress = (0.6 - clampedZoom) / zoomRange;
+        spacingScaleX = 1 + zoomProgress * 2;
+        spacingScaleY = 1 + zoomProgress * 1;
+      }
 
-        const dagreGraph = new dagre.graphlib.Graph();
-        dagreGraph.setDefaultEdgeLabel(() => ({}));
-        dagreGraph.setGraph({
-          rankdir: direction,
-          nodesep: nodeSep,
-          ranksep: rankSep,
+      const effectiveNodeWidth = TREE_VIEW_NODE_WIDTH * clampedZoom;
+      const effectiveNodeHeight = TREE_VIEW_NODE_HEIGHT * clampedZoom;
+      const nodeSep = TREE_VIEW_NODE_SEP * clampedZoom * spacingScaleX;
+      const rankSep = TREE_VIEW_RANK_SEP * clampedZoom * spacingScaleY;
+
+      const dagreGraph = new dagre.graphlib.Graph();
+      dagreGraph.setDefaultEdgeLabel(() => ({}));
+      dagreGraph.setGraph({
+        rankdir: direction,
+        nodesep: nodeSep,
+        ranksep: rankSep,
+      });
+
+      nodes.forEach(node => {
+        dagreGraph.setNode(node.id, {
+          width: effectiveNodeWidth,
+          height: effectiveNodeHeight,
         });
+      });
 
-        nodes.forEach(node => {
-          dagreGraph.setNode(node.id, {
-            width: effectiveNodeWidth,
-            height: effectiveNodeHeight,
-          });
-        });
+      edges.forEach(edge => {
+        dagreGraph.setEdge(edge.source, edge.target);
+      });
 
-        edges.forEach(edge => {
-          dagreGraph.setEdge(edge.source, edge.target);
-        });
+      dagre.layout(dagreGraph);
 
-        dagre.layout(dagreGraph);
+      const layoutedNodes = nodes.map(node => {
+        const dagreNode = dagreGraph.node(node.id);
+        return dagreNode
+          ? {
+              ...node,
+              position: {
+                x: dagreNode.x - effectiveNodeWidth / 2 + 50,
+                y: dagreNode.y - effectiveNodeHeight / 2 + 50,
+              },
+            }
+          : node;
+      });
 
-        const layoutedNodes = nodes.map(node => {
-          const dagreNode = dagreGraph.node(node.id);
-          return dagreNode
-            ? {
-                ...node,
-                position: {
-                  x: dagreNode.x - effectiveNodeWidth / 2 + 50,
-                  y: dagreNode.y - effectiveNodeHeight / 2 + 50,
-                },
-              }
-            : node;
-        });
-
-        return { nodes: layoutedNodes, edges };
-      },
-    [currentZoom]
+      return { nodes: layoutedNodes, edges };
+    },
+    [debouncedZoom]
   );
 
   const [rawDataVersion, setRawDataVersion] = useState(0);
