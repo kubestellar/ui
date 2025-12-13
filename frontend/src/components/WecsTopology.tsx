@@ -273,6 +273,16 @@ const getLayoutedElements = (
   prevNodes: React.MutableRefObject<CustomNode[]>,
   currentZoom: number
 ) => {
+  const nodeMap = new Map<string, CustomNode>();
+
+  // recalculate only if node count changes significantly or if this is first render
+  const shouldRecalculate =
+    prevNodes.current.length === 0 || Math.abs(nodes.length - prevNodes.current.length) > 5;
+
+  if (!shouldRecalculate) {
+    prevNodes.current.forEach(node => nodeMap.set(node.id, node));
+  }
+
   const clampedZoom = Math.max(0.5, Math.min(2.0, currentZoom));
 
   let spacingScaleX = 1;
