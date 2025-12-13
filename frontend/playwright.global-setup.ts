@@ -53,7 +53,10 @@ export default async function globalSetup(config: FullConfig) {
     const baseURL =
       config.projects?.[0]?.use?.baseURL || process.env.VITE_BASE_URL || 'http://localhost:5173';
     console.log(`🔥 Warming up ${baseURL} with ${browserName}...`);
-    await page.goto(baseURL, { waitUntil: 'networkidle', timeout: 30000 });
+    // Use domcontentloaded instead of networkidle since MSW may keep connections open
+    await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // Wait a bit for the app to initialize
+    await page.waitForTimeout(2000);
     console.log('✅ Application is ready');
   } catch (err) {
     console.warn('⚠️ Warning: Warmup failed:', err);
