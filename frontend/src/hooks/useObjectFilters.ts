@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { ObjectFilter } from '../components/ObjectFilters';
 import { fetchResources, getResourceKinds, getNamespaces } from '../services/resourceService';
 
@@ -40,74 +41,111 @@ interface UseObjectFiltersResult {
   filteredResources: Resource[];
   isLoading: boolean;
   error: string | null;
-  applyFilters: (
-    resourceKinds: string[],
-    namespaces: string[],
-    filters: ObjectFilter
-  ) => Promise<void>;
+  applyFilters: (resourceKinds: string[], namespaces: string[], filters: ObjectFilter) => void;
+  isFiltering: boolean;
+  refetchResourceData: () => void;
 }
 
 export const useObjectFilters = (): UseObjectFiltersResult => {
-  const [resourceKinds, setResourceKinds] = useState<ResourceKind[]>([]);
-  const [namespaces, setNamespaces] = useState<Namespace[]>([]);
-  const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [filterParams, setFilterParams] = useState<{
+    kinds: string[];
+    namespaces: string[];
+    filters: ObjectFilter;
+  } | null>(null);
 
-  // Load resource kinds and namespaces on mount
-  useEffect(() => {
-    const loadResourceData = async () => {
-      setIsLoading(true);
-      setError(null);
+  const {
+    data: resourceKinds = [],
+    isLoading: isLoadingKinds,
+    error: kindsError,
+    refetch: refetchKinds,
+  } = useQuery<ResourceKind[]>({
+    queryKey: ['resourceKinds'],
+    queryFn: getResourceKinds,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
 
-      try {
-        const [kinds, ns] = await Promise.all([getResourceKinds(), getNamespaces()]);
-        setResourceKinds(kinds);
-        setNamespaces(ns);
-      } catch (err) {
-        console.error('Error loading resource data:', err);
-        setError('Failed to load resource data. Please try again.');
-      } finally {
-        setIsLoading(false);
+  // Fetch namespaces with React Query
+  const {
+    data: namespaces = [],
+    isLoading: isLoadingNamespaces,
+    error: namespacesError,
+    refetch: refetchNamespaces,
+  } = useQuery<Namespace[]>({
+    queryKey: ['namespaces'],
+    queryFn: getNamespaces,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+
+  // Build queries for filtered resources
+  const buildResourceQueries = useCallback(() => {
+    if (!filterParams) return [];
+
+    const { kinds, namespaces: nsList, filters } = filterParams;
+    const queries: Array<{
+      queryKey: (string | ObjectFilter | boolean | undefined)[];
+      queryFn: () => Promise<FetchResourcesResponse>;
+    }> = [];
+
+    for (const kind of kinds) {
+      const kindInfo = resourceKinds.find(rk => rk.name === kind);
+      const isNamespaced = kindInfo?.namespaced ?? true;
+
+      if (isNamespaced) {
+        const namespacesToUse = nsList.length > 0 ? nsList : namespaces.map(ns => ns.name);
+        for (const ns of namespacesToUse) {
+          queries.push({
+            queryKey: ['resources', kind, ns, filters, true],
+            queryFn: () => fetchResources(kind, ns, filters, { isNamespaced: true }),
+          });
+        }
+      } else {
+        queries.push({
+          queryKey: ['resources', kind, undefined, filters, false],
+          queryFn: () => fetchResources(kind, undefined, filters, { isNamespaced: false }),
+        });
       }
-    };
+    }
 
-    loadResourceData();
+    return queries;
+  }, [filterParams, resourceKinds, namespaces]);
+
+  // Fetch filtered resources using useQueries
+  const resourceQueries = useQueries({
+    queries: buildResourceQueries(),
+  });
+
+  // Combine results from all queries
+  const filteredResources: Resource[] = resourceQueries
+    .filter(query => query.isSuccess && query.data)
+    .flatMap(query => (query.data as FetchResourcesResponse).items || []);
+
+  const isFiltering = resourceQueries.some(query => query.isLoading);
+  const hasFilterError = resourceQueries.some(query => query.isError);
+
+  // Apply filters callback
+  const applyFilters = useCallback((kinds: string[], nsList: string[], filters: ObjectFilter) => {
+    setFilterParams({ kinds, namespaces: nsList, filters });
   }, []);
 
-  // Apply filters to fetch resources for multiple kinds and namespaces
-  const applyFilters = useCallback(
-    async (kinds: string[], nsList: string[], filters: ObjectFilter) => {
-      setIsLoading(true);
-      setError(null);
+  // Refetch all resource data
+  const refetchResourceData = useCallback(() => {
+    refetchKinds();
+    refetchNamespaces();
+  }, [refetchKinds, refetchNamespaces]);
 
-      try {
-        const fetchPromises: Promise<FetchResourcesResponse>[] = [];
-        for (const kind of kinds) {
-          const kindInfo = resourceKinds.find(resourceKind => resourceKind.name === kind);
-          const isNamespaced = kindInfo?.namespaced ?? true;
-          if (isNamespaced) {
-            const namespacesToUse = nsList.length > 0 ? nsList : namespaces.map(ns => ns.name);
-            for (const ns of namespacesToUse) {
-              fetchPromises.push(fetchResources(kind, ns, filters, { isNamespaced: true }));
-            }
-          } else {
-            fetchPromises.push(fetchResources(kind, undefined, filters, { isNamespaced: false }));
-          }
-        }
-        const results = await Promise.all(fetchPromises);
-        // Flatten all items arrays into one
-        const allResources: Resource[] = results.map(res => (res.items ? res.items : [])).flat();
-        setFilteredResources(allResources);
-      } catch (err) {
-        console.error('Error applying resource filters:', err);
-        setError('Failed to filter resources. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [resourceKinds]
-  );
+  // Determine overall loading state
+  const isLoading = isLoadingKinds || isLoadingNamespaces;
+
+  // Determine error state
+  const error = kindsError
+    ? 'Failed to load resource kinds'
+    : namespacesError
+      ? 'Failed to load namespaces'
+      : hasFilterError
+        ? 'Failed to filter resources. Please try again.'
+        : null;
 
   return {
     resourceKinds,
@@ -116,5 +154,7 @@ export const useObjectFilters = (): UseObjectFiltersResult => {
     isLoading,
     error,
     applyFilters,
+    isFiltering,
+    refetchResourceData,
   };
 };

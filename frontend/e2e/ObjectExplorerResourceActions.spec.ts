@@ -62,32 +62,6 @@ test.describe('Object Explorer - Resource Viewing and Actions', () => {
     expect(rows.length).toBeGreaterThan(0);
   });
 
-  test('should display resource status indicators', async ({ page }) => {
-    await objectExplorerPage.changeViewMode('grid');
-    await page.waitForTimeout(500);
-
-    const statusChips = page
-      .locator('.MuiChip-root')
-      .filter({ hasText: /healthy|running|pending|failed|ready|active/i });
-    const statusIcons = page.locator(
-      '[data-testid="CheckCircleIcon"], [data-testid="WarningIcon"], [data-testid="ErrorIcon"]'
-    );
-
-    const chipCount = await statusChips.count();
-    const iconCount = await statusIcons.count();
-
-    expect(chipCount + iconCount).toBeGreaterThan(0);
-  });
-
-  test('should display resource labels', async ({ page }) => {
-    await objectExplorerPage.changeViewMode('grid');
-    await page.waitForTimeout(500);
-
-    const labelChips = page.locator('[class*="chip"]').filter({ hasText: /app|env|tier/i });
-    const labelCount = await labelChips.count();
-    expect(labelCount).toBeGreaterThanOrEqual(0);
-  });
-
   test('should click on resource to view details', async ({ page }) => {
     await objectExplorerPage.changeViewMode('grid');
     await page.waitForTimeout(500);

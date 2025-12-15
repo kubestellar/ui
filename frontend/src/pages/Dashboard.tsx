@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, Suspense, lazy } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useK8sQueries } from '../hooks/queries/useK8sQueries';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -116,7 +116,7 @@ const OptimizedProgressBar = ({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {Icon && <Icon size={14} className="mr-2 text-gray-500" />}
+          {Icon && React.createElement(Icon, { size: 14, className: 'mr-2 text-gray-500' })}
           {label}
           {tooltip && (
             <>
@@ -293,7 +293,7 @@ const StatCard = ({
   };
 
   interface CardLinkWrapperProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     link?: string;
   }
 
@@ -391,7 +391,7 @@ const StatCard = ({
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center">
             <div className={`rounded-xl p-2.5 ${getIconGradient()} mr-3 text-white shadow-lg`}>
-              <Icon size={18} />
+              {React.createElement(Icon, { size: 18 })}
             </div>
             <span className="text-sm font-medium text-gray-700 transition-colors dark:text-gray-300">
               {title}
@@ -459,7 +459,7 @@ const OverviewCard = ({
       <div className="flex items-center justify-between border-b px-5 pb-3 pt-5 dark:border-gray-700">
         <div className="flex items-center">
           <div className={`mr-3 rounded-lg p-2 ${iconColor} transition-colors`}>
-            <Icon size={18} />
+            {React.createElement(Icon, { size: 18 })}
           </div>
           <h2 className="text-lg font-semibold text-gray-900 transition-colors dark:text-gray-100">
             {title}

@@ -331,6 +331,17 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         .react-flow__edge-path {
           stroke-width: 2;
           stroke-dasharray: none;
+          will-change: auto;
+        }
+        
+        .react-flow__edges {
+          will-change: transform;
+          transform: translateZ(0);
+        }
+        
+        .react-flow__nodes {
+          will-change: transform;
+          transform: translateZ(0);
         }
 
         /* Ensure menu buttons are always clickable */

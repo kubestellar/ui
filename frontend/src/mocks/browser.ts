@@ -35,6 +35,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   itsSuccess: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clusters, // Normal clusters response
     h.k8sInfo,
     h.importCluster,
@@ -48,6 +50,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   itsLabelsSuccess: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clusters,
     h.k8sInfo,
     h.updateClusterLabelsSuccess, // Successful label updates
@@ -60,6 +64,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   itsImportSuccess: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clusters,
     h.k8sInfo,
     h.importClusterSuccess, // Successful import
@@ -72,6 +78,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   itsImportError: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clusters,
     h.k8sInfo,
     h.importClusterError, // Failed import
@@ -84,6 +92,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   itsDetachSuccess: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clusters,
     h.k8sInfo,
     h.importCluster,
@@ -96,6 +106,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   itsPagination: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clustersPaginated, // Paginated clusters for testing
     h.k8sInfo,
     h.importCluster,
@@ -108,6 +120,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   itsLoading: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clustersDelayed, // Delayed response for loading states
     h.k8sInfo,
     h.importCluster,
@@ -164,6 +178,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   userManagement: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.userActivities,
     h.createUser,
     h.updateUser,
@@ -176,6 +192,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   objectExplorerSuccess: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.getResourceKinds,
     h.getNamespaces,
     h.getPods,
@@ -188,6 +206,8 @@ export const scenarios: Record<string, HttpHandler[]> = {
   bindingPolicy: [
     h.login,
     h.me,
+    h.statusReady,
+    h.statusReadyRel,
     h.clusters,
     h.workloads,
     h.workloadsRel,

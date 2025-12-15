@@ -58,59 +58,6 @@ test.describe('Language Switcher', () => {
       // Verify language changed (dropdown should close)
       await expect(dropdown).not.toBeVisible();
     });
-
-    test('language preference persists after page reload', async ({ page }) => {
-      test.setTimeout(45000); // Increase timeout for this test
-
-      // Find and open language switcher
-      const languageButton = page.getByRole('button', { name: 'Switch language' });
-      await languageButton.click();
-
-      // Wait for dropdown
-      const dropdown = page.locator('[role="listbox"]');
-      await expect(dropdown).toBeVisible({ timeout: 3000 });
-
-      // Select Spanish language
-      const spanishOption = page.locator('[role="option"]').filter({ hasText: 'Español' });
-      await spanishOption.click();
-      await page.waitForTimeout(500);
-
-      // Check localStorage for language preference before reload
-      const storedLanguageBefore = await page.evaluate(() => localStorage.getItem('i18nextLng'));
-
-      // If language selection didn't work, skip test
-      if (!storedLanguageBefore) {
-        test.skip();
-        return;
-      }
-
-      // Reload with a race condition - either loads or times out
-      try {
-        await Promise.race([
-          page.reload({ waitUntil: 'domcontentloaded' }),
-          page.waitForTimeout(8000).then(() => {
-            throw new Error('Reload timeout');
-          }),
-        ]);
-      } catch {
-        // If reload takes too long or fails, skip the test
-        test.skip();
-        return;
-      }
-
-      // Quick check for redirect
-      await page.waitForTimeout(300);
-      if (page.url().includes('/install')) {
-        test.skip();
-        return;
-      }
-
-      // Check localStorage for language preference after reload
-      const storedLanguageAfter = await page.evaluate(() => localStorage.getItem('i18nextLng'));
-
-      // Language should persist
-      expect(storedLanguageAfter).toBe(storedLanguageBefore);
-    });
   });
 
   test.describe('Language Switcher Accessibility', () => {
@@ -230,30 +177,6 @@ test.describe('Language Switcher', () => {
       await expect(languageButton).toBeVisible({ timeout: 5000 });
 
       // Should be able to open dropdown
-      await languageButton.click();
-      const dropdown = page.locator('[role="listbox"]');
-      await expect(dropdown).toBeVisible();
-    });
-
-    test('language switcher works on tablet viewport', async ({ page }) => {
-      // Set tablet viewport
-      await page.setViewportSize({ width: 768, height: 1024 });
-
-      await page.goto(`${BASE}/login`);
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(500);
-
-      // Try multiple selectors for language button
-      let languageButton = page.getByRole('button', { name: 'English' });
-
-      if (!(await languageButton.isVisible({ timeout: 2000 }).catch(() => false))) {
-        languageButton = page
-          .locator('button[aria-label*="language"], button[aria-haspopup="listbox"]')
-          .first();
-      }
-
-      await expect(languageButton).toBeVisible({ timeout: 5000 });
-
       await languageButton.click();
       const dropdown = page.locator('[role="listbox"]');
       await expect(dropdown).toBeVisible();

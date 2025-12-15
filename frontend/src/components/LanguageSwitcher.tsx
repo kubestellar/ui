@@ -316,7 +316,9 @@ const LanguageSwitcher = () => {
                       {languages.map((lang, idx) => (
                         <button
                           key={lang.code}
-                          ref={el => (itemRefs.current[idx] = el)}
+                          ref={el => {
+                            itemRefs.current[idx] = el;
+                          }}
                           tabIndex={0}
                           onClick={() => changeLanguage(lang.code)}
                           className={

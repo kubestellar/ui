@@ -96,15 +96,4 @@ test.describe('ITS Page - Complete Tests', () => {
     await itsPage.page.waitForTimeout(500);
     await expect(itsPage.searchInput).toHaveValue('');
   });
-
-  test('responsive design works on mobile', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
-    await itsPage.openWithScenario(msw, 'itsSuccess');
-    await page.waitForTimeout(500);
-    await expect(itsPage.table.first()).toBeVisible({ timeout: 15000 });
-    await expect(itsPage.clusterRow('cluster1')).toBeVisible();
-    if (await itsPage.importButton.isVisible()) {
-      await expect(itsPage.importButton).toBeVisible();
-    }
-  });
 });

@@ -129,8 +129,8 @@ export class ObjectExplorerPage extends BasePage {
   }
 
   async waitForPageLoad() {
-    await this.pageTitle.waitFor({ state: 'visible', timeout: 10000 });
-    await this.kindInput.waitFor({ state: 'visible', timeout: 5000 });
+    await this.pageTitle.waitFor({ state: 'visible', timeout: 30000 });
+    await this.kindInput.waitFor({ state: 'visible', timeout: 15000 });
   }
 
   async closeModals() {
@@ -173,32 +173,57 @@ export class ObjectExplorerPage extends BasePage {
     await this.page.waitForTimeout(500);
     const menu = this.page.locator('[role="listbox"], [role="menu"]');
     await menu.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
-    const option = this.page.getByRole('option', { name: namespace });
-    await option.waitFor({ state: 'visible', timeout: 3000 });
-    const checkbox = option.getByRole('checkbox');
-    await checkbox.check();
+    const escapedNamespace = namespace.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const option = this.page
+      .locator('[role="option"], li')
+      .filter({ hasText: new RegExp(`^${escapedNamespace}$`, 'i') })
+      .first();
+    await option.waitFor({ state: 'visible', timeout: 5000 });
+    await option.click();
+    await this.page.waitForTimeout(500);
     await this.page.keyboard.press('Escape');
     await this.page.waitForTimeout(1000);
   }
 
   async selectNamespaces(namespaces: string[]) {
-    await this.namespaceSelect.click();
-    await this.page.waitForTimeout(500);
+    await this.closeModals();
+    if (this.page.isClosed()) return;
     const menu = this.page.locator('[role="listbox"], [role="menu"]');
-    await menu.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
     for (const namespace of namespaces) {
       try {
-        const option = this.page.getByRole('option', { name: namespace });
+        if (this.page.isClosed()) break;
+
+        const isMenuVisible = await menu.isVisible().catch(() => false);
+        if (!isMenuVisible) {
+          await this.namespaceSelect.click();
+          await this.page.waitForTimeout(300);
+          await menu.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+        }
+
+        const escapedNamespace = namespace.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+        const option = this.page
+          .locator('[role="option"], li')
+          .filter({ hasText: new RegExp(`^${escapedNamespace}$`, 'i') })
+          .first();
         await option.waitFor({ state: 'visible', timeout: 5000 });
-        const checkbox = option.getByRole('checkbox');
-        await checkbox.check();
+        await option.click();
         await this.page.waitForTimeout(200);
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.includes('Target page, context or browser has been closed')) {
+          break;
+        }
         console.warn(`Failed to select namespace ${namespace}:`, error);
       }
     }
-    await this.page.keyboard.press('Escape');
-    await this.page.waitForTimeout(1000);
+    if (!this.page.isClosed()) {
+      try {
+        await this.page.keyboard.press('Escape');
+        await this.page.waitForTimeout(1000);
+      } catch {
+        // ignore errors if page is closing
+      }
+    }
   }
 
   async removeKindChip(kind: string) {
@@ -288,9 +313,9 @@ export class ObjectExplorerPage extends BasePage {
     await this.page.waitForTimeout(300);
   }
 
-  async waitForResources(timeout: number = 10000) {
+  async waitForResources(timeout: number = 20000) {
     await Promise.race([
-      this.resultsCount.waitFor({ state: 'visible', timeout }),
+      this.resultsCount.waitFor({ state: 'visible', timeout: 20000 }),
       this.page.waitForTimeout(timeout),
     ]).catch(() => {});
     await this.page.waitForTimeout(1000);

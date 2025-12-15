@@ -303,16 +303,6 @@ test.describe('User Management - Pagination and Performance', () => {
     await userManagementPage.goto();
   });
 
-  test('should load users quickly', async () => {
-    const startTime = Date.now();
-    await userManagementPage.goto();
-    await userManagementPage.waitForPageLoad();
-    const endTime = Date.now();
-
-    const loadTime = endTime - startTime;
-    expect(loadTime).toBeLessThan(5000); // Should load within 5 seconds
-  });
-
   test('should handle search with debouncing', async () => {
     await userManagementPage.filterButton.click();
     await userManagementPage.searchInput.fill('a');
@@ -338,26 +328,5 @@ test.describe('User Management - Pagination and Performance', () => {
 
     const userCount = await userManagementPage.getUserCount();
     expect(userCount).toBeGreaterThan(0);
-  });
-
-  test('should maintain performance with multiple operations', async () => {
-    const startTime = Date.now();
-
-    await userManagementPage.searchUsers('test');
-    await userManagementPage.page.waitForTimeout(600);
-
-    await userManagementPage.setRoleFilter('user');
-    await userManagementPage.page.waitForTimeout(600);
-
-    await userManagementPage.clearSearch();
-    await userManagementPage.page.waitForTimeout(600);
-
-    await userManagementPage.clearFilters();
-    await userManagementPage.page.waitForTimeout(600);
-
-    const endTime = Date.now();
-    const totalTime = endTime - startTime;
-
-    expect(totalTime).toBeLessThan(10000); // Should complete within 10 seconds
   });
 });

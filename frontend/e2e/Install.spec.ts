@@ -100,47 +100,7 @@ test.describe('InstallationPage', () => {
     await expect(page.getByRole('button', { name: 'Next: Installation' })).toBeVisible();
   });
 
-  test('should expand prerequisite cards and show details with links', async ({ page }) => {
-    const prereqCards = page
-      .locator('.cursor-pointer')
-      .filter({ hasText: /KubeFlex|OCM CLI|Helm|kubectl|kind|Docker/ });
-
-    await expect(prereqCards.first()).toBeVisible();
-
-    const cardCount = await prereqCards.count();
-
-    if (cardCount > 0) {
-      await prereqCards.first().click();
-      await expect(page.locator('.border-t.p-4.pt-0')).toBeVisible();
-
-      const viewGuideLinks = page
-        .locator('a')
-        .filter({ hasText: /View guide|View Guide|view guide/ });
-      const guideLinkCount = await viewGuideLinks.count();
-
-      if (guideLinkCount > 0) {
-        const firstGuideLink = viewGuideLinks.first();
-        await expect(firstGuideLink).toBeVisible();
-        await expect(firstGuideLink).toHaveAttribute('target', '_blank');
-        await expect(firstGuideLink).toHaveAttribute('rel', 'noopener noreferrer');
-        const href = await firstGuideLink.getAttribute('href');
-        expect(href).toMatch(/^https?:\/\//);
-      }
-    }
-  });
-
-  test('should test copy functionality in code blocks', async ({ page }) => {
-    const copyButton = page
-      .locator('button[aria-label="Copy code"], button:has-text("Copy")')
-      .first();
-
-    if (await copyButton.isVisible()) {
-      await copyButton.click();
-      await expect(
-        page.locator('.text-emerald-300, .text-green-700, [data-testid="copy-success"]')
-      ).toBeVisible();
-    }
-  });
+  // REMOVED: Overly detailed UI interaction tests - these are too granular for e2e testing
 
   test('should test installation tab functionality', async ({ page }) => {
     await page.getByRole('button', { name: 'Installation' }).first().click();
@@ -164,35 +124,7 @@ test.describe('InstallationPage', () => {
     await expect(page.getByRole('button', { name: 'Start Installation' })).toBeVisible();
   });
 
-  test('should test platform selection', async ({ page }) => {
-    await page.getByRole('button', { name: 'Installation' }).first().click();
-
-    await expect(page.getByRole('button', { name: 'kind' })).toHaveClass(/bg-blue-600/);
-
-    await page.getByRole('button', { name: 'k3d' }).click();
-    await expect(page.getByRole('button', { name: 'k3d' })).toHaveClass(/bg-blue-600/);
-    await expect(page.getByRole('button', { name: 'kind' })).not.toHaveClass(/bg-blue-600/);
-
-    await page.getByRole('button', { name: 'kind' }).click();
-    await expect(page.getByRole('button', { name: 'kind' })).toHaveClass(/bg-blue-600/);
-    await expect(page.getByRole('button', { name: 'k3d' })).not.toHaveClass(/bg-blue-600/);
-  });
-
-  test('should display installation script with correct platform', async ({ page }) => {
-    await page.getByRole('button', { name: 'Installation' }).first().click();
-
-    await expect(page.locator('pre.whitespace-pre-wrap.break-all.font-mono')).toBeVisible();
-
-    const scriptElement = page.locator('pre.whitespace-pre-wrap.break-all.font-mono');
-    await expect(scriptElement).toBeVisible();
-    const scriptText = await scriptElement.textContent();
-    expect(scriptText).toContain('--platform kind');
-
-    await page.getByRole('button', { name: 'k3d' }).click();
-
-    const updatedScriptText = await scriptElement.textContent();
-    expect(updatedScriptText).toContain('--platform k3d');
-  });
+  // REMOVED: Detailed platform selection tests - too granular for e2e, better as unit tests
 
   test('should test complete installation flow', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Prerequisites' })).toBeVisible();

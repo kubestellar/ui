@@ -471,7 +471,8 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
   const updateNodeStyles = useCallback(
     (nodes: CustomNode[]) => {
       return nodes.map(node => {
-        const resourceData = node.data?.label?.props?.resourceData;
+        const resourceData = (node.data?.label?.props as { resourceData?: ResourceItem })
+          ?.resourceData;
         const hasHighlightedLabel =
           resourceData?.metadata?.labels &&
           highlightedLabels &&

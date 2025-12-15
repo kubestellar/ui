@@ -1,12 +1,44 @@
 version: 2
 updates:
+  # Frontend npm dependencies
   - package-ecosystem: 'npm'
-    directory: '/'
+    directory: '/frontend'
     schedule:
       interval: 'weekly'
     versioning-strategy: 'increase'
+    groups:
+      # Group minor/patch updates to reduce PR noise
+      minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    ignore:
+      # Ignore major version updates for stability
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  # Backend Go dependencies
   - package-ecosystem: 'gomod'
     directory: '/backend'
     schedule:
       interval: 'weekly'
     versioning-strategy: 'increase'
+    groups:
+      go-minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # GitHub Actions dependencies
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    groups:
+      actions:
+        patterns:
+          - '*'
