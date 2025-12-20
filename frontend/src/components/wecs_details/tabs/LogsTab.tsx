@@ -24,7 +24,7 @@ interface LogsTabProps {
   type: string;
   theme: string;
   t: (key: string, options?: Record<string, unknown>) => string;
-  terminalRef: React.RefObject<HTMLDivElement | null>;
+  terminalRef: React.RefObject<HTMLDivElement>;
   logsContainers: ContainerInfo[];
   selectedLogsContainer: string;
   loadingLogsContainers: boolean;
