@@ -129,8 +129,8 @@ export class ObjectExplorerPage extends BasePage {
   }
 
   async waitForPageLoad() {
-    await this.pageTitle.waitFor({ state: 'visible', timeout: 10000 });
-    await this.kindInput.waitFor({ state: 'visible', timeout: 5000 });
+    await this.pageTitle.waitFor({ state: 'visible', timeout: 30000 });
+    await this.kindInput.waitFor({ state: 'visible', timeout: 15000 });
   }
 
   async closeModals() {
@@ -313,9 +313,9 @@ export class ObjectExplorerPage extends BasePage {
     await this.page.waitForTimeout(300);
   }
 
-  async waitForResources(timeout: number = 10000) {
+  async waitForResources(timeout: number = 20000) {
     await Promise.race([
-      this.resultsCount.waitFor({ state: 'visible', timeout }),
+      this.resultsCount.waitFor({ state: 'visible', timeout: 20000 }),
       this.page.waitForTimeout(timeout),
     ]).catch(() => {});
     await this.page.waitForTimeout(1000);

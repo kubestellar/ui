@@ -12,16 +12,20 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     
     strategy:
+      fail-fast: false
       matrix:
-        # Run tests on multiple browsers
+        # Run tests on multiple browsers with sharding for parallelization
         browser: [chromium, firefox, webkit]
+        shard: [1/4, 2/4, 3/4, 4/4]
     
     env:
       WARMUP_BROWSER: ${{ matrix.browser }}
+      # Use 2 workers for stability
+      PLAYWRIGHT_WORKERS: 2
     
     steps:
     - uses: actions/checkout@v4
@@ -50,39 +54,75 @@ jobs:
     
     - name: Install Playwright Browsers
       working-directory: ./frontend
-      run: npx playwright install --with-deps ${{ matrix.browser }}
-    
-    - name: Verify Playwright installation
-      working-directory: ./frontend
-      run: npx playwright --version
-    
-    - name: List available tests
-      working-directory: ./frontend
-      run: npx playwright test --list --project=${{ matrix.browser }} > /tmp/playwright_list.txt && head -5 /tmp/playwright_list.txt && rm /tmp/playwright_list.txt
-    
-    - name: Build frontend
-      working-directory: ./frontend
-      env: 
-        VITE_USE_MSW: 'true'
-      run: npm run build
+      run: |
+        npx playwright install --with-deps ${{ matrix.browser }}
+        # Ensure all system dependencies are installed for webkit
+        if [ "${{ matrix.browser }}" = "webkit" ]; then
+          sudo apt-get update
+          sudo apt-get install -y libwoff1 libopus0 libwebpdemux2 libharfbuzz-icu0 libenchant-2-2 libsecret-1-0 libhyphen0 libmanette-0.2-0 libflite1 libgles2 gstreamer1.0-libav
+        fi
     
     - name: Run Playwright tests
       working-directory: ./frontend
-      run: npx playwright test --project=${{ matrix.browser }}
+      run: npx playwright test --project=${{ matrix.browser }} --shard=${{ matrix.shard }}
       env:
         CI: true
         VITE_USE_MSW: 'true'
     
-    - uses: actions/upload-artifact@v4
+    - name: Upload blob report
+      uses: actions/upload-artifact@v4
       if: always()
+      with:
+        name: blob-report-${{ matrix.browser }}-${{ strategy.job-index }}
+        path: frontend/blob-report/
+        retention-days: 1
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-results-${{ matrix.browser }}-${{ strategy.job-index }}
+        path: frontend/test-results/
+        retention-days: 7
+
+  # Merge all sharded reports into a single HTML report per browser
+  merge-reports:
+    name: Merge Reports
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Download blob reports for ${{ matrix.browser }}
+      uses: actions/download-artifact@v4
+      with:
+        pattern: blob-report-${{ matrix.browser }}-*
+        path: frontend/all-blob-reports
+        merge-multiple: true
+    
+    - name: Merge reports
+      working-directory: ./frontend
+      run: npx playwright merge-reports --reporter html ./all-blob-reports
+    
+    - name: Upload merged HTML report
+      uses: actions/upload-artifact@v4
       with:
         name: playwright-report-${{ matrix.browser }}
         path: frontend/playwright-report/
-        retention-days: 7
-    
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results-${{ matrix.browser }}
-        path: frontend/test-results/
-        retention-days: 7
+        retention-days: 14

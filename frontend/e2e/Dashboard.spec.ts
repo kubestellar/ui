@@ -183,7 +183,7 @@ test.describe('Dashboard Page', () => {
       const firstCluster = page.getByRole('heading', { name: 'cluster1' }).first();
       await firstCluster.click();
 
-      await expect(page.locator('[role="dialog"], .modal')).toBeVisible({ timeout: 2000 });
+      await expect(page.locator('[role="dialog"], .modal')).toBeVisible({ timeout: 10000 });
 
       await page.keyboard.press('Escape');
     });

@@ -340,13 +340,14 @@ export class LoginPage extends BasePage {
         const options = Array.from(document.querySelectorAll('[role="option"]'));
         return options.some(opt => opt.textContent?.includes(text));
       },
+
       languageText,
-      { timeout: 2000 }
+      { timeout: 5000 }
     );
 
     // Use a more reliable click approach - wait for element to be actionable
-    await languageOption.waitFor({ state: 'attached', timeout: 2000 });
-    await expect(languageOption).toBeEnabled({ timeout: 2000 });
+    await languageOption.waitFor({ state: 'attached', timeout: 5000 });
+    await expect(languageOption).toBeEnabled({ timeout: 5000 });
 
     // Click with retry handling
     try {

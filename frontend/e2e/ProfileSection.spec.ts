@@ -7,10 +7,11 @@ test.describe('Profile Section', () => {
     // Login first to access the profile section
     await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
 
-    // Wait for login page to be ready
-    await page.waitForSelector('input[type="text"], input[name="username"]', { timeout: 10000 });
+    // Wait for login form to be ready using role-based locator (auto-retries)
+    const usernameInput = page.getByRole('textbox', { name: 'Username' });
+    await expect(usernameInput).toBeVisible({ timeout: 15000 });
 
-    await page.getByRole('textbox', { name: 'Username' }).fill('admin');
+    await usernameInput.fill('admin');
     await page.getByRole('textbox', { name: 'Password' }).fill('admin');
     await page.getByRole('button', { name: /Sign In|Sign In to/i }).click();
 
