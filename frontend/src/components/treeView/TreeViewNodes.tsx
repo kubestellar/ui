@@ -48,6 +48,18 @@ interface TreeViewNodesProps {
   isExpanded: boolean;
 }
 
+// TreeView node dimensions
+export const TREE_VIEW_NODE_WIDTH = 146;
+export const TREE_VIEW_NODE_HEIGHT = 30;
+
+// Fixed node style - shared across all node creation and updates
+const FIXED_NODE_STYLE = {
+  padding: '2px 12px',
+  fontSize: '6px',
+  width: `${TREE_VIEW_NODE_WIDTH}px`,
+  height: `${TREE_VIEW_NODE_HEIGHT}px`,
+} as const;
+
 const iconMap: Record<string, string> = {
   ConfigMap: ConfigMap,
   ClusterRoleBinding: ClusterRoleBinding,
@@ -281,13 +293,6 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         resourceData?.metadata?.labels &&
         resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
 
-      const fixedNodeStyle = {
-        padding: '2px 12px',
-        fontSize: '6px',
-        width: '146px',
-        height: '30px',
-      };
-
       const node =
         cachedNode ||
         ({
@@ -331,7 +336,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           },
           position: { x: 0, y: 0 },
           style: {
-            ...fixedNodeStyle,
+            ...FIXED_NODE_STYLE,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -366,7 +371,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
       // If the node is already cached but highlighting changed, update style
       if (cachedNode) {
         node.style = {
-          ...fixedNodeStyle,
+          ...FIXED_NODE_STYLE,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -469,15 +474,8 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           highlightedLabels &&
           resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
 
-        const fixedNodeStyle = {
-          padding: '2px 12px',
-          fontSize: '6px',
-          width: '146px',
-          height: '30px',
-        };
-
         const newStyle = {
-          ...fixedNodeStyle,
+          ...FIXED_NODE_STYLE,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

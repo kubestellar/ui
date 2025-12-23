@@ -12,7 +12,7 @@ import {
   ResourceItem,
   ResourceDataChangeEvent,
 } from '../types';
-import { useTreeViewNodes } from '../TreeViewNodes';
+import { useTreeViewNodes, TREE_VIEW_NODE_WIDTH, TREE_VIEW_NODE_HEIGHT } from '../TreeViewNodes';
 import { useTreeViewEdges } from '../TreeViewEdges';
 
 interface UseTreeViewDataProps {
@@ -123,8 +123,8 @@ export const useTreeViewData = ({
 
   const getLayoutedElements = useCallback(
     (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
-      const NODE_WIDTH = 146;
-      const NODE_HEIGHT = 30;
+      const NODE_WIDTH = TREE_VIEW_NODE_WIDTH;
+      const NODE_HEIGHT = TREE_VIEW_NODE_HEIGHT;
 
       const dagreGraph = new dagre.graphlib.Graph();
       dagreGraph.setDefaultEdgeLabel(() => ({}));
