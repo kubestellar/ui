@@ -34,8 +34,10 @@ interface CentralNodeChild extends THREE.Object3D {
 const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
   const { t } = useTranslation();
   const globeRef = useRef<THREE.Mesh>(null);
+  const gridLinesRef = useRef<THREE.Group>(null);
   const centralNodeRef = useRef<THREE.Group>(null);
   const dataFlowsRef = useRef<THREE.Group>(null);
+  const rotatingContentRef = useRef<THREE.Group>(null);
   const frameCount = useRef(0);
 
   // Track document visibility to pause rendering when tab/page is not active
@@ -231,16 +233,17 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
 
     // Increment frame counter
     frameCount.current += 1;
+    const time = state.clock.getElapsedTime();
 
     // Update animation progress for reveal effect - only when loading
     if (isLoaded && animationProgress < 1) {
       setAnimationProgress(Math.min(animationProgress + 0.01, 1));
     }
 
-    // Rotate the globe slowly - limit updates for better performance
     if (globeRef.current && frameCount.current % 2 === 0) {
-      globeRef.current.rotation.y = state.clock.getElapsedTime() * 0.05;
-      globeRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.2) * 0.02;
+      globeRef.current.rotation.y = time * 0.1;
+      globeRef.current.rotation.x = Math.sin(time * 0.15) * 0.08;
+      globeRef.current.rotation.z = Math.cos(time * 0.08) * 0.03;
 
       // Update material opacity
       if (globeMaterial.opacity !== 0.08 * animationProgress) {
@@ -252,12 +255,18 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
       globeRef.current.scale.setScalar(scale);
     }
 
+    // Rotate grid lines to match globe rotation with same slow speed
+    if (gridLinesRef.current && frameCount.current % 2 === 0) {
+      gridLinesRef.current.rotation.y = time * 0.1;
+      gridLinesRef.current.rotation.x = Math.sin(time * 0.15) * 0.08;
+      gridLinesRef.current.rotation.z = Math.cos(time * 0.08) * 0.03;
+    }
+
     // Animate central node - less frequently
     if (centralNodeRef.current && frameCount.current % 3 === 0) {
-      centralNodeRef.current.rotation.y = state.clock.getElapsedTime() * 0.2;
-      centralNodeRef.current.scale.setScalar(
-        (1 + Math.sin(state.clock.getElapsedTime() * 1.5) * 0.05) * animationProgress
-      );
+      centralNodeRef.current.rotation.y = time * 0.15;
+      centralNodeRef.current.rotation.x = Math.sin(time * 0.2) * 0.05;
+      centralNodeRef.current.scale.setScalar((1 + Math.sin(time * 1.5) * 0.05) * animationProgress);
 
       // Fade in the central node with throttled updates
       centralNodeRef.current.children.forEach((child: CentralNodeChild) => {
@@ -269,6 +278,13 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
           );
         }
       });
+    }
+
+    // Rotate the cluster group around the central node - same frequency as central node
+    if (rotatingContentRef.current && frameCount.current % 3 === 0) {
+      rotatingContentRef.current.rotation.y = time * 0.1; // Match globe speed
+      rotatingContentRef.current.rotation.x = Math.sin(time * 0.15) * 0.08;
+      rotatingContentRef.current.rotation.z = Math.cos(time * 0.08) * 0.03;
     }
 
     // Animate data flows - only every 3 frames
@@ -299,7 +315,7 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
       </Sphere>
 
       {/* Grid lines for the globe - optimized with shared geometry */}
-      <group rotation={[0, 0, 0]}>
+      <group ref={gridLinesRef} rotation={[0, 0, 0]}>
         {Array.from({ length: 4 }).map((_, idx) => (
           <Torus
             key={`h-${idx}`}
@@ -335,10 +351,13 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
         <LogoElement animate={isLoaded && isDocumentVisible} />
       </group>
 
-      {/* Clusters of nodes */}
-      {clusters.map((cluster, idx) => (
-        <Cluster key={idx} {...cluster} isActive={isDocumentVisible} />
-      ))}
+      {/* Rotating cluster group */}
+      <group ref={rotatingContentRef}>
+        {/* Clusters of nodes */}
+        {clusters.map((cluster, idx) => (
+          <Cluster key={idx} {...cluster} isActive={isDocumentVisible} />
+        ))}
+      </group>
 
       {/* Data flow connections - use reduced detail and memoized materials */}
       <group ref={dataFlowsRef}>
