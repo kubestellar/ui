@@ -241,9 +241,9 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
     }
 
     if (globeRef.current && frameCount.current % 2 === 0) {
-      globeRef.current.rotation.y = time * 0.1;
-      globeRef.current.rotation.x = Math.sin(time * 0.15) * 0.08;
-      globeRef.current.rotation.z = Math.cos(time * 0.08) * 0.03;
+      globeRef.current.rotation.y = time * 0.05;
+      globeRef.current.rotation.x = Math.sin(time * 0.15) * 0.04;
+      globeRef.current.rotation.z = Math.cos(time * 0.08) * 0.015;
 
       // Update material opacity
       if (globeMaterial.opacity !== 0.08 * animationProgress) {
@@ -257,9 +257,9 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
 
     // Rotate grid lines to match globe rotation with same slow speed
     if (gridLinesRef.current && frameCount.current % 2 === 0) {
-      gridLinesRef.current.rotation.y = time * 0.1;
-      gridLinesRef.current.rotation.x = Math.sin(time * 0.15) * 0.08;
-      gridLinesRef.current.rotation.z = Math.cos(time * 0.08) * 0.03;
+      gridLinesRef.current.rotation.y = time * 0.05;
+      gridLinesRef.current.rotation.x = Math.sin(time * 0.15) * 0.04;
+      gridLinesRef.current.rotation.z = Math.cos(time * 0.08) * 0.015;
     }
 
     // Animate central node - less frequently
@@ -282,9 +282,9 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
 
     // Rotate the cluster group around the central node - same frequency as central node
     if (rotatingContentRef.current && frameCount.current % 3 === 0) {
-      rotatingContentRef.current.rotation.y = time * 0.1; // Match globe speed
-      rotatingContentRef.current.rotation.x = Math.sin(time * 0.15) * 0.08;
-      rotatingContentRef.current.rotation.z = Math.cos(time * 0.08) * 0.03;
+      rotatingContentRef.current.rotation.y = time * 0.05; // Match globe speed
+      rotatingContentRef.current.rotation.x = Math.sin(time * 0.15) * 0.04;
+      rotatingContentRef.current.rotation.z = Math.cos(time * 0.08) * 0.015;
     }
 
     // Animate data flows - only every 3 frames
