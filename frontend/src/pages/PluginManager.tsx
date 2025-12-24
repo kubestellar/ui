@@ -227,6 +227,11 @@ export const PluginManager: React.FC = () => {
     );
   }
 
+  // Calculate plugin stats once to avoid repeated filter operations
+  const totalPlugins = availablePlugins.length;
+  const activePlugins = availablePlugins.filter(p => p.enabled).length;
+  const inactivePlugins = availablePlugins.filter(p => !p.enabled).length;
+
   return (
     <div className="flex h-full w-full flex-col gap-6 p-6">
       {/* Header */}
@@ -276,19 +281,19 @@ export const PluginManager: React.FC = () => {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
             title={t('plugins.list.total')}
-            value={availablePlugins.length}
+            value={totalPlugins}
             icon={Puzzle}
             iconColor="blue"
           />
           <StatCard
             title={t('plugins.list.active')}
-            value={availablePlugins.filter(p => p.enabled).length}
+            value={activePlugins}
             icon={CheckCircle}
             iconColor="green"
           />
           <StatCard
             title={t('plugins.list.inactive')}
-            value={availablePlugins.filter(p => !p.enabled).length}
+            value={inactivePlugins}
             icon={XCircle}
             iconColor="gray"
           />
