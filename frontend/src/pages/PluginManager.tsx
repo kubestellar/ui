@@ -20,12 +20,14 @@ import {
   HiOutlineRocketLaunch,
 } from 'react-icons/hi2';
 import { Link } from 'react-router-dom';
+import { Puzzle, CheckCircle, XCircle } from 'lucide-react';
 import { usePlugins } from '../plugins/PluginLoader';
 import { PluginAPI } from '../plugins/PluginAPI';
 import useTheme from '../stores/themeStore';
 import getThemeStyles from '../lib/theme-utils';
 import FeedbackModel from '../components/plugin/FeedbackModel';
 import toast from 'react-hot-toast';
+import StatCard from '../components/dashboard/StatCard';
 
 interface Plugin {
   name: string;
@@ -271,43 +273,25 @@ export const PluginManager: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="flex gap-4">
-          {[
-            {
-              label: t('plugins.list.total'),
-              value: availablePlugins.length,
-              color: themeStyles.colors.text.primary,
-            },
-            {
-              label: t('plugins.list.active'),
-              value: availablePlugins.filter(p => p.enabled).length,
-              color: themeStyles.colors.status.success,
-            },
-            {
-              label: t('plugins.list.inactive'),
-              value: availablePlugins.filter(p => !p.enabled).length,
-              color: themeStyles.colors.text.secondary,
-            },
-          ].map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              className="flex flex-col gap-1 rounded-xl p-4"
-              style={{
-                background: themeStyles.effects.glassMorphism.background,
-                border: `1px solid ${themeStyles.card.borderColor}`,
-              }}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-            >
-              <span className="text-2xl font-bold" style={{ color: stat.color }}>
-                {stat.value}
-              </span>
-              <span className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                {stat.label}
-              </span>
-            </motion.div>
-          ))}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard
+            title={t('plugins.list.total')}
+            value={availablePlugins.length}
+            icon={Puzzle}
+            iconColor="blue"
+          />
+          <StatCard
+            title={t('plugins.list.active')}
+            value={availablePlugins.filter(p => p.enabled).length}
+            icon={CheckCircle}
+            iconColor="green"
+          />
+          <StatCard
+            title={t('plugins.list.inactive')}
+            value={availablePlugins.filter(p => !p.enabled).length}
+            icon={XCircle}
+            iconColor="gray"
+          />
         </div>
       </motion.div>
 
