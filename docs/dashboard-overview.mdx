@@ -25,3 +25,23 @@ To view meaningful information on the Dashboard, the following prerequisites sho
 - **Workloads and binding policies (optional)**  
   While not required, having workloads and binding policies configured enables additional dashboard insights, such as workload distribution and policy status. If none are defined, these sections may show zero values or limited data.
 
+
+## Feature Overview
+
+The Dashboard is designed to provide a clear and concise overview of the KubeStellar platform by surfacing the most important information in a single place. Its primary goal is to reduce the effort required to understand the state of a multi-cluster environment and enable faster operational decision-making.
+
+### Dashboard Philosophy
+
+The Dashboard follows a *summary-first* philosophy. Instead of exposing all details at once, it presents high-level signals that help users quickly identify normal operation or potential issues. From this overview, users can drill down into more detailed views only when necessary.
+
+### Card-Based Layout
+
+Information on the Dashboard is organized using a card-based layout. Each card represents a specific area of the platform, such as clusters, health status, or activity. This structure improves readability, creates a clear visual hierarchy, and allows the layout to adapt naturally across different screen sizes.
+
+### Metric Aggregation
+
+The Dashboard aggregates metrics from multiple platform components and presents them in a simplified form. Rather than showing raw data, it summarizes counts, health indicators, and distributions to provide immediate insight into system state.
+
+### Real-Time Updates
+
+Dashboard data is refreshed regularly to reflect the current state of the platform. Visual indicators and status values update as underlying conditions change, allowing users to monitor system health and activity without manually navigating between pages.
