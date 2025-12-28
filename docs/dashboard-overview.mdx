@@ -220,3 +220,58 @@ Dashboard data is refreshed using a combination of initial loading and periodic 
   Users can manually trigger a data refresh, causing the Dashboard to re-fetch data on demand.
 
 This approach ensures that the Dashboard reflects the current state of the platform while minimizing unnecessary navigation.
+
+## Troubleshooting
+
+This section lists common issues that users may encounter when using the Dashboard, along with recommended steps to diagnose and resolve them.
+
+---
+
+### Issue 1: Metrics Not Loading
+
+**Symptoms:**
+- Dashboard cards remain empty or show loading indicators
+- Health or activity sections do not display data
+
+**Possible Solutions:**
+
+1. Verify that backend services are running and reachable.
+2. Confirm that the required API endpoints are accessible.
+3. Check the browser console for network or authorization errors.
+4. Refresh the Dashboard page.
+5. Ensure the current user has sufficient permissions to view metrics and cluster data.
+
+---
+
+### Issue 2: Incorrect or Inconsistent Counts
+
+**Symptoms:**
+- Cluster, workload, or policy counts do not match expected values
+- Dashboard data differs from detailed views (ITS, WDS, or BP)
+
+**Possible Solutions:**
+
+1. Perform a hard refresh of the page (`Ctrl + Shift + R` or equivalent).
+2. Clear the browser cache and reload the Dashboard.
+3. Verify counts directly in the source pages (ITS, WDS, and BP).
+4. Allow time for synchronization if recent changes were made.
+5. Review backend logs to identify potential data aggregation or sync issues.
+
+---
+
+### Issue 3: Slow Dashboard Loading
+
+**Symptoms:**
+- Dashboard takes a long time to load
+- Metrics update slowly or appear delayed
+
+**Possible Solutions:**
+
+1. Check network latency between the browser and backend services.
+2. Review backend query performance and applied filters.
+3. Ensure caching mechanisms (such as Redis) are enabled and functioning correctly.
+4. Reduce the auto-refresh frequency if periodic polling is enabled.
+
+---
+
+If issues persist after following these steps, consult platform logs or contact an administrator for further investigation.
