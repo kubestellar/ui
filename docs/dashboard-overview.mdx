@@ -275,3 +275,24 @@ This section lists common issues that users may encounter when using the Dashboa
 ---
 
 If issues persist after following these steps, consult platform logs or contact an administrator for further investigation.
+
+## Related Features
+
+The Dashboard acts as an aggregation layer and entry point to several core KubeStellar features. Data displayed on the Dashboard is sourced from, and links directly to, the following areas of the platform:
+
+- **Inventory and Transport Space (ITS)**  
+  Provides cluster inventory, connectivity status, and cluster-level metadata used for cluster metrics and health indicators.
+
+- **Workload Description Space (WDS)**  
+  Supplies workload-related data, including workload counts, deployment state, and distribution across clusters.
+
+- **Binding Policies (BP)**  
+  Contributes policy configuration and status information used to summarize how workloads are bound to clusters.
+
+- **Object Explorer**  
+  Enables detailed inspection of Kubernetes resources such as pods, services, config maps, and other objects referenced by Dashboard summaries.
+
+- **Workload Execution and Control Space (WECS)**  
+  Provides monitoring and execution-related insights, including runtime and health information for deployed workloads.
+
+Together, these features allow the Dashboard to present a unified view while enabling seamless navigation to more detailed, task-specific interfaces.
