@@ -46,6 +46,25 @@ The Dashboard aggregates metrics from multiple platform components and presents 
 
 Dashboard data is refreshed regularly to reflect the current state of the platform. Visual indicators and status values update as underlying conditions change, allowing users to monitor system health and activity without manually navigating between pages.
 
+## Dashboard Layout
+
+The Dashboard is divided into the following logical sections:
+
+- **Cluster Metrics** – Total and active clusters
+- **Health Overview** – System and resource health
+- **Workload Statistics** – Workload counts and states
+- **Policy Overview** – Binding policy status
+- **Quick Actions** – Shortcuts to common workflows
+- **Recent Activity** – Latest platform events
+
+<img
+  src="./images/dashboard/dashboard-layout-annotated.png"
+  alt="Dashboard overview showing summary cards and health indicators"
+  width="750"
+/>
+> **Screenshot:** Dashboard layout with annotated sections  
+
+
 ## Step-by-Step Guides
 
 The following guides describe common workflows that can be performed using the Dashboard. Each guide focuses on practical, day-to-day actions that help users understand platform state and navigate efficiently to detailed views.
@@ -56,6 +75,11 @@ The following guides describe common workflows that can be performed using the D
 
 <img
   src="./images/dashboard/dashboard-overview-desktop.png"
+  alt="Dashboard overview showing summary cards, cluster health, and navigation sidebar"
+  width="800"
+/>
+<img
+  src="./images/dashboard/dashboard-overview-mobile.png"
   alt="Dashboard overview showing summary cards, cluster health, and navigation sidebar"
   width="800"
 />
@@ -99,6 +123,13 @@ The following guides describe common workflows that can be performed using the D
 />
 
 *Figure: Dashboard cards and sidebar navigation enable quick access to detailed cluster and workload views.*
+<img
+  src="./images/dashboard/dashboard-navigation-mobile.png"
+  alt="Navigation from the Dashboard to cluster and workload views"
+  width="650"
+/>
+
+*Figure: to access navigation in mobile view.*
 
 1. Click on cluster-related cards or links displayed on the Dashboard.
 2. Navigate to the **Managed Clusters** or ITS view to access detailed cluster information.
@@ -296,3 +327,11 @@ The Dashboard acts as an aggregation layer and entry point to several core KubeS
   Provides monitoring and execution-related insights, including runtime and health information for deployed workloads.
 
 Together, these features allow the Dashboard to present a unified view while enabling seamless navigation to more detailed, task-specific interfaces.
+
+## References
+
+- **Dashboard implementation:**  
+  `/frontend/src/pages/Dashboard.tsx`
+
+- **End-to-end tests:**  
+  `/frontend/e2e/Dashboard.spec.ts`
