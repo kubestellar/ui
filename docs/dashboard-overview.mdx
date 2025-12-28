@@ -173,3 +173,50 @@ An alert or issue is reported indicating a potential problem in the platform.
 
 **Outcome:**  
 Issues can be identified and investigated quickly, reducing time to diagnosis and enabling faster resolution.
+
+## API / Integration Reference
+
+The Dashboard aggregates data from multiple backend services to present a unified view of platform state. The endpoints listed below are provided for reference to illustrate how Dashboard data is sourced and refreshed.
+
+> **Note:** Endpoint names and responses may evolve over time. This section is intended for conceptual understanding rather than as a strict API contract.
+
+---
+
+### Backend Endpoints
+
+The Dashboard retrieves metrics and status information using the following backend APIs:
+
+- **GET `/api/dashboard/metrics`**  
+  Retrieves aggregated Dashboard metrics, including cluster, workload, and policy summaries.
+
+- **GET `/api/clusters/count`**  
+  Returns the total number of clusters managed by the platform.
+
+- **GET `/api/wds/count`**  
+  Returns workload-related counts sourced from the Workload Description Space (WDS).
+
+- **GET `/api/bp/count`**  
+  Returns binding policy counts and related status information.
+
+- **GET `/api/dashboard/health`**  
+  Provides overall system and component health indicators used by the Dashboard.
+
+- **GET `/api/dashboard/recent`**  
+  Retrieves recent activity and event information displayed in the Dashboard activity feed.
+
+---
+
+### Data Refresh Behavior
+
+Dashboard data is refreshed using a combination of initial loading and periodic updates:
+
+- **Initial load**  
+  When the Dashboard is opened, all required APIs are called in parallel to populate metrics and status indicators as quickly as possible.
+
+- **Auto-refresh**  
+  If enabled, the Dashboard periodically polls backend services to keep displayed data up to date.
+
+- **Manual refresh**  
+  Users can manually trigger a data refresh, causing the Dashboard to re-fetch data on demand.
+
+This approach ensures that the Dashboard reflects the current state of the platform while minimizing unnecessary navigation.
