@@ -17,7 +17,7 @@ func TestLoadConfigDefaults(t *testing.T) {
 
 	cfg := config.LoadConfig()
 
-	assert.Equal(t, "postgres://authuser:authpass123@localhost:5400/authdb?sslmode=disable", cfg.DatabaseURL)
+	assert.Equal(t, "postgres://authuser:authpass123@localhost:5400/authdbui?sslmode=disable", cfg.DatabaseURL)
 	assert.Equal(t, "your-secret-key-here", cfg.JWTSecret)
 	assert.Equal(t, "5400", cfg.Port)
 	assert.Equal(t, "debug", cfg.GinMode)
