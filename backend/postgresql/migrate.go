@@ -13,16 +13,11 @@ import (
 )
 
 func RunMigration() error {
-	if config.LoadConfig().DatabaseURL == "" {
-		log.LogError("Database URL is not set in config")
-		return fmt.Errorf("Database URL is not set")
-	}
-
 	migratePath := "file://postgresql/migrations"
-
+	DBURL := config.LoadConfig().DatabaseURL
 	m, err := migrate.New(
 		migratePath,
-		config.LoadConfig().DatabaseURL,
+		DBURL,
 	)
 	if err != nil {
 		log.LogError("Failed to initialize migrate", zap.String("error", err.Error()))
