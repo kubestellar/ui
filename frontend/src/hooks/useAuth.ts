@@ -34,6 +34,7 @@ export const useAuthActions = () => {
   return {
     logout: () => {
       localStorage.removeItem('jwtToken');
+      localStorage.removeItem('refreshToken');
       localStorage.setItem('tokenRemovalTime', Date.now().toString());
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
     },
@@ -45,6 +46,7 @@ export const useAuthActions = () => {
 
 export const logout = () => {
   localStorage.removeItem('jwtToken');
+  localStorage.removeItem('refreshToken');
   localStorage.setItem('tokenRemovalTime', Date.now().toString());
   window.dispatchEvent(new Event('storage'));
 };
