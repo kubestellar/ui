@@ -55,7 +55,7 @@ export const TREE_VIEW_NODE_HEIGHT = 30;
 // Fixed node style - shared across all node creation and updates
 const FIXED_NODE_STYLE = {
   padding: '2px 12px',
-  fontSize: '6px',
+  fontSize: '12px',
   width: `${TREE_VIEW_NODE_WIDTH}px`,
   height: `${TREE_VIEW_NODE_HEIGHT}px`,
 } as const;
