@@ -265,7 +265,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
             <p>
               {t('login.layout.needHelp')}{' '}
               <a
-                href="https://kubernetes.slack.com/archives/C058SUSL5AA"
+                href="https://cloud-native.slack.com/archives/C097094RZ3M"
                 target="_blank"
                 rel="noreferrer"
                 className="text-blue-400 transition-colors hover:text-blue-300"

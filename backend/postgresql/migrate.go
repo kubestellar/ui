@@ -2,9 +2,9 @@ package postgresql
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/pkg/config"
 	"go.uber.org/zap"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -13,17 +13,11 @@ import (
 )
 
 func RunMigration() error {
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.LogError("DATABASE_URL environment variable is not set")
-		return fmt.Errorf("DATABASE_URL is not set")
-	}
-
 	migratePath := "file://postgresql/migrations"
-
+	DBURL := config.LoadConfig().DatabaseURL
 	m, err := migrate.New(
 		migratePath,
-		dbURL,
+		DBURL,
 	)
 	if err != nil {
 		log.LogError("Failed to initialize migrate", zap.String("error", err.Error()))
