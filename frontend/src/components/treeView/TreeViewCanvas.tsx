@@ -47,6 +47,7 @@ interface TreeViewCanvasProps {
   onResourceFiltersChange?: (filters: ObjectFilter) => void;
   onToggleFullscreen?: () => void;
   isFullscreen?: boolean;
+  refreshKey?: number;
 }
 
 const TreeViewCanvas = memo<TreeViewCanvasProps>(
@@ -67,6 +68,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
     onResourceFiltersChange,
     onToggleFullscreen,
     isFullscreen = false,
+    refreshKey,
   }) => {
     const { t } = useTranslation();
     const theme = useTheme(state => state.theme);
@@ -344,7 +346,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
 
     return (
       <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-        <ReactFlowProvider>
+        <ReactFlowProvider key={refreshKey ?? 0}>
           <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
           <ZoomControls
             theme={theme}

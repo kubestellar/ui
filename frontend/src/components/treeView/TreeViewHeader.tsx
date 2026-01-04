@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Box, Typography, IconButton, Button } from '@mui/material';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../../stores/themeStore';
 
@@ -8,11 +8,13 @@ interface TreeViewHeaderProps {
   viewMode: 'tiles' | 'list';
   onViewModeChange: (mode: 'tiles' | 'list') => void;
   onCreateWorkload: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   children?: React.ReactNode;
 }
 
 const TreeViewHeader = memo<TreeViewHeaderProps>(
-  ({ viewMode, onViewModeChange, onCreateWorkload, children }) => {
+  ({ viewMode, onViewModeChange, onCreateWorkload, onRefresh, isRefreshing = false, children }) => {
     const { t } = useTranslation();
     const theme = useTheme(state => state.theme);
 
@@ -119,12 +121,37 @@ const TreeViewHeader = memo<TreeViewHeaderProps>(
           >
             {t('treeView.createWorkload')}
           </Button>
+          {onRefresh && (
+            <IconButton
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              sx={{
+                padding: 1,
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                color: theme === 'dark' ? '#FFFFFF' : undefined,
+                opacity: isRefreshing ? 0.6 : 1,
+                transition: 'opacity 0.2s ease',
+                '&:hover': {
+                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.04)',
+                },
+                '&.Mui-disabled': {
+                  color: theme === 'dark' ? '#FFFFFF' : undefined,
+                  opacity: 0.6,
+                },
+              }}
+              title={t('treeView.refresh')}
+              aria-label={t('treeView.refresh')}
+            >
+              <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+            </IconButton>
+          )}
         </Box>
       </Box>
     );
   }
 );
-
 TreeViewHeader.displayName = 'TreeViewHeader';
 
 export default TreeViewHeader;

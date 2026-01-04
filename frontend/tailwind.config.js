@@ -59,6 +59,7 @@ export default {
       animation: {
         'pulse-subtle': 'pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         shimmer: 'shimmer 2s infinite linear',
+        spin: 'spin 1s linear infinite',
       },
       keyframes: {
         'pulse-subtle': {
@@ -68,6 +69,10 @@ export default {
         shimmer: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' },
+        },
+        spin: {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
         },
       },
       backgroundImage: {

@@ -34,7 +34,7 @@ import cluster from '../assets/k8s_resources_logo/kubernetes-logo.svg';
 import pod from '../assets/k8s_resources_logo/pod.png';
 import user from '../assets/k8s_resources_logo/user.svg';
 import vol from '../assets/k8s_resources_logo/vol.svg';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import CreateOptions from '../components/CreateOptions';
 import { NodeLabel } from './wds_topology/NodeLabel';
 import { ZoomControls } from './wds_topology/ZoomControls';
@@ -561,7 +561,9 @@ const WecsTreeview = () => {
   const prevWecsData = useRef<WecsCluster[] | null>(null);
   const stateRef = useRef({ isCollapsed, isExpanded });
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
 
@@ -623,6 +625,15 @@ const WecsTreeview = () => {
   useEffect(() => {
     stateRef.current = { isCollapsed, isExpanded };
   }, [isCollapsed, isExpanded]);
+
+  // Cleanup refresh timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return '';
@@ -1440,6 +1451,34 @@ const WecsTreeview = () => {
     setActiveOption('option1');
   };
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefresh = useCallback(() => {
+    // Prevent rapid clicking
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    setIsTransforming(true);
+    setRefreshKey(k => k + 1);
+
+    transformDataToTree(memoizedWecsData as WecsCluster[])
+      .catch(err => {
+        console.error('Error refreshing topology:', err);
+        setIsTransforming(false);
+      })
+      .finally(() => {
+        // Clear existing timeout
+        if (refreshTimeoutRef.current) {
+          clearTimeout(refreshTimeoutRef.current);
+        }
+
+        // Reset loading state after animation completes
+        refreshTimeoutRef.current = setTimeout(() => {
+          setIsRefreshing(false);
+        }, 1000);
+      });
+  }, [transformDataToTree, memoizedWecsData, isRefreshing]);
+
   const handleToggleCollapse = useCallback(() => {
     setIsCollapsed(prev => {
       const newCollapsed = !prev;
@@ -1593,6 +1632,32 @@ const WecsTreeview = () => {
             >
               {t('wecsTopology.createWorkload')}
             </Button>
+            <IconButton
+              title={t('wecsTopology.refresh')}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              aria-label={t('wecsTopology.refresh')}
+              sx={{
+                ml: 1,
+                padding: 1,
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                color: theme === 'dark' ? '#FFFFFF' : undefined,
+                bgcolor: theme === 'dark' ? 'transparent' : 'transparent',
+                opacity: isRefreshing ? 0.6 : 1,
+                transition: 'opacity 0.2s ease',
+                '&:hover': {
+                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.04)',
+                },
+                '&.Mui-disabled': {
+                  color: theme === 'dark' ? '#FFFFFF' : undefined,
+                  opacity: 0.6,
+                },
+              }}
+            >
+              <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+            </IconButton>
           </Box>
         </Box>
 
@@ -1634,7 +1699,7 @@ const WecsTreeview = () => {
             <ListViewComponent />
           ) : nodes.length > 0 || edges.length > 0 ? (
             <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-              <ReactFlowProvider>
+              <ReactFlowProvider key={refreshKey}>
                 <FlowCanvas
                   nodes={memoizedNodes}
                   edges={edges}
