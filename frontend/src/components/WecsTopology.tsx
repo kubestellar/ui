@@ -47,6 +47,7 @@ import useTheme from '../stores/themeStore';
 import WecsDetailsPanel from './wecs_details/WecsDetailsPanel';
 import { FlowCanvas } from './wds_topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
+import { REFRESH_ANIMATION_DURATION, getRefreshButtonSx } from './refreshConfig';
 
 import { api } from '../lib/api';
 import useEdgeTypeStore from '../stores/edgeTypeStore';
@@ -540,6 +541,7 @@ const getLayoutedElements = (
 const WecsTreeview = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
+  const themeMode = theme === 'dark' ? 'dark' : 'light';
   const { edgeType } = useEdgeTypeStore();
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
@@ -1453,7 +1455,7 @@ const WecsTreeview = () => {
 
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     // Prevent rapid clicking
     if (isRefreshing) return;
 
@@ -1461,22 +1463,19 @@ const WecsTreeview = () => {
     setIsTransforming(true);
     setRefreshKey(k => k + 1);
 
-    transformDataToTree(memoizedWecsData as WecsCluster[])
-      .catch(err => {
-        console.error('Error refreshing topology:', err);
-        setIsTransforming(false);
-      })
-      .finally(() => {
-        // Clear existing timeout
-        if (refreshTimeoutRef.current) {
-          clearTimeout(refreshTimeoutRef.current);
-        }
-
-        // Reset loading state after animation completes
-        refreshTimeoutRef.current = setTimeout(() => {
-          setIsRefreshing(false);
-        }, 1000);
-      });
+    try {
+      await transformDataToTree(memoizedWecsData as WecsCluster[]);
+    } catch (err) {
+      console.error('Error refreshing topology:', err);
+      setIsTransforming(false);
+    } finally {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      refreshTimeoutRef.current = setTimeout(() => {
+        setIsRefreshing(false);
+      }, REFRESH_ANIMATION_DURATION);
+    }
   }, [transformDataToTree, memoizedWecsData, isRefreshing]);
 
   const handleToggleCollapse = useCallback(() => {
@@ -1637,24 +1636,7 @@ const WecsTreeview = () => {
               onClick={handleRefresh}
               disabled={isRefreshing}
               aria-label={t('wecsTopology.refresh')}
-              sx={{
-                ml: 1,
-                padding: 1,
-                borderRadius: '50%',
-                width: 40,
-                height: 40,
-                color: theme === 'dark' ? '#FFFFFF' : undefined,
-                bgcolor: theme === 'dark' ? 'transparent' : 'transparent',
-                opacity: isRefreshing ? 0.6 : 1,
-                transition: 'opacity 0.2s ease',
-                '&:hover': {
-                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.04)',
-                },
-                '&.Mui-disabled': {
-                  color: theme === 'dark' ? '#FFFFFF' : undefined,
-                  opacity: 0.6,
-                },
-              }}
+              sx={{ ...getRefreshButtonSx(themeMode, isRefreshing), ml: 1 }}
             >
               <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
             </IconButton>

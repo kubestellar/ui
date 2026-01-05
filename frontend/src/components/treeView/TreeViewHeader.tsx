@@ -3,6 +3,7 @@ import { Box, Typography, IconButton, Button } from '@mui/material';
 import { Plus, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../../stores/themeStore';
+import { getRefreshButtonSx } from '../refreshConfig';
 
 interface TreeViewHeaderProps {
   viewMode: 'tiles' | 'list';
@@ -125,22 +126,7 @@ const TreeViewHeader = memo<TreeViewHeaderProps>(
             <IconButton
               onClick={onRefresh}
               disabled={isRefreshing}
-              sx={{
-                padding: 1,
-                borderRadius: '50%',
-                width: 40,
-                height: 40,
-                color: theme === 'dark' ? '#FFFFFF' : undefined,
-                opacity: isRefreshing ? 0.6 : 1,
-                transition: 'opacity 0.2s ease',
-                '&:hover': {
-                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.04)',
-                },
-                '&.Mui-disabled': {
-                  color: theme === 'dark' ? '#FFFFFF' : undefined,
-                  opacity: 0.6,
-                },
-              }}
+              sx={getRefreshButtonSx(theme === 'dark' ? 'dark' : 'light', isRefreshing)}
               title={t('treeView.refresh')}
               aria-label={t('treeView.refresh')}
             >

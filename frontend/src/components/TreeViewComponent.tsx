@@ -14,6 +14,7 @@ import { useTreeViewActions } from './treeView/hooks/useTreeViewActions';
 import { ResourceItem as TreeResourceItem, CustomNode, CustomEdge } from './treeView/types';
 import { ObjectFilter } from './ObjectFilters';
 import { ResourceItem as ListResourceItem } from './ListViewComponent';
+import { REFRESH_ANIMATION_DURATION } from './refreshConfig';
 
 // Re-export types for other components to import
 export type { ResourceItem as TreeResourceItem, CustomNode, CustomEdge } from './treeView/types';
@@ -98,25 +99,25 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
    * This ensures a complete visual refresh of the React Flow canvas.
    * Includes debouncing to prevent rapid clicking.
    */
-  const handleRefresh = useCallback(() => {
-    // Prevent rapid clicking
+  const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
 
     setIsRefreshing(true);
     setRefreshKey(k => k + 1);
-    refreshTree();
 
-    // Clear existing timeout
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
+    try {
+      await refreshTree();
+    } catch (error) {
+      console.error('Failed to refresh tree view:', error);
+    } finally {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      refreshTimeoutRef.current = setTimeout(() => {
+        setIsRefreshing(false);
+      }, REFRESH_ANIMATION_DURATION);
     }
-
-    // Reset loading state after animation completes
-    refreshTimeoutRef.current = setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1000);
   }, [refreshTree, isRefreshing]);
-
   // Actions management hook
   const {
     contextMenu,
