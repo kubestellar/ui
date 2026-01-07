@@ -3,6 +3,7 @@ import { VerifyToken } from '../api/auth';
 import { AUTH_QUERY_KEY } from '../api/auth/constant';
 import { api } from '../lib/api';
 import { useState, useEffect } from 'react';
+import { clearTokens } from '../components/login/tokenUtils';
 
 export const useAuth = () => {
   return useQuery({
@@ -33,7 +34,7 @@ export const useAuthActions = () => {
 
   return {
     logout: () => {
-      localStorage.removeItem('jwtToken');
+      clearTokens();
       localStorage.setItem('tokenRemovalTime', Date.now().toString());
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
     },
@@ -44,7 +45,7 @@ export const useAuthActions = () => {
 };
 
 export const logout = () => {
-  localStorage.removeItem('jwtToken');
+  clearTokens();
   localStorage.setItem('tokenRemovalTime', Date.now().toString());
   window.dispatchEvent(new Event('storage'));
 };

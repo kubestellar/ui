@@ -3,7 +3,6 @@ import { Position, MarkerType } from 'reactflow';
 import { NodeLabel } from '../wds_topology/NodeLabel';
 import useTheme from '../../stores/themeStore';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
-import useZoomStore from '../../stores/zoomStore';
 import useEdgeTypeStore from '../../stores/edgeTypeStore';
 import { CustomNode, ResourceItem, CustomEdge } from './types';
 import ConfigMap from '../../assets/k8s_resources_logo/cm.svg';
@@ -49,7 +48,17 @@ interface TreeViewNodesProps {
   isExpanded: boolean;
 }
 
-// Node styling is now handled dynamically through the zoom store
+// TreeView node dimensions
+export const TREE_VIEW_NODE_WIDTH = 146;
+export const TREE_VIEW_NODE_HEIGHT = 30;
+
+// Fixed node style - shared across all node creation and updates
+const FIXED_NODE_STYLE = {
+  padding: '2px 12px',
+  fontSize: '12px',
+  width: `${TREE_VIEW_NODE_WIDTH}px`,
+  height: `${TREE_VIEW_NODE_HEIGHT}px`,
+} as const;
 
 const iconMap: Record<string, string> = {
   ConfigMap: ConfigMap,
@@ -253,7 +262,6 @@ const getTimeAgo = (timestamp: string | undefined, t: (key: string) => string): 
 export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeViewNodesProps) => {
   const theme = useTheme(state => state.theme);
   const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
-  const { currentZoom, getScaledNodeStyle } = useZoomStore();
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeIdCounter = useRef<number>(0);
   const { edgeType } = useEdgeTypeStore();
@@ -284,9 +292,6 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         highlightedLabels &&
         resourceData?.metadata?.labels &&
         resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
-
-      // Get dynamically scaled node style
-      const scaledNodeStyle = getScaledNodeStyle(currentZoom);
 
       const node =
         cachedNode ||
@@ -331,7 +336,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           },
           position: { x: 0, y: 0 },
           style: {
-            ...scaledNodeStyle,
+            ...FIXED_NODE_STYLE,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -366,7 +371,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
       // If the node is already cached but highlighting changed, update style
       if (cachedNode) {
         node.style = {
-          ...scaledNodeStyle,
+          ...FIXED_NODE_STYLE,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -451,16 +456,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         newEdges.push(edge);
       }
     },
-    [
-      theme,
-      isExpanded,
-      highlightedLabels,
-      onNodeSelect,
-      onMenuOpen,
-      currentZoom,
-      getScaledNodeStyle,
-      edgeType,
-    ]
+    [theme, isExpanded, highlightedLabels, onNodeSelect, onMenuOpen, edgeType]
   );
 
   const clearNodeCache = useCallback(() => {
@@ -478,10 +474,8 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           highlightedLabels &&
           resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
 
-        const scaledNodeStyle = getScaledNodeStyle(currentZoom);
-
         const newStyle = {
-          ...scaledNodeStyle,
+          ...FIXED_NODE_STYLE,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -518,7 +512,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         };
       });
     },
-    [theme, highlightedLabels, currentZoom, getScaledNodeStyle]
+    [theme, highlightedLabels]
   );
 
   return {
