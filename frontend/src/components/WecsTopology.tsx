@@ -612,7 +612,6 @@ const WecsTreeview = () => {
         },
         markerEnd: {
           ...edge.markerEnd,
-          type: MarkerType.ArrowClosed,
           color: theme === 'dark' ? '#64748b' : '#94a3b8',
         },
       }));
