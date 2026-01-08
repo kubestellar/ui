@@ -595,6 +595,34 @@ const WecsTreeview = () => {
     updateNodeStyles();
   }, [updateNodeStyles]);
 
+  // Update edge styles when theme changes
+  const updateEdgeStyles = useCallback(() => {
+    setEdges(currentEdges => {
+      if (currentEdges.length === 0) return currentEdges;
+
+      return currentEdges.map(edge => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: theme === 'dark' ? 'url(#edge-gradient-dark)' : 'url(#edge-gradient-light)',
+          filter:
+            theme === 'dark'
+              ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+              : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+        },
+        markerEnd: {
+          ...edge.markerEnd,
+          type: MarkerType.ArrowClosed,
+          color: theme === 'dark' ? '#64748b' : '#94a3b8',
+        },
+      }));
+    });
+  }, [theme]);
+
+  useEffect(() => {
+    updateEdgeStyles();
+  }, [updateEdgeStyles]);
+
   // Update edge types when edgeType changes
   useEffect(() => {
     if (edges.length > 0) {
