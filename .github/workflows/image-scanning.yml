@@ -7,17 +7,19 @@ on:
     branches:
       - main
     paths:
-      - 'Dockerfile*'
+      - '**/Dockerfile*'
       - 'go.mod'
       - 'go.sum'
+      - 'package.json'
       - '.github/workflows/image-scanning.yml'
   pull_request:
     branches:
       - main
     paths:
-      - 'Dockerfile*'
+      - '**/Dockerfile*'
       - 'go.mod'
       - 'go.sum'
+      - 'package.json'
   schedule:
     # Weekly scan
     - cron: '0 8 * * 0'
@@ -35,20 +37,26 @@ jobs:
   build-and-scan:
     name: Build and scan image
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - frontend
+          - backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Build image
         run: |
-          docker build -t local/image:${{ github.sha }} .
+          docker build -f ${{ matrix.component }}/Dockerfile -t local/${{ matrix.component }}:${{ github.sha }} ${{ matrix.component }}
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'local/image:${{ github.sha }}'
+          image-ref: 'local/${{ matrix.component }}:${{ github.sha }}'
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'trivy-results-${{ matrix.component }}.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
@@ -56,4 +64,5 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: 'trivy-results-${{ matrix.component }}.sarif'
+          category: '${{ matrix.component }}'
