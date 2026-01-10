@@ -5,7 +5,7 @@ name: Container Image Scanning
 on:
   push:
     branches:
-      - main
+      - dev
     paths:
       - '**/Dockerfile*'
       - 'go.mod'
@@ -14,7 +14,7 @@ on:
       - '.github/workflows/image-scanning.yml'
   pull_request:
     branches:
-      - main
+      - dev
     paths:
       - '**/Dockerfile*'
       - 'go.mod'
@@ -31,32 +31,26 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/dev' }}
 
 jobs:
-  build-and-scan:
-    name: Build and scan image
+  scan-frontend:
+    name: Scan frontend image
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        component:
-          - frontend
-          - backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build image
+      - name: Build frontend image
         run: |
-          docker build -f ${{ matrix.component }}/Dockerfile -t local/${{ matrix.component }}:${{ github.sha }} ${{ matrix.component }}
+          docker build -f frontend/Dockerfile -t local/frontend:${{ github.sha }} .
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'local/${{ matrix.component }}:${{ github.sha }}'
+          image-ref: 'local/frontend:${{ github.sha }}'
           format: 'sarif'
-          output: 'trivy-results-${{ matrix.component }}.sarif'
+          output: 'trivy-results-frontend.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
@@ -64,5 +58,32 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'trivy-results-${{ matrix.component }}.sarif'
-          category: '${{ matrix.component }}'
+          sarif_file: 'trivy-results-frontend.sarif'
+          category: 'frontend'
+
+  scan-backend:
+    name: Scan backend image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: |
+          docker build -f backend/Dockerfile -t local/backend:${{ github.sha }} backend
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'local/backend:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results-backend.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results-backend.sarif'
+          category: 'backend'
