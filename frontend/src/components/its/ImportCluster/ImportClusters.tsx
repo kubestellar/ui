@@ -381,6 +381,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
     const clusterName = formData.clusterName.trim();
 
+
+
     // Log the request data for debugging
     console.log('[DEBUG] Starting cluster onboarding process for:', clusterName);
     console.log('[DEBUG] Using hybrid approach:');
