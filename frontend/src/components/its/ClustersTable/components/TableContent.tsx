@@ -15,7 +15,7 @@ import StatusBadge from './StatusBadge';
 import LabelChip from './LabelChip';
 import { ActionButton } from './ActionMenu';
 import EmptyState from './EmptyState';
-import ClusterVisualization from './ClusterVisualization';
+import ClusterIcon from './ClusterIcon';
 
 interface TableContentProps {
   clusters: ManagedClusterInfo[];
@@ -137,16 +137,16 @@ const TableContent: React.FC<TableContentProps> = ({
                   position: 'relative',
                   '&::after': selectedClusters.includes(cluster.name)
                     ? {
-                        content: '""',
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        height: '100%',
-                        width: '3px',
-                        backgroundColor: colors.primary,
-                        borderTopLeftRadius: '4px',
-                        borderBottomLeftRadius: '4px',
-                      }
+                      content: '""',
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      height: '100%',
+                      width: '3px',
+                      backgroundColor: colors.primary,
+                      borderTopLeftRadius: '4px',
+                      borderBottomLeftRadius: '4px',
+                    }
                     : {},
                 }}
               >
@@ -172,7 +172,7 @@ const TableContent: React.FC<TableContentProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-4">
-                    <ClusterVisualization
+                    <ClusterIcon
                       available={!!cluster.available}
                       isDark={isDark}
                       colors={colors}
@@ -208,14 +208,14 @@ const TableContent: React.FC<TableContentProps> = ({
                 <TableCell>
                   {cluster.creationTime || cluster.creationTimestamp
                     ? new Date(
-                        cluster.creationTime || cluster.creationTimestamp || ''
-                      ).toLocaleString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                      cluster.creationTime || cluster.creationTimestamp || ''
+                    ).toLocaleString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                     : 'N/A'}
                 </TableCell>
                 <TableCell>
