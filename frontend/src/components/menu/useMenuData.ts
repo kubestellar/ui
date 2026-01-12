@@ -1,14 +1,16 @@
 import {
-  HiOutlineCube,
-  HiOutlineCommandLine,
-  HiOutlinePuzzlePiece,
-  HiOutlineUsers,
-  HiOutlineRocketLaunch,
-  HiOutlineViewfinderCircle,
-} from 'react-icons/hi2';
-import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
-import { useTranslation } from 'react-i18next';
+  FaHome,
+  FaServer,
+  FaLayerGroup,
+  FaLink,
+  FaRocket,
+  FaSearch,
+  FaStore,
+  FaPuzzlePiece,
+  FaUsersCog,
+} from 'react-icons/fa';
 import { SiGrafana } from 'react-icons/si';
+import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
 import { usePlugins } from '../../plugins/PluginLoader';
@@ -27,7 +29,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/',
-          icon: MdDashboard,
+          icon: FaHome,
           label: t('menu.items.home'),
         },
       ],
@@ -40,31 +42,31 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/its',
-          icon: HiOutlineCube,
+          icon: FaServer,
           label: t('menu.items.managedClusters'),
         },
         {
           isLink: true,
           url: '/workloads/manage',
-          icon: HiOutlineCommandLine,
+          icon: FaLayerGroup,
           label: t('menu.items.stagedWorkloads'),
         },
         {
           isLink: true,
           url: '/bp/manage',
-          icon: MdPolicy,
+          icon: FaLink,
           label: t('menu.items.bindingPolicies'),
         },
         {
           isLink: true,
           url: '/wecs/treeview',
-          icon: MdAssuredWorkload,
+          icon: FaRocket,
           label: t('menu.items.deployedWorkloads'),
         },
         {
           isLink: true,
           url: '/resources',
-          icon: HiOutlineViewfinderCircle,
+          icon: FaSearch,
           label: t('menu.items.resourceExplorer'),
         },
         {
@@ -83,13 +85,13 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/plugins/marketplace',
-          icon: HiOutlineRocketLaunch,
+          icon: FaStore,
           label: t('menu.items.galaxyMarketplace', 'Galaxy Marketplace'),
         },
         {
           isLink: true,
           url: '/plugins/manage',
-          icon: HiOutlinePuzzlePiece,
+          icon: FaPuzzlePiece,
           label: t('menu.items.pluginManager'),
         },
         ...pluginMenuItems,
@@ -107,7 +109,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/admin/users',
-          icon: HiOutlineUsers,
+          icon: FaUsersCog,
           label: t('menu.items.userManagement') || 'User Management',
         },
       ],
