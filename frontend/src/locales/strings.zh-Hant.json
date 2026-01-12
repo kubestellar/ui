@@ -1,22 +1,22 @@
 {
-  "raiseIssue": "回報問題",
+  "raiseIssue": "報告問題",
   "profileSection": {
     "changePassword": "修改密碼",
-    "changePasswordSubtitle": "請輸入您目前的密碼並選擇一個新密碼。",
-    "currentPassword": "目前的密碼",
+    "changePasswordSubtitle": "請輸入您當前的密碼並選擇一個新密碼。",
+    "currentPassword": "當前密碼",
     "newPassword": "新密碼",
     "confirmNewPassword": "確認新密碼",
     "passwordChangedSuccess": "密碼修改成功。",
-    "passwordChangedError": "密碼修改失敗。",
-    "passwordsDoNotMatch": "新密碼不相符。",
-    "passwordRequired": "密碼為必填項。",
-    "errorCurrentPasswordIncorrect": "目前的密碼不正確",
+    "passwordChangedError": "修改密碼失敗。",
+    "passwordsDoNotMatch": "新密碼不匹配。",
+    "passwordRequired": "密碼是必填項。",
+    "errorCurrentPasswordIncorrect": "當前密碼不正確",
     "cancel": "取消",
     "changePasswordButton": "修改密碼",
-    "passwordsMatch": "密碼相符！"
+    "passwordsMatch": "密碼匹配！"
   },
   "commandPalette": {
-    "ariaLabel": "打開命令面板",
+    "ariaLabel": "開啟命令面板",
     "title": "命令面板（Ctrl+K）",
     "badge": "K",
     "searchPlaceholder": "搜尋命令...",
@@ -33,87 +33,87 @@
     },
     "sections": {
       "navigation": "導航",
-      "visualizations": "可視化",
+      "visualizations": "視覺化",
       "help": "幫助",
-      "account": "帳戶",
+      "account": "賬戶",
       "admin": "管理"
     },
     "commands": {
       "home": {
         "title": "首頁",
-        "description": "前往儀表板"
+        "description": "前往儀表盤"
       },
       "plugin": {
-        "title": "插件管理器",
-        "description": "管理和監控 KubeStellar 插件"
+        "title": "外掛管理器",
+        "description": "管理和監控 KubeStellar 外掛"
       },
       "managedClusters": {
         "title": "管理叢集",
-        "description": "管理 Kubernetes 叢集"
+        "description": "管理Kubernetes叢集"
       },
       "workloads": {
         "title": "工作負載",
         "description": "跨叢集管理工作負載"
       },
       "bindingPolicies": {
-        "title": "綁定策略",
-        "description": "配置綁定策略"
+        "title": "繫結策略",
+        "description": "配置繫結策略"
       },
       "userManagement": {
         "title": "使用者管理",
-        "description": "管理系統使用者與權限"
+        "description": "管理系統使用者和許可權"
       },
       "wdsTreeview": {
-        "title": "WDS 樹狀圖",
-        "description": "可視化工作負載分布"
+        "title": "WDS 樹檢視",
+        "description": "視覺化工作負載分佈"
       },
       "wecsTreeview": {
-        "title": "WECS 樹狀圖",
-        "description": "可視化已部署工作負載結構"
+        "title": "WECS 樹檢視",
+        "description": "視覺化已部署工作負載結構"
       },
       "documentation": {
-        "title": "打開文件",
+        "title": "開啟文件",
         "description": "啟動 KubeStellar 文件"
       },
       "logout": {
-        "title": "登出",
-        "description": "登出您的帳戶",
-        "infoMessage": "您已成功登出。"
+        "title": "退出登入",
+        "description": "退出您的賬戶",
+        "infoMessage": "您已成功退出登入。"
       },
       "galaxyMarketplace": {
         "title": "銀河市場",
-        "description": "在銀河市場中探索並安裝插件"
+        "description": "在銀河市場中發現並安裝外掛"
       }
     }
   },
   "admin": {
     "users": {
-      "title": "用戶管理",
-      "subtitle": "系統用戶",
-      "noUsers": "未找到用戶",
-      "noUsersDescription": "系統中還沒有用戶。點擊\"添加用戶\"創建您的第一個用戶。",
-      "noPermissions": "未分配權限",
+      "title": "使用者管理",
+      "subtitle": "系統使用者",
+      "noUsers": "未找到使用者",
+      "noUsersDescription": "系統中還沒有使用者。點選\"新增使用者\"建立您的第一個使用者。",
+      "noPermissions": "未分配許可權",
       "actions": {
-        "addUser": "添加用戶",
-        "editUser": "編輯用戶",
-        "add": "添加用戶",
-        "update": "更新用戶",
-        "delete": "刪除用戶",
+        "addUser": "新增使用者",
+        "editUser": "編輯使用者",
+        "add": "新增使用者",
+        "update": "更新使用者",
+        "delete": "刪除使用者",
         "edit": "編輯",
-        "deleteUser": "刪除用戶"
+        "deleteUser": "刪除使用者"
       },
       "table": {
-        "username": "用戶名",
+        "username": "使用者名稱",
         "role": "角色",
-        "permissions": "權限",
+        "permissions": "許可權",
         "actions": "操作"
       },
       "roles": {
         "admin": "管理員",
-        "user": "用戶"
+        "user": "使用者"
       },
       "permissions": {
-        "users": "用戶",
+        "users": "使用者",
         "resources": "資源",
         "system": "系統",
         "dashboard": "儀表板",
@@ -124,38 +124,38 @@
         }
       },
       "form": {
-        "username": "用戶名",
-        "usernamePlaceholder": "輸入用戶名",
+        "username": "使用者名稱",
+        "usernamePlaceholder": "輸入使用者名稱",
         "password": "密碼",
         "passwordPlaceholder": "輸入密碼",
         "passwordOptional": "密碼（可選）",
         "passwordOptionalPlaceholder": "輸入新密碼或留空",
         "confirmPassword": "確認密碼",
         "confirmPasswordPlaceholder": "確認密碼",
-        "isAdmin": "管理員訪問權限",
-        "permissions": "組件權限",
+        "isAdmin": "管理員訪問許可權",
+        "permissions": "元件許可權",
         "cancel": "取消",
         "optional": "可選"
       },
       "delete": {
-        "title": "刪除用戶",
+        "title": "刪除使用者",
         "confirmTitle": "確認刪除",
-        "confirmMessage": "您確定要刪除用戶\"{{username}}\"嗎？此操作無法撤消。",
-        "confirm": "刪除用戶"
+        "confirmMessage": "您確定要刪除使用者\"{{username}}\"嗎？此操作無法撤消。",
+        "confirm": "刪除使用者"
       },
       "errors": {
-        "fetchFailed": "獲取用戶失敗",
+        "fetchFailed": "獲取使用者失敗",
         "missingFields": "請填寫所有必填欄位",
         "passwordMismatch": "密碼不匹配",
-        "addFailed": "添加用戶失敗",
-        "updateFailed": "更新用戶失敗",
-        "deleteFailed": "刪除用戶失敗",
-        "invalidUsername": "用戶名只能包含字母、數字、底線和連字符"
+        "addFailed": "新增使用者失敗",
+        "updateFailed": "更新使用者失敗",
+        "deleteFailed": "刪除使用者失敗",
+        "invalidUsername": "使用者名稱只能包含字母、數字、下劃線和連字元"
       },
       "success": {
-        "userAdded": "用戶添加成功",
-        "userUpdated": "用戶更新成功",
-        "userDeleted": "用戶刪除成功"
+        "userAdded": "使用者新增成功",
+        "userUpdated": "使用者更新成功",
+        "userDeleted": "使用者刪除成功"
       }
     }
   },
@@ -163,22 +163,1906 @@
     "catalogs": {
       "main": "主要",
       "management": "管理",
-      "plugins": "插件",
+      "plugins": "外掛",
       "admin": "管理"
     },
     "items": {
       "home": "首頁",
       "managedClusters": "管理叢集",
+      "grafana": "監控面板",
       "stagedWorkloads": "已暫存工作負載",
-      "bindingPolicies": "綁定策略",
+      "bindingPolicies": "繫結策略",
       "deployedWorkloads": "已部署工作負載",
-      "pluginManager": "插件管理器",
-      "userManagement": "用戶管理",
+      "pluginManager": "外掛管理器",
+      "userManagement": "使用者管理",
       "galaxyMarketplace": "銀河市場"
     }
   },
+  "common": {
+    "changes": "更改",
+    "clusterLabel": "叢集標籤",
+    "workloadLabel": "工作負載標籤",
+    "workloads": "工作負載",
+    "clearCanvas": "清除畫布",
+    "clearFilter": "清除篩選器",
+    "cancel": "取消",
+    "save": "儲存",
+    "edit": "編輯",
+    "delete": "刪除",
+    "create": "建立",
+    "add": "新增",
+    "refresh": "重新整理",
+    "search": "搜尋",
+    "connect": "連線",
+    "import": "匯入",
+    "loading": "載入中...",
+    "success": "成功",
+    "error": "錯誤",
+    "warning": "警告",
+    "actions": "操作",
+    "status": {
+      "status": "狀態",
+      "active": "活動中",
+      "inactive": "未啟用",
+      "pending": "待定",
+      "checking": "檢查中",
+      "success": "成功",
+      "warning": "版本不匹配",
+      "error": "缺失",
+      "installed": "已安裝"
+    },
+    "noResource": "未指定{{resource}}",
+    "copy": "複製",
+    "close": "關閉",
+    "update": "更新",
+    "unknown": "未知",
+    "workload": "工作負載",
+    "tryAgain": "重試",
+    "confirm": "確認",
+    "continue": "繼續",
+    "back": "返回",
+    "submit": "提交",
+    "settings": "設定",
+    "help": "幫助",
+    "details": "詳情",
+    "view": "檢視",
+    "yes": "是",
+    "no": "否",
+    "all": "全部",
+    "none": "無",
+    "ok": "確定",
+    "finish": "完成",
+    "next": "下一步",
+    "retry": "重試",
+    "previous": "上一步",
+    "page": "頁面",
+    "sync": "同步",
+    "clearAll": "全部清除",
+    "fitView": "適應檢視",
+    "clearSearch": "清除搜尋",
+    "clearFilters": "清除篩選條件",
+    "clear": "清除",
+    "of": "共",
+    "items": "{{count}} 項",
+    "items_plural": "{{count}} 項",
+    "filteredFrom": "篩選自"
+  },
+  "installationPage": {
+    "statusBadge": {
+      "installed": "已安裝",
+      "versionMismatch": "版本不匹配",
+      "missing": "缺失",
+      "checking": "檢查中"
+    },
+    "codeBlock": {
+      "bash": "bash"
+    },
+    "title": "安裝",
+    "verification": "驗證",
+    "installCommand": "執行以下命令進行安裝",
+    "verifyCommand": "使用以下命令驗證安裝",
+    "welcome": "歡迎使用 KubeStellar",
+    "gettingStarted": "透過設定開發環境開始使用 KubeStellar。按照引導式安裝流程部署演示系統。",
+    "tabs": {
+      "prerequisites": "前提條件",
+      "installation": "安裝"
+    },
+    "sidebarSteps": {
+      "title": "安裝步驟",
+      "description": "按照以下步驟設定 KubeStellar",
+      "checkPrerequisites": "檢查前提條件",
+      "checkPrerequisitesDescription": "確保已安裝所有必需工具",
+      "installKubestellar": "安裝 KubeStellar",
+      "installKubestellarDescription": "使用 CLI 命令部署 KubeStellar",
+      "startUsingKubestellar": "開始使用 KubeStellar",
+      "startUsingKubestellarDescription": "登入並開始管理叢集"
+    },
+    "documentationLink": "檢視完整安裝指南",
+    "prerequisites": {
+      "prerequisites": "前提條件",
+      "title": "系統前提條件",
+      "description": "請在繼續之前確保已安裝以下工具",
+      "status": {
+        "success": "成功",
+        "warnings": "警告",
+        "missing": "缺失",
+        "checking": "檢查中"
+      },
+      "coreRequirements": "核心要求",
+      "demoEnvironmentRequirements": "演示環境要求",
+      "buttons": {
+        "refresh": "重新整理",
+        "nextInstallation": "下一步：安裝"
+      }
+    },
+    "installation": {
+      "title": "安裝 KubeStellar",
+      "description": "選擇您的平臺並執行安裝指令碼",
+      "installPrerequisitesFirst": {
+        "title": "先安裝前提條件",
+        "description": "在執行安裝指令碼之前，請確保系統中已安裝所有必需的前提條件。",
+        "button": "檢視安裝前提條件"
+      },
+      "platform": "平臺",
+      "platforms": {
+        "kind": "kind",
+        "k3d": "k3d"
+      },
+      "installationScript": "安裝指令碼",
+      "scriptInstructions": "在終端中執行此命令以使用以下方式安裝 KubeStellar",
+      "installationProcess": {
+        "title": "安裝過程：",
+        "steps": [
+          "建立並配置本地叢集",
+          "安裝 KubeStellar 元件及其依賴項",
+          "設定正確的網路和許可權",
+          "配置演示環境"
+        ]
+      },
+      "importantNotes": {
+        "title": "重要說明：",
+        "notes": [
+          "安裝可能需要幾分鐘才能完成",
+          "請確保系統資源充足",
+          "在安裝完成前請保持終端視窗開啟",
+          "檢查終端輸出中的任何錯誤資訊"
+        ]
+      },
+      "afterInstallation": {
+        "title": "安裝後：",
+        "steps": ["透過檢查叢集狀態驗證安裝", "檢視入門文件", "開始管理您的 KubeStellar 環境"]
+      },
+      "buttons": {
+        "backPrerequisites": "上一步：前提條件",
+        "startInstallation": "開始安裝",
+        "installing": "正在安裝..."
+      }
+    },
+    "checkingStatus": {
+      "title": "正在檢查 KubeStellar 安裝狀態...",
+      "description": "這隻需片刻時間。我們正在檢查系統中是否已安裝 KubeStellar。"
+    },
+    "checkError": {
+      "title": "狀態檢查失敗",
+      "description": "無法檢查 KubeStellar 是否已安裝。可能是由於後端服務連線問題或伺服器暫時不可用。",
+      "retryButton": "重試連線",
+      "persistenceNote": "如果問題仍然存在，請檢查您的網路連線或聯絡系統管理員。"
+    },
+    "footer": {
+      "copyright": "KubeStellar",
+      "documentation": "文件",
+      "github": "GitHub",
+      "description": "KubeStellar 是一個開源專案。如需支援、功能請求或報告錯誤，請訪問我們的 GitHub 倉庫。"
+    },
+    "skipPrerequisitesNotice": {
+      "title": "已跳過前提條件檢查",
+      "description": "當前環境中已停用前提條件檢查。您可以直接進行安裝。",
+      "note": "注意：請確保在執行安裝命令之前手動安裝所有必需工具。"
+    },
+    "toasts": {
+      "alreadyInstalled": "KubeStellar 已安裝！正在跳轉到登入頁面...",
+      "notInstalled": "未發現 Kubeflex 叢集。請按照步驟設定 KubeStellar 環境。",
+      "checkFailed": "檢查 KubeStellar 狀態失敗",
+      "preparingInstructions": "正在準備安裝指令...",
+      "followInstructions": "請按照以下 CLI 安裝指令安裝 KubeStellar",
+      "loadInstructionsFailed": "載入安裝指令失敗。請重新整理頁面並重試。",
+      "installationDetected": "檢測到已安裝 KubeStellar。正在跳轉到登入頁面..."
+    }
+  },
+  "header": {
+    "themeToggle": "切換主題",
+    "dashboard": "儀表盤",
+    "clusters": "叢集",
+    "workloads": "工作負載",
+    "policies": "策略",
+    "settings": "設定",
+    "logout": "退出登入",
+    "language": "語言",
+    "importCluster": "匯入叢集",
+    "menu": "選單",
+    "goToHome": "返回主頁",
+    "logoAlt": "KubeStellar 標誌",
+    "themeToggleTip": "Alt+Q 切換主題",
+    "switchTheme": "切換為 {{mode}} 模式"
+  },
+  "login": {
+    "controlPlane": "控制平面",
+    "layout": {
+      "logoAlt": "KubeStellar",
+      "tagline": "無縫多叢集管理",
+      "taglineEmphasis": "為未來而生。",
+      "fullscreen": "切換全屏",
+      "welcomeBack": "歡迎回來",
+      "accessDashboard": "進入儀表盤",
+      "enterCredentials": "請輸入您的憑據",
+      "needHelp": "需要幫助？",
+      "contactSupport": "聯絡支援"
+    },
+    "loading": {
+      "logoAlt": "KubeStellar",
+      "initializing": "正在初始化 KubeStellar 環境..."
+    },
+    "form": {
+      "username": "使用者名稱",
+      "password": "密碼",
+      "rememberMe": "記住我",
+      "signIn": "登入 KubeStellar",
+      "signingIn": "正在登入...",
+      "showPassword": "顯示密碼",
+      "hidePassword": "隱藏密碼",
+      "errors": {
+        "usernameRequired": "使用者名稱為必填項",
+        "passwordRequired": "密碼為必填項"
+      }
+    }
+  },
+  "clusters": {
+    "title": "管理叢集",
+    "subtitle": "管理和監控您的 Kubernetes 叢集",
+    "searchPlaceholder": "按名稱、標籤、狀態或上下文搜尋叢集...",
+    "importCluster": "匯入叢集",
+    "activeFilters": "活動篩選器：",
+    "search": "搜尋",
+    "noClustersFound": "未找到叢集",
+    "noClustersMatchBoth": "沒有叢集同時匹配您的搜尋和篩選條件",
+    "noClustersMatchSearch": "沒有叢集匹配您的搜尋詞",
+    "noClustersMatchFilter": "沒有叢集匹配您的篩選選擇",
+    "noClustersAvailable": "尚無可用叢集。匯入您的第一個叢集以開始使用。",
+    "importYourFirst": "匯入您的第一個叢集",
+    "filteredByLabel": "按標籤篩選",
+    "actions": {
+      "viewDetails": "檢視詳情",
+      "editLabels": "編輯標籤",
+      "copyName": "複製名稱",
+      "detachCluster": "分離叢集"
+    },
+    "status": {
+      "title": "狀態",
+      "active": "活躍",
+      "inactive": "非活躍",
+      "pending": "待處理"
+    },
+    "table": {
+      "name": "名稱",
+      "labels": "標籤",
+      "creationTime": "建立時間",
+      "context": "上下文",
+      "status": "狀態",
+      "actions": "操作"
+    },
+    "quickConnect": {
+      "title": "透過快速連線進行連線",
+      "description": "使用快速連線功能匯入您的叢集",
+      "clusterName": "叢集名稱",
+      "clusterNamePlaceholder": "為您的叢集輸入名稱",
+      "token": "令牌",
+      "tokenPlaceholder": "輸入您的令牌",
+      "hubApiServer": "中心 API 伺服器",
+      "hubApiServerPlaceholder": "輸入中心 API 伺服器 URL",
+      "steps": {
+        "step1": {
+          "title": "選擇您的叢集",
+          "description": "從上面的下拉列表中選擇一個叢集"
+        },
+        "step2": {
+          "title": "一鍵入駐",
+          "description": "點選\"入駐叢集\"按鈕開始自動化流程"
+        },
+        "step3": {
+          "title": "即時連線",
+          "description": "您的叢集將自動入駐，無需手動命令"
+        }
+      }
+    },
+    "manualImport": {
+      "title": "手動叢集設定",
+      "subtitle": "推薦",
+      "description": "按照以下步驟使用 kubectl 命令手動匯入您的叢集",
+      "generateCommand": "生成命令",
+      "copyCommand": "複製命令",
+      "runInTerminal": "在終端中執行",
+      "commandGenerated": "命令生成成功",
+      "selectCluster": "選擇叢集",
+      "generateImportCommand": "生成匯入命令",
+      "importCommand": "匯入命令"
+    },
+    "apiUrl": {
+      "title": "透過 API/URL 連線",
+      "description": "透過提供 API 端點和身份驗證詳細資訊來匯入您的叢集",
+      "endpoint": "API/URL 端點",
+      "endpointPlaceholder": "https://kubernetes.example.com:6443",
+      "token": "身份驗證令牌（可選）",
+      "tokenPlaceholder": "如果需要，請輸入身份驗證令牌",
+      "connectImport": "連線並匯入"
+    },
+    "excluded": [
+      "kubestellar-report",
+      "kube-node-lease",
+      "kube-public",
+      "default",
+      "kube-system",
+      "open-cluster-management-hub",
+      "open-cluster-management",
+      "local-path-storage"
+    ],
+    "labels": {
+      "label": "標籤",
+      "editvalue": "鍵和值都是必需的",
+      "manage": "管理標籤",
+      "clearFilter": "清除篩選器",
+      "searchLabelsPlaceholder": "搜尋標籤...",
+      "bulkEditTitle": "編輯 {{count}} 個叢集的標籤",
+      "editTitle": "編輯 {{name}} 的標籤",
+      "bulkEditDescription": "您正在編輯 {{count}} 個叢集的標籤。更改將應用於所有選定的叢集。",
+      "keyPlaceholder": "例如：environment",
+      "valuePlaceholder": "例如：production",
+      "protectedLabelsCannotBeModified": "🔒 受保護的標籤無法修改。",
+      "exitSearch": "退出搜尋",
+      "saveChanges": "儲存更改",
+      "saveChangesButton": "儲存更改",
+      "tooltipTitle": "叢集：",
+      "noLabelsAvailable": "沒有可用的叢集標籤。請新增帶有標籤的叢集以在繫結策略中使用。",
+      "noLabelsMatchSearch": "沒有標籤匹配您的搜尋。",
+      "noLabelsFound": "在可用叢集中未找到標籤。",
+      "clickToAdd": "點選標籤將其新增到畫布",
+      "edit": "編輯標籤",
+      "add": "新增標籤",
+      "for": "為",
+      "bulkEdit": "批次編輯模式",
+      "appendToExisting": "附加到現有標籤",
+      "key": "標籤鍵",
+      "value": "標籤值",
+      "noLabels": "尚未新增標籤",
+      "noMatchingLabels": "未找到匹配的標籤",
+      "addYourFirst": "使用上面的欄位新增您的第一個標籤，以幫助組織此叢集。",
+      "tip": "提示：按 Enter 鍵在欄位間移動，或雙擊標籤進行編輯",
+      "tryDifferentSearch": "嘗試不同的搜尋詞或清除搜尋",
+      "count": "{{count}} 個標籤{{count, plural, one {} other {}}}",
+      "description": "新增、編輯或刪除標籤以組織和分類您的叢集。",
+      "defaultProtected": "預設標籤 - 無法修改",
+      "bindingProtected": "在繫結策略中使用 - 無法修改",
+      "manageLabels": "管理標籤",
+      "bulkLabels": "批次標籤",
+      "editValue": "編輯標籤",
+      "removeLabel": "刪除標籤",
+      "cancelEdit": "取消編輯",
+      "added": "已新增新標籤：{{key}}",
+      "updated": "已更新現有標籤：{{key}}",
+      "removed": "已刪除標籤：{{key}}",
+      "updateSuccess": "標籤更新成功",
+      "duplicate": "鍵為\"{{key}}\"的標籤已存在",
+      "protected": "無法修改受保護的標籤：{{key}}",
+      "finishEditing": "完成編輯",
+      "noClustersToEdit": "沒有可編輯的叢集",
+      "noClustersSelected": "未選擇叢集",
+      "cannotDeleteUsed": "標籤在繫結策略中使用，無法刪除。請先刪除策略。",
+      "bulkUpdateSuccess": "已為所有 {{count}} 個叢集更新標籤",
+      "bulkUpdatePartial": "已為 {{success}} 個叢集更新標籤，{{failures}} 個叢集失敗",
+      "bulkUpdateFail": "為所有 {{count}} 個叢集更新標籤失敗"
+    },
+    "dialog": {
+      "selectMultipleClusters": "選擇多個叢集",
+      "selectClusterToEdit": "選擇要編輯的叢集",
+      "selectedCount": "已選擇 {{count}} 個",
+      "editClustersButton": "編輯 {{count}} 個叢集"
+    },
+    "list": {
+      "more": "更多",
+      "title": "管理叢集",
+      "subtitle": "管理和監控您的 Kubernetes 叢集",
+      "searchPlaceholder": "按名稱、標籤、狀態或上下文搜尋叢集...",
+      "import": "匯入叢集",
+      "noResults": "未找到叢集",
+      "name": "名稱",
+      "creationTime": "建立時間",
+      "context": "上下文",
+      "description": "管理和監控您的 Kubernetes 叢集",
+      "filter": "狀態篩選器",
+      "activeFilters": "活動篩選器：",
+      "searchFilter": "搜尋：\"{{query}}\"",
+      "statusFilter": "狀態：{{value}}",
+      "labelFilter": "標籤：{{key}}={{value}}",
+      "clearAll": "清除全部",
+      "showingResults": "{{count}} 個結果{{count, plural, one {} other {}}}",
+      "clearSearch": "按 Esc 鍵清除搜尋",
+      "importCluster": "匯入叢集",
+      "importYourFirst": "匯入您的第一個叢集",
+      "searchLabelsPlaceholder": "搜尋標籤...",
+      "search": "搜尋",
+      "label": "標籤",
+      "filteredByLabel": "按標籤篩選：",
+      "filterByLabel": "點選按此標籤篩選",
+      "noClustersFound": "未找到叢集",
+      "noClustersMatchBoth": "沒有叢集同時匹配您的搜尋和篩選條件",
+      "noClustersMatchSearch": "沒有叢集匹配您的搜尋詞",
+      "noClustersMatchFilter": "沒有叢集匹配您的篩選選擇",
+      "noClustersAvailable": "尚無可用叢集。匯入您的第一個叢集以開始使用。",
+      "table": {
+        "name": "名稱",
+        "labels": "標籤",
+        "creationTime": "建立時間",
+        "context": "上下文",
+        "status": "狀態",
+        "actions": "操作"
+      },
+      "status": {
+        "active": "活躍",
+        "inactive": "非活躍",
+        "pending": "待處理"
+      },
+      "actions": {
+        "viewDetails": "檢視詳情",
+        "editLabels": "編輯標籤",
+        "copyName": "複製名稱",
+        "detachCluster": "分離叢集"
+      },
+      "labels": {
+        "edit": "編輯標籤",
+        "add": "新增標籤",
+        "bulkEdit": "批次編輯模式",
+        "appendToExisting": "附加到現有標籤",
+        "key": "標籤鍵",
+        "value": "標籤值",
+        "noLabels": "尚未新增標籤",
+        "noMatchingLabels": "未找到匹配的標籤",
+        "addYourFirst": "使用上面的欄位新增您的第一個標籤，以幫助組織此叢集。",
+        "tip": "提示：按 Enter 鍵在欄位間移動，或雙擊標籤進行編輯",
+        "tryDifferentSearch": "嘗試不同的搜尋詞或清除搜尋",
+        "count": "{{count}} 個標籤{{count, plural, one {} other {}}}",
+        "description": "新增、編輯或刪除標籤以組織和分類您的叢集。",
+        "defaultProtected": "預設標籤 - 無法修改",
+        "bindingProtected": "在繫結策略中使用 - 無法修改",
+        "manage": "管理標籤"
+      }
+    },
+    "details": {
+      "title": "叢集詳情",
+      "overview": "概覽",
+      "labels": "標籤",
+      "resources": "資源",
+      "status": "狀態",
+      "events": "事件",
+      "logs": "日誌"
+    },
+    "clusterDetailDialog": {
+      "title": "叢集詳情",
+      "loading": "正在載入叢集資訊...",
+      "error": {
+        "title": "載入叢集詳情失敗",
+        "description": "檢索此叢集資訊時出錯。"
+      },
+      "status": {
+        "available": "可用",
+        "unavailable": "不可用"
+      },
+      "kubernetes": "Kubernetes {{version}}",
+      "createdOn": "創建於 {{date}}",
+      "labels": "標籤",
+      "labelCount": "{{count}} 個標籤",
+      "noLabels": "此叢集未分配標籤",
+      "capacityResources": "容量和資源",
+      "cpuCores": "CPU 核心數",
+      "memory": "記憶體",
+      "podCapacity": "Pod 容量",
+      "lastRefreshed": "最後重新整理時間",
+      "noClusterSelected": "未選擇叢集"
+    },
+    "dashboard": {
+      "title": "儀表盤",
+      "lastUpdatedJustNow": "最後更新：剛剛",
+      "status": "狀態：良好",
+      "other": "其他",
+      "distribution": "分佈",
+      "state": "待處理或非活躍",
+      "otherClusters": "其他叢集",
+      "hoverFormula": "懸停檢視公式明細",
+      "healthScore": "健康評分公式",
+      "clusterHealth": "整體叢集健康狀況",
+      "clusterStatus": "叢集狀態",
+      "welcome": "歡迎使用 KubeStellar 管理儀表盤",
+      "errorLoading": "載入叢集資訊時出錯",
+      "addCluster": "新增叢集",
+      "notAvailable": "不可用",
+      "invalidDate": "無效日期",
+      "managedClusters": "受管叢集",
+      "total": "總計",
+      "viewAll": "檢視全部",
+      "cpuCapacity": "CPU 容量",
+      "memoryCapacity": "記憶體容量",
+      "podCapacity": "Pod 容量",
+      "podCapacityLabel": "Pod 容量",
+      "active": "活躍",
+      "inactive": "非活躍",
+      "noManagedClusters": "未找到受管叢集",
+      "importCluster": "匯入叢集",
+      "showMoreClusters": "顯示更多叢集",
+      "clustersActive": "叢集活躍",
+      "systemHealth": "系統健康狀況",
+      "refresh": "重新整理",
+      "noRecentActivity": "未找到最近活動",
+      "recentActivity": "最近活動",
+      "resourceUtilization": "資源利用率",
+      "clusterMetrics": "基於叢集指標",
+      "pods": {
+        "formula": "Pod 健康公式",
+        "calculation": "基於所有名稱空間中健康 Pod 與總 Pod 的比率計算。",
+        "status": "考慮 Pod 狀態、就緒探針和存活檢查",
+        "value": "數值越高表示叢集健康狀況越好",
+        "formulaDesc": "(執行中的 Pod / 總 Pod 數) × 100%",
+        "health": "Pod 健康狀況"
+      },
+      "cpu": {
+        "usage": "CPU 使用率",
+        "formula": "CPU 使用率公式",
+        "calculation": "計算為叢集中所有節點當前正在使用的已分配 CPU 資源百分比。",
+        "value": "數值越低表示資源可用性越好",
+        "formulaDesc": "(已使用 CPU 核心數 / 總 CPU 核心數) × 100%",
+        "health": "數值越低表示效能越好"
+      },
+      "memory": {
+        "usage": "記憶體使用率",
+        "formula": "記憶體使用率公式",
+        "calculation": "計算為叢集中所有節點當前正在使用的已分配記憶體資源百分比。",
+        "value": "數值越低表示資源可用性越好",
+        "formulaDesc": "(已使用記憶體 / 總記憶體) × 100%"
+      },
+      "stats": {
+        "running": "執行且可用",
+        "totalClusters": "總叢集數",
+        "activeClusters": "活躍叢集",
+        "bindingPolicies": "繫結策略",
+        "currentContext": "當前上下文",
+        "none": "無"
+      },
+      "health": {
+        "excellent": "優秀",
+        "good": "良好",
+        "fair": "一般",
+        "needsAttention": "需要關注",
+        "critical": "嚴重"
+      },
+      "guide": {
+        "title": "儀表盤指南",
+        "clusterStats": "叢集統計",
+        "clusterStatsDesc": "顯示總叢集數和活躍叢集數。將滑鼠懸停在指標上可檢視其計算方式的詳細資訊。",
+        "healthMetrics": "健康指標",
+        "healthMetricsDesc": "顯示 CPU、記憶體使用率和 Pod 健康狀況。綠色指示器表示良好健康狀況，黃色需要關注。",
+        "recentActivity": "最近活動",
+        "recentActivityDesc": "顯示叢集和策略的最近更改。點選叢集檢視詳細資訊。",
+        "proTip": "專業提示",
+        "proTipDesc": "將滑鼠懸停在任何指標或圖表上，可檢視其計算方式和可採取操作的詳細資訊。"
+      }
+    },
+    "detach": {
+      "title": "分離叢集",
+      "confirmation": "您確定要分離以下叢集嗎？",
+      "context": "上下文",
+      "warning": "警告：此操作將從管理中移除叢集。它將不再可見或可從此介面控制。",
+      "detaching": "正在分離...",
+      "detach": "分離叢集"
+    }
+  },
+  "webSocket": {
+    "errors": {
+      "notConnected": "WebSocket 未連線",
+      "closingError": "關閉 WebSocket 時出錯：",
+      "expectedStringData": "JSON 解析需要字串資料",
+      "processingFailed": "處理 WebSocket 訊息失敗",
+      "connectionError": "WebSocket 連線錯誤"
+    }
+  },
+  "wdsQueries": {
+    "errors": {
+      "fetchWorkloads": "獲取工作負載失敗",
+      "errorFetchingWorkloads": "獲取工作負載時出錯：",
+      "fetchWorkloadDetails": "獲取工作負載詳情失敗",
+      "errorFetchingWorkloadDetails": "獲取工作負載詳情時出錯：",
+      "statusFetchFailed": "狀態獲取失敗：",
+      "createWorkloadFailed": "建立工作負載失敗",
+      "errorCreatingWorkload": "建立工作負載時出錯：",
+      "uploadFileFailed": "上傳檔案失敗",
+      "errorUploadingFile": "上傳檔案時出錯：",
+      "updateWorkloadFailed": "更新工作負載失敗",
+      "errorUpdatingWorkload": "更新工作負載時出錯：",
+      "scaleWorkloadFailed": "擴縮工作負載失敗",
+      "errorScalingWorkload": "擴縮工作負載時出錯：",
+      "deleteWorkloadFailed": "刪除工作負載失敗",
+      "errorDeletingWorkload": "刪除工作負載時出錯：",
+      "fetchWorkloadLogsFailed": "獲取工作負載日誌失敗",
+      "errorFetchingWorkloadLogs": "獲取工作負載日誌時出錯："
+    },
+    "success": {
+      "workloadCreated": "工作負載建立成功",
+      "fileUploaded": "檔案上傳成功",
+      "workloadUpdated": "工作負載更新成功",
+      "workloadScaled": "工作負載已擴縮至 {{replicas}} 個副本",
+      "workloadDeleted": "工作負載刪除成功"
+    },
+    "defaults": {
+      "deploymentKind": "deployment",
+      "defaultNamespace": "default"
+    }
+  },
+  "clusterQueries": {
+    "status": {
+      "available": "可用",
+      "unavailable": "不可用"
+    },
+    "logging": {
+      "clusterOnboardRequestPayload": "[除錯] 叢集入駐請求載荷：",
+      "clusterOnboardResponse": "[除錯] 叢集入駐響應：",
+      "onboardSuccessful": "[除錯] 叢集入駐變更成功，使叢集查詢快取失效",
+      "onboardError": "[除錯] 叢集入駐變更錯誤：",
+      "mutationStart": "[除錯] ========== 變更開始 ==========",
+      "context": "[除錯] 上下文：",
+      "cluster": "[除錯] 叢集：",
+      "originalLabels": "[除錯] 原始標籤：",
+      "deletedLabels": "[除錯] 已刪除標籤：",
+      "processingBulkUpdate": "[除錯] 正在處理 {{count}} 個叢集的批次標籤更新",
+      "addingDeletedLabels": "[除錯] 將已刪除的標籤新增為空值：",
+      "finalLabels": "[除錯] 傳送到後端的最終標籤：",
+      "apiPayload": "[除錯] API 載荷：",
+      "apiResponse": "[除錯] API 響應：",
+      "apiError": "[除錯] API 錯誤：",
+      "labelsUpdated": "[除錯] 標籤更新成功，使叢集查詢快取失效",
+      "errorUpdatingLabels": "[除錯] 更新叢集標籤時出錯：",
+      "detachingCluster": "[除錯] 正在分離叢集：",
+      "detachSuccessful": "[除錯] 叢集分離成功，使叢集查詢快取失效",
+      "detachError": "[除錯] 叢集分離變更錯誤：",
+      "skippingDetailsFetch": "[除錯] 跳過虛擬批次叢集的詳情獲取"
+    },
+    "messages": {
+      "applyLabelsToMultipleClusters": "將對 {{count}} 個叢集應用標籤"
+    },
+    "defaults": {
+      "virtualBulkOperationId": "virtual-bulk-operation"
+    }
+  },
+  "bpQueries": {
+    "logging": {
+      "fetchingPolicyDetails": "正在獲取繫結策略的完整詳情：{{policyName}}",
+      "receivedResponses": "已從兩個 API 端點接收到響應",
+      "foundPolicyDetails": "在主 BP 響應中找到策略詳情：",
+      "receivedStatusData": "已接收狀態資料：",
+      "yamlFromResponse": "直接從響應根部使用 YAML",
+      "yamlFromMetadata": "從 metadata.annotations.yaml 使用 YAML",
+      "yamlAvailable": "策略 {{policyName}} 的提取 YAML 內容可用（{{length}} 個字元）",
+      "noYamlFound": "未找到策略 {{policyName}} 的 YAML 內容",
+      "parsedYaml": "已解析的 YAML：",
+      "errorParsingYaml": "解析 YAML 時出錯：",
+      "usingStatus": "使用來自狀態 API 端點的狀態\"{{status}}\"",
+      "finalPolicyObject": "最終策略物件：",
+      "extractedUniqueWorkloads": "共提取了 {{count}} 個唯一工作負載",
+      "rawBindingPolicies": "原始繫結策略："
+    },
+    "errors": {
+      "policyNotFound": "在主響應中未找到策略 {{policyName}}",
+      "errorParsingJson": "從原始 fieldsv1 解析 JSON 時出錯：",
+      "resourcesNull": "名稱空間 {{namespace}}、資源型別 {{resourceType}} 的資源為空",
+      "resourcesNullClusterScoped": "叢集範圍資源型別 {{resourceType}} 的資源為空"
+    }
+  },
+  "wecsTopology": {
+    "title": "遠端叢集樹檢視",
+    "createWorkload": "建立工作負載",
+    "viewModes": {
+      "tiles": "磁貼",
+      "list": "列表"
+    },
+    "note": "注意：此檢視中已過濾掉預設、Kubernetes 系統和 OpenShift 名稱空間。",
+    "emptyState": {
+      "title": "未找到工作負載",
+      "description": "建立您的第一個工作負載以開始使用"
+    },
+    "contextMenu": {
+      "details": "詳情",
+      "edit": "編輯",
+      "logs": "日誌",
+      "execPods": "執行 Pod"
+    },
+    "fullscreen": {
+      "toggle": "切換全屏檢視"
+    },
+    "timeAgo": {
+      "today": "今天",
+      "days": "{{count}} 天",
+      "days_plural": "{{count}} 天"
+    },
+    "status": {
+      "active": "活躍",
+      "inactive": "非活躍"
+    },
+    "zoomControls": {
+      "groupByResource": "按資源/型別分組",
+      "expandAll": "展開所有父節點的子節點",
+      "collapseAll": "摺疊所有父節點的子節點",
+      "zoomIn": "放大",
+      "zoomOut": "縮小"
+    },
+    "nodeLabel": {
+      "labels": "標籤：",
+      "noLabels": "無標籤"
+    }
+  },
+  "wecsDetailsPanel": {
+    "common": {
+      "update": "更新",
+      "sync": "同步",
+      "delete": "刪除",
+      "close": "關閉",
+      "unknown": "未知",
+      "na": "不可用",
+      "today": "今天",
+      "daysAgo": "{{count}} 天前"
+    },
+    "buttons": {
+      "clearTerminal": "清除終端",
+      "minimize": "最小化",
+      "maximize": "最大化"
+    },
+    "tabs": {
+      "summary": "摘要",
+      "edit": "編輯",
+      "logs": "日誌",
+      "execPods": "執行 PODS"
+    },
+    "terminal": {
+      "connecting": "正在連線到容器 {{containerName}} 中的 pod shell...",
+      "connected": "已連線到容器 {{containerName}} 中的 pod shell",
+      "connectionClosed": "連線已關閉",
+      "connectionNotActive": "連線未啟用。無法傳送命令。",
+      "errorConnecting": "連線到 pod 時出錯。請重試。"
+    },
+    "format": {
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "table": {
+      "kind": "型別",
+      "name": "名稱",
+      "namespace": "名稱空間",
+      "createdAt": "建立時間",
+      "context": "上下文",
+      "labels": "標籤"
+    },
+    "containers": {
+      "selectContainer": "選擇容器",
+      "noContainersFound": "未找到容器"
+    },
+    "errors": {
+      "failedLoadClusterDetails": "載入叢集詳情失敗。",
+      "failedLoadDetails": "載入 {{type}} 詳情失敗。",
+      "apiNotImplemented": "更新 pod \"{{resourceName}}\" 的 API 未實現",
+      "failedFetchContainers": "獲取容器列表失敗"
+    },
+    "cluster": {
+      "active": "活躍"
+    },
+    "noManifest": "無可用清單"
+  },
+  "treeView": {
+    "title": "管理工作負載",
+    "createWorkload": "建立工作負載",
+    "note": "注意：預設、Kubernetes 系統和 OpenShift 名稱空間已從此檢視中過濾。",
+    "filteringContext": "篩選：僅顯示來自 {{context}} 上下文的資源。",
+    "unknown": "未知",
+    "viewModes": {
+      "tiles": "磁貼",
+      "list": "列表"
+    },
+    "timeAgo": {
+      "today": "今天",
+      "days": "{{count}} 天",
+      "days_plural": "{{count}} 天"
+    },
+    "emptyState": {
+      "title": "未找到工作負載",
+      "description": "建立您的第一個工作負載以開始使用"
+    },
+    "fullscreen": {
+      "toggle": "切換全屏檢視"
+    },
+    "contextMenu": {
+      "details": "詳情",
+      "delete": "刪除",
+      "edit": "編輯",
+      "logs": "日誌"
+    },
+    "deleteDialog": {
+      "title": "確認刪除資源",
+      "message": "您確定要刪除\"{{name}}\"嗎？此操作無法撤銷。",
+      "confirm": "是的，刪除"
+    }
+  },
+  "quickConnect": {
+    "title": "一鍵叢集設定",
+    "description": "簡化的自動化叢集入駐，無需命令。選擇您的叢集，讓系統處理其餘工作。",
+    "selectCluster": "選擇 Kubernetes 叢集",
+    "searchingClusters": "正在搜尋可用叢集...",
+    "errorLoadingClusters": "載入叢集時出錯",
+    "automatedOnboarding": "自動化叢集入駐",
+    "new": "新功能",
+    "automatedDescription": "這是連線您的 Kubernetes 叢集最簡單的方式。選擇一個叢集並點選入駐按鈕即可直接連線，無需任何手動命令。",
+    "retry": "重試",
+    "chooseCluster": "選擇叢集...",
+    "noClusters": "沒有可用叢集",
+    "discoveredClusters": {
+      "title": "發現的叢集",
+      "description": "這些是在您的環境中發現的叢集。選擇一個以繼續。"
+    },
+    "refreshClustersList": "重新整理叢集列表",
+    "howToConnect": "如何連線您的叢集",
+    "steps": {
+      "step1": {
+        "title": "選擇您的叢集",
+        "description": "從上面的下拉列表中選擇一個叢集"
+      },
+      "step2": {
+        "title": "一鍵入駐",
+        "description": "點選\"入駐叢集\"按鈕開始自動化流程"
+      },
+      "step3": {
+        "title": "即時連線",
+        "description": "您的叢集將自動入駐，無需手動命令"
+      }
+    },
+    "whyUseAutomated": "為什麼使用自動化入駐？",
+    "approaches": {
+      "automated": {
+        "title": "自動化方式（新功能）",
+        "features": ["一鍵設定流程", "無需手動執行命令", "流線化體驗", "減少出錯機會"]
+      },
+      "manual": {
+        "title": "手動方式（傳統）",
+        "features": ["手動複製並執行命令", "需要多個 CLI 步驟", "更復雜的流程", "需要命令列知識"]
+      }
+    },
+    "buttons": {
+      "onboarding": "正在入駐...",
+      "onboard": "入駐叢集",
+      "back": "返回",
+      "close": "關閉",
+      "openDashboard": "開啟叢集儀表盤",
+      "goToDashboard": "前往儀表盤"
+    },
+    "success": {
+      "title": "叢集入駐成功",
+      "clusterAdded": "叢集新增成功",
+      "clusterAvailable": "您的叢集現在可在平臺中使用",
+      "message": "叢集 {{clusterName}} 已成功入駐到平臺。",
+      "detailMessage": "您的叢集 {{clusterName}} 已成功入駐。以下是您接下來可以做的事情：",
+      "nextSteps": {
+        "viewManage": {
+          "title": "檢視和管理",
+          "description": "透過儀表盤訪問您的叢集以檢視資源和狀態"
+        },
+        "deployApps": {
+          "title": "部署應用程式",
+          "description": "將容器化應用程式和服務部署到您的叢集"
+        },
+        "configureSettings": {
+          "title": "配置設定",
+          "description": "自定義和配置您的叢集設定和策略"
+        }
+      }
+    }
+  },
+  "bindingPolicy": {
+    "editPolicy": "編輯策略",
+    "saveAndCreatePolicy": "儲存並建立策略",
+    "title": "管理繫結策略",
+    "description": "建立和管理工作負載分發的繫結策略",
+    "createBindingPolicy": "建立繫結策略",
+    "noBindingPolicies": "未找到繫結策略",
+    "noBindingPoliciesDescription": "沒有可用的繫結策略",
+    "noBindingPoliciesWithFilter": "沒有繫結策略匹配您的 {{status}} 篩選條件",
+    "notifications": {
+      "fetchError": "獲取繫結策略失敗",
+      "createSuccess": "繫結策略建立成功",
+      "createError": "建立繫結策略失敗",
+      "deleteSuccess": "繫結策略\"{{name}}\"刪除成功",
+      "deleteError": "刪除繫結策略失敗",
+      "deleteManySuccess": "{{count}} 個繫結{{count, plural, one {策略} other {策略}}}刪除成功",
+      "deleteManyError": "刪除繫結策略失敗",
+      "deploySuccess": "部署完成成功",
+      "deployError": "部署失敗",
+      "yamlGenerateError": "生成繫結策略 YAML 失敗",
+      "quickConnectError": "建立繫結策略失敗",
+      "labelsAssignedTitle": "標籤已分配",
+      "policyBindingCreatedTitle": "策略繫結已建立",
+      "labelsAssignedChip": "標籤幫助將策略定向到特定資源",
+      "policyBindingCreatedChip": "為策略傳播建立的繫結"
+    },
+    "tabs": {
+      "selectItems": "選擇專案",
+      "yaml": "YAML",
+      "uploadFile": "上傳檔案"
+    },
+    "upload": {
+      "createNamespaceAutomatically": "自動建立名稱空間",
+      "chooseDifferentYaml": "選擇不同的 YAML 檔案",
+      "filePreview": "檔案預覽",
+      "chooseOrDrag": "選擇或拖放 YAML 檔案",
+      "or": "- 或 -",
+      "chooseYaml": "選擇 YAML 檔案",
+      "uploadAndDeploy": "上傳並部署",
+      "dropHere": "在此放置 YAML 檔案",
+      "chooseOrUpload": "選擇或上傳 YAML 檔案",
+      "selectFile": "選擇 YAML 檔案",
+      "acceptedFormats": "接受的格式：.yaml, .yml",
+      "chooseDifferentFile": "選擇不同的檔案"
+    },
+    "previewGeneratedYaml": "預覽生成的 YAML",
+    "deployBindingPolicies": "部署繫結策略",
+    "deployBindingPolicy": "部署繫結策略",
+    "creating": "正在建立...",
+    "loadingResources": "正在載入資源...",
+    "deploying": "正在部署...",
+    "table": {
+      "name": "繫結策略名稱",
+      "clusters": "叢集",
+      "workload": "工作負載",
+      "creationDate": "建立日期",
+      "status": "狀態",
+      "actions": "操作",
+      "noClusters": "未定義目標叢集",
+      "noWorkloads": "未定義工作負載"
+    },
+    "yamlGeneration": {
+      "resourceRequired": "必須指定至少一種資源型別",
+      "resourceRequiredYaml": "YAML 生成必須指定至少一種資源型別"
+    },
+    "quickConnect": {
+      "unknownWorkload": "未知",
+      "unknownLocationGroup": "未知"
+    },
+    "loading": "正在載入...",
+    "unknown": "未知",
+    "visualization": {
+      "title": "繫結策略網路",
+      "policies": "{{count}} 個策略",
+      "targetCluster": "目標叢集",
+      "clusters": "{{count}} 個叢集",
+      "workloads": "{{count}} 個工作負載",
+      "showWorkloads": "顯示工作負載",
+      "highlightActive": "高亮活躍項",
+      "refresh": "重新整理視覺化",
+      "fitView": "適合檢視",
+      "search": "搜尋節點... (⌘+K)",
+      "legend": "圖例",
+      "policyPreview": "策略預覽",
+      "policyDistribution": "策略分佈",
+      "previewMode": "預覽模式",
+      "workloadSource": "工作負載源",
+      "matchingWorkloads": "{{count}} 個匹配的工作負載{{count, plural, one {} other {}}}",
+      "matchRateShort": "{{matchRate}}% 匹配",
+      "targetClusters": "目標叢集 ({{count}})",
+      "moreClusters": "+{{count}} 個更多",
+      "policyInsights": "策略洞察",
+      "status": "狀態",
+      "lastModified": "最後修改時間",
+      "notModified": "未修改",
+      "matchRate": "匹配率",
+      "matchRateLong": "可用叢集的 {{matchRate}}%",
+      "legendItems": {
+        "activePolicy": "活躍策略",
+        "cluster": "叢集",
+        "workload": "工作負載",
+        "activeConnection": "活躍連線",
+        "inactiveConnection": "非活躍連線"
+      },
+      "layout": {
+        "title": "佈局",
+        "horizontal": "水平",
+        "vertical": "垂直",
+        "radial": "徑向"
+      },
+      "empty": {
+        "title": "無視覺化資料",
+        "description": "沒有繫結策略、叢集或工作負載可供視覺化。建立一些資源以在此檢視中檢視它們。"
+      },
+      "error": {
+        "title": "視覺化錯誤",
+        "description": "渲染視覺化時發生錯誤。"
+      },
+      "loading": "正在載入視覺化...",
+      "searchResources": "搜尋資源",
+      "noNodesFound": "未找到匹配\"{{searchTerm}}\"的節點"
+    },
+    "policyName": "策略名稱",
+    "namespace": "名稱空間",
+    "propagationMode": "傳播模式",
+    "updateStrategy": "更新策略",
+    "resources": "資源",
+    "advanced": "高階設定",
+    "basic": "基本設定",
+    "scheduling": "排程規則",
+    "yaml": "YAML",
+    "modes": {
+      "downsyncOnly": "僅下行同步",
+      "upsyncOnly": "僅上行同步",
+      "bidirectionalSync": "雙向同步"
+    },
+    "strategies": {
+      "serverSideApply": "服務端應用",
+      "forceApply": "強制應用",
+      "rollingUpdate": "滾動更新",
+      "blueGreenDeployment": "藍綠部署"
+    },
+    "deploymentType": {
+      "allClusters": "所有可用叢集",
+      "selectedClusters": "選定叢集"
+    },
+    "confirm": {
+      "title": "確認繫結策略部署",
+      "description": "您即將部署 {{count}} 個繫結策略。請在繼續之前審查它們。",
+      "deploy": "部署策略",
+      "deploying": "正在部署...",
+      "viewYaml": "檢視 YAML"
+    },
+    "emptyState": {
+      "noClusters": {
+        "title": "沒有就緒的叢集",
+        "description": "當前沒有可用於繫結的叢集。在建立繫結策略之前，您需要至少有一個處於\"就緒\"狀態的叢集。",
+        "button": "管理叢集"
+      },
+      "noWorkloads": {
+        "title": "未找到工作負載",
+        "description": "沒有可用的工作負載。請確保您有權訪問工作負載。",
+        "button": "轉到工作負載"
+      },
+      "noResources": {
+        "title": "未找到叢集或工作負載",
+        "description": "您需要叢集和工作負載才能建立繫結策略。",
+        "button": "檢視資源"
+      },
+      "noPolicies": {
+        "title": "未找到繫結策略",
+        "description": "透過建立您的第一個繫結策略開始使用",
+        "button": "建立繫結策略"
+      }
+    },
+    "loadingCanvas": "正在載入畫布資料...",
+    "dragDrop": {
+      "infoAlert": "此介面使用模擬響應來建立繫結策略。從列表中選擇叢集和工作負載將它們新增到畫布，然後點選工作負載，再點選叢集以建立繫結策略連線。",
+      "helpDialog": {
+        "title": "透過直接連線建立繫結策略",
+        "intro": "按照以下步驟建立繫結策略：",
+        "steps": {
+          "selectClusters": "1. 從左側面板選擇叢集以包含在畫布中",
+          "selectWorkloads": "2. 從右側面板選擇工作負載以包含在畫布中",
+          "createConnection": "3. 先點選工作負載，然後點選叢集以建立直接連線",
+          "fillDetails": "4. 在出現的對話方塊中填寫策略詳細資訊",
+          "deploy": "5. 使用\"部署繫結策略\"按鈕模擬部署"
+        },
+        "gotIt": "明白了",
+        "helpDialog": {
+          "title": "如何建立繫結策略",
+          "intro": "按照以下步驟建立繫結策略：",
+          "steps": {
+            "selectLabels": "1. 選擇標籤新增到畫布",
+            "selectLabelsDesc": "從左側面板點選叢集，從右側面板點選工作負載，將它們新增到繫結策略畫布",
+            "deploy": "2. 部署您的策略",
+            "deployDesc": "點選\"部署繫結策略\"建立並部署基於選定標籤的繫結策略，將工作負載連線到叢集"
+          },
+          "tip": "提示：基於標籤的方法允許您建立強大的繫結策略，自動應用於所有匹配選定標籤的資源，無論是現在還是將來。",
+          "dontShowAgain": "不再顯示",
+          "tooltip": "檢視選擇說明"
+        }
+      }
+    },
+    "messages": {
+      "noSelectedPolicies": "未選擇要刪除的策略",
+      "invalidPolicyNames": "錯誤：一些選定的策略名稱無效",
+      "partialDeleteSuccess": "刪除了 {{success}} 個策略，但刪除 {{failures}} 個策略失敗",
+      "deleteError": "刪除繫結策略時出錯：{{errorMessage}}",
+      "updateSuccess": "繫結策略\"{{name}}\"更新成功",
+      "updateError": "更新繫結策略\"{{name}}\"時出錯",
+      "simulatedAssignment": "成功將 {{policy}} 分配給 {{targetType}} {{target}}",
+      "policyCreatedSuccess": "成功建立繫結策略：{{name}}"
+    },
+    "editDialog": {
+      "title": "編輯繫結策略",
+      "infoTitle": "資訊",
+      "info": "編輯您的繫結策略配置。更改將在儲存後應用。",
+      "name": "繫結策略名稱",
+      "save": "儲存更改",
+      "unsavedTitle": "未儲存的更改",
+      "unsavedWarning": "警告",
+      "unsavedInfo": "您有未儲存的更改。確定要在不儲存的情況下關閉嗎？",
+      "continueEditing": "繼續編輯",
+      "discard": "丟棄更改"
+    },
+    "deleteDialog": {
+      "title": "刪除繫結策略",
+      "confirm": "您確定要刪除繫結策略\"{{name}}\"嗎？此操作無法撤銷。"
+    },
+    "header": {
+      "searchPlaceholder": "按名稱、標籤或狀態搜尋策略",
+      "clearSearch": "按 Esc 鍵清除搜尋",
+      "deleteSelected": "刪除選定項",
+      "create": "建立繫結策略",
+      "activeFilters": "活動篩選器：",
+      "search": "搜尋",
+      "status": "狀態",
+      "clearAll": "清除全部"
+    },
+    "statusFilter": {
+      "all": "所有狀態",
+      "active": "活躍",
+      "pending": "待處理",
+      "inactive": "非活躍",
+      "label": "狀態篩選器"
+    },
+    "availableItems": {
+      "title": "可用專案",
+      "subtitle": "透過點選選擇策略、叢集或工作負載並將其新增到畫布。",
+      "policy-list": "策略",
+      "cluster-list": "叢集",
+      "workload-list": "工作負載",
+      "clickToAdd": "點選專案將其新增到畫布",
+      "none": "沒有可用的 {{title}}"
+    },
+    "canvas": {
+      "policiesOnCanvas": "畫布上的策略：",
+      "clusters": "{{count}} 個叢集",
+      "workloads": "{{count}} 個工作負載",
+      "status": "狀態：",
+      "namespace": "名稱空間：",
+      "namespaces": "名稱空間：",
+      "clustersOnCanvas": "畫布上的叢集：",
+      "workloadsOnCanvas": "畫布上的工作負載：",
+      "selectClusters": "在此選擇叢集",
+      "matches": "匹配：{{count}} 個 {{resourceType}}"
+    },
+    "labels": {
+      "title": "標籤：",
+      "key": "鍵",
+      "value": "值",
+      "add": "新增",
+      "count": "{{total}} 中的 {{count}} 個唯一標籤"
+    },
+    "creatingConnection": "正在建立連線：",
+    "previewDialog": {
+      "title": "策略預覽和洞察",
+      "visualizationTab": "視覺化",
+      "detailsTab": "詳情",
+      "matchingDetails": "匹配詳情",
+      "matchedClusters": "匹配的叢集 ({{count}})",
+      "clusterStatus": "{{name}} - {{status}}",
+      "labels": "標籤：{{labels}}",
+      "matchedWorkloads": "匹配的工作負載 ({{count}})",
+      "workloadNamespace": "{{name}} ({{namespace}})"
+    },
+    "policyNameDialog": {
+      "title": "為您的繫結策略命名",
+      "policyName": "策略名稱",
+      "generateNew": "生成新名稱",
+      "placeholder": "輸入繫結策略名稱...",
+      "invalid": "名稱必須是小寫字母數字加連字元，最多 253 個字元",
+      "helper": "僅使用小寫字母、數字和連字元",
+      "namingTipsTitle": "💡 命名提示：",
+      "namingTips": "使用描述性名稱，如\"frontend-to-production\"或\"database-sync-policy\"以便更好地組織。",
+      "creating": "正在建立...",
+      "createPolicy": "建立策略"
+    },
+    "configureDialog": {
+      "title": "配置繫結策略",
+      "creatingFor": "正在為以下項建立繫結策略：",
+      "creatingForDesc": "這將建立一個將 {{sourceType}} 連結到 {{targetType}} 的繫結策略。",
+      "tabs": {
+        "basic": "基本",
+        "advanced": "高階",
+        "scheduling": "排程",
+        "yaml": "YAML"
+      },
+      "nameHelper": "繫結策略的名稱",
+      "namespaceHelper": "繫結策略的名稱空間",
+      "updateStrategyHelper": "選擇如何將資源更改應用到叢集。透過從面板中選擇來新增叢集和工作負載。",
+      "addCustomLabels": "新增自定義標籤",
+      "labelsTooltip": "標籤幫助識別和選擇資源",
+      "tolerationsTitle": "容忍度（高階）",
+      "tolerationExpression": "容忍度表示式",
+      "tolerationRequired": "容忍度是必需的",
+      "schedulingRules": "排程規則",
+      "schedulingTooltip": "定義叢集接收此工作負載必須滿足的條件",
+      "resource": "資源",
+      "resource.cpu": "CPU 核心數",
+      "resource.memory": "記憶體",
+      "resource.storage": "儲存",
+      "resource.pods": "可用 Pod 數",
+      "operator": "運算子",
+      "activeRules": "活動規則：",
+      "noSchedulingRules": "未新增排程規則。策略將應用於所有匹配的叢集，不考慮其資源。",
+      "yamlPreview": "YAML 預覽",
+      "yamlPreviewInfo": "這是將要應用的 YAML 預覽。您可以在其他標籤頁中進行更改以更新此預覽。"
+    }
+  },
+  "workloads": {
+    "label": {
+      "title": "工作負載標籤 *",
+      "prefix": "kubestellar.io/workload:",
+      "helpTextError": "未找到標籤",
+      "helpText": "工作負載標籤是鍵值對。鍵是常量且預設為 'kubestellar.io/workload'，您只能更改值。"
+    },
+    "github": {
+      "repositoryUrlLabel": "倉庫 URL *",
+      "pathLabel": "路徑 *",
+      "branchLabel": "分支（預設：main）*",
+      "credentialsLabel": "憑據",
+      "credentialsTip": "為私有倉庫選擇或新增憑據",
+      "addCredentials": "新增憑據",
+      "webhooksLabel": "Webhook",
+      "webhooksTip": "為自動化部署選擇或新增 webhook",
+      "addWebhook": "新增 Webhook",
+      "previousDeploymentsTitle": "先前部署列表",
+      "loadingPreviousDeployments": "正在載入先前部署...",
+      "noPreviousDeployments": "沒有可用的先前部署。",
+      "confirmResourceDeletion": "確認資源刪除",
+      "deleteConfirmation": "您確定要刪除 \"{{name}}\" 嗎？此操作無法撤銷。",
+      "yesDelete": "是的，刪除",
+      "apply": "應用",
+      "deploying": "正在部署...",
+      "createFromYourGitHub": "從您的 GitHub 建立",
+      "deployFromPopularRepositories": "從熱門倉庫部署",
+      "listOfPreviousDeployments": "先前部署列表",
+      "repositoryUrl": "倉庫 URL *",
+      "repositoryUrlPlaceholder": "例如：https://github.com/username/repo",
+      "repositoryUrlTip": "使用有效的 GitHub 倉庫 URL",
+      "path": "路徑 *",
+      "pathPlaceholder": "例如：/path/to/yaml",
+      "pathTip": "指定倉庫中 YAML 檔案的路徑",
+      "branch": "分支（預設：main）*",
+      "branchPlaceholder": "例如：master、dev-branch",
+      "branchTip": "指定要部署的分支",
+      "credentials": "憑據",
+      "credentialsPlaceholder": "例如：username-pat",
+      "title": "從您的 GitHub 倉庫建立並部署！",
+      "tab": {
+        "importFromGitHub": "從 GitHub 匯入",
+        "selectRepositorySource": "選擇倉庫源以匯入您的應用程式",
+        "repositorySource": "倉庫源",
+        "selectRepository": "選擇倉庫",
+        "repositoryDetails": "倉庫詳情",
+        "selectedRepository": "已選擇的倉庫："
+      },
+      "options": {
+        "yourGitHub": {
+          "title": "您的 GitHub 倉庫",
+          "description": "從您自己的 GitHub 倉庫匯入"
+        },
+        "enterprise": {
+          "title": "企業倉庫",
+          "description": "從 GitHub 企業倉庫匯入"
+        },
+        "public": {
+          "title": "公共倉庫",
+          "description": "從任何公共 GitHub 倉庫匯入"
+        },
+        "popular": {
+          "title": "熱門倉庫",
+          "description": "從我們精選的示例列表中選擇"
+        },
+        "placeholder": {
+          "yourGitHub": "您的 GitHub 倉庫表單將顯示在此處",
+          "enterprise": "企業倉庫表單將顯示在此處",
+          "public": "公共倉庫表單將顯示在此處"
+        }
+      }
+    },
+    "artifactHub": {
+      "searchPackages": "搜尋包",
+      "directDeploy": "從 Artifact Hub 部署 Helm Chart",
+      "listRepositories": "列出倉庫",
+      "form": {
+        "packageId": "包 ID *",
+        "packageIdTooltip": "格式：helm/repository-name/chart-name（例如：helm/bitnami/nginx）",
+        "packageIdPlaceholder": "helm/bitnami/nginx",
+        "packageIdTip": "指定 Helm chart 包 ID（例如：helm/bitnami/nginx）",
+        "version": "版本（預設：latest）",
+        "versionTooltip": "要部署的 chart 版本（例如：13.2.12）。如果未指定，將使用最新版本。",
+        "versionPlaceholder": "13.2.12（留空表示使用最新版本）",
+        "versionTip": "指定要部署的版本（留空表示使用最新版本）",
+        "releaseName": "釋出名稱 *",
+        "releaseNameTooltip": "用於標識您的 Helm 釋出的名稱",
+        "releaseNamePlaceholder": "my-nginx",
+        "releaseNameTip": "指定 Helm 釋出的名稱",
+        "namespace": "名稱空間",
+        "namespaceTooltip": "要部署到的 Kubernetes 名稱空間",
+        "namespacePlaceholder": "default",
+        "namespaceTip": "指定要部署到的名稱空間（預設為 'default'）",
+        "customValues": "自定義值",
+        "customValuesTooltip": "格式：key=value,key2=value2（例如：service.type=LoadBalancer,service.port=80）",
+        "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
+        "customValuesTip": "Helm chart 的自定義配置值（key=value 格式）"
+      },
+      "validation": {
+        "selectPackage": "請先選擇一個包",
+        "enterWorkloadLabel": "請輸入工作負載標籤",
+        "enterPackageId": "請輸入包 ID。",
+        "enterReleaseName": "請輸入釋出名稱。"
+      },
+      "buttons": {
+        "close": "關閉",
+        "apply": "應用"
+      },
+      "searchPackagesForm": {
+        "searchHint": "開始輸入以在 Artifact Hub 上搜索 Helm 包",
+        "errorMessage": {
+          "enterSearchTerm": "請輸入搜尋詞",
+          "noPackagesFound": "未找到 '{{query}}' 的包",
+          "searchFailed": "搜尋失敗：{{message}}"
+        },
+        "serviceConfig": {
+          "title": "服務配置",
+          "serviceType": "服務型別",
+          "servicePort": "服務埠"
+        },
+        "packageDetails": {
+          "stars": "星標",
+          "repository": "倉庫：",
+          "verified": "已驗證",
+          "namespace": "名稱空間"
+        }
+      },
+      "repositoriesList": {
+        "tip": "倉庫是 Helm chart 的來源，點選卡片檢視更多詳情",
+        "loading": "正在載入倉庫...",
+        "noRepositories": "沒有可用的倉庫",
+        "official": "官方",
+        "helm": "Helm",
+        "other": "其他",
+        "organization": "組織：",
+        "user": "使用者：",
+        "url": "URL："
+      }
+    },
+    "yaml": {
+      "createNamespaceAutomatically": "自動建立名稱空間",
+      "editor": "YAML 編輯器",
+      "deploy": "部署"
+    },
+    "helm": {
+      "createOwn": "建立您自己的 Helm chart",
+      "popularCharts": "從熱門 Helm chart 部署",
+      "form": {
+        "repositoryName": "倉庫名稱 *",
+        "repositoryNameTip": "指定 Helm 倉庫的名稱",
+        "repositoryNamePlaceholder": "例如：my-helm-repo",
+        "repositoryUrl": "倉庫 URL *",
+        "repositoryUrlTip": "使用有效的 Helm 倉庫 URL",
+        "repositoryUrlPlaceholder": "例如：https://charts.helm.sh/stable",
+        "chartName": "Chart 名稱 *",
+        "chartNameTip": "指定要部署的 Helm chart 名稱",
+        "chartNamePlaceholder": "例如：nginx",
+        "releaseName": "釋出名稱 *",
+        "releaseNameTip": "指定此 Helm 部署的釋出名稱",
+        "releaseNamePlaceholder": "例如：my-release",
+        "version": "版本（預設：latest）",
+        "versionTip": "指定要部署的 chart 版本",
+        "versionPlaceholder": "例如：1.2.3",
+        "namespace": "名稱空間 *",
+        "namespaceTip": "指定 Helm chart 的名稱空間",
+        "namespacePlaceholder": "例如：default、my-namespace",
+        "searchChartLabel": "搜尋 Helm Chart"
+      },
+      "userCharts": {
+        "loading": "正在載入使用者 chart...",
+        "noCharts": "沒有可用的使用者建立的 chart。",
+        "delete": "刪除",
+        "confirmDeletion": "確認資源刪除",
+        "deleteConfirmation": "您確定要刪除 \"{{chartId}}\" 嗎？此操作無法撤銷。",
+        "deleteSuccess": "Chart {{chartId}} 刪除成功！",
+        "deleteError": "Chart {{chartId}} 刪除失敗！"
+      },
+      "buttons": {
+        "cancel": "取消",
+        "deploying": "正在部署...",
+        "apply": "應用"
+      },
+      "messages": {
+        "selectChart": "請選擇要部署的 Helm chart。",
+        "deploySuccess": "選擇的 {{chartName}} Helm chart 部署成功！",
+        "deployFailureReuse": "部署失敗：安裝 chart 失敗：無法重複使用仍在使用的名稱！",
+        "deployFailure": "熱門 Helm chart 部署失敗！"
+      }
+    },
+    "list": {
+      "title": "工作負載",
+      "create": "建立工作負載",
+      "filter": "篩選工作負載",
+      "noWorkloads": "未找到工作負載",
+      "createFirst": "建立您的第一個工作負載以開始使用"
+    },
+    "tabs": {
+      "yaml": "YAML",
+      "helm": "Helm",
+      "github": "GitHub",
+      "artifactHub": "Artifact Hub"
+    },
+    "createOptions": {
+      "title": "建立工作負載",
+      "subtitle": "建立工作負載",
+      "yaml": {
+        "createNamespaceAutomatically": "自動建立名稱空間",
+        "deploy": "部署",
+        "cancel": "取消"
+      },
+      "file": {
+        "title": "從檔案",
+        "dragDrop": "拖放您的 YAML 或 JSON 檔案到此處",
+        "browse": "瀏覽",
+        "selectFile": "選擇 YAML 或 JSON 檔案",
+        "fileSelected": "檔案已選擇",
+        "fileSize": "檔案大小",
+        "deploy": "部署",
+        "cancel": "取消",
+        "noFileSelected": "未選擇檔案。",
+        "invalidFile": "請上傳有效的 YAML 或 JSON 檔案。"
+      },
+      "github": {
+        "title": "GitHub",
+        "workloadLabel": "工作負載標籤",
+        "workloadLabelPlaceholder": "為標籤 'kubestellar.io/workload' 輸入值",
+        "repositoryUrl": "倉庫 URL",
+        "repositoryUrlPlaceholder": "例如：https://github.com/username/repo",
+        "path": "路徑",
+        "pathPlaceholder": "例如：/path/to/yaml",
+        "branch": "分支（預設：main）",
+        "branchPlaceholder": "例如：master、dev-branch",
+        "credentials": "憑據",
+        "webhook": "Webhook",
+        "addCredentials": "新增憑據",
+        "addWebhook": "新增 Webhook",
+        "deploy": "部署",
+        "cancel": "取消"
+      },
+      "helm": {
+        "title": "Helm",
+        "repoName": "倉庫名稱",
+        "repoNamePlaceholder": "例如：bitnami",
+        "repoUrl": "倉庫 URL",
+        "repoUrlPlaceholder": "例如：https://charts.bitnami.com/bitnami",
+        "chartName": "Chart 名稱",
+        "chartNamePlaceholder": "例如：nginx",
+        "releaseName": "釋出名稱",
+        "releaseNamePlaceholder": "例如：my-release",
+        "version": "版本（留空表示使用最新版本）",
+        "versionPlaceholder": "例如：1.0.0",
+        "namespace": "名稱空間",
+        "namespacePlaceholder": "例如：default",
+        "workloadLabel": "工作負載標籤",
+        "workloadLabelPlaceholder": "為標籤 'kubestellar.io/workload' 輸入值",
+        "deploy": "部署",
+        "cancel": "取消",
+        "userCharts": {
+          "title": "使用者建立的 Chart 列表",
+          "deleteSuccess": "Chart {{chartId}} 刪除成功！",
+          "deleteError": "Chart {{chartId}} 刪除失敗！",
+          "loading": "正在載入使用者 chart...",
+          "noCharts": "沒有可用的使用者建立的 chart。",
+          "delete": "刪除",
+          "confirmDeletion": "確認資源刪除",
+          "deleteConfirmation": "您確定要刪除 \"{{chartId}}\" 嗎？此操作無法撤銷。"
+        }
+      },
+      "artifactHub": {
+        "title": "Artifact Hub",
+        "searchPlaceholder": "搜尋 Helm chart...",
+        "selectPackage": "請選擇一個包。",
+        "enterReleaseName": "請輸入釋出名稱。"
+      },
+      "credentials": {
+        "title": "新增憑據",
+        "username": "GitHub 使用者名稱",
+        "usernamePlaceholder": "輸入您的 GitHub 使用者名稱",
+        "token": "個人訪問令牌",
+        "tokenPlaceholder": "輸入您的 GitHub 個人訪問令牌",
+        "add": "新增",
+        "cancel": "取消",
+        "fillBoth": "請填寫 GitHub 使用者名稱和個人訪問令牌。"
+      },
+      "webhook": {
+        "title": "新增 Webhook",
+        "url": "Webhook URL",
+        "urlPlaceholder": "輸入 webhook URL",
+        "token": "個人訪問令牌",
+        "tokenPlaceholder": "輸入 webhook 的個人訪問令牌",
+        "add": "新增",
+        "cancel": "取消",
+        "fillBoth": "請填寫 Webhook URL 和個人訪問令牌。"
+      },
+      "cancelConfirmation": {
+        "title": "丟棄更改？",
+        "message": "您有未儲存的更改。您確定要取消嗎？",
+        "confirm": "是的，丟棄",
+        "cancel": "不，繼續編輯"
+      },
+      "notifications": {
+        "workloadDeploySuccess": "工作負載部署成功！",
+        "deploymentSuccess": "部署成功！",
+        "helmDeploySuccess": "Helm chart 部署成功！",
+        "artifactHubDeploySuccess": "Artifact Hub 部署成功！",
+        "credentialAddedSuccess": "憑據新增成功！",
+        "webhookAddedSuccess": "Webhook 新增成功！",
+        "deploymentConflict": "衝突錯誤：部署已在進行中！",
+        "workloadAlreadyExists": "在名稱空間 {{namespace}} 中建立 {{kind}} {{name}} 失敗，工作負載已存在或名稱空間 {{namespace}} 未找到",
+        "unknownWorkloadExists": "建立未知 {{name}} 工作負載失敗，已存在",
+        "helmDeployFailed": "部署失敗：安裝 chart 失敗：無法重複使用仍在使用的名稱！",
+        "gitRepoError": "克隆倉庫失敗，請填寫正確的 URL 和路徑！",
+        "enterWorkloadLabel": "請輸入工作負載標籤。",
+        "invalidWorkloadLabel": "您只能輸入值，鍵是常量且預設為 'kubestellar.io/workload'。",
+        "enterGitRepo": "請輸入 Git 倉庫。",
+        "enterPath": "請輸入路徑。",
+        "enterRepoName": "請輸入倉庫名稱。",
+        "enterRepoUrl": "請輸入倉庫 URL。",
+        "enterChartName": "請輸入 chart 名稱。",
+        "enterReleaseName": "請輸入釋出名稱。",
+        "enterNamespace": "請輸入名稱空間。",
+        "enterYamlJson": "請輸入 YAML 或 JSON 內容。",
+        "needMetadataName": "至少一個文件必須具有 'metadata.name'"
+      }
+    }
+  },
+  "visualization": {
+    "policyDistribution": "{{count}} 個連線",
+    "clusters": {
+      "edge": "邊緣叢集",
+      "aiInference": "AI 推理叢集",
+      "aiTraining": "AI 訓練叢集",
+      "service": "服務叢集",
+      "compute": "計算叢集",
+      "descriptions": {
+        "edge": "用於低延遲處理的邊緣計算資源",
+        "aiInference": "即時 AI 模型推理和預測服務",
+        "aiTraining": "用於 AI 模型訓練的高效能計算",
+        "service": "核心微服務和 API 端點",
+        "compute": "通用計算資源"
+      }
+    },
+    "title": "視覺化",
+    "controls": "檢視控制",
+    "zoom": "縮放",
+    "searchResources": "搜尋資源"
+  },
+  "namespaces": {
+    "default": "預設",
+    "create": "建立名稱空間",
+    "select": "選擇名稱空間"
+  },
+  "errors": {
+    "policyNameRequired": "策略名稱是必需的",
+    "policyNotFound": "未找到策略 {{name}}",
+    "parseError": "無法解析繫結策略響應",
+    "unexpectedFormat": "API 響應格式異常",
+    "error": "錯誤",
+    "required": "此欄位是必需的",
+    "invalidFormat": "格式無效",
+    "connectionFailed": "連線失敗",
+    "forbidden": "您沒有許可權訪問此資源",
+    "serverError": "伺服器錯誤",
+    "notFound": "未找到資源",
+    "timeout": "請求超時",
+    "unknown": "發生未知錯誤",
+    "contextNameRequired": "上下文名稱是必需的",
+    "versionRequired": "KubeStellar 版本是必需的",
+    "operationTimeout": "操作超時。程序可能仍在後臺執行。",
+    "failedToCreateContext": "建立上下文失敗",
+    "creatingContext": "建立上下文時出錯：",
+    "websocketConnectionFailed": "無法連線到伺服器。請檢查您的網路連線並重試。",
+    "websocketClosedUnexpectedly": "WebSocket 連線意外關閉",
+    "fetchingContexts": "獲取上下文時出錯："
+  },
+  "contexts": {
+    "filterByContext": "按上下文篩選",
+    "allContexts": "所有上下文",
+    "showingAllContexts": "顯示來自所有上下文的資源",
+    "filteringByContext": "篩選以僅顯示 {{context}} 上下文",
+    "createdSuccessfully": "上下文建立成功！",
+    "websocketClosed": "WebSocket 連線已關閉：",
+    "contextCreatedSuccess": "上下文\"{{contextName}}\"建立成功！",
+    "createNewContext": "建立新上下文",
+    "contextName": "上下文名稱",
+    "kubestellarVersion": "KubeStellar 版本",
+    "creating": "正在建立...",
+    "createContext": "建立上下文"
+  },
+  "policyDragDropStore": {
+    "labelsAssigned": "標籤已自動分配給 {{itemType}} {{itemId}}",
+    "policyAssigned": "成功將 {{policyName}} 分配給 {{targetType}} {{targetName}}",
+    "clusterAlreadyAssigned": "叢集 {{targetName}} 已分配給策略 {{policyName}}",
+    "workloadAlreadyAssigned": "工作負載 {{targetName}} 已分配給策略 {{policyName}}"
+  },
+  "auth": {
+    "login": {
+      "success": "登入成功",
+      "error": "登入錯誤：",
+      "successWithUser": "使用者 {{username}} 登入成功。正在重定向到 {{path}}",
+      "invalidCredentials": "無效憑據",
+      "authFailed": "身份驗證失敗。請檢查您的憑據。",
+      "noToken": "未從伺服器接收到令牌"
+    }
+  },
+  "kubestellarData": {
+    "logging": {
+      "clustersApiResponse": "叢集 API 響應：",
+      "processedClusters": "已處理的叢集：",
+      "errorFetchingClusters": "獲取叢集時出錯：",
+      "processedWorkloads": "已處理的工作負載：",
+      "errorFetchingWorkloads": "獲取工作負載時出錯：",
+      "errorFetchingPolicies": "獲取策略時出錯：",
+      "assigningPolicy": "正在將策略 {{policyName}} 分配給 {{targetType}} {{targetName}}"
+    },
+    "errors": {
+      "failedFetchClusters": "獲取叢集失敗",
+      "failedFetchWorkloads": "獲取工作負載失敗",
+      "failedFetchPolicies": "獲取策略失敗",
+      "errorAssigningPolicy": "分配策略時出錯：",
+      "failedToAssign": "將 {{policyName}} 分配給 {{targetType}} {{targetName}} 失敗"
+    },
+    "success": {
+      "successfullyAssigned": "成功將 {{policyName}} 分配給 {{targetType}} {{targetName}}"
+    },
+    "defaults": {
+      "unknown": "未知",
+      "ready": "就緒",
+      "deployment": "部署",
+      "defaultNamespace": "預設",
+      "active": "活躍",
+      "alwaysMatch": "始終匹配"
+    }
+  },
+  "onboardingLogs": {
+    "onboarding": "入駐",
+    "complete": "完成",
+    "connecting": "正在連線到日誌流...",
+    "errors": {
+      "websocketFailed": "WebSocket 連線失敗。請重試。",
+      "connectionFailed": "連線到日誌流失敗。請重試。"
+    },
+    "status": {
+      "processing": "處理中",
+      "verifying": "驗證中",
+      "available": "可用",
+      "completed": "已完成",
+      "error": "錯誤"
+    }
+  },
+  "newAppDialog": {
+    "title": "建立新應用",
+    "githubUrl": "GitHub URL",
+    "path": "路徑",
+    "deploy": "部署"
+  },
+  "navbar": {
+    "generateLog": "生成日誌",
+    "toggleTheme": "切換主題",
+    "brandName": "KubestellarUI",
+    "its": "ITS",
+    "wds": "WDS",
+    "logFilename": "kubestellarui.log",
+    "generateLogError": "生成日誌失敗。請重試。"
+  },
+  "manualImportTab": {
+    "loadingClusters": "正在載入可用叢集...",
+    "errorLoadingClusters": "載入叢集時出錯",
+    "title": "手動叢集設定",
+    "recommended": "推薦",
+    "description": "這是連線您的 Kubernetes 叢集最簡單的方式。選擇一個叢集並點選入駐叢集按鈕，即可直接將其連線到您的平臺，無需任何手動命令。",
+    "selectCluster": "選擇要連線的叢集",
+    "chooseCluster": "選擇叢集...",
+    "noClusters": "沒有可用的叢集",
+    "discoveredClusters": "這些是在您的環境中發現的叢集。選擇一個以繼續。",
+    "refreshClustersList": "重新整理叢集列表",
+    "howToConnect": "如何連線您的叢集",
+    "steps": {
+      "selectCluster": "從上面的下拉列表中選擇一個叢集",
+      "clickOnboard": "點選\"入駐叢集\"按鈕直接連線您的叢集",
+      "autoOnboard": "您的叢集將自動入駐，無需手動命令"
+    },
+    "connectionError": "連線錯誤",
+    "installationGuide": "安裝指南：",
+    "installCommand": "要安裝 clusteradm，請執行：",
+    "commandCopied": "安裝命令已複製！",
+    "onboarding": "正在入駐...",
+    "onboardCluster": "入駐叢集",
+    "clusterAddedSuccess": "叢集已新增到平臺",
+    "clusterOnboardedSuccess": "您的叢集 {{clusterName}} 已成功入駐。您現在可以：",
+    "nextSteps": {
+      "viewManage": "在儀表盤中檢視和管理叢集",
+      "deployApps": "將應用程式和服務部署到叢集",
+      "configureSettings": "配置和管理叢集設定"
+    },
+    "viewDashboard": "在儀表盤中檢視叢集",
+    "goToDashboard": "前往儀表盤"
+  },
+  "logModal": {
+    "connectedToStream": "已連線到日誌流...",
+    "connectionClosed": "日誌完整。連線已關閉。",
+    "retryConnection": "連線已關閉。請重試。",
+    "logs": "日誌",
+    "loadingLogs": "正在載入日誌..."
+  },
+  "loadingFallback": {
+    "loadingContent": "正在載入內容..."
+  },
+  "listView": {
+    "connecting": "正在連線到伺服器...",
+    "receivingWorkloads": "正在接收工作負載...",
+    "receivedWorkloadsSoFar": "目前已接收 {{count}} 個工作負載...",
+    "allWorkloadsReceived": "已接收所有 {{count}} 個工作負載",
+    "connectionLost": "連線丟失。顯示已接收的 {{count}} 個工作負載。",
+    "connectionError": "與伺服器的連線丟失或失敗。正在嘗試備用方法...",
+    "fetchingFallback": "正在獲取資源（備用方法）...",
+    "invalidResponseFormat": "伺服器響應格式無效",
+    "unknownError": "獲取資源時發生未知錯誤。",
+    "errorLoading": "載入資源時出錯",
+    "downloadLogs": "下載日誌",
+    "namespace": "名稱空間",
+    "created": "已建立",
+    "filteredByContext": "按上下文篩選：{{context}}",
+    "showingResourceCount": "顯示 {{total}} 個總資源中的 {{showing}} 個",
+    "resourceStats": "檢測到 {{raw}} 個原始資源，已處理 {{processed}} 個",
+    "pagination": {
+      "prev": "上一頁",
+      "next": "下一頁",
+      "showing": "顯示第 {{from}} 到 {{to}} 項，共 {{total}} 項",
+      "filtered": "（按 {{context}} 上下文篩選）"
+    },
+    "troubleshooting": {
+      "title": "嘗試以下故障排除步驟：",
+      "step1": "1. 檢查後端伺服器是否在 http://localhost:4000 執行",
+      "step2": "2. 驗證伺服器的 CORS 配置是否允許來自 http://localhost:5173 的請求",
+      "step3": "3. 如果伺服器使用萬用字元 (*) CORS，則無法接受帶有憑據的請求",
+      "step4": "4. 檢查瀏覽器控制檯的詳細錯誤訊息"
+    },
+    "noWorkloads": {
+      "title": "未找到工作負載",
+      "noResourcesForContext": "未找到 {{context}} 上下文的資源",
+      "resourcesFilteredOut": "資源可用但已被篩選掉",
+      "getStarted": "建立您的第一個工作負載以開始使用",
+      "resourcesAvailable": "共有 {{count}} 個資源可用，但沒有匹配當前篩選器"
+    }
+  },
+  "kubeconfigImport": {
+    "title": "上傳 Kubeconfig 檔案",
+    "description": "透過上傳 kubeconfig 檔案匯入您的叢集",
+    "dragAndDrop": "將您的 kubeconfig 檔案拖放到這裡",
+    "or": "- 或 -",
+    "browseFiles": "瀏覽檔案",
+    "importCluster": "匯入叢集"
+  },
+  "importClusters": {
+    "title": "匯入叢集",
+    "description": "將您的 Kubernetes 叢集連線到平臺",
+    "tabs": {
+      "quickConnect": "快速連線",
+      "kubeconfig": "Kubeconfig",
+      "apiUrl": "API/URL"
+    },
+    "abortDialog": {
+      "title": "中止入駐流程",
+      "warning": "您確定要中止入駐嗎？所有進度將丟失。",
+      "continue": "繼續入駐",
+      "confirm": "是的，中止"
+    },
+    "fileUpload": {
+      "selected": "已選擇檔案\"{{filename}}\"。上傳功能待實現。"
+    },
+    "icons": {
+      "quickConnect": "快速連線",
+      "kubeconfig": "kubeconfig",
+      "apiUrl": "api url",
+      "ariaLabel": "匯入"
+    }
+  },
+  "groupPanel": {
+    "close": "關閉面板",
+    "tableAriaLabel": "組專案表格",
+    "table": {
+      "name": "名稱",
+      "groupKind": "組/型別",
+      "syncOrder": "同步順序",
+      "namespace": "名稱空間",
+      "createdAt": "建立時間"
+    },
+    "notAvailable": "不可用"
+  },
+  "downloadLogsModal": {
+    "title": "下載日誌",
+    "fileSize": "檔案大小",
+    "download": "下載"
+  },
+  "footer": {
+    "commit": "提交",
+    "viewCommit": "在 GitHub 上檢視提交詳情"
+  },
+  "downloadLogsButton": {
+    "title": "下載日誌",
+    "placeholder": {
+      "header": "叢集 {{cluster}} 上名稱空間 {{namespace}} 中 Pod {{podName}} 的日誌",
+      "generated": "生成時間：{{date}}",
+      "noContent": "日誌內容不可直接獲取。請使用流式日誌功能。"
+    },
+    "toast": {
+      "success": "已下載 {{podName}} 的日誌",
+      "error": "下載日誌失敗"
+    }
+  },
+  "detachmentLogsDialog": {
+    "title": "正在分離叢集：{{clusterName}}",
+    "logs": "分離日誌",
+    "connected": "已連線",
+    "disconnected": "已斷開連線",
+    "connecting": "正在連線到分離服務...",
+    "completedSuccessfully": "叢集分離已成功完成。",
+    "done": "完成"
+  },
+  "addWebhookDialog": {
+    "copiedToClipboard": "已複製到剪貼簿！",
+    "setupWebhook": "設定 Webhook",
+    "localDevSmee": "使用 Smee.io 進行本地開發",
+    "installSmee": "安裝 Smee 客戶端 (npm install -g smee-client)。",
+    "goToSmee": "訪問 Smee.io 並建立新通道。",
+    "copySmeeUrl": "複製生成的 Smee.io URL。",
+    "runSmeeClient": "執行 Smee 客戶端將 webhook 轉發到您的本地 Go 後端：",
+    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+    "configureWebhookSmee": "使用 Smee.io URL 在您的外部服務中配置 webhook。",
+    "startGoBackend": "啟動您的 Go 後端並確保它在 /api/webhook 處監聽。",
+    "testWebhook": "測試 webhook。",
+    "vmIp4000": "在虛擬機器 (VM) 上使用 IP:4000 配置 Webhook",
+    "ensureGoBackend4000": "確保您的 Go 後端在埠 4000 上執行並處理 /api/webhook。",
+    "openPort4000": "在您的防火牆/安全組中開放埠 4000 (UFW、AWS、GCP 或 Azure)。",
+    "findPublicIp": "查詢您的公網 IP (curl ifconfig.me) 並新增。",
+    "configureWebhookVm": "使用以下地址在您的外部服務中配置 webhook：",
+    "vmWebhookUrl": "http://your-public-ip:4000/api/webhook",
+    "vmWebhookUrlCopy": "http://<your-public-ip>:4000/api/webhook",
+    "testWebhookOtherMachine": "從另一臺機器測試 webhook。",
+    "keepGoServerRunning": "保持您的 Go 伺服器在後臺執行 (nohup 或 systemd)。"
+  },
+  "cancelConfirmationDialog": {
+    "title": "取消工作負載建立",
+    "titlePolicy": "取消策略建立",
+    "warning": "警告",
+    "message": "您確定要取消嗎？所有更改將丟失。",
+    "continueEditing": "繼續編輯",
+    "yesCancel": "是的，取消"
+  },
+  "addCredentialsDialog": {
+    "title": "新增憑據",
+    "usernameLabel": "Github 使用者名稱 *",
+    "usernamePlaceholder": "例如：onkar717",
+    "usernameTip": "輸入您的 GitHub 使用者名稱",
+    "tokenLabel": "個人訪問令牌 (PAT) *",
+    "tokenPlaceholder": "例如：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tokenTip": "輸入您的 GitHub 個人訪問令牌"
+  },
   "marketplace": {
-    "title": "KubeStellar Galaxy 市集",
-    "description": "探索並安裝插件以提升您的 KubeStellar 體驗"
+    "title": "KubeStellar Galaxy 市場",
+    "description": "發現並安裝外掛以增強您的 KubeStellar 體驗"
+  },
+  "validation": {
+    "missingRequiredFields": "缺少必填欄位"
   }
 }
