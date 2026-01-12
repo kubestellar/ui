@@ -180,5 +180,13 @@
   "marketplace": {
     "title": "KubeStellar Galaxy 市集",
     "description": "探索並安裝插件以提升您的 KubeStellar 體驗"
+  },
+  "clusters": {
+    "dashboard": {
+      "awsSupport": {
+        "title": "AWS 支援",
+        "description": "完整的 AWS 雲端提供商支援目前處於 Alpha 階段。部分功能可能受限。"
+      }
+    }
   }
 }
