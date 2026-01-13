@@ -1,183 +1,4 @@
 {
-  "raiseIssue": "報告問題",
-  "profileSection": {
-    "changePassword": "修改密碼",
-    "changePasswordSubtitle": "請輸入您當前的密碼並選擇一個新密碼。",
-    "currentPassword": "當前密碼",
-    "newPassword": "新密碼",
-    "confirmNewPassword": "確認新密碼",
-    "passwordChangedSuccess": "密碼修改成功。",
-    "passwordChangedError": "修改密碼失敗。",
-    "passwordsDoNotMatch": "新密碼不匹配。",
-    "passwordRequired": "密碼是必填項。",
-    "errorCurrentPasswordIncorrect": "當前密碼不正確",
-    "cancel": "取消",
-    "changePasswordButton": "修改密碼",
-    "passwordsMatch": "密碼匹配！"
-  },
-  "commandPalette": {
-    "ariaLabel": "開啟命令面板",
-    "title": "命令面板（Ctrl+K）",
-    "badge": "K",
-    "searchPlaceholder": "搜尋命令...",
-    "noCommandsFound": "未找到命令。請嘗試其他搜尋詞。",
-    "footer": {
-      "navigate": "導航",
-      "select": "選擇",
-      "shortcut": "Ctrl+K"
-    },
-    "kbd": {
-      "esc": "ESC",
-      "arrows": "↑↓",
-      "enter": "↵"
-    },
-    "sections": {
-      "navigation": "導航",
-      "visualizations": "視覺化",
-      "help": "幫助",
-      "account": "賬戶",
-      "admin": "管理"
-    },
-    "commands": {
-      "home": {
-        "title": "首頁",
-        "description": "前往儀表盤"
-      },
-      "plugin": {
-        "title": "外掛管理器",
-        "description": "管理和監控 KubeStellar 外掛"
-      },
-      "managedClusters": {
-        "title": "管理叢集",
-        "description": "管理Kubernetes叢集"
-      },
-      "workloads": {
-        "title": "工作負載",
-        "description": "跨叢集管理工作負載"
-      },
-      "bindingPolicies": {
-        "title": "繫結策略",
-        "description": "配置繫結策略"
-      },
-      "userManagement": {
-        "title": "使用者管理",
-        "description": "管理系統使用者和許可權"
-      },
-      "wdsTreeview": {
-        "title": "WDS 樹檢視",
-        "description": "視覺化工作負載分佈"
-      },
-      "wecsTreeview": {
-        "title": "WECS 樹檢視",
-        "description": "視覺化已部署工作負載結構"
-      },
-      "documentation": {
-        "title": "開啟文件",
-        "description": "啟動 KubeStellar 文件"
-      },
-      "logout": {
-        "title": "退出登入",
-        "description": "退出您的賬戶",
-        "infoMessage": "您已成功退出登入。"
-      },
-      "galaxyMarketplace": {
-        "title": "銀河市場",
-        "description": "在銀河市場中發現並安裝外掛"
-      }
-    }
-  },
-  "admin": {
-    "users": {
-      "title": "使用者管理",
-      "subtitle": "系統使用者",
-      "noUsers": "未找到使用者",
-      "noUsersDescription": "系統中還沒有使用者。點選\"新增使用者\"建立您的第一個使用者。",
-      "noPermissions": "未分配許可權",
-      "actions": {
-        "addUser": "新增使用者",
-        "editUser": "編輯使用者",
-        "add": "新增使用者",
-        "update": "更新使用者",
-        "delete": "刪除使用者",
-        "edit": "編輯",
-        "deleteUser": "刪除使用者"
-      },
-      "table": {
-        "username": "使用者名稱",
-        "role": "角色",
-        "permissions": "許可權",
-        "actions": "操作"
-      },
-      "roles": {
-        "admin": "管理員",
-        "user": "使用者"
-      },
-      "permissions": {
-        "users": "使用者",
-        "resources": "資源",
-        "system": "系統",
-        "dashboard": "儀表板",
-        "levels": {
-          "read": "讀取",
-          "write": "寫入",
-          "none": "無"
-        }
-      },
-      "form": {
-        "username": "使用者名稱",
-        "usernamePlaceholder": "輸入使用者名稱",
-        "password": "密碼",
-        "passwordPlaceholder": "輸入密碼",
-        "passwordOptional": "密碼（可選）",
-        "passwordOptionalPlaceholder": "輸入新密碼或留空",
-        "confirmPassword": "確認密碼",
-        "confirmPasswordPlaceholder": "確認密碼",
-        "isAdmin": "管理員訪問許可權",
-        "permissions": "元件許可權",
-        "cancel": "取消",
-        "optional": "可選"
-      },
-      "delete": {
-        "title": "刪除使用者",
-        "confirmTitle": "確認刪除",
-        "confirmMessage": "您確定要刪除使用者\"{{username}}\"嗎？此操作無法撤消。",
-        "confirm": "刪除使用者"
-      },
-      "errors": {
-        "fetchFailed": "獲取使用者失敗",
-        "missingFields": "請填寫所有必填欄位",
-        "passwordMismatch": "密碼不匹配",
-        "addFailed": "新增使用者失敗",
-        "updateFailed": "更新使用者失敗",
-        "deleteFailed": "刪除使用者失敗",
-        "invalidUsername": "使用者名稱只能包含字母、數字、下劃線和連字元"
-      },
-      "success": {
-        "userAdded": "使用者新增成功",
-        "userUpdated": "使用者更新成功",
-        "userDeleted": "使用者刪除成功"
-      }
-    }
-  },
-  "menu": {
-    "catalogs": {
-      "main": "主要",
-      "management": "管理",
-      "plugins": "外掛",
-      "admin": "管理"
-    },
-    "items": {
-      "home": "首頁",
-      "managedClusters": "管理叢集",
-      "grafana": "監控面板",
-      "stagedWorkloads": "已暫存工作負載",
-      "bindingPolicies": "繫結策略",
-      "deployedWorkloads": "已部署工作負載",
-      "pluginManager": "外掛管理器",
-      "userManagement": "使用者管理",
-      "galaxyMarketplace": "銀河市場"
-    }
-  },
   "common": {
     "changes": "更改",
     "clusterLabel": "叢集標籤",
@@ -247,7 +68,110 @@
     "items_plural": "{{count}} 項",
     "filteredFrom": "篩選自"
   },
+  "admin": {
+    "users": {
+      "title": "使用者管理",
+      "subtitle": "系統使用者",
+      "description": "Manage system users and their permissions",
+      "searchPlaceholder": "Search users by name, role, or permissions...",
+      "refresh": "Refresh Users",
+      "addUser": "Add User",
+      "noUsers": "未找到使用者",
+      "noUsersDescription": "系統中還沒有使用者。點選\"新增使用者\"建立您的第一個使用者。",
+      "noPermissions": "未分配許可權",
+      "filters": {
+        "title": "Filters",
+        "reset": "Reset Filters",
+        "role": "Role",
+        "allRoles": "All Roles",
+        "permission": "Permission",
+        "anyPermission": "Any Permission",
+        "permissionLevel": "Permission Level",
+        "anyLevel": "Any Level",
+        "sortBy": "Sort By",
+        "created": "Creation Date",
+        "ascending": "Ascending",
+        "descending": "Descending",
+        "active": "Active Filters",
+        "roleFilter": "Role",
+        "permissionFilter": "Permission",
+        "levelFilter": "Level",
+        "searchFilter": "Search"
+      },
+      "actions": {
+        "addUser": "新增使用者",
+        "editUser": "編輯使用者",
+        "add": "新增使用者",
+        "update": "更新使用者",
+        "delete": "刪除使用者",
+        "edit": "編輯",
+        "deleteUser": "刪除使用者"
+      },
+      "table": {
+        "username": "使用者名稱",
+        "role": "角色",
+        "permissions": "許可權",
+        "actions": "操作"
+      },
+      "roles": {
+        "admin": "管理員",
+        "user": "使用者"
+      },
+      "permissions": {
+        "users": "使用者",
+        "resources": "資源",
+        "system": "系統",
+        "dashboard": "儀表板",
+        "levels": {
+          "read": "讀取",
+          "write": "寫入",
+          "none": "無"
+        }
+      },
+      "form": {
+        "username": "使用者名稱",
+        "usernamePlaceholder": "輸入使用者名稱",
+        "password": "密碼",
+        "passwordPlaceholder": "輸入密碼",
+        "passwordOptional": "密碼（可選）",
+        "passwordOptionalPlaceholder": "輸入新密碼或留空",
+        "confirmPassword": "確認密碼",
+        "confirmPasswordPlaceholder": "確認密碼",
+        "isAdmin": "管理員訪問許可權",
+        "permissions": "元件許可權",
+        "cancel": "取消",
+        "optional": "可選"
+      },
+      "delete": {
+        "title": "刪除使用者",
+        "confirmTitle": "確認刪除",
+        "confirmMessage": "您確定要刪除使用者\"{{username}}\"嗎？此操作無法撤消。",
+        "confirm": "刪除使用者"
+      },
+      "errors": {
+        "fetchFailed": "獲取使用者失敗",
+        "missingFields": "請填寫所有必填欄位",
+        "passwordMismatch": "密碼不匹配",
+        "addFailed": "新增使用者失敗",
+        "updateFailed": "更新使用者失敗",
+        "deleteFailed": "刪除使用者失敗",
+        "invalidUsername": "使用者名稱只能包含字母、數字、下劃線和連字元"
+      },
+      "success": {
+        "userAdded": "使用者新增成功",
+        "userUpdated": "使用者更新成功",
+        "userDeleted": "使用者刪除成功"
+      }
+    }
+  },
   "installationPage": {
+    "successSection": {
+      "installed": "is correctly installed and meets the version requirements."
+    },
+    "errorSection": {
+      "title": "Installation Instructions",
+      "viewGuide": "View installation guide"
+    },
     "statusBadge": {
       "installed": "已安裝",
       "versionMismatch": "版本不匹配",
@@ -282,6 +206,12 @@
       "prerequisites": "前提條件",
       "title": "系統前提條件",
       "description": "請在繼續之前確保已安裝以下工具",
+      "kubeflexDescription": "KubeFlex CLI tool (required version ≥ 0.8.0)",
+      "ocmDescription": "Open Cluster Management CLI (required version between 0.7 and 0.11)",
+      "helmDescription": "Kubernetes package manager (required version ≥ 3.0.0)",
+      "kubectlDescription": "Kubernetes command-line tool (required version ≥ 1.27.0)",
+      "kindDescription": "Tool for running local Kubernetes clusters (required version ≥ 0.20.0)",
+      "dockerDescription": "Container runtime (required version ≥ 20.0.0)",
       "status": {
         "success": "成功",
         "warnings": "警告",
@@ -291,8 +221,9 @@
       "coreRequirements": "核心要求",
       "demoEnvironmentRequirements": "演示環境要求",
       "buttons": {
-        "refresh": "重新整理",
-        "nextInstallation": "下一步：安裝"
+        "nextInstallation": "下一步：安裝",
+        "checking": "Checking...",
+        "refresh": "重新整理"
       }
     },
     "installation": {
@@ -330,7 +261,11 @@
       },
       "afterInstallation": {
         "title": "安裝後：",
-        "steps": ["透過檢查叢集狀態驗證安裝", "檢視入門文件", "開始管理您的 KubeStellar 環境"]
+        "steps": [
+          "透過檢查叢集狀態驗證安裝",
+          "檢視入門文件",
+          "開始管理您的 KubeStellar 環境"
+        ]
       },
       "buttons": {
         "backPrerequisites": "上一步：前提條件",
@@ -366,7 +301,10 @@
       "preparingInstructions": "正在準備安裝指令...",
       "followInstructions": "請按照以下 CLI 安裝指令安裝 KubeStellar",
       "loadInstructionsFailed": "載入安裝指令失敗。請重新整理頁面並重試。",
-      "installationDetected": "檢測到已安裝 KubeStellar。正在跳轉到登入頁面..."
+      "installationDetected": "檢測到已安裝 KubeStellar。正在跳轉到登入頁面...",
+      "recheckingPrerequisites": "Rechecking prerequisites...",
+      "prerequisitesRechecked": "Prerequisites rechecked successfully",
+      "recheckFailed": "Failed to recheck prerequisites"
     }
   },
   "header": {
@@ -383,7 +321,12 @@
     "goToHome": "返回主頁",
     "logoAlt": "KubeStellar 標誌",
     "themeToggleTip": "Alt+Q 切換主題",
-    "switchTheme": "切換為 {{mode}} 模式"
+    "switchTheme": "切換為 {{mode}} 模式",
+    "switchLanguage": "Switch language",
+    "selectLanguage": "Select Language",
+    "enterFullscreen": "Enter fullscreen mode",
+    "exitFullscreen": "Exit fullscreen mode",
+    "fullscreen": "Toggle fullscreen mode"
   },
   "login": {
     "controlPlane": "控制平面",
@@ -509,6 +452,8 @@
       "label": "標籤",
       "editvalue": "鍵和值都是必需的",
       "manage": "管理標籤",
+      "bulkTooltipDisabled": "Select at least 2 clusters to enable bulk labeling",
+      "bulkTooltipEnabled": "Manage labels for selected clusters",
       "clearFilter": "清除篩選器",
       "searchLabelsPlaceholder": "搜尋標籤...",
       "bulkEditTitle": "編輯 {{count}} 個叢集的標籤",
@@ -685,6 +630,7 @@
       "notAvailable": "不可用",
       "invalidDate": "無效日期",
       "managedClusters": "受管叢集",
+      "grafana": "Grafana",
       "total": "總計",
       "viewAll": "檢視全部",
       "cpuCapacity": "CPU 容量",
@@ -897,7 +843,17 @@
       "expandAll": "展開所有父節點的子節點",
       "collapseAll": "摺疊所有父節點的子節點",
       "zoomIn": "放大",
-      "zoomOut": "縮小"
+      "zoomOut": "縮小",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "nodeLabel": {
       "labels": "標籤：",
@@ -949,14 +905,33 @@
       "selectContainer": "選擇容器",
       "noContainersFound": "未找到容器"
     },
+    "logs": {
+      "previousLogs": "Previous Logs",
+      "currentLogs": "Current Logs",
+      "selectLogsContainer": "Select logs container"
+    },
     "errors": {
       "failedLoadClusterDetails": "載入叢集詳情失敗。",
       "failedLoadDetails": "載入 {{type}} 詳情失敗。",
       "apiNotImplemented": "更新 pod \"{{resourceName}}\" 的 API 未實現",
-      "failedFetchContainers": "獲取容器列表失敗"
+      "failedFetchContainers": "獲取容器列表失敗",
+      "failedFetchLogsContainers": "Failed to fetch container list for logs",
+      "failedConnectExec": "Failed to connect to exec session",
+      "failedInitExec": "Failed to initialize exec session",
+      "failedUpdate": "Failed to update manifest",
+      "resourceNotFound": "Resource not found",
+      "permissionDenied": "Permission denied",
+      "invalidManifest": "Invalid manifest format",
+      "namespaceRequired": "Namespace is required"
+    },
+    "success": {
+      "manifestUpdated": "Manifest updated successfully"
     },
     "cluster": {
       "active": "活躍"
+    },
+    "exec": {
+      "connected": "Connected"
     },
     "noManifest": "無可用清單"
   },
@@ -981,6 +956,23 @@
     },
     "fullscreen": {
       "toggle": "切換全屏檢視"
+    },
+    "zoomControls": {
+      "groupByResource": "Group By Resource/Kind",
+      "expandAll": "Expand all the child nodes of all parent nodes",
+      "collapseAll": "Collapse all the child nodes of all parent nodes",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "contextMenu": {
       "details": "詳情",
@@ -1030,11 +1022,21 @@
     "approaches": {
       "automated": {
         "title": "自動化方式（新功能）",
-        "features": ["一鍵設定流程", "無需手動執行命令", "流線化體驗", "減少出錯機會"]
+        "features": [
+          "一鍵設定流程",
+          "無需手動執行命令",
+          "流線化體驗",
+          "減少出錯機會"
+        ]
       },
       "manual": {
         "title": "手動方式（傳統）",
-        "features": ["手動複製並執行命令", "需要多個 CLI 步驟", "更復雜的流程", "需要命令列知識"]
+        "features": [
+          "手動複製並執行命令",
+          "需要多個 CLI 步驟",
+          "更復雜的流程",
+          "需要命令列知識"
+        ]
       }
     },
     "buttons": {
@@ -1243,31 +1245,31 @@
       }
     },
     "loadingCanvas": "正在載入畫布資料...",
-    "dragDrop": {
-      "infoAlert": "此介面使用模擬響應來建立繫結策略。從列表中選擇叢集和工作負載將它們新增到畫布，然後點選工作負載，再點選叢集以建立繫結策略連線。",
+    "selection": {
+      "infoAlert": "This interface is using simulated responses to create binding policies. Select clusters and workloads from the lists to add them to the canvas, then click on a workload and then a cluster to create a binding policy connection.",
       "helpDialog": {
-        "title": "透過直接連線建立繫結策略",
-        "intro": "按照以下步驟建立繫結策略：",
+        "title": "Create Binding Policies with Direct Connections",
+        "intro": "Follow these steps to create binding policies:",
         "steps": {
-          "selectClusters": "1. 從左側面板選擇叢集以包含在畫布中",
-          "selectWorkloads": "2. 從右側面板選擇工作負載以包含在畫布中",
-          "createConnection": "3. 先點選工作負載，然後點選叢集以建立直接連線",
-          "fillDetails": "4. 在出現的對話方塊中填寫策略詳細資訊",
-          "deploy": "5. 使用\"部署繫結策略\"按鈕模擬部署"
+          "selectClusters": "1. Select clusters from the left panel to include in the canvas",
+          "selectWorkloads": "2. Select workloads from the right panel to include in the canvas",
+          "createConnection": "3. Click on a workload first, then a cluster to create a direct connection",
+          "fillDetails": "4. Fill in the policy details in the dialog that appears",
+          "deploy": "5. Use the 'Deploy Binding Policies' button to simulate deployment"
         },
-        "gotIt": "明白了",
+        "gotIt": "Got it",
         "helpDialog": {
-          "title": "如何建立繫結策略",
-          "intro": "按照以下步驟建立繫結策略：",
+          "title": "How to Create Binding Policies",
+          "intro": "Follow these steps to create binding policies:",
           "steps": {
-            "selectLabels": "1. 選擇標籤新增到畫布",
-            "selectLabelsDesc": "從左側面板點選叢集，從右側面板點選工作負載，將它們新增到繫結策略畫布",
-            "deploy": "2. 部署您的策略",
-            "deployDesc": "點選\"部署繫結策略\"建立並部署基於選定標籤的繫結策略，將工作負載連線到叢集"
+            "selectLabels": "1. Select labels to add to the canvas",
+            "selectLabelsDesc": "Click on clusters from the left panel and workloads from the right panel to add them to the binding policy canvas",
+            "deploy": "2. Deploy your policies",
+            "deployDesc": "Click 'Deploy Binding Policies' to create and deploy binding policies that connect workloads to clusters based on the selected labels"
           },
-          "tip": "提示：基於標籤的方法允許您建立強大的繫結策略，自動應用於所有匹配選定標籤的資源，無論是現在還是將來。",
-          "dontShowAgain": "不再顯示",
-          "tooltip": "檢視選擇說明"
+          "tip": "Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.",
+          "dontShowAgain": "Don't Show Again",
+          "tooltip": "View selection instructions"
         }
       }
     },
@@ -1339,8 +1341,7 @@
       "title": "標籤：",
       "key": "鍵",
       "value": "值",
-      "add": "新增",
-      "count": "{{total}} 中的 {{count}} 個唯一標籤"
+      "add": "新增"
     },
     "creatingConnection": "正在建立連線：",
     "previewDialog": {
@@ -1545,6 +1546,7 @@
     "helm": {
       "createOwn": "建立您自己的 Helm chart",
       "popularCharts": "從熱門 Helm chart 部署",
+      "prevCharts": "Previously Deployed Helm Charts",
       "form": {
         "repositoryName": "倉庫名稱 *",
         "repositoryNameTip": "指定 Helm 倉庫的名稱",
@@ -1787,11 +1789,11 @@
     "creating": "正在建立...",
     "createContext": "建立上下文"
   },
-  "policyDragDropStore": {
-    "labelsAssigned": "標籤已自動分配給 {{itemType}} {{itemId}}",
-    "policyAssigned": "成功將 {{policyName}} 分配給 {{targetType}} {{targetName}}",
-    "clusterAlreadyAssigned": "叢集 {{targetName}} 已分配給策略 {{policyName}}",
-    "workloadAlreadyAssigned": "工作負載 {{targetName}} 已分配給策略 {{policyName}}"
+  "policySelectionStore": {
+    "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
+    "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
+    "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",
+    "workloadAlreadyAssigned": "Workload {{targetName}} is already assigned to policy {{policyName}}"
   },
   "auth": {
     "login": {
@@ -1800,7 +1802,9 @@
       "successWithUser": "使用者 {{username}} 登入成功。正在重定向到 {{path}}",
       "invalidCredentials": "無效憑據",
       "authFailed": "身份驗證失敗。請檢查您的憑據。",
-      "noToken": "未從伺服器接收到令牌"
+      "noToken": "未從伺服器接收到令牌",
+      "invalidRequest": "Invalid request. Please check your input and try again.",
+      "serverError": "Server error. Please try again later."
     }
   },
   "kubestellarData": {
@@ -1831,6 +1835,27 @@
       "active": "活躍",
       "alwaysMatch": "始終匹配"
     }
+  },
+  "profileSection": {
+    "logoutMessage": "You have been successfully logged out.",
+    "account": "Account",
+    "admin": "Admin",
+    "helpSupport": "Help & Support",
+    "raiseIssue": "Report an Issue",
+    "signOut": "Sign Out",
+    "changePassword": "修改密碼",
+    "changePasswordSubtitle": "請輸入您當前的密碼並選擇一個新密碼。",
+    "currentPassword": "當前密碼",
+    "newPassword": "新密碼",
+    "confirmNewPassword": "確認新密碼",
+    "passwordChangedSuccess": "密碼修改成功。",
+    "passwordChangedError": "修改密碼失敗。",
+    "passwordsDoNotMatch": "新密碼不匹配。",
+    "passwordRequired": "密碼是必填項。",
+    "errorCurrentPasswordIncorrect": "當前密碼不正確",
+    "cancel": "取消",
+    "changePasswordButton": "修改密碼",
+    "passwordsMatch": "密碼匹配！"
   },
   "onboardingLogs": {
     "onboarding": "入駐",
@@ -1917,17 +1942,25 @@
     "invalidResponseFormat": "伺服器響應格式無效",
     "unknownError": "獲取資源時發生未知錯誤。",
     "errorLoading": "載入資源時出錯",
-    "downloadLogs": "下載日誌",
     "namespace": "名稱空間",
     "created": "已建立",
+    "downloadLogs": "下載日誌",
+    "pagination": {
+      "showing": "顯示第 {{from}} 到 {{to}} 項，共 {{total}} 項",
+      "filtered": "（按 {{context}} 上下文篩選）",
+      "prev": "上一頁",
+      "next": "下一頁"
+    },
+    "resourceStats": "檢測到 {{raw}} 個原始資源，已處理 {{processed}} 個",
     "filteredByContext": "按上下文篩選：{{context}}",
     "showingResourceCount": "顯示 {{total}} 個總資源中的 {{showing}} 個",
-    "resourceStats": "檢測到 {{raw}} 個原始資源，已處理 {{processed}} 個",
-    "pagination": {
-      "prev": "上一頁",
-      "next": "下一頁",
-      "showing": "顯示第 {{from}} 到 {{to}} 項，共 {{total}} 項",
-      "filtered": "（按 {{context}} 上下文篩選）"
+    "noWorkloads": {
+      "title": "未找到工作負載",
+      "noResourcesForContext": "未找到 {{context}} 上下文的資源",
+      "resourcesFilteredOut": "資源可用但已被篩選掉",
+      "getStarted": "建立您的第一個工作負載以開始使用",
+      "resourcesAvailable": "共有 {{count}} 個資源可用，但沒有匹配當前篩選器",
+      "noMatchingFilters": "No resources match the current filters"
     },
     "troubleshooting": {
       "title": "嘗試以下故障排除步驟：",
@@ -1935,13 +1968,6 @@
       "step2": "2. 驗證伺服器的 CORS 配置是否允許來自 http://localhost:5173 的請求",
       "step3": "3. 如果伺服器使用萬用字元 (*) CORS，則無法接受帶有憑據的請求",
       "step4": "4. 檢查瀏覽器控制檯的詳細錯誤訊息"
-    },
-    "noWorkloads": {
-      "title": "未找到工作負載",
-      "noResourcesForContext": "未找到 {{context}} 上下文的資源",
-      "resourcesFilteredOut": "資源可用但已被篩選掉",
-      "getStarted": "建立您的第一個工作負載以開始使用",
-      "resourcesAvailable": "共有 {{count}} 個資源可用，但沒有匹配當前篩選器"
     }
   },
   "kubeconfigImport": {
@@ -2058,9 +2084,751 @@
     "tokenPlaceholder": "例如：ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tokenTip": "輸入您的 GitHub 個人訪問令牌"
   },
+  "commandPalette": {
+    "ariaLabel": "開啟命令面板",
+    "title": "命令面板（Ctrl+K）",
+    "badge": "K",
+    "searchPlaceholder": "搜尋命令...",
+    "noCommandsFound": "未找到命令。請嘗試其他搜尋詞。",
+    "footer": {
+      "navigate": "導航",
+      "select": "選擇",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "commands": {
+      "home": {
+        "title": "首頁",
+        "description": "前往儀表盤"
+      },
+      "plugin": {
+        "title": "外掛管理器",
+        "description": "管理和監控 KubeStellar 外掛"
+      },
+      "managedClusters": {
+        "title": "管理叢集",
+        "description": "管理Kubernetes叢集"
+      },
+      "Grafana": {
+        "title": "Grafana Dashboard",
+        "description": "Grafana Dashboard"
+      },
+      "workloads": {
+        "title": "工作負載",
+        "description": "跨叢集管理工作負載"
+      },
+      "resourceExplorer": {
+        "title": "Object Explorer",
+        "description": "Search and filter Kubernetes objects"
+      },
+      "bindingPolicies": {
+        "title": "繫結策略",
+        "description": "配置繫結策略"
+      },
+      "userManagement": {
+        "title": "使用者管理",
+        "description": "管理系統使用者和許可權"
+      },
+      "wdsTreeview": {
+        "title": "WDS 樹檢視",
+        "description": "視覺化工作負載分佈"
+      },
+      "wecsTreeview": {
+        "title": "WECS 樹檢視",
+        "description": "視覺化已部署工作負載結構"
+      },
+      "documentation": {
+        "title": "開啟文件",
+        "description": "啟動 KubeStellar 文件"
+      },
+      "logout": {
+        "title": "退出登入",
+        "description": "退出您的賬戶",
+        "infoMessage": "您已成功退出登入。"
+      },
+      "metricsDashboard": {
+        "title": "Metrics Dashboard",
+        "description": "Monitor system performance and metrics"
+      },
+      "galaxyMarketplace": {
+        "title": "銀河市場",
+        "description": "在銀河市場中發現並安裝外掛"
+      }
+    },
+    "sections": {
+      "navigation": "導航",
+      "admin": "管理",
+      "visualizations": "視覺化",
+      "help": "幫助",
+      "account": "賬戶"
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "主要",
+      "management": "管理",
+      "plugins": "外掛",
+      "admin": "管理"
+    },
+    "items": {
+      "home": "首頁",
+      "managedClusters": "管理叢集",
+      "Grafana": "Grafana Dashboard",
+      "stagedWorkloads": "已暫存工作負載",
+      "bindingPolicies": "繫結策略",
+      "deployedWorkloads": "已部署工作負載",
+      "resourceExplorer": "Object Explorer",
+      "pluginManager": "外掛管理器",
+      "userManagement": "使用者管理",
+      "metricsDashboard": "Metrics Dashboard",
+      "galaxyMarketplace": "銀河市場"
+    }
+  },
+  "plugins": {
+    "title": "Plugin Manager",
+    "description": "Manage and monitor KubeStellar plugins",
+    "install": {
+      "title": "Install New Plugin",
+      "methods": {
+        "local": "Local Path",
+        "github": "GitHub"
+      },
+      "localPlaceholder": "Please select a file",
+      "githubPlaceholder": "https://github.com/user/plugin-repo",
+      "browse": "Browse",
+      "installLocal": "Install from Local Path",
+      "installGithub": "Install from GitHub",
+      "localHelp": "Install a plugin from a local directory on your system. Click Browse to select a folder or manually enter the full path.",
+      "githubHelp": "GitHub installation is not yet implemented. Use local path installation for now.",
+      "placeholder": "Plugin URL, GitHub repository, or local path",
+      "button": "Install",
+      "installing": "Installing...",
+      "success": "Plugin installed successfully",
+      "error": "Failed to install plugin"
+    },
+    "list": {
+      "title": "Installed Plugins",
+      "noPlugins": "No plugins installed",
+      "noPluginsDescription": "Get started by installing your first plugin",
+      "searchPlaceholder": "Search plugins by name, author, or status...",
+      "total": "Total",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "card": {
+      "version": "v{{version}}",
+      "author": "by {{author}}",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "loading": "Loading",
+        "error": "Error"
+      },
+      "actions": {
+        "enable": "Enable",
+        "disable": "Disable",
+        "details": "Details",
+        "uninstall": "Uninstall",
+        "reload": "Reload",
+        "settings": "Settings",
+        "feedback": "Feedback"
+      }
+    },
+    "details": {
+      "title": "Plugin Details",
+      "information": "Information",
+      "configuration": "Configuration",
+      "routes": "API Routes",
+      "widgets": "Widgets",
+      "assets": "Assets",
+      "noRoutes": "No API routes defined",
+      "noWidgets": "No widgets available",
+      "noAssets": "No assets loaded"
+    },
+    "notifications": {
+      "enableSuccess": "Plugin {{name}} enabled successfully",
+      "enableError": "Failed to enable plugin {{name}}",
+      "disableSuccess": "Plugin {{name}} disabled successfully",
+      "disableError": "Failed to disable plugin {{name}}",
+      "uninstallSuccess": "Plugin {{name}} uninstalled successfully",
+      "uninstallError": "Failed to uninstall plugin {{name}}",
+      "reloadSuccess": "Plugin {{name}} reloaded successfully",
+      "reloadError": "Failed to reload plugin {{name}}",
+      "fetchError": "Failed to load plugin data"
+    },
+    "confirmations": {
+      "uninstall": {
+        "title": "Confirm Plugin Uninstallation",
+        "message": "Are you sure you want to uninstall \"{{name}}\"? This action cannot be undone and will remove all plugin data.",
+        "confirm": "Yes, Uninstall"
+      },
+      "disable": {
+        "title": "Confirm Plugin Disable",
+        "message": "Disabling \"{{name}}\" will stop all plugin functionality. You can re-enable it later.",
+        "confirm": "Yes, Disable"
+      },
+      "enable": {
+        "title": "Confirm Plugin Enable",
+        "message": "Enabling \"{{name}}\" will activate all plugin functionality and make it available for use.",
+        "confirm": "Yes, Enable"
+      }
+    },
+    "marketplace": {
+      "title": "KubeStellar Galaxy Marketplace",
+      "subtitle": "Discover and install plugins to enhance your KubeStellar experience",
+      "browse": "Browse Available Plugins",
+      "featured": "Featured Plugins",
+      "categories": "Categories",
+      "search": "Search marketplace..."
+    },
+    "development": {
+      "title": "Plugin Development",
+      "createNew": "Create New Plugin",
+      "template": "Use Template",
+      "documentation": "View Documentation",
+      "examples": "Examples"
+    },
+    "feedback": {
+      "title": "Share Your Feedback",
+      "rate": "Rate this plugin",
+      "comment": {
+        "title": "Your Comment",
+        "placeholder": "Tell us about your experience"
+      },
+      "suggestion": {
+        "title": "Suggestions for Improvement",
+        "placeholder": "Any suggestions for Improvements ?"
+      }
+    }
+  },
   "marketplace": {
     "title": "KubeStellar Galaxy 市場",
-    "description": "發現並安裝外掛以增強您的 KubeStellar 體驗"
+    "subtitle": "發現並安裝插件以增強您的 KubeStellar 體驗",
+    "searchPlaceholder": "搜索插件、作者、類別...",
+    "filters": "篩選",
+    "sortPopular": "最受歡迎",
+    "sortRating": "最高評分",
+    "sortNewest": "最近添加",
+    "searchResults": "搜索結果",
+    "allPlugins": "所有插件",
+    "clearFilters": "清除篩選",
+    "loadMore": "加載更多插件",
+    "adminPanel": "管理面板",
+    "categories": {
+      "all": "所有插件",
+      "management": "管理",
+      "monitoring": "監控",
+      "security": "安全",
+      "networking": "網絡",
+      "storage": "儲存",
+      "database": "數據庫",
+      "ai": "人工智能與機器學習",
+      "devops": "DevOps",
+      "automation": "自動化",
+      "integration": "集成",
+      "analytics": "分析",
+      "backup": "備份與恢復",
+      "compliance": "合規",
+      "testing": "測試",
+      "development": "開發工具"
+    },
+    "plugin": {
+      "status": {
+        "active": "活躍",
+        "inactive": "非活躍",
+        "loading": "加載中",
+        "error": "錯誤",
+        "installed": "已安裝",
+        "notInstalled": "未安裝"
+      },
+      "actions": {
+        "install": "安裝",
+        "uninstall": "解除安裝",
+        "enable": "啟用",
+        "disable": "禁用",
+        "update": "更新",
+        "viewDetails": "查看詳情",
+        "download": "下載",
+        "rate": "評分",
+        "review": "評價",
+        "share": "分享",
+        "report": "報告問題"
+      },
+      "details": {
+        "overview": "概覽",
+        "details": "詳情",
+        "feedback": "反饋",
+        "documentation": "文檔",
+        "dependencies": "依賴項",
+        "reviews": "評價",
+        "changelog": "變更日誌",
+        "license": "許可證",
+        "author": "作者",
+        "version": "版本",
+        "lastUpdated": "最後更新",
+        "createdAt": "創建於",
+        "downloads": "下載",
+        "rating": "評分",
+        "category": "類別",
+        "tags": "標籤",
+        "size": "大小",
+        "compatibility": "兼容性",
+        "requirements": "要求",
+        "installation": "安裝",
+        "configuration": "配置",
+        "usage": "使用",
+        "troubleshooting": "故障排除"
+      },
+      "feedback": {
+        "title": "插件反饋",
+        "rating": "評分",
+        "comment": "評論",
+        "submit": "提交反饋",
+        "submitting": "提交中...",
+        "success": "反饋提交成功",
+        "error": "提交反饋失敗",
+        "placeholder": "告訴我們您對此插件的體驗...",
+        "ratingRequired": "請提供評分",
+        "commentRequired": "請提供評論"
+      },
+      "installation": {
+        "title": "安裝",
+        "installing": "安裝中...",
+        "success": "插件安裝成功",
+        "error": "安裝插件失敗",
+        "confirm": "您確定要安裝此插件嗎？",
+        "requirements": "要求",
+        "dependencies": "依賴項",
+        "steps": "安裝步驟",
+        "verification": "驗證"
+      }
+    },
+    "featured": {
+      "title": "精選插件",
+      "subtitle": "為最佳體驗精選的插件",
+      "viewAll": "查看所有精選",
+      "noFeatured": "沒有可用的精選插件",
+      "loading": "正在加載精選插件..."
+    },
+    "admin": {
+      "title": "市場管理",
+      "overview": "概覽",
+      "plugins": "插件",
+      "users": "使用者",
+      "settings": "設置",
+      "stats": {
+        "totalPlugins": "插件總數",
+        "pendingReviews": "待審核評價",
+        "totalDownloads": "總下載量",
+        "activeUsers": "活躍使用者"
+      },
+      "actions": {
+        "uploadPlugin": "上傳插件",
+        "deletePlugin": "刪除插件",
+        "approvePlugin": "批准插件",
+        "rejectPlugin": "拒絕插件",
+        "featurePlugin": "精選插件",
+        "unfeaturePlugin": "取消精選插件"
+      },
+      "upload": {
+        "title": "上傳新插件",
+        "selectFile": "選擇插件文件",
+        "dragDrop": "拖放插件文件到此處",
+        "supportedFormats": "支持的格式：.tar.gz, .zip",
+        "maxSize": "最大文件大小：100MB",
+        "uploading": "上傳中...",
+        "success": "插件上傳成功",
+        "error": "上傳插件失敗"
+      },
+      "delete": {
+        "title": "刪除插件",
+        "confirm": "您確定要刪除 \"{{name}}\" 嗎？此操作無法撤銷。",
+        "deleting": "刪除中...",
+        "success": "插件刪除成功",
+        "error": "刪除插件失敗"
+      },
+      "quickActions": "快速操作",
+      "uploadNewPlugin": "上傳新插件",
+      "reviewPlugins": "審核插件",
+      "searchPlugins": "搜索插件...",
+      "allStatus": "所有狀態",
+      "active": "活躍",
+      "inactive": "非活躍",
+      "loadingPlugins": "正在加載插件...",
+      "noPluginsFound": "未找到插件。",
+      "userManagement": "使用者管理",
+      "userManagementComingSoon": "使用者管理功能即將推出。",
+      "adminSettings": "管理設置",
+      "settingsComingSoon": "設置面板即將推出。",
+      "marketplaceManagement": "市場管理",
+      "adminPanel": "管理面板"
+    },
+    "search": {
+      "noResults": "未找到插件",
+      "noResultsDescription": "嘗試調整您的搜索詞或瀏覽所有插件",
+      "clearSearch": "清除搜索",
+      "searching": "搜索中...",
+      "resultsCount": "找到 {{count}} 個插件{{count, plural, one {} other {}}} "
+    },
+    "errors": {
+      "failedToLoad": "加載市場數據失敗",
+      "failedToInstall": "安裝插件失敗",
+      "failedToUninstall": "解除安裝插件失敗",
+      "failedToEnable": "啟用插件失敗",
+      "failedToDisable": "禁用插件失敗",
+      "failedToSubmitFeedback": "提交反饋失敗",
+      "pluginNotFound": "未找到插件",
+      "installationFailed": "安裝失敗",
+      "networkError": "網絡錯誤",
+      "serverError": "伺服器錯誤"
+    },
+    "success": {
+      "pluginInstalled": "插件安裝成功",
+      "pluginUninstalled": "插件解除安裝成功",
+      "pluginEnabled": "插件啟用成功",
+      "pluginDisabled": "插件禁用成功",
+      "feedbackSubmitted": "反饋提交成功",
+      "pluginUpdated": "插件更新成功"
+    },
+    "loading": {
+      "loadingPlugins": "正在加載精彩插件...",
+      "discoveringGalaxy": "正在探索無限可能",
+      "loadingMarketplace": "正在加載市場...",
+      "loadingPlugin": "Loading plugin details...",
+      "installingPlugin": "Installing plugin...",
+      "uninstallingPlugin": "Uninstalling plugin..."
+    },
+    "empty": {
+      "noPlugins": "No plugins found",
+      "noPluginsDescription": "No plugins match your current filters",
+      "showAllPlugins": "Show All Plugins",
+      "noFeaturedPlugins": "No featured plugins available",
+      "noCategories": "No categories available",
+      "noSearchResults": "No search results found"
+    },
+    "backToMarketplace": "Back to Marketplace",
+    "enable": "Enable",
+    "disable": "Disable",
+    "install": "Install",
+    "uninstall": "Uninstall",
+    "by": "By",
+    "overview": "Overview",
+    "details": "Details",
+    "feedback": "Feedback",
+    "docSection": "Documentation",
+    "description": "發現並安裝外掛以增強您的 KubeStellar 體驗",
+    "dependencies": "Dependencies",
+    "keyFeatures": "Key Features",
+    "technicalDetails": "Technical Details",
+    "generalInfo": "General Information",
+    "version": "Version",
+    "lastUpdated": "Last Updated",
+    "author": "Author",
+    "license": "License",
+    "category": "Category",
+    "requirements": "Requirements",
+    "kubestellarVersion": "KubeStellar Version",
+    "platforms": "Platforms",
+    "fileSize": "File Size",
+    "pluginIdentifiers": "Plugin Identifiers",
+    "tags": "Tags",
+    "userFeedback": "User Feedback",
+    "leaveFeedback": "Leave Feedback",
+    "yourFeedback": "Your Feedback",
+    "rating": "Rating",
+    "comments": "Comments",
+    "delete": {
+      "confirmTitle": "Delete Plugin",
+      "confirmLabel": "Type the plugin name to confirm:",
+      "confirmPlaceholder": "Enter plugin name here",
+      "mismatch": "Plugin name does not match",
+      "confirmed": "Plugin name confirmed",
+      "deleteButton": "Delete Plugin",
+      "deleting": "Deleting Plugin...",
+      "deletingMessage": "Please wait while we remove your plugin.",
+      "success": "Plugin Deleted Successfully!",
+      "error": "Delete Failed",
+      "tryAgain": "Try Again",
+      "title": "Delete Plugin"
+    },
+    "upload": {
+      "dragDrop": "Drag and drop your plugin here",
+      "browseFiles": "Browse Files",
+      "requirements": "Upload Requirements:",
+      "reviewFile": "Review Your Plugin",
+      "uploadPlugin": "Upload Plugin",
+      "uploading": "Uploading Plugin...",
+      "success": "Plugin Uploaded Successfully!",
+      "error": "Upload Failed",
+      "tryAgain": "Try Again",
+      "title": "Upload Plugin",
+      "supportedFormat": "or click to browse. Supported format: .tar.gz",
+      "confirmUpload": "Please confirm the details below before uploading",
+      "processingFile": "Processing your plugin file. This may take a moment.",
+      "successMessage": "Your plugin has been uploaded and is now available in the marketplace.",
+      "errorMessage": "Something went wrong while uploading your plugin.",
+      "invalidFileType": "Invalid file type. Please upload a .tar.gz file.",
+      "fileTooLarge": "File size too large. Maximum size is 50MB."
+    },
+    "common": {
+      "featured": "FEATURED",
+      "viewDetails": "View Details",
+      "installNow": "Install Now",
+      "installing": "Installing...",
+      "installed": "Installed",
+      "uninstalling": "Uninstalling...",
+      "rating": "rating",
+      "downloads": "downloads",
+      "updated": "Updated",
+      "recently": "recently",
+      "by": "by",
+      "unknownAuthor": "Unknown author",
+      "noDescription": "No description available",
+      "premiumPlugins": "Discover Premium Plugins",
+      "enhanceWorkflow": "Enhance your workflow with powerful plugins designed specifically for Kubernetes and cloud-native environments.",
+      "exploreMarketplace": "Explore Marketplace",
+      "suggestedCategories": [
+        "Monitoring",
+        "Security",
+        "Development",
+        "Deployment",
+        "Storage"
+      ],
+      "noPluginsFound": "No plugins found",
+      "tryAdjustingSearch": "Try adjusting your search terms or browse all plugins",
+      "noMatchingFilters": "No plugins match your current filters",
+      "showAllPlugins": "Show All Plugins",
+      "remaining": "remaining",
+      "allPlugins": "All Plugins",
+      "plugin": "plugin",
+      "plugins": "plugins",
+      "tags": "Tags:",
+      "license": "License",
+      "created": "Created",
+      "routes": "Routes",
+      "loadTime": "Load Time",
+      "endpoints": "endpoint",
+      "endpoints_plural": "endpoints",
+      "seconds": "s",
+      "misc": "Misc",
+      "installPlugin": "Install Plugin",
+      "noRoutes": "No API routes defined",
+      "noWidgets": "No widgets available",
+      "noAssets": "No assets loaded",
+      "unnamedPlugin": "Unnamed Plugin",
+      "defaultVersion": "1.0.0",
+      "versionPrefix": "v"
+    },
+    "documentation": {
+      "title": "Documentation",
+      "overview": "Overview",
+      "installation": "Installation",
+      "apiReference": "API Reference",
+      "codeExamples": "Code Examples",
+      "practicalExamples": "Practical examples to help you get started with",
+      "tutorials": "Tutorials",
+      "faq": "FAQ",
+      "troubleshooting": "Troubleshooting",
+      "installationGuide": "Installation Guide",
+      "followSteps": "Follow these steps to install and configure",
+      "inEnvironment": "in your KubeStellar environment.",
+      "keyFeatures": "Key Features",
+      "requirements": "Requirements",
+      "welcomeMessage": "Welcome to the comprehensive documentation for",
+      "extendsCapabilities": "extends KubeStellar's capabilities with advanced features designed to enhance your multi-cluster management experience.",
+      "powerfulPlugin": "This powerful plugin provides essential functionality for modern Kubernetes environments, offering seamless integration with existing workflows and robust performance monitoring capabilities.",
+      "advancedMultiCluster": "Advanced multi-cluster synchronization",
+      "realTimeMonitoring": "Real-time monitoring and alerting",
+      "automatedScaling": "Automated scaling and optimization",
+      "securityPolicy": "Security policy enforcement",
+      "comprehensiveAPI": "Comprehensive API coverage",
+      "kubestellarVersion": "KubeStellar v1.0.0 or higher",
+      "kubernetesVersion": "Kubernetes 1.19+",
+      "ramMinimum": "512MB RAM minimum (1GB recommended)",
+      "networkConnectivity": "Network connectivity to target clusters",
+      "validCredentials": "Valid authentication credentials",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "fileFormat": "File format: .tar.gz only",
+      "maxFileSize": "Maximum file size: 50MB",
+      "mustContain": "Must contain plugin.yml file",
+      "validStructure": "Valid plugin structure required"
+    }
+  },
+  "notFoundPage": {
+    "logoAlt": "KubeStellar Logo",
+    "mainTitle": "404 - Page Not Found",
+    "description": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "returnHomeButton": "Return to Home",
+    "tryAgainButton": "Try Again",
+    "quotes": [
+      {
+        "text": "In the vast universe of code, sometimes we get lost among the stars.",
+        "author": "Anonymous Developer"
+      },
+      {
+        "text": "The path less traveled is often not found for a reason.",
+        "author": "Web Explorer"
+      },
+      {
+        "text": "Not all who wander are lost, but this page definitely is.",
+        "author": "J.R.R. Token"
+      },
+      {
+        "text": "Success is not final, 404 is not fatal: it's the courage to navigate that counts.",
+        "author": "Winston Codehill"
+      },
+      {
+        "text": "The best way to predict the future is to implement proper routing.",
+        "author": "Alan Turning"
+      }
+    ]
+  },
+  "resources": {
+    "search": "搜尋物件...",
+    "kind": "類型",
+    "namespace": "命名空間",
+    "labels": "標籤",
+    "labels_plural": "{{count}} 個標籤",
+    "filterByKind": "按物件類型篩選",
+    "filterByNamespace": "按命名空間篩選",
+    "filterByStatus": "按狀態篩選",
+    "filterByLabel": "按標籤篩選",
+    "clearFilters": "清除篩選",
+    "noLabelsFound": "未找到標籤",
+    "noMatchingFilters": "沒有符合當前篩選條件的物件",
+    "title": "物件瀏覽器",
+    "selectKind": "選擇類型/物件",
+    "selectNamespace": "選擇命名空間",
+    "applyFilters": "應用篩選",
+    "results": "結果",
+    "created": "創建於",
+    "noResourcesFound": "未找到符合條件的物件",
+    "selectResourceAndNamespace": "選擇物件類型和命名空間以開始",
+    "refresh": "刷新",
+    "toggleFilters": "切換篩選",
+    "description": "跨集群探索和管理 Kubernetes 物件",
+    "autoRefresh": "自動刷新",
+    "viewMode": {
+      "grid": "網格視圖",
+      "list": "列表視圖",
+      "table": "表格視圖",
+      "gridLabel": "網格視圖",
+      "listLabel": "列表視圖",
+      "tableLabel": "表格視圖"
+    },
+    "objectSelection": "物件選擇與篩選",
+    "searchPlaceholder": "搜尋物件類型...",
+    "quickSearchPlaceholder": "快速搜尋物件...",
+    "bulkActions": {
+      "resourcesSelected": "已選擇 {{count}} 個 {{objectText}}",
+      "clearSelection": "清除選擇",
+      "viewDetails": "查看詳情",
+      "export": "導出"
+    },
+    "sorting": {
+      "sortBy": "排序方式",
+      "name": "按名稱排序",
+      "kind": "按類型排序",
+      "namespace": "按命名空間排序",
+      "createdAt": "按創建時間排序"
+    },
+    "emptyState": {
+      "readyToExplore": "準備探索",
+      "noResourcesFound": "未找到物件",
+      "noResourcesDescription": "沒有符合當前篩選條件的物件。嘗試調整搜尋條件或清除篩選。",
+      "getStartedDescription": "選擇一種物件類型和命名空間以開始探索您的 Kubernetes 物件。",
+      "getStarted": "開始使用",
+      "clearFilters": "清除篩選"
+    },
+    "actions": {
+      "view": "查看",
+      "viewDetails": "查看詳情",
+      "editYaml": "編輯 YAML",
+      "delete": "刪除",
+      "more": "更多"
+    },
+    "filters": {
+      "activeFilters": "當前篩選：",
+      "kindFilter": "類型：{{kind}}",
+      "namespaceFilter": "命名空間：{{namespace}}",
+      "labelFilter": "{{key}}: {{value}}",
+      "clear": "清除 ({{count}})"
+    },
+    "menus": {
+      "resourceKinds": "物件類型 ({{count}})",
+      "namespaces": "命名空間 ({{count}})",
+      "labels": "標籤 ({{count}} 個鍵)",
+      "noLabelsFound": "當前物件中未找到標籤",
+      "active": "活躍"
+    },
+    "stats": {
+      "resourceOverview": "物件概覽",
+      "topResourceKinds": "熱門物件類型",
+      "topNamespaces": "熱門命名空間"
+    },
+    "table": {
+      "name": "名稱",
+      "kind": "類型",
+      "namespace": "命名空間",
+      "status": "狀態",
+      "age": "年齡",
+      "createdAt": "創建時間",
+      "labels": "標籤",
+      "actions": "操作"
+    },
+    "preview": {
+      "objectDetails": "物件詳情",
+      "namespace": "命名空間",
+      "createdAt": "創建時間",
+      "uid": "UID",
+      "noLabels": "無標籤",
+      "labels": "標籤"
+    },
+    "time": {
+      "justNow": "剛剛",
+      "hoursAgo": "{{count}}小時前",
+      "daysAgo": "{{count}}天前"
+    },
+    "loading": {
+      "resources": "加載物件中...",
+      "applying": "應用篩選中...",
+      "refreshing": "刷新中..."
+    },
+    "errors": {
+      "loadFailed": "加載物件失敗",
+      "filterFailed": "篩選失敗",
+      "actionFailed": "操作失敗"
+    },
+    "notifications": {
+      "filtersApplied": "篩選已應用",
+      "resourcesRefreshed": "物件列表已刷新"
+    },
+    "subtitle": "探索和管理 Kubernetes 資源",
+    "status": {
+      "healthy": "健康",
+      "warning": "警告",
+      "error": "錯誤",
+      "active": "活躍",
+      "unknown": "未知",
+      "running": "運行中",
+      "pending": "待處理",
+      "failed": "失敗",
+      "progressing": "進行中",
+      "scheduled": "已調度",
+      "waiting": "等待中",
+      "ready": "就緒",
+      "notReady": "未就緒",
+      "succeeded": "成功",
+      "outOfSync": "不同步",
+      "missing": "缺失",
+      "synced": "已同步"
+    },
+    "unknown": "未知"
   },
   "validation": {
     "missingRequiredFields": "缺少必填欄位"
