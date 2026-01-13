@@ -45,6 +45,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const [resourceFilters, setResourceFilters] = useState<ObjectFilter>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const prevThemeRef = useRef<string>(theme);
 
   // Node selection handler
   const handleNodeSelect = useCallback(
@@ -71,6 +72,8 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const {
     nodes,
     edges,
+    setNodes,
+    setEdges,
     isLoading,
     viewMode,
     setViewMode,
@@ -79,6 +82,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     renderStartTime,
     handleResourceDataChange,
     updateNodeStyles,
+    updateEdgeStyles,
     getDescendantEdges,
   } = useTreeViewData({
     filteredContext,
@@ -105,13 +109,11 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   } = useTreeViewActions({
     nodes,
     edges,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onNodesUpdate: (_newNodes: CustomNode[]) => {
-      // Update nodes state - handled by the data hook
+    onNodesUpdate: (newNodes: CustomNode[]) => {
+      setNodes(newNodes);
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onEdgesUpdate: (_newEdges: CustomEdge[]) => {
-      // Update edges state - handled by the data hook
+    onEdgesUpdate: (newEdges: CustomEdge[]) => {
+      setEdges(newEdges);
     },
     getDescendantEdges,
     onNodeSelect: handleNodeSelect,
@@ -176,6 +178,15 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
       updateNodeStyles(nodes);
     }
   }, [theme, nodes.length, updateNodeStyles, nodes]);
+
+  // Update edge styles when theme changes
+  useEffect(() => {
+    if (edges.length > 0 && prevThemeRef.current !== theme) {
+      // Update edges state with new styles for current theme
+      updateEdgeStyles(edges);
+    }
+    prevThemeRef.current = theme;
+  }, [theme, edges, updateEdgeStyles]);
 
   // Notify parent component of view mode changes
   useEffect(() => {
