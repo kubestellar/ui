@@ -68,6 +68,102 @@
     "items_plural": "{{count}} éléments",
     "filteredFrom": "filtré à partir de"
   },
+  "admin": {
+    "users": {
+      "title": "Gestion des Utilisateurs",
+      "subtitle": "Utilisateurs du Système",
+      "description": "Gérer les utilisateurs du système et leurs permissions",
+      "searchPlaceholder": "Rechercher des utilisateurs par nom, rôle ou permissions...",
+      "refresh": "Actualiser les Utilisateurs",
+      "addUser": "Ajouter un Utilisateur",
+      "noUsers": "Aucun Utilisateur Trouvé",
+      "noUsersDescription": "Il n'y a pas encore d'utilisateurs dans le système. Cliquez sur 'Ajouter un Utilisateur' pour créer votre premier utilisateur.",
+      "noPermissions": "Aucune permission attribuée",
+      "filters": {
+        "title": "Filtres",
+        "reset": "Réinitialiser les Filtres",
+        "role": "Rôle",
+        "allRoles": "Tous les Rôles",
+        "permission": "Permission",
+        "anyPermission": "N'importe quelle Permission",
+        "permissionLevel": "Niveau de Permission",
+        "anyLevel": "N'importe quel Niveau",
+        "sortBy": "Trier Par",
+        "created": "Date de Création",
+        "ascending": "Ascendant",
+        "descending": "Descendant",
+        "active": "Filtres Actifs",
+        "roleFilter": "Rôle",
+        "permissionFilter": "Permission",
+        "levelFilter": "Niveau",
+        "searchFilter": "Recherche"
+      },
+      "actions": {
+        "addUser": "Ajouter un Utilisateur",
+        "editUser": "Modifier un Utilisateur",
+        "add": "Ajouter un Utilisateur",
+        "update": "Mettre à jour l'Utilisateur",
+        "delete": "Supprimer l'Utilisateur",
+        "edit": "Modifier",
+        "deleteUser": "Supprimer l'Utilisateur"
+      },
+      "table": {
+        "username": "Nom d'Utilisateur",
+        "role": "Rôle",
+        "permissions": "Permissions",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Administrateur",
+        "user": "Utilisateur"
+      },
+      "permissions": {
+        "users": "Utilisateurs",
+        "resources": "Ressources",
+        "system": "Système",
+        "dashboard": "Tableau de Bord",
+        "levels": {
+          "read": "Lecture",
+          "write": "Écriture",
+          "none": "Aucun"
+        }
+      },
+      "form": {
+        "username": "Nom d'Utilisateur",
+        "usernamePlaceholder": "Entrez le nom d'utilisateur",
+        "password": "Mot de Passe",
+        "passwordPlaceholder": "Entrez le mot de passe",
+        "passwordOptional": "Mot de Passe (optionnel)",
+        "passwordOptionalPlaceholder": "Entrez un nouveau mot de passe ou laissez vide",
+        "confirmPassword": "Confirmer le Mot de Passe",
+        "confirmPasswordPlaceholder": "Confirmez le mot de passe",
+        "isAdmin": "Accès Administrateur",
+        "permissions": "Permissions des Composants",
+        "cancel": "Annuler",
+        "optional": "optionnel"
+      },
+      "delete": {
+        "title": "Supprimer l'Utilisateur",
+        "confirmTitle": "Confirmer la Suppression",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'utilisateur \"{{username}}\" ? Cette action ne peut pas être annulée.",
+        "confirm": "Supprimer l'Utilisateur"
+      },
+      "errors": {
+        "fetchFailed": "Échec de la récupération des utilisateurs",
+        "missingFields": "Veuillez remplir tous les champs requis",
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "addFailed": "Échec de l'ajout de l'utilisateur",
+        "updateFailed": "Échec de la mise à jour de l'utilisateur",
+        "deleteFailed": "Échec de la suppression de l'utilisateur",
+        "invalidUsername": "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres, des tirets bas et des tirets."
+      },
+      "success": {
+        "userAdded": "Utilisateur ajouté avec succès",
+        "userUpdated": "Utilisateur mis à jour avec succès",
+        "userDeleted": "Utilisateur supprimé avec succès"
+      }
+    }
+  },
   "installationPage": {
     "successSection": {
       "installed": "est correctement installé et répond aux exigences de version."
@@ -110,6 +206,12 @@
       "prerequisites": "Prérequis",
       "title": "Prérequis système",
       "description": "Assurez-vous que ces outils sont installés avant de continuer",
+      "kubeflexDescription": "KubeFlex CLI tool (required version ≥ 0.8.0)",
+      "ocmDescription": "Open Cluster Management CLI (required version between 0.7 and 0.11)",
+      "helmDescription": "Kubernetes package manager (required version ≥ 3.0.0)",
+      "kubectlDescription": "Kubernetes command-line tool (required version ≥ 1.27.0)",
+      "kindDescription": "Tool for running local Kubernetes clusters (required version ≥ 0.20.0)",
+      "dockerDescription": "Container runtime (required version ≥ 20.0.0)",
       "status": {
         "success": "Succès",
         "warnings": "Avertissements",
@@ -119,8 +221,9 @@
       "coreRequirements": "Exigences principales",
       "demoEnvironmentRequirements": "Exigences de l'environnement de démonstration",
       "buttons": {
-        "refresh": "Rafraîchir",
-        "nextInstallation": "Suivant : Installation"
+        "nextInstallation": "Suivant : Installation",
+        "checking": "Checking...",
+        "refresh": "Rafraîchir"
       }
     },
     "installation": {
@@ -198,7 +301,10 @@
       "preparingInstructions": "Préparation des instructions d'installation...",
       "followInstructions": "Suivez les instructions CLI ci-dessous pour installer KubeStellar",
       "loadInstructionsFailed": "Échec du chargement des instructions d'installation. Veuillez actualiser la page et réessayer.",
-      "installationDetected": "Installation de KubeStellar détectée ! Redirection vers la page de connexion..."
+      "installationDetected": "Installation de KubeStellar détectée ! Redirection vers la page de connexion...",
+      "recheckingPrerequisites": "Rechecking prerequisites...",
+      "prerequisitesRechecked": "Prerequisites rechecked successfully",
+      "recheckFailed": "Failed to recheck prerequisites"
     }
   },
   "header": {
@@ -215,7 +321,12 @@
     "goToHome": "Aller à la page d'accueil",
     "logoAlt": "Logo KubeStellar",
     "themeToggleTip": "Alt+Q pour changer de thème",
-    "switchTheme": "Passer en mode {{mode}}"
+    "switchTheme": "Passer en mode {{mode}}",
+    "switchLanguage": "Switch language",
+    "selectLanguage": "Select Language",
+    "enterFullscreen": "Enter fullscreen mode",
+    "exitFullscreen": "Exit fullscreen mode",
+    "fullscreen": "Toggle fullscreen mode"
   },
   "login": {
     "controlPlane": "Plan de contrôle",
@@ -341,6 +452,8 @@
       "label": "Étiquette",
       "editvalue": "La clé et la valeur sont toutes deux requises",
       "manage": "Gérer les étiquettes",
+      "bulkTooltipDisabled": "Select at least 2 clusters to enable bulk labeling",
+      "bulkTooltipEnabled": "Manage labels for selected clusters",
       "clearFilter": "Effacer le filtre",
       "searchLabelsPlaceholder": "Rechercher des étiquettes...",
       "bulkEditTitle": "Modifier les étiquettes pour {{count}} clusters",
@@ -730,7 +843,17 @@
       "expandAll": "Développer tous les nœuds enfants de tous les nœuds parents",
       "collapseAll": "Réduire tous les nœuds enfants de tous les nœuds parents",
       "zoomIn": "Agrandir",
-      "zoomOut": "Rétrécir"
+      "zoomOut": "Rétrécir",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "nodeLabel": {
       "labels": "Étiquettes :",
@@ -782,14 +905,33 @@
       "selectContainer": "Sélectionner un conteneur",
       "noContainersFound": "Aucun conteneur trouvé"
     },
+    "logs": {
+      "previousLogs": "Previous Logs",
+      "currentLogs": "Current Logs",
+      "selectLogsContainer": "Select logs container"
+    },
     "errors": {
       "failedLoadClusterDetails": "Échec du chargement des détails du cluster.",
       "failedLoadDetails": "Échec du chargement des détails de {{type}}.",
       "apiNotImplemented": "API non implémentée pour la mise à jour du pod « {{resourceName}} »",
-      "failedFetchContainers": "Échec de la récupération de la liste des conteneurs"
+      "failedFetchContainers": "Échec de la récupération de la liste des conteneurs",
+      "failedFetchLogsContainers": "Failed to fetch container list for logs",
+      "failedConnectExec": "Failed to connect to exec session",
+      "failedInitExec": "Failed to initialize exec session",
+      "failedUpdate": "Failed to update manifest",
+      "resourceNotFound": "Resource not found",
+      "permissionDenied": "Permission denied",
+      "invalidManifest": "Invalid manifest format",
+      "namespaceRequired": "Namespace is required"
+    },
+    "success": {
+      "manifestUpdated": "Manifest updated successfully"
     },
     "cluster": {
       "active": "Actif"
+    },
+    "exec": {
+      "connected": "Connected"
     },
     "noManifest": "Aucun manifeste disponible"
   },
@@ -814,6 +956,23 @@
     },
     "fullscreen": {
       "toggle": "Basculer en mode plein écran"
+    },
+    "zoomControls": {
+      "groupByResource": "Group By Resource/Kind",
+      "expandAll": "Expand all the child nodes of all parent nodes",
+      "collapseAll": "Collapse all the child nodes of all parent nodes",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "contextMenu": {
       "details": "Détails",
@@ -1178,13 +1337,11 @@
       "selectClusters": "Sélectionner les clusters ici",
       "matches": "Correspondances : {{count}} {{resourceType}}"
     },
-
     "labels": {
       "title": "Étiquettes :",
       "key": "Clé",
       "value": "Valeur",
-      "add": "Ajouter",
-      "count": "{{count}} étiquettes uniques sur {{total}}"
+      "add": "Ajouter"
     },
     "creatingConnection": "Création de la connexion :",
     "previewDialog": {
@@ -1645,7 +1802,9 @@
       "successWithUser": "Connexion réussie pour l'utilisateur : {{username}}. Redirection vers {{path}}",
       "invalidCredentials": "Identifiants invalides",
       "authFailed": "Échec de l'authentification. Veuillez vérifier vos identifiants.",
-      "noToken": "Aucun jeton reçu du serveur"
+      "noToken": "Aucun jeton reçu du serveur",
+      "invalidRequest": "Invalid request. Please check your input and try again.",
+      "serverError": "Server error. Please try again later."
     }
   },
   "kubestellarData": {
@@ -1783,17 +1942,25 @@
     "invalidResponseFormat": "Format de réponse invalide du serveur",
     "unknownError": "Une erreur inconnue est survenue lors de la récupération des ressources.",
     "errorLoading": "Erreur lors du chargement des ressources",
-    "downloadLogs": "Télécharger les journaux",
     "namespace": "Espace de noms",
     "created": "Créé",
+    "downloadLogs": "Télécharger les journaux",
+    "pagination": {
+      "showing": "Affichage de {{from}} à {{to}} sur {{total}} entrées",
+      "filtered": " (filtré par le contexte {{context}})",
+      "prev": "Précédent",
+      "next": "Suivant"
+    },
+    "resourceStats": "{{raw}} ressources brutes détectées, {{processed}} traitées",
     "filteredByContext": "Filtré par contexte : {{context}}",
     "showingResourceCount": "Affichage de {{showing}} sur {{total}} ressources totales",
-    "resourceStats": "{{raw}} ressources brutes détectées, {{processed}} traitées",
-    "pagination": {
-      "prev": "Précédent",
-      "next": "Suivant",
-      "showing": "Affichage de {{from}} à {{to}} sur {{total}} entrées",
-      "filtered": " (filtré par le contexte {{context}})"
+    "noWorkloads": {
+      "title": "Aucune charge de travail trouvée",
+      "noResourcesForContext": "Aucune ressource trouvée pour le contexte {{context}}",
+      "resourcesFilteredOut": "Des ressources sont disponibles mais filtrées",
+      "getStarted": "Commencez par créer votre première charge de travail",
+      "resourcesAvailable": "{{count}} ressources totales disponibles, mais aucune ne correspond au filtre actuel",
+      "noMatchingFilters": "No resources match the current filters"
     },
     "troubleshooting": {
       "title": "Essayez ces étapes de dépannage :",
@@ -1801,13 +1968,6 @@
       "step2": "2. Vérifiez que la configuration CORS du serveur autorise les requêtes depuis http://localhost:5173",
       "step3": "3. Si le serveur utilise un CORS générique (*), il ne peut pas accepter les requêtes avec des identifiants",
       "step4": "4. Consultez la console du navigateur pour des messages d'erreur détaillés"
-    },
-    "noWorkloads": {
-      "title": "Aucune charge de travail trouvée",
-      "noResourcesForContext": "Aucune ressource trouvée pour le contexte {{context}}",
-      "resourcesFilteredOut": "Des ressources sont disponibles mais filtrées",
-      "getStarted": "Commencez par créer votre première charge de travail",
-      "resourcesAvailable": "{{count}} ressources totales disponibles, mais aucune ne correspond au filtre actuel"
     }
   },
   "kubeconfigImport": {
@@ -1940,13 +2100,6 @@
       "arrows": "↑↓",
       "enter": "↵"
     },
-    "sections": {
-      "navigation": "Navigation",
-      "visualizations": "Visualisations",
-      "help": "Aide",
-      "account": "Compte",
-      "admin": "Administration"
-    },
     "commands": {
       "home": {
         "title": "Accueil",
@@ -1956,9 +2109,13 @@
         "title": "Gestionnaire de Plugins",
         "description": "Gérer et surveiller les plugins de KubeStellar"
       },
-      "clusters": {
-        "title": "Clusters Gérés",
-        "description": "Gérer les clusters Kubernetes"
+      "managedClusters": {
+        "title": "Managed Clusters",
+        "description": "Manage Kubernetes clusters"
+      },
+      "Grafana": {
+        "title": "Grafana Dashboard",
+        "description": "Grafana Dashboard"
       },
       "workloads": {
         "title": "Charges de travail",
@@ -1993,10 +2150,21 @@
         "description": "Se déconnecter de votre compte",
         "infoMessage": "Vous avez été déconnecté avec succès."
       },
+      "metricsDashboard": {
+        "title": "Metrics Dashboard",
+        "description": "Monitor system performance and metrics"
+      },
       "galaxyMarketplace": {
         "title": "Marché Galaxy KubeStellar",
         "description": "Découvrez et installez des plugins pour améliorer votre expérience KubeStellar"
       }
+    },
+    "sections": {
+      "navigation": "Navigation",
+      "admin": "Administration",
+      "visualizations": "Visualisations",
+      "help": "Aide",
+      "account": "Compte"
     }
   },
   "menu": {
@@ -2009,12 +2177,14 @@
     "items": {
       "home": "Accueil",
       "managedClusters": "Clusters Gérés",
-      "grafana": "Grafana",
+      "Grafana": "Grafana Dashboard",
       "stagedWorkloads": "Charges en attente",
       "bindingPolicies": "Politiques d'assignation",
       "deployedWorkloads": "Charges déployées",
+      "resourceExplorer": "Object Explorer",
       "pluginManager": "Gestionnaire de Plugins",
       "userManagement": "Gestion des Utilisateurs",
+      "metricsDashboard": "Metrics Dashboard",
       "galaxyMarketplace": "Marché Galaxy KubeStellar"
     }
   },
@@ -2064,7 +2234,8 @@
         "details": "Détails",
         "uninstall": "Désinstaller",
         "reload": "Recharger",
-        "settings": "Paramètres"
+        "settings": "Paramètres",
+        "feedback": "Feedback"
       }
     },
     "details": {
@@ -2099,10 +2270,16 @@
         "title": "Confirmer la désactivation du plugin",
         "message": "La désactivation de \"{{name}}\" arrêtera toutes les fonctionnalités du plugin. Vous pourrez le réactiver plus tard.",
         "confirm": "Oui, désactiver"
+      },
+      "enable": {
+        "title": "Confirm Plugin Enable",
+        "message": "Enabling \"{{name}}\" will activate all plugin functionality and make it available for use.",
+        "confirm": "Yes, Enable"
       }
     },
     "marketplace": {
       "title": "Marketplace de Plugins",
+      "subtitle": "Discover and install plugins to enhance your KubeStellar experience",
       "browse": "Parcourir les plugins disponibles",
       "featured": "Plugins en vedette",
       "categories": "Catégories",
@@ -2128,100 +2305,358 @@
       }
     }
   },
-  "admin": {
-    "users": {
-      "title": "Gestion des Utilisateurs",
-      "subtitle": "Utilisateurs du Système",
-      "description": "Gérer les utilisateurs du système et leurs permissions",
-      "searchPlaceholder": "Rechercher des utilisateurs par nom, rôle ou permissions...",
-      "refresh": "Actualiser les Utilisateurs",
-      "addUser": "Ajouter un Utilisateur",
-      "noUsers": "Aucun Utilisateur Trouvé",
-      "noUsersDescription": "Il n'y a pas encore d'utilisateurs dans le système. Cliquez sur 'Ajouter un Utilisateur' pour créer votre premier utilisateur.",
-      "noPermissions": "Aucune permission attribuée",
-      "filters": {
-        "title": "Filtres",
-        "reset": "Réinitialiser les Filtres",
-        "role": "Rôle",
-        "allRoles": "Tous les Rôles",
-        "permission": "Permission",
-        "anyPermission": "N'importe quelle Permission",
-        "permissionLevel": "Niveau de Permission",
-        "anyLevel": "N'importe quel Niveau",
-        "sortBy": "Trier Par",
-        "created": "Date de Création",
-        "ascending": "Ascendant",
-        "descending": "Descendant",
-        "active": "Filtres Actifs",
-        "roleFilter": "Rôle",
-        "permissionFilter": "Permission",
-        "levelFilter": "Niveau",
-        "searchFilter": "Recherche"
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marketplace",
+    "subtitle": "Discover and install plugins to enhance your KubeStellar experience",
+    "searchPlaceholder": "Search plugins, authors, categories...",
+    "filters": "Filters",
+    "sortPopular": "Most Popular",
+    "sortRating": "Highest Rated",
+    "sortNewest": "Recently Added",
+    "searchResults": "Search Results",
+    "allPlugins": "All Plugins",
+    "clearFilters": "Clear Filters",
+    "loadMore": "Load More Plugins",
+    "adminPanel": "Admin Panel",
+    "categories": {
+      "all": "All Plugins",
+      "management": "Management",
+      "monitoring": "Monitoring",
+      "security": "Security",
+      "networking": "Networking",
+      "storage": "Storage",
+      "database": "Database",
+      "ai": "AI & Machine Learning",
+      "devops": "DevOps",
+      "automation": "Automation",
+      "integration": "Integration",
+      "analytics": "Analytics",
+      "backup": "Backup & Recovery",
+      "compliance": "Compliance",
+      "testing": "Testing",
+      "development": "Development Tools"
+    },
+    "plugin": {
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "loading": "Loading",
+        "error": "Error",
+        "installed": "Installed",
+        "notInstalled": "Not Installed"
       },
       "actions": {
-        "addUser": "Ajouter un Utilisateur",
-        "editUser": "Modifier un Utilisateur",
-        "add": "Ajouter un Utilisateur",
-        "update": "Mettre à jour l'Utilisateur",
-        "delete": "Supprimer l'Utilisateur",
-        "edit": "Modifier",
-        "deleteUser": "Supprimer l'Utilisateur"
+        "install": "Install",
+        "uninstall": "Uninstall",
+        "enable": "Enable",
+        "disable": "Disable",
+        "update": "Update",
+        "viewDetails": "View Details",
+        "download": "Download",
+        "rate": "Rate",
+        "review": "Review",
+        "share": "Share",
+        "report": "Report Issue"
       },
-      "table": {
-        "username": "Nom d'Utilisateur",
-        "role": "Rôle",
-        "permissions": "Permissions",
-        "actions": "Actions"
+      "details": {
+        "overview": "Overview",
+        "details": "Details",
+        "feedback": "Feedback",
+        "documentation": "Documentation",
+        "dependencies": "Dependencies",
+        "reviews": "Reviews",
+        "changelog": "Changelog",
+        "license": "License",
+        "author": "Author",
+        "version": "Version",
+        "lastUpdated": "Last Updated",
+        "createdAt": "Created At",
+        "downloads": "Downloads",
+        "rating": "Rating",
+        "category": "Category",
+        "tags": "Tags",
+        "size": "Size",
+        "compatibility": "Compatibility",
+        "requirements": "Requirements",
+        "installation": "Installation",
+        "configuration": "Configuration",
+        "usage": "Usage",
+        "troubleshooting": "Troubleshooting"
       },
-      "roles": {
-        "admin": "Administrateur",
-        "user": "Utilisateur"
+      "feedback": {
+        "title": "Plugin Feedback",
+        "rating": "Rating",
+        "comment": "Comment",
+        "submit": "Submit Feedback",
+        "submitting": "Submitting...",
+        "success": "Feedback submitted successfully",
+        "error": "Failed to submit feedback",
+        "placeholder": "Tell us about your experience with this plugin...",
+        "ratingRequired": "Please provide a rating",
+        "commentRequired": "Please provide a comment"
       },
-      "permissions": {
-        "users": "Utilisateurs",
-        "resources": "Ressources",
-        "system": "Système",
-        "dashboard": "Tableau de Bord",
-        "levels": {
-          "read": "Lecture",
-          "write": "Écriture",
-          "none": "Aucun"
-        }
+      "installation": {
+        "title": "Installation",
+        "installing": "Installing...",
+        "success": "Plugin installed successfully",
+        "error": "Failed to install plugin",
+        "confirm": "Are you sure you want to install this plugin?",
+        "requirements": "Requirements",
+        "dependencies": "Dependencies",
+        "steps": "Installation Steps",
+        "verification": "Verification"
+      }
+    },
+    "featured": {
+      "title": "Featured Plugins",
+      "subtitle": "Hand-picked plugins for the best experience",
+      "viewAll": "View All Featured",
+      "noFeatured": "No featured plugins available",
+      "loading": "Loading featured plugins..."
+    },
+    "admin": {
+      "title": "Marketplace Administration",
+      "overview": "Overview",
+      "plugins": "Plugins",
+      "users": "Users",
+      "settings": "Settings",
+      "stats": {
+        "totalPlugins": "Total Plugins",
+        "pendingReviews": "Pending Reviews",
+        "totalDownloads": "Total Downloads",
+        "activeUsers": "Active Users"
       },
-      "form": {
-        "username": "Nom d'Utilisateur",
-        "usernamePlaceholder": "Entrez le nom d'utilisateur",
-        "password": "Mot de Passe",
-        "passwordPlaceholder": "Entrez le mot de passe",
-        "passwordOptional": "Mot de Passe (optionnel)",
-        "passwordOptionalPlaceholder": "Entrez un nouveau mot de passe ou laissez vide",
-        "confirmPassword": "Confirmer le Mot de Passe",
-        "confirmPasswordPlaceholder": "Confirmez le mot de passe",
-        "isAdmin": "Accès Administrateur",
-        "permissions": "Permissions des Composants",
-        "cancel": "Annuler",
-        "optional": "optionnel"
+      "actions": {
+        "uploadPlugin": "Upload Plugin",
+        "deletePlugin": "Delete Plugin",
+        "approvePlugin": "Approve Plugin",
+        "rejectPlugin": "Reject Plugin",
+        "featurePlugin": "Feature Plugin",
+        "unfeaturePlugin": "Unfeature Plugin"
+      },
+      "upload": {
+        "title": "Upload New Plugin",
+        "selectFile": "Select Plugin File",
+        "dragDrop": "Drag & Drop plugin file here",
+        "supportedFormats": "Supported formats: .tar.gz, .zip",
+        "maxSize": "Maximum file size: 100MB",
+        "uploading": "Uploading...",
+        "success": "Plugin uploaded successfully",
+        "error": "Failed to upload plugin"
       },
       "delete": {
-        "title": "Supprimer l'Utilisateur",
-        "confirmTitle": "Confirmer la Suppression",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'utilisateur \"{{username}}\" ? Cette action ne peut pas être annulée.",
-        "confirm": "Supprimer l'Utilisateur"
+        "title": "Delete Plugin",
+        "confirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "deleting": "Deleting...",
+        "success": "Plugin deleted successfully",
+        "error": "Failed to delete plugin"
       },
-      "errors": {
-        "fetchFailed": "Échec de la récupération des utilisateurs",
-        "missingFields": "Veuillez remplir tous les champs requis",
-        "passwordMismatch": "Les mots de passe ne correspondent pas",
-        "addFailed": "Échec de l'ajout de l'utilisateur",
-        "updateFailed": "Échec de la mise à jour de l'utilisateur",
-        "deleteFailed": "Échec de la suppression de l'utilisateur",
-        "invalidUsername": "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres, des tirets bas et des tirets."
-      },
-      "success": {
-        "userAdded": "Utilisateur ajouté avec succès",
-        "userUpdated": "Utilisateur mis à jour avec succès",
-        "userDeleted": "Utilisateur supprimé avec succès"
-      }
+      "quickActions": "Quick Actions",
+      "uploadNewPlugin": "Upload New Plugin",
+      "reviewPlugins": "Review Plugins",
+      "searchPlugins": "Search plugins...",
+      "allStatus": "All Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "loadingPlugins": "Loading plugins...",
+      "noPluginsFound": "No plugins found.",
+      "userManagement": "User Management",
+      "userManagementComingSoon": "User management features coming soon.",
+      "adminSettings": "Admin Settings",
+      "settingsComingSoon": "Settings panel coming soon.",
+      "marketplaceManagement": "Marketplace Management",
+      "adminPanel": "Admin Panel"
+    },
+    "search": {
+      "noResults": "No plugins found",
+      "noResultsDescription": "Try adjusting your search terms or browse all plugins",
+      "clearSearch": "Clear search",
+      "searching": "Searching...",
+      "resultsCount": "{{count}} plugin{{count, plural, one {} other {s}}} found"
+    },
+    "errors": {
+      "failedToLoad": "Failed to load marketplace data",
+      "failedToInstall": "Failed to install plugin",
+      "failedToUninstall": "Failed to uninstall plugin",
+      "failedToEnable": "Failed to enable plugin",
+      "failedToDisable": "Failed to disable plugin",
+      "failedToSubmitFeedback": "Failed to submit feedback",
+      "pluginNotFound": "Plugin not found",
+      "installationFailed": "Installation failed",
+      "networkError": "Network error occurred",
+      "serverError": "Server error occurred"
+    },
+    "success": {
+      "pluginInstalled": "Plugin installed successfully",
+      "pluginUninstalled": "Plugin uninstalled successfully",
+      "pluginEnabled": "Plugin enabled successfully",
+      "pluginDisabled": "Plugin disabled successfully",
+      "feedbackSubmitted": "Feedback submitted successfully",
+      "pluginUpdated": "Plugin updated successfully"
+    },
+    "loading": {
+      "loadingPlugins": "Loading amazing plugins...",
+      "discoveringGalaxy": "Discovering the galaxy of possibilities",
+      "loadingMarketplace": "Loading marketplace...",
+      "loadingPlugin": "Loading plugin details...",
+      "installingPlugin": "Installing plugin...",
+      "uninstallingPlugin": "Uninstalling plugin..."
+    },
+    "empty": {
+      "noPlugins": "No plugins found",
+      "noPluginsDescription": "No plugins match your current filters",
+      "showAllPlugins": "Show All Plugins",
+      "noFeaturedPlugins": "No featured plugins available",
+      "noCategories": "No categories available",
+      "noSearchResults": "No search results found"
+    },
+    "backToMarketplace": "Back to Marketplace",
+    "enable": "Enable",
+    "disable": "Disable",
+    "install": "Install",
+    "uninstall": "Uninstall",
+    "by": "By",
+    "overview": "Overview",
+    "details": "Details",
+    "feedback": "Feedback",
+    "docSection": "Documentation",
+    "description": "Description",
+    "dependencies": "Dependencies",
+    "keyFeatures": "Key Features",
+    "technicalDetails": "Technical Details",
+    "generalInfo": "General Information",
+    "version": "Version",
+    "lastUpdated": "Last Updated",
+    "author": "Author",
+    "license": "License",
+    "category": "Category",
+    "requirements": "Requirements",
+    "kubestellarVersion": "KubeStellar Version",
+    "platforms": "Platforms",
+    "fileSize": "File Size",
+    "pluginIdentifiers": "Plugin Identifiers",
+    "tags": "Tags",
+    "userFeedback": "User Feedback",
+    "leaveFeedback": "Leave Feedback",
+    "yourFeedback": "Your Feedback",
+    "rating": "Rating",
+    "comments": "Comments",
+    "delete": {
+      "confirmTitle": "Delete Plugin",
+      "confirmLabel": "Type the plugin name to confirm:",
+      "confirmPlaceholder": "Enter plugin name here",
+      "mismatch": "Plugin name does not match",
+      "confirmed": "Plugin name confirmed",
+      "deleteButton": "Delete Plugin",
+      "deleting": "Deleting Plugin...",
+      "deletingMessage": "Please wait while we remove your plugin.",
+      "success": "Plugin Deleted Successfully!",
+      "error": "Delete Failed",
+      "tryAgain": "Try Again",
+      "title": "Delete Plugin"
+    },
+    "upload": {
+      "dragDrop": "Drag and drop your plugin here",
+      "browseFiles": "Browse Files",
+      "requirements": "Upload Requirements:",
+      "reviewFile": "Review Your Plugin",
+      "uploadPlugin": "Upload Plugin",
+      "uploading": "Uploading Plugin...",
+      "success": "Plugin Uploaded Successfully!",
+      "error": "Upload Failed",
+      "tryAgain": "Try Again",
+      "title": "Upload Plugin",
+      "supportedFormat": "or click to browse. Supported format: .tar.gz",
+      "confirmUpload": "Please confirm the details below before uploading",
+      "processingFile": "Processing your plugin file. This may take a moment.",
+      "successMessage": "Your plugin has been uploaded and is now available in the marketplace.",
+      "errorMessage": "Something went wrong while uploading your plugin.",
+      "invalidFileType": "Invalid file type. Please upload a .tar.gz file.",
+      "fileTooLarge": "File size too large. Maximum size is 50MB."
+    },
+    "common": {
+      "featured": "FEATURED",
+      "viewDetails": "View Details",
+      "installNow": "Install Now",
+      "installing": "Installing...",
+      "installed": "Installed",
+      "uninstalling": "Uninstalling...",
+      "rating": "rating",
+      "downloads": "downloads",
+      "updated": "Updated",
+      "recently": "recently",
+      "by": "by",
+      "unknownAuthor": "Unknown author",
+      "noDescription": "No description available",
+      "premiumPlugins": "Discover Premium Plugins",
+      "enhanceWorkflow": "Enhance your workflow with powerful plugins designed specifically for Kubernetes and cloud-native environments.",
+      "exploreMarketplace": "Explore Marketplace",
+      "suggestedCategories": [
+        "Monitoring",
+        "Security",
+        "Development",
+        "Deployment",
+        "Storage"
+      ],
+      "noPluginsFound": "No plugins found",
+      "tryAdjustingSearch": "Try adjusting your search terms or browse all plugins",
+      "noMatchingFilters": "No plugins match your current filters",
+      "showAllPlugins": "Show All Plugins",
+      "remaining": "remaining",
+      "allPlugins": "All Plugins",
+      "plugin": "plugin",
+      "plugins": "plugins",
+      "tags": "Tags:",
+      "license": "License",
+      "created": "Created",
+      "routes": "Routes",
+      "loadTime": "Load Time",
+      "endpoints": "endpoint",
+      "endpoints_plural": "endpoints",
+      "seconds": "s",
+      "misc": "Misc",
+      "installPlugin": "Install Plugin",
+      "noRoutes": "No API routes defined",
+      "noWidgets": "No widgets available",
+      "noAssets": "No assets loaded",
+      "unnamedPlugin": "Unnamed Plugin",
+      "defaultVersion": "1.0.0",
+      "versionPrefix": "v"
+    },
+    "documentation": {
+      "title": "Documentation",
+      "overview": "Overview",
+      "installation": "Installation",
+      "apiReference": "API Reference",
+      "codeExamples": "Code Examples",
+      "practicalExamples": "Practical examples to help you get started with",
+      "tutorials": "Tutorials",
+      "faq": "FAQ",
+      "troubleshooting": "Troubleshooting",
+      "installationGuide": "Installation Guide",
+      "followSteps": "Follow these steps to install and configure",
+      "inEnvironment": "in your KubeStellar environment.",
+      "keyFeatures": "Key Features",
+      "requirements": "Requirements",
+      "welcomeMessage": "Welcome to the comprehensive documentation for",
+      "extendsCapabilities": "extends KubeStellar's capabilities with advanced features designed to enhance your multi-cluster management experience.",
+      "powerfulPlugin": "This powerful plugin provides essential functionality for modern Kubernetes environments, offering seamless integration with existing workflows and robust performance monitoring capabilities.",
+      "advancedMultiCluster": "Advanced multi-cluster synchronization",
+      "realTimeMonitoring": "Real-time monitoring and alerting",
+      "automatedScaling": "Automated scaling and optimization",
+      "securityPolicy": "Security policy enforcement",
+      "comprehensiveAPI": "Comprehensive API coverage",
+      "kubestellarVersion": "KubeStellar v1.0.0 or higher",
+      "kubernetesVersion": "Kubernetes 1.19+",
+      "ramMinimum": "512MB RAM minimum (1GB recommended)",
+      "networkConnectivity": "Network connectivity to target clusters",
+      "validCredentials": "Valid authentication credentials",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "fileFormat": "File format: .tar.gz only",
+      "maxFileSize": "Maximum file size: 50MB",
+      "mustContain": "Must contain plugin.yml file",
+      "validStructure": "Valid plugin structure required"
     }
   },
   "notFoundPage": {
@@ -2252,6 +2687,148 @@
         "author": "Alan Turning"
       }
     ]
+  },
+  "resources": {
+    "search": "Search objects...",
+    "kind": "Kind",
+    "namespace": "Namespace",
+    "labels": "Labels",
+    "labels_plural": "{{count}} labels",
+    "filterByKind": "Filter by object kind",
+    "filterByNamespace": "Filter by namespace",
+    "filterByStatus": "Filter by status",
+    "filterByLabel": "Filter by label",
+    "clearFilters": "Clear Filters",
+    "noLabelsFound": "No labels found",
+    "noMatchingFilters": "No objects match the current filters",
+    "title": "Object Explorer",
+    "selectKind": "Select Kind / Object",
+    "selectNamespace": "Select Namespace",
+    "applyFilters": "Apply Filters",
+    "results": "Results",
+    "created": "Created",
+    "noResourcesFound": "No objects found matching the criteria",
+    "selectResourceAndNamespace": "Select an object kind and namespace to begin",
+    "refresh": "Refresh",
+    "toggleFilters": "Toggle filters",
+    "description": "Explore and manage Kubernetes objects across your clusters",
+    "autoRefresh": "Auto-refresh",
+    "viewMode": {
+      "grid": "Grid View",
+      "list": "List View",
+      "table": "Table View",
+      "gridLabel": "grid view",
+      "listLabel": "list view",
+      "tableLabel": "table view"
+    },
+    "objectSelection": "Object Selection & Filters",
+    "searchPlaceholder": "Search object kinds...",
+    "quickSearchPlaceholder": "Quick search objects...",
+    "bulkActions": {
+      "resourcesSelected": "{{count}} {{objectText}} selected",
+      "clearSelection": "Clear Selection",
+      "viewDetails": "View Details",
+      "export": "Export"
+    },
+    "sorting": {
+      "sortBy": "Sort by",
+      "name": "Sort by Name",
+      "kind": "Sort by Kind",
+      "namespace": "Sort by Namespace",
+      "createdAt": "Sort by Created"
+    },
+    "emptyState": {
+      "readyToExplore": "Ready to explore",
+      "noResourcesFound": "No objects found",
+      "noResourcesDescription": "No objects match your current filters. Try adjusting your search criteria or clearing filters.",
+      "getStartedDescription": "Select an object kind and namespace to begin exploring your Kubernetes objects.",
+      "getStarted": "Get Started",
+      "clearFilters": "Clear Filters"
+    },
+    "actions": {
+      "view": "View",
+      "viewDetails": "View Details",
+      "editYaml": "Edit YAML",
+      "delete": "Delete",
+      "more": "More"
+    },
+    "filters": {
+      "activeFilters": "Active Filters:",
+      "kindFilter": "Kind: {{kind}}",
+      "namespaceFilter": "Namespace: {{namespace}}",
+      "labelFilter": "{{key}}: {{value}}",
+      "clear": "Clear ({{count}})"
+    },
+    "menus": {
+      "resourceKinds": "Object Kinds ({{count}})",
+      "namespaces": "Namespaces ({{count}})",
+      "labels": "Labels ({{count}} keys)",
+      "noLabelsFound": "No labels found in the current objects",
+      "active": "Active"
+    },
+    "stats": {
+      "resourceOverview": "Object Overview",
+      "topResourceKinds": "Top Object Kinds",
+      "topNamespaces": "Top Namespaces"
+    },
+    "table": {
+      "name": "Name",
+      "kind": "Kind",
+      "namespace": "Namespace",
+      "status": "Status",
+      "age": "Age",
+      "createdAt": "Created",
+      "labels": "Labels",
+      "actions": "Actions"
+    },
+    "preview": {
+      "objectDetails": "Object Details",
+      "namespace": "Namespace",
+      "createdAt": "Created",
+      "uid": "UID",
+      "noLabels": "No labels",
+      "labels": "Labels"
+    },
+    "time": {
+      "justNow": "Just now",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "loading": {
+      "resources": "Loading resources...",
+      "applying": "Applying filters...",
+      "refreshing": "Refreshing..."
+    },
+    "errors": {
+      "loadFailed": "Failed to load resources",
+      "filterFailed": "Failed to apply filters",
+      "actionFailed": "Action failed"
+    },
+    "notifications": {
+      "filtersApplied": "Filters applied successfully",
+      "resourcesRefreshed": "Resources refreshed successfully"
+    },
+    "subtitle": "Explore and manage Kubernetes resources",
+    "status": {
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "error": "Error",
+      "active": "Active",
+      "unknown": "Unknown",
+      "running": "Running",
+      "pending": "Pending",
+      "failed": "Failed",
+      "progressing": "Progressing",
+      "scheduled": "Scheduled",
+      "waiting": "Waiting",
+      "ready": "Ready",
+      "notReady": "Not Ready",
+      "succeeded": "Succeeded",
+      "outOfSync": "Out of Sync",
+      "missing": "Missing",
+      "synced": "Synced"
+    },
+    "unknown": "Unknown"
   },
   "validation": {
     "missingRequiredFields": "Champs obligatoires manquants"

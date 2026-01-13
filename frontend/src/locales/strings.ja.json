@@ -206,6 +206,12 @@
       "prerequisites": "前提条件",
       "title": "システムの前提条件",
       "description": "次のツールがインストールされていることを確認してください",
+      "kubeflexDescription": "KubeFlex CLI tool (required version ≥ 0.8.0)",
+      "ocmDescription": "Open Cluster Management CLI (required version between 0.7 and 0.11)",
+      "helmDescription": "Kubernetes package manager (required version ≥ 3.0.0)",
+      "kubectlDescription": "Kubernetes command-line tool (required version ≥ 1.27.0)",
+      "kindDescription": "Tool for running local Kubernetes clusters (required version ≥ 0.20.0)",
+      "dockerDescription": "Container runtime (required version ≥ 20.0.0)",
       "status": {
         "success": "成功",
         "warnings": "警告",
@@ -215,8 +221,9 @@
       "coreRequirements": "基本要件",
       "demoEnvironmentRequirements": "デモ環境の要件",
       "buttons": {
-        "refresh": "更新",
-        "nextInstallation": "次へ：インストール"
+        "nextInstallation": "次へ：インストール",
+        "checking": "Checking...",
+        "refresh": "更新"
       }
     },
     "installation": {
@@ -294,7 +301,10 @@
       "preparingInstructions": "インストール手順を準備中...",
       "followInstructions": "以下のCLIインストール手順に従ってKubeStellarをインストールしてください",
       "loadInstructionsFailed": "インストール手順の読み込みに失敗しました。ページを更新して再試行してください。",
-      "installationDetected": "KubeStellarのインストールが検出されました。ログインページにリダイレクト中..."
+      "installationDetected": "KubeStellarのインストールが検出されました。ログインページにリダイレクト中...",
+      "recheckingPrerequisites": "Rechecking prerequisites...",
+      "prerequisitesRechecked": "Prerequisites rechecked successfully",
+      "recheckFailed": "Failed to recheck prerequisites"
     }
   },
   "header": {
@@ -311,7 +321,12 @@
     "goToHome": "ホームページへ移動",
     "logoAlt": "KubeStellarのロゴ",
     "themeToggleTip": "Alt+Qでテーマを切り替え",
-    "switchTheme": "{{mode}}モードに切り替え"
+    "switchTheme": "{{mode}}モードに切り替え",
+    "switchLanguage": "Switch language",
+    "selectLanguage": "Select Language",
+    "enterFullscreen": "Enter fullscreen mode",
+    "exitFullscreen": "Exit fullscreen mode",
+    "fullscreen": "Toggle fullscreen mode"
   },
   "login": {
     "controlPlane": "コントロールプレーン",
@@ -437,6 +452,8 @@
       "label": "ラベル",
       "editvalue": "キーと値の両方が必要です",
       "manage": "ラベルを管理",
+      "bulkTooltipDisabled": "Select at least 2 clusters to enable bulk labeling",
+      "bulkTooltipEnabled": "Manage labels for selected clusters",
       "clearFilter": "フィルターをクリア",
       "searchLabelsPlaceholder": "ラベルを検索...",
       "bulkEditTitle": "{{count}} クラスターのラベルを編集",
@@ -826,7 +843,17 @@
       "expandAll": "すべての親ノードの子ノードを展開",
       "collapseAll": "すべての親ノードの子ノードを折りたたむ",
       "zoomIn": "ズームイン",
-      "zoomOut": "ズームアウト"
+      "zoomOut": "ズームアウト",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "nodeLabel": {
       "labels": "ラベル：",
@@ -878,14 +905,33 @@
       "selectContainer": "コンテナを選択",
       "noContainersFound": "コンテナが見つかりません"
     },
+    "logs": {
+      "previousLogs": "Previous Logs",
+      "currentLogs": "Current Logs",
+      "selectLogsContainer": "Select logs container"
+    },
     "errors": {
       "failedLoadClusterDetails": "クラスターの詳細の読み込みに失敗しました。",
       "failedLoadDetails": "{{type}} の詳細の読み込みに失敗しました。",
       "apiNotImplemented": "Pod「{{resourceName}}」の更新用 API は未実装です",
-      "failedFetchContainers": "コンテナ一覧の取得に失敗しました"
+      "failedFetchContainers": "コンテナ一覧の取得に失敗しました",
+      "failedFetchLogsContainers": "Failed to fetch container list for logs",
+      "failedConnectExec": "Failed to connect to exec session",
+      "failedInitExec": "Failed to initialize exec session",
+      "failedUpdate": "Failed to update manifest",
+      "resourceNotFound": "Resource not found",
+      "permissionDenied": "Permission denied",
+      "invalidManifest": "Invalid manifest format",
+      "namespaceRequired": "Namespace is required"
+    },
+    "success": {
+      "manifestUpdated": "Manifest updated successfully"
     },
     "cluster": {
       "active": "アクティブ"
+    },
+    "exec": {
+      "connected": "Connected"
     },
     "noManifest": "マニフェストは利用できません"
   },
@@ -910,6 +956,23 @@
     },
     "fullscreen": {
       "toggle": "全画面表示の切り替え"
+    },
+    "zoomControls": {
+      "groupByResource": "Group By Resource/Kind",
+      "expandAll": "Expand all the child nodes of all parent nodes",
+      "collapseAll": "Collapse all the child nodes of all parent nodes",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
+      "edgeStyle": "Edge Style",
+      "curvy": "Curvy",
+      "square": "Square",
+      "fullscreen": "Enter Fullscreen",
+      "exitFullscreen": "Exit Fullscreen"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     },
     "contextMenu": {
       "details": "詳細",
@@ -1278,8 +1341,7 @@
       "title": "ラベル：",
       "key": "キー",
       "value": "値",
-      "add": "追加",
-      "count": "{{total}}に対して{{count}}件の一意なラベル"
+      "add": "追加"
     },
     "creatingConnection": "接続を作成中：",
     "previewDialog": {
@@ -1662,18 +1724,6 @@
         "enterYamlJson": "YAML または JSON の内容を入力してください。",
         "needMetadataName": "少なくとも 1 つのドキュメントに 'metadata.name' が必要です。"
       }
-    },
-    "workloads": {
-      "title": "ワークロード",
-      "description": "クラスター間のワークロードを管理する"
-    },
-    "resourceExplorer": {
-      "title": "オブジェクトエクスプローラー",
-      "description": "Kubernetesオブジェクトを検索およびフィルタリングする"
-    },
-    "bindingPolicies": {
-      "title": "バインディングポリシー",
-      "description": "ワークロードの分配に関するバインディングポリシーを作成・管理します"
     }
   },
   "visualization": {
@@ -1752,7 +1802,9 @@
       "successWithUser": "ユーザー「{{username}}」でのログインに成功しました。{{path}} にリダイレクト中です",
       "invalidCredentials": "認証情報が無効です",
       "authFailed": "認証に失敗しました。認証情報を確認してください。",
-      "noToken": "サーバーからトークンを受信できませんでした"
+      "noToken": "サーバーからトークンを受信できませんでした",
+      "invalidRequest": "Invalid request. Please check your input and try again.",
+      "serverError": "Server error. Please try again later."
     }
   },
   "kubestellarData": {
@@ -1890,17 +1942,25 @@
     "invalidResponseFormat": "サーバーからの応答形式が無効です",
     "unknownError": "リソースの取得中に不明なエラーが発生しました。",
     "errorLoading": "リソースの読み込みエラー",
-    "downloadLogs": "ログをダウンロード",
     "namespace": "Namespace",
     "created": "作成日",
+    "downloadLogs": "ログをダウンロード",
+    "pagination": {
+      "showing": "{{total}} 件中 {{from}} 件目から {{to}} 件目を表示中",
+      "filtered": "（{{context}} コンテキストでフィルタ中）",
+      "prev": "前へ",
+      "next": "次へ"
+    },
+    "resourceStats": "{{raw}} 件の未処理リソース、{{processed}} 件の処理済みリソースを検出",
     "filteredByContext": "コンテキストでフィルタ: {{context}}",
     "showingResourceCount": "{{total}} 件中 {{showing}} 件を表示中",
-    "resourceStats": "{{raw}} 件の未処理リソース、{{processed}} 件の処理済みリソースを検出",
-    "pagination": {
-      "prev": "前へ",
-      "next": "次へ",
-      "showing": "{{total}} 件中 {{from}} 件目から {{to}} 件目を表示中",
-      "filtered": "（{{context}} コンテキストでフィルタ中）"
+    "noWorkloads": {
+      "title": "ワークロードが見つかりません",
+      "noResourcesForContext": "{{context}} コンテキストに該当するリソースが見つかりませんでした",
+      "resourcesFilteredOut": "リソースは存在しますが、現在のフィルター条件では表示されません",
+      "getStarted": "最初のワークロードを作成して開始しましょう",
+      "resourcesAvailable": "合計 {{count}} 件のリソースがありますが、現在のフィルター条件には一致しません",
+      "noMatchingFilters": "No resources match the current filters"
     },
     "troubleshooting": {
       "title": "次のトラブルシューティング手順をお試しください：",
@@ -1908,13 +1968,6 @@
       "step2": "2. サーバーの CORS 設定が http://localhost:5173 からのリクエストを許可しているか確認",
       "step3": "3. サーバーがワイルドカード（*）CORS を使用している場合、認証付きリクエストは受け付けません",
       "step4": "4. 詳細なエラーメッセージはブラウザのコンソールを確認"
-    },
-    "noWorkloads": {
-      "title": "ワークロードが見つかりません",
-      "noResourcesForContext": "{{context}} コンテキストに該当するリソースが見つかりませんでした",
-      "resourcesFilteredOut": "リソースは存在しますが、現在のフィルター条件では表示されません",
-      "getStarted": "最初のワークロードを作成して開始しましょう",
-      "resourcesAvailable": "合計 {{count}} 件のリソースがありますが、現在のフィルター条件には一致しません"
     }
   },
   "kubeconfigImport": {
@@ -2047,13 +2100,6 @@
       "arrows": "↑↓",
       "enter": "↵"
     },
-    "sections": {
-      "navigation": "ナビゲーション",
-      "visualizations": "可視化",
-      "help": "ヘルプ",
-      "account": "アカウント",
-      "admin": "管理"
-    },
     "commands": {
       "home": {
         "title": "ホーム",
@@ -2063,9 +2109,13 @@
         "title": "プラグインマネージャー",
         "description": "KubeStellarプラグインの管理と監視"
       },
-      "clusters": {
-        "title": "リモートクラスタ",
-        "description": "Kubernetes クラスタを管理"
+      "managedClusters": {
+        "title": "管理クラスター",
+        "description": "Kubernetesクラスターを管理"
+      },
+      "Grafana": {
+        "title": "Grafana Dashboard",
+        "description": "Grafana Dashboard"
       },
       "workloads": {
         "title": "ワークロード",
@@ -2100,14 +2150,21 @@
         "description": "アカウントからサインアウト",
         "infoMessage": "正常にログアウトしました。"
       },
+      "metricsDashboard": {
+        "title": "Metrics Dashboard",
+        "description": "Monitor system performance and metrics"
+      },
       "galaxyMarketplace": {
         "title": "ギャラクシーマーケットプレイス",
         "description": "ギャラクシーマーケットプレイスからプラグインを見つけてインストールしましょう"
-      },
-      "managedClusters": {
-        "title": "管理クラスター",
-        "description": "Kubernetesクラスターを管理"
       }
+    },
+    "sections": {
+      "navigation": "ナビゲーション",
+      "admin": "管理",
+      "visualizations": "可視化",
+      "help": "ヘルプ",
+      "account": "アカウント"
     }
   },
   "menu": {
@@ -2119,15 +2176,16 @@
     },
     "items": {
       "home": "ホーム",
-      "remoteClusters": "リモートクラスタ",
+      "managedClusters": "管理クラスター",
+      "Grafana": "Grafana Dashboard",
       "stagedWorkloads": "ステージ済みワークロード",
       "bindingPolicies": "バインディングポリシー",
       "deployedWorkloads": "デプロイ済みワークロード",
+      "resourceExplorer": "Object Explorer",
       "pluginManager": "プラグインマネージャー",
       "userManagement": "ユーザー管理",
-      "galaxyMarketplace": "ギャラクシーマーケットプレイス",
-      "managedClusters": "管理クラスター",
-      "grafana": "グラファナ"
+      "metricsDashboard": "Metrics Dashboard",
+      "galaxyMarketplace": "ギャラクシーマーケットプレイス"
     }
   },
   "plugins": {
@@ -2176,7 +2234,8 @@
         "details": "詳細",
         "uninstall": "アンインストール",
         "reload": "再読み込み",
-        "settings": "設定"
+        "settings": "設定",
+        "feedback": "Feedback"
       }
     },
     "details": {
@@ -2211,11 +2270,16 @@
         "title": "プラグインの無効化確認",
         "message": "「{{name}}」を無効化すると、すべての機能が停止します。後で再度有効化できます。",
         "confirm": "はい、無効化します"
+      },
+      "enable": {
+        "title": "Confirm Plugin Enable",
+        "message": "Enabling \"{{name}}\" will activate all plugin functionality and make it available for use.",
+        "confirm": "Yes, Enable"
       }
     },
     "marketplace": {
       "title": "KubeStellar Galaxy マーケットプレイス",
-      "description": "KubeStellarの体験を向上させるプラグインを見つけてインストール",
+      "subtitle": "Discover and install plugins to enhance your KubeStellar experience",
       "browse": "利用可能なプラグインを参照",
       "featured": "おすすめプラグイン",
       "categories": "カテゴリ",
@@ -2239,6 +2303,360 @@
         "title": "改善の提案",
         "placeholder": "改善の提案があればご記入ください"
       }
+    }
+  },
+  "marketplace": {
+    "title": "KubeStellar Galaxy Marketplace",
+    "subtitle": "Discover and install plugins to enhance your KubeStellar experience",
+    "searchPlaceholder": "Search plugins, authors, categories...",
+    "filters": "Filters",
+    "sortPopular": "Most Popular",
+    "sortRating": "Highest Rated",
+    "sortNewest": "Recently Added",
+    "searchResults": "Search Results",
+    "allPlugins": "All Plugins",
+    "clearFilters": "Clear Filters",
+    "loadMore": "Load More Plugins",
+    "adminPanel": "Admin Panel",
+    "categories": {
+      "all": "All Plugins",
+      "management": "Management",
+      "monitoring": "Monitoring",
+      "security": "Security",
+      "networking": "Networking",
+      "storage": "Storage",
+      "database": "Database",
+      "ai": "AI & Machine Learning",
+      "devops": "DevOps",
+      "automation": "Automation",
+      "integration": "Integration",
+      "analytics": "Analytics",
+      "backup": "Backup & Recovery",
+      "compliance": "Compliance",
+      "testing": "Testing",
+      "development": "Development Tools"
+    },
+    "plugin": {
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "loading": "Loading",
+        "error": "Error",
+        "installed": "Installed",
+        "notInstalled": "Not Installed"
+      },
+      "actions": {
+        "install": "Install",
+        "uninstall": "Uninstall",
+        "enable": "Enable",
+        "disable": "Disable",
+        "update": "Update",
+        "viewDetails": "View Details",
+        "download": "Download",
+        "rate": "Rate",
+        "review": "Review",
+        "share": "Share",
+        "report": "Report Issue"
+      },
+      "details": {
+        "overview": "Overview",
+        "details": "Details",
+        "feedback": "Feedback",
+        "documentation": "Documentation",
+        "dependencies": "Dependencies",
+        "reviews": "Reviews",
+        "changelog": "Changelog",
+        "license": "License",
+        "author": "Author",
+        "version": "Version",
+        "lastUpdated": "Last Updated",
+        "createdAt": "Created At",
+        "downloads": "Downloads",
+        "rating": "Rating",
+        "category": "Category",
+        "tags": "Tags",
+        "size": "Size",
+        "compatibility": "Compatibility",
+        "requirements": "Requirements",
+        "installation": "Installation",
+        "configuration": "Configuration",
+        "usage": "Usage",
+        "troubleshooting": "Troubleshooting"
+      },
+      "feedback": {
+        "title": "Plugin Feedback",
+        "rating": "Rating",
+        "comment": "Comment",
+        "submit": "Submit Feedback",
+        "submitting": "Submitting...",
+        "success": "Feedback submitted successfully",
+        "error": "Failed to submit feedback",
+        "placeholder": "Tell us about your experience with this plugin...",
+        "ratingRequired": "Please provide a rating",
+        "commentRequired": "Please provide a comment"
+      },
+      "installation": {
+        "title": "Installation",
+        "installing": "Installing...",
+        "success": "Plugin installed successfully",
+        "error": "Failed to install plugin",
+        "confirm": "Are you sure you want to install this plugin?",
+        "requirements": "Requirements",
+        "dependencies": "Dependencies",
+        "steps": "Installation Steps",
+        "verification": "Verification"
+      }
+    },
+    "featured": {
+      "title": "Featured Plugins",
+      "subtitle": "Hand-picked plugins for the best experience",
+      "viewAll": "View All Featured",
+      "noFeatured": "No featured plugins available",
+      "loading": "Loading featured plugins..."
+    },
+    "admin": {
+      "title": "Marketplace Administration",
+      "overview": "Overview",
+      "plugins": "Plugins",
+      "users": "Users",
+      "settings": "Settings",
+      "stats": {
+        "totalPlugins": "Total Plugins",
+        "pendingReviews": "Pending Reviews",
+        "totalDownloads": "Total Downloads",
+        "activeUsers": "Active Users"
+      },
+      "actions": {
+        "uploadPlugin": "Upload Plugin",
+        "deletePlugin": "Delete Plugin",
+        "approvePlugin": "Approve Plugin",
+        "rejectPlugin": "Reject Plugin",
+        "featurePlugin": "Feature Plugin",
+        "unfeaturePlugin": "Unfeature Plugin"
+      },
+      "upload": {
+        "title": "Upload New Plugin",
+        "selectFile": "Select Plugin File",
+        "dragDrop": "Drag & Drop plugin file here",
+        "supportedFormats": "Supported formats: .tar.gz, .zip",
+        "maxSize": "Maximum file size: 100MB",
+        "uploading": "Uploading...",
+        "success": "Plugin uploaded successfully",
+        "error": "Failed to upload plugin"
+      },
+      "delete": {
+        "title": "Delete Plugin",
+        "confirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "deleting": "Deleting...",
+        "success": "Plugin deleted successfully",
+        "error": "Failed to delete plugin"
+      },
+      "quickActions": "Quick Actions",
+      "uploadNewPlugin": "Upload New Plugin",
+      "reviewPlugins": "Review Plugins",
+      "searchPlugins": "Search plugins...",
+      "allStatus": "All Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "loadingPlugins": "Loading plugins...",
+      "noPluginsFound": "No plugins found.",
+      "userManagement": "User Management",
+      "userManagementComingSoon": "User management features coming soon.",
+      "adminSettings": "Admin Settings",
+      "settingsComingSoon": "Settings panel coming soon.",
+      "marketplaceManagement": "Marketplace Management",
+      "adminPanel": "Admin Panel"
+    },
+    "search": {
+      "noResults": "No plugins found",
+      "noResultsDescription": "Try adjusting your search terms or browse all plugins",
+      "clearSearch": "Clear search",
+      "searching": "Searching...",
+      "resultsCount": "{{count}} plugin{{count, plural, one {} other {s}}} found"
+    },
+    "errors": {
+      "failedToLoad": "Failed to load marketplace data",
+      "failedToInstall": "Failed to install plugin",
+      "failedToUninstall": "Failed to uninstall plugin",
+      "failedToEnable": "Failed to enable plugin",
+      "failedToDisable": "Failed to disable plugin",
+      "failedToSubmitFeedback": "Failed to submit feedback",
+      "pluginNotFound": "Plugin not found",
+      "installationFailed": "Installation failed",
+      "networkError": "Network error occurred",
+      "serverError": "Server error occurred"
+    },
+    "success": {
+      "pluginInstalled": "Plugin installed successfully",
+      "pluginUninstalled": "Plugin uninstalled successfully",
+      "pluginEnabled": "Plugin enabled successfully",
+      "pluginDisabled": "Plugin disabled successfully",
+      "feedbackSubmitted": "Feedback submitted successfully",
+      "pluginUpdated": "Plugin updated successfully"
+    },
+    "loading": {
+      "loadingPlugins": "Loading amazing plugins...",
+      "discoveringGalaxy": "Discovering the galaxy of possibilities",
+      "loadingMarketplace": "Loading marketplace...",
+      "loadingPlugin": "Loading plugin details...",
+      "installingPlugin": "Installing plugin...",
+      "uninstallingPlugin": "Uninstalling plugin..."
+    },
+    "empty": {
+      "noPlugins": "No plugins found",
+      "noPluginsDescription": "No plugins match your current filters",
+      "showAllPlugins": "Show All Plugins",
+      "noFeaturedPlugins": "No featured plugins available",
+      "noCategories": "No categories available",
+      "noSearchResults": "No search results found"
+    },
+    "backToMarketplace": "Back to Marketplace",
+    "enable": "Enable",
+    "disable": "Disable",
+    "install": "Install",
+    "uninstall": "Uninstall",
+    "by": "By",
+    "overview": "Overview",
+    "details": "Details",
+    "feedback": "Feedback",
+    "docSection": "Documentation",
+    "description": "Description",
+    "dependencies": "Dependencies",
+    "keyFeatures": "Key Features",
+    "technicalDetails": "Technical Details",
+    "generalInfo": "General Information",
+    "version": "Version",
+    "lastUpdated": "Last Updated",
+    "author": "Author",
+    "license": "License",
+    "category": "Category",
+    "requirements": "Requirements",
+    "kubestellarVersion": "KubeStellar Version",
+    "platforms": "Platforms",
+    "fileSize": "File Size",
+    "pluginIdentifiers": "Plugin Identifiers",
+    "tags": "Tags",
+    "userFeedback": "User Feedback",
+    "leaveFeedback": "Leave Feedback",
+    "yourFeedback": "Your Feedback",
+    "rating": "Rating",
+    "comments": "Comments",
+    "delete": {
+      "confirmTitle": "Delete Plugin",
+      "confirmLabel": "Type the plugin name to confirm:",
+      "confirmPlaceholder": "Enter plugin name here",
+      "mismatch": "Plugin name does not match",
+      "confirmed": "Plugin name confirmed",
+      "deleteButton": "Delete Plugin",
+      "deleting": "Deleting Plugin...",
+      "deletingMessage": "Please wait while we remove your plugin.",
+      "success": "Plugin Deleted Successfully!",
+      "error": "Delete Failed",
+      "tryAgain": "Try Again",
+      "title": "Delete Plugin"
+    },
+    "upload": {
+      "dragDrop": "Drag and drop your plugin here",
+      "browseFiles": "Browse Files",
+      "requirements": "Upload Requirements:",
+      "reviewFile": "Review Your Plugin",
+      "uploadPlugin": "Upload Plugin",
+      "uploading": "Uploading Plugin...",
+      "success": "Plugin Uploaded Successfully!",
+      "error": "Upload Failed",
+      "tryAgain": "Try Again",
+      "title": "Upload Plugin",
+      "supportedFormat": "or click to browse. Supported format: .tar.gz",
+      "confirmUpload": "Please confirm the details below before uploading",
+      "processingFile": "Processing your plugin file. This may take a moment.",
+      "successMessage": "Your plugin has been uploaded and is now available in the marketplace.",
+      "errorMessage": "Something went wrong while uploading your plugin.",
+      "invalidFileType": "Invalid file type. Please upload a .tar.gz file.",
+      "fileTooLarge": "File size too large. Maximum size is 50MB."
+    },
+    "common": {
+      "featured": "FEATURED",
+      "viewDetails": "View Details",
+      "installNow": "Install Now",
+      "installing": "Installing...",
+      "installed": "Installed",
+      "uninstalling": "Uninstalling...",
+      "rating": "rating",
+      "downloads": "downloads",
+      "updated": "Updated",
+      "recently": "recently",
+      "by": "by",
+      "unknownAuthor": "Unknown author",
+      "noDescription": "No description available",
+      "premiumPlugins": "Discover Premium Plugins",
+      "enhanceWorkflow": "Enhance your workflow with powerful plugins designed specifically for Kubernetes and cloud-native environments.",
+      "exploreMarketplace": "Explore Marketplace",
+      "suggestedCategories": [
+        "Monitoring",
+        "Security",
+        "Development",
+        "Deployment",
+        "Storage"
+      ],
+      "noPluginsFound": "No plugins found",
+      "tryAdjustingSearch": "Try adjusting your search terms or browse all plugins",
+      "noMatchingFilters": "No plugins match your current filters",
+      "showAllPlugins": "Show All Plugins",
+      "remaining": "remaining",
+      "allPlugins": "All Plugins",
+      "plugin": "plugin",
+      "plugins": "plugins",
+      "tags": "Tags:",
+      "license": "License",
+      "created": "Created",
+      "routes": "Routes",
+      "loadTime": "Load Time",
+      "endpoints": "endpoint",
+      "endpoints_plural": "endpoints",
+      "seconds": "s",
+      "misc": "Misc",
+      "installPlugin": "Install Plugin",
+      "noRoutes": "No API routes defined",
+      "noWidgets": "No widgets available",
+      "noAssets": "No assets loaded",
+      "unnamedPlugin": "Unnamed Plugin",
+      "defaultVersion": "1.0.0",
+      "versionPrefix": "v"
+    },
+    "documentation": {
+      "title": "Documentation",
+      "overview": "Overview",
+      "installation": "Installation",
+      "apiReference": "API Reference",
+      "codeExamples": "Code Examples",
+      "practicalExamples": "Practical examples to help you get started with",
+      "tutorials": "Tutorials",
+      "faq": "FAQ",
+      "troubleshooting": "Troubleshooting",
+      "installationGuide": "Installation Guide",
+      "followSteps": "Follow these steps to install and configure",
+      "inEnvironment": "in your KubeStellar environment.",
+      "keyFeatures": "Key Features",
+      "requirements": "Requirements",
+      "welcomeMessage": "Welcome to the comprehensive documentation for",
+      "extendsCapabilities": "extends KubeStellar's capabilities with advanced features designed to enhance your multi-cluster management experience.",
+      "powerfulPlugin": "This powerful plugin provides essential functionality for modern Kubernetes environments, offering seamless integration with existing workflows and robust performance monitoring capabilities.",
+      "advancedMultiCluster": "Advanced multi-cluster synchronization",
+      "realTimeMonitoring": "Real-time monitoring and alerting",
+      "automatedScaling": "Automated scaling and optimization",
+      "securityPolicy": "Security policy enforcement",
+      "comprehensiveAPI": "Comprehensive API coverage",
+      "kubestellarVersion": "KubeStellar v1.0.0 or higher",
+      "kubernetesVersion": "Kubernetes 1.19+",
+      "ramMinimum": "512MB RAM minimum (1GB recommended)",
+      "networkConnectivity": "Network connectivity to target clusters",
+      "validCredentials": "Valid authentication credentials",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "fileFormat": "File format: .tar.gz only",
+      "maxFileSize": "Maximum file size: 50MB",
+      "mustContain": "Must contain plugin.yml file",
+      "validStructure": "Valid plugin structure required"
     }
   },
   "notFoundPage": {
@@ -2269,6 +2687,148 @@
         "author": "アラン・ターニング"
       }
     ]
+  },
+  "resources": {
+    "search": "Search objects...",
+    "kind": "Kind",
+    "namespace": "Namespace",
+    "labels": "Labels",
+    "labels_plural": "{{count}} labels",
+    "filterByKind": "Filter by object kind",
+    "filterByNamespace": "Filter by namespace",
+    "filterByStatus": "Filter by status",
+    "filterByLabel": "Filter by label",
+    "clearFilters": "Clear Filters",
+    "noLabelsFound": "No labels found",
+    "noMatchingFilters": "No objects match the current filters",
+    "title": "Object Explorer",
+    "selectKind": "Select Kind / Object",
+    "selectNamespace": "Select Namespace",
+    "applyFilters": "Apply Filters",
+    "results": "Results",
+    "created": "Created",
+    "noResourcesFound": "No objects found matching the criteria",
+    "selectResourceAndNamespace": "Select an object kind and namespace to begin",
+    "refresh": "Refresh",
+    "toggleFilters": "Toggle filters",
+    "description": "Explore and manage Kubernetes objects across your clusters",
+    "autoRefresh": "Auto-refresh",
+    "viewMode": {
+      "grid": "Grid View",
+      "list": "List View",
+      "table": "Table View",
+      "gridLabel": "grid view",
+      "listLabel": "list view",
+      "tableLabel": "table view"
+    },
+    "objectSelection": "Object Selection & Filters",
+    "searchPlaceholder": "Search object kinds...",
+    "quickSearchPlaceholder": "Quick search objects...",
+    "bulkActions": {
+      "resourcesSelected": "{{count}} {{objectText}} selected",
+      "clearSelection": "Clear Selection",
+      "viewDetails": "View Details",
+      "export": "Export"
+    },
+    "sorting": {
+      "sortBy": "Sort by",
+      "name": "Sort by Name",
+      "kind": "Sort by Kind",
+      "namespace": "Sort by Namespace",
+      "createdAt": "Sort by Created"
+    },
+    "emptyState": {
+      "readyToExplore": "Ready to explore",
+      "noResourcesFound": "No objects found",
+      "noResourcesDescription": "No objects match your current filters. Try adjusting your search criteria or clearing filters.",
+      "getStartedDescription": "Select an object kind and namespace to begin exploring your Kubernetes objects.",
+      "getStarted": "Get Started",
+      "clearFilters": "Clear Filters"
+    },
+    "actions": {
+      "view": "View",
+      "viewDetails": "View Details",
+      "editYaml": "Edit YAML",
+      "delete": "Delete",
+      "more": "More"
+    },
+    "filters": {
+      "activeFilters": "Active Filters:",
+      "kindFilter": "Kind: {{kind}}",
+      "namespaceFilter": "Namespace: {{namespace}}",
+      "labelFilter": "{{key}}: {{value}}",
+      "clear": "Clear ({{count}})"
+    },
+    "menus": {
+      "resourceKinds": "Object Kinds ({{count}})",
+      "namespaces": "Namespaces ({{count}})",
+      "labels": "Labels ({{count}} keys)",
+      "noLabelsFound": "No labels found in the current objects",
+      "active": "Active"
+    },
+    "stats": {
+      "resourceOverview": "Object Overview",
+      "topResourceKinds": "Top Object Kinds",
+      "topNamespaces": "Top Namespaces"
+    },
+    "table": {
+      "name": "Name",
+      "kind": "Kind",
+      "namespace": "Namespace",
+      "status": "Status",
+      "age": "Age",
+      "createdAt": "Created",
+      "labels": "Labels",
+      "actions": "Actions"
+    },
+    "preview": {
+      "objectDetails": "Object Details",
+      "namespace": "Namespace",
+      "createdAt": "Created",
+      "uid": "UID",
+      "noLabels": "No labels",
+      "labels": "Labels"
+    },
+    "time": {
+      "justNow": "Just now",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "loading": {
+      "resources": "Loading resources...",
+      "applying": "Applying filters...",
+      "refreshing": "Refreshing..."
+    },
+    "errors": {
+      "loadFailed": "Failed to load resources",
+      "filterFailed": "Failed to apply filters",
+      "actionFailed": "Action failed"
+    },
+    "notifications": {
+      "filtersApplied": "Filters applied successfully",
+      "resourcesRefreshed": "Resources refreshed successfully"
+    },
+    "subtitle": "Explore and manage Kubernetes resources",
+    "status": {
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "error": "Error",
+      "active": "Active",
+      "unknown": "Unknown",
+      "running": "Running",
+      "pending": "Pending",
+      "failed": "Failed",
+      "progressing": "Progressing",
+      "scheduled": "Scheduled",
+      "waiting": "Waiting",
+      "ready": "Ready",
+      "notReady": "Not Ready",
+      "succeeded": "Succeeded",
+      "outOfSync": "Out of Sync",
+      "missing": "Missing",
+      "synced": "Synced"
+    },
+    "unknown": "Unknown"
   },
   "validation": {
     "missingRequiredFields": "必須フィールドがありません"

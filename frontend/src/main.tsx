@@ -41,7 +41,7 @@ declare global {
 
       console.log('[MSW] worker started');
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[MSW] failed to start', err);
     }
   }

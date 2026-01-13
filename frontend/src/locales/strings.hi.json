@@ -221,9 +221,9 @@
       "coreRequirements": "मुख्य आवश्यकताएं",
       "demoEnvironmentRequirements": "डेमो वातावरण आवश्यकताएं",
       "buttons": {
-        "refresh": "रीफ्रेश करें",
         "nextInstallation": "आगे: इंस्टॉलेशन",
-        "checking": "जांच रहे हैं..."
+        "checking": "जांच रहे हैं...",
+        "refresh": "रीफ्रेश करें"
       }
     },
     "installation": {
@@ -452,6 +452,8 @@
       "label": "लेबल",
       "editvalue": "Key और value दोनों आवश्यक हैं",
       "manage": "लेबल्स प्रबंधित करें",
+      "bulkTooltipDisabled": "बल्क लेबलिंग सक्षम करने के लिए कम से कम 2 क्लस्टर्स चुनें",
+      "bulkTooltipEnabled": "चयनित क्लस्टर्स के लिए लेबल्स प्रबंधित करें",
       "clearFilter": "फ़िल्टर साफ़ करें",
       "searchLabelsPlaceholder": "लेबल्स खोजें...",
       "bulkEditTitle": "{{count}} क्लस्टर्स के लिए लेबल्स संपादित करें",
@@ -501,9 +503,7 @@
       "cannotDeleteUsed": "लेबल्स Binding Policy में उपयोग हो रहे हैं और हटाए नहीं जा सकते। कृपया पहले policy हटाएं।",
       "bulkUpdateSuccess": "सभी {{count}} क्लस्टर्स के लिए लेबल्स अपडेट किए गए",
       "bulkUpdatePartial": "{{success}} क्लस्टर्स के लिए लेबल्स अपडेट किए गए, {{failures}} क्लस्टर्स के लिए विफल",
-      "bulkUpdateFail": "सभी {{count}} क्लस्टर्स के लिए लेबल्स अपडेट करने में विफल",
-      "bulkTooltipDisabled": "बल्क लेबलिंग सक्षम करने के लिए कम से कम 2 क्लस्टर्स चुनें",
-      "bulkTooltipEnabled": "चयनित क्लस्टर्स के लिए लेबल्स प्रबंधित करें"
+      "bulkUpdateFail": "सभी {{count}} क्लस्टर्स के लिए लेबल्स अपडेट करने में विफल"
     },
     "dialog": {
       "selectMultipleClusters": "कई क्लस्टर्स चुनें",
@@ -851,6 +851,10 @@
       "fullscreen": "पूर्ण स्क्रीन में जाएं",
       "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
     },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
+    },
     "nodeLabel": {
       "labels": "लेबल्स:",
       "noLabels": "कोई लेबल्स नहीं"
@@ -920,16 +924,16 @@
       "invalidManifest": "अमान्य मैनिफेस्ट प्रारूप",
       "namespaceRequired": "नेमस्पेस आवश्यक है"
     },
-    "cluster": {
-      "active": "सक्रिय"
-    },
-    "noManifest": "कोई manifest उपलब्ध नहीं",
     "success": {
       "manifestUpdated": "मैनिफेस्ट सफलतापूर्वक अपडेट किया गया"
     },
+    "cluster": {
+      "active": "सक्रिय"
+    },
     "exec": {
       "connected": "कनेक्टेड"
-    }
+    },
+    "noManifest": "कोई manifest उपलब्ध नहीं"
   },
   "treeView": {
     "title": "वर्कलोड्स प्रबंधित करें",
@@ -953,17 +957,6 @@
     "fullscreen": {
       "toggle": "पूर्ण स्क्रीन view टॉगल करें"
     },
-    "contextMenu": {
-      "details": "विवरण",
-      "delete": "हटाएं",
-      "edit": "संपादित करें",
-      "logs": "लॉग्स"
-    },
-    "deleteDialog": {
-      "title": "संसाधन हटाने की पुष्टि करें",
-      "message": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
-      "confirm": "हाँ, हटाएं"
-    },
     "zoomControls": {
       "groupByResource": "Resource/Kind द्वारा समूहीकृत करें",
       "expandAll": "सभी parent nodes के सभी child nodes को विस्तृत करें",
@@ -976,6 +969,21 @@
       "square": "वर्गाकार",
       "fullscreen": "पूर्ण स्क्रीन में जाएं",
       "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
+    },
+    "contextMenu": {
+      "details": "विवरण",
+      "delete": "हटाएं",
+      "edit": "संपादित करें",
+      "logs": "लॉग्स"
+    },
+    "deleteDialog": {
+      "title": "संसाधन हटाने की पुष्टि करें",
+      "message": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
+      "confirm": "हाँ, हटाएं"
     }
   },
   "quickConnect": {
@@ -1934,25 +1942,18 @@
     "invalidResponseFormat": "सर्वर से अमान्य प्रतिक्रिया प्रारूप",
     "unknownError": "संसाधन प्राप्त करते समय अज्ञात त्रुटि हुई।",
     "errorLoading": "संसाधन लोड करने में त्रुटि",
-    "downloadLogs": "लॉग्स डाउनलोड करें",
     "namespace": "Namespace",
     "created": "बनाया गया",
+    "downloadLogs": "लॉग्स डाउनलोड करें",
+    "pagination": {
+      "showing": "{{total}} entries में से {{from}} से {{to}} दिखा रहे हैं",
+      "filtered": " ({{context}} context द्वारा फ़िल्टर किया गया)",
+      "prev": "पिछला",
+      "next": "अगला"
+    },
+    "resourceStats": "{{raw}} raw संसाधन detected, {{processed}} प्रसंस्करित",
     "filteredByContext": "Context द्वारा फ़िल्टर किया गया: {{context}}",
     "showingResourceCount": "कुल {{total}} में से {{showing}} संसाधन दिखा रहे हैं",
-    "resourceStats": "{{raw}} raw संसाधन detected, {{processed}} प्रसंस्करित",
-    "pagination": {
-      "prev": "पिछला",
-      "next": "अगला",
-      "showing": "{{total}} entries में से {{from}} से {{to}} दिखा रहे हैं",
-      "filtered": " ({{context}} context द्वारा फ़िल्टर किया गया)"
-    },
-    "troubleshooting": {
-      "title": "ये troubleshooting चरण आज़माएं:",
-      "step1": "1. जांचें कि backend server http://localhost:4000 पर चल रहा है",
-      "step2": "2. सत्यापित करें कि सर्वर का CORS configuration http://localhost:5173 से requests की अनुमति देता है",
-      "step3": "3. यदि सर्वर wildcard (*) CORS का उपयोग करता है, तो यह credentials के साथ requests स्वीकार नहीं कर सकता",
-      "step4": "4. विस्तृत त्रुटि संदेशों के लिए browser console जांचें"
-    },
     "noWorkloads": {
       "title": "कोई वर्कलोड्स नहीं मिले",
       "noResourcesForContext": "{{context}} context के लिए कोई संसाधन नहीं मिले",
@@ -1960,6 +1961,13 @@
       "getStarted": "अपना पहला वर्कलोड बनाकर शुरुआत करें",
       "resourcesAvailable": "{{count}} कुल संसाधन उपलब्ध हैं, लेकिन कोई वर्तमान फ़िल्टर से मेल नहीं खाता",
       "noMatchingFilters": "वर्तमान फ़िल्टर्स से कोई संसाधन मेल नहीं खाते"
+    },
+    "troubleshooting": {
+      "title": "ये troubleshooting चरण आज़माएं:",
+      "step1": "1. जांचें कि backend server http://localhost:4000 पर चल रहा है",
+      "step2": "2. सत्यापित करें कि सर्वर का CORS configuration http://localhost:5173 से requests की अनुमति देता है",
+      "step3": "3. यदि सर्वर wildcard (*) CORS का उपयोग करता है, तो यह credentials के साथ requests स्वीकार नहीं कर सकता",
+      "step4": "4. विस्तृत त्रुटि संदेशों के लिए browser console जांचें"
     }
   },
   "kubeconfigImport": {
@@ -2101,6 +2109,10 @@
         "title": "प्लगइन मैनेजर",
         "description": "KubeStellar प्लगइन्स प्रबंधित और निगरानी करें"
       },
+      "managedClusters": {
+        "title": "प्रबंधित क्लस्टर",
+        "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
+      },
       "Grafana": {
         "title": "ग्राफाना डैशबोर्ड",
         "description": "ग्राफाना डैशबोर्ड खोलें"
@@ -2138,18 +2150,13 @@
         "description": "अपने खाते से साइन आउट करें",
         "infoMessage": "आपको सफलतापूर्वक लॉग आउट कर दिया गया है।"
       },
-      "galaxyMarketplace": {
-        "title": "गैलेक्सी मार्केटप्लेस",
-        "description": "गैलेक्सी मार्केटप्लेस से प्लगइन्स खोजें और इंस्टॉल करें"
-      },
-      "managedClusters": {
-        "title": "प्रबंधित क्लस्टर",
-        "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
-      },
-
       "metricsDashboard": {
         "title": "मेट्रिक्स डैशबोर्ड",
         "description": "सिस्टम प्रदर्शन और मेट्रिक्स मॉनिटर करें"
+      },
+      "galaxyMarketplace": {
+        "title": "गैलेक्सी मार्केटप्लेस",
+        "description": "गैलेक्सी मार्केटप्लेस से प्लगइन्स खोजें और इंस्टॉल करें"
       }
     },
     "sections": {
@@ -2169,16 +2176,16 @@
     },
     "items": {
       "home": "होम",
+      "managedClusters": "प्रबंधित क्लस्टर",
       "Grafana": "ग्राफाना डैशबोर्ड",
       "stagedWorkloads": "स्टेज्ड वर्कलोड्स",
       "bindingPolicies": "बाइंडिंग नीतियाँ",
       "deployedWorkloads": "परिनियोजित वर्कलोड्स",
+      "resourceExplorer": "ऑब्जेक्ट एक्सप्लोरर",
       "pluginManager": "प्लगइन मैनेजर",
       "userManagement": "उपयोगकर्ता प्रबंधन",
       "metricsDashboard": "मेट्रिक्स डैशबोर्ड",
-      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस",
-      "managedClusters": "प्रबंधित क्लस्टर",
-      "resourceExplorer": "ऑब्जेक्ट एक्सप्लोरर"
+      "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस"
     }
   },
   "plugins": {
@@ -2512,6 +2519,7 @@
     "overview": "अवलोकन",
     "details": "विवरण",
     "feedback": "प्रतिक्रिया",
+    "docSection": "Documentation",
     "description": "विवरण",
     "dependencies": "निर्भरताएं",
     "keyFeatures": "मुख्य विशेषताएं",
@@ -2583,7 +2591,13 @@
       "premiumPlugins": "प्रीमियम प्लगइन्स खोजें",
       "enhanceWorkflow": "Kubernetes और cloud-native वातावरण के लिए विशेष रूप से डिज़ाइन किए गए शक्तिशाली प्लगइन्स के साथ अपना कार्यप्रवाह बेहतर बनाएं।",
       "exploreMarketplace": "मार्केटप्लेस खोजें",
-      "suggestedCategories": ["निगरानी", "सुरक्षा", "विकास", "तैनाती", "संग्रहण"],
+      "suggestedCategories": [
+        "निगरानी",
+        "सुरक्षा",
+        "विकास",
+        "तैनाती",
+        "संग्रहण"
+      ],
       "noPluginsFound": "कोई प्लगइन्स नहीं मिले",
       "tryAdjustingSearch": "अपने खोज शब्दों को समायोजित करने का प्रयास करें या सभी प्लगइन्स देखें",
       "noMatchingFilters": "कोई प्लगइन्स आपके वर्तमान फ़िल्टर्स से मेल नहीं खाते",
@@ -2673,9 +2687,6 @@
         "author": "एलन टर्निंग"
       }
     ]
-  },
-  "validation": {
-    "missingRequiredFields": "आवश्यक फ़ील्ड्स गायब हैं"
   },
   "resources": {
     "search": "संसाधन खोजें...",
@@ -2818,5 +2829,8 @@
       "synced": "सिंक किया गया"
     },
     "unknown": "अज्ञात"
+  },
+  "validation": {
+    "missingRequiredFields": "आवश्यक फ़ील्ड्स गायब हैं"
   }
 }
