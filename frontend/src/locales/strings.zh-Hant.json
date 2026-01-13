@@ -261,11 +261,7 @@
       },
       "afterInstallation": {
         "title": "安裝後：",
-        "steps": [
-          "透過檢查叢集狀態驗證安裝",
-          "檢視入門文件",
-          "開始管理您的 KubeStellar 環境"
-        ]
+        "steps": ["透過檢查叢集狀態驗證安裝", "檢視入門文件", "開始管理您的 KubeStellar 環境"]
       },
       "buttons": {
         "backPrerequisites": "上一步：前提條件",
@@ -1022,21 +1018,11 @@
     "approaches": {
       "automated": {
         "title": "自動化方式（新功能）",
-        "features": [
-          "一鍵設定流程",
-          "無需手動執行命令",
-          "流線化體驗",
-          "減少出錯機會"
-        ]
+        "features": ["一鍵設定流程", "無需手動執行命令", "流線化體驗", "減少出錯機會"]
       },
       "manual": {
         "title": "手動方式（傳統）",
-        "features": [
-          "手動複製並執行命令",
-          "需要多個 CLI 步驟",
-          "更復雜的流程",
-          "需要命令列知識"
-        ]
+        "features": ["手動複製並執行命令", "需要多個 CLI 步驟", "更復雜的流程", "需要命令列知識"]
       }
     },
     "buttons": {
@@ -2591,13 +2577,7 @@
       "premiumPlugins": "Discover Premium Plugins",
       "enhanceWorkflow": "Enhance your workflow with powerful plugins designed specifically for Kubernetes and cloud-native environments.",
       "exploreMarketplace": "Explore Marketplace",
-      "suggestedCategories": [
-        "Monitoring",
-        "Security",
-        "Development",
-        "Deployment",
-        "Storage"
-      ],
+      "suggestedCategories": ["Monitoring", "Security", "Development", "Deployment", "Storage"],
       "noPluginsFound": "No plugins found",
       "tryAdjustingSearch": "Try adjusting your search terms or browse all plugins",
       "noMatchingFilters": "No plugins match your current filters",

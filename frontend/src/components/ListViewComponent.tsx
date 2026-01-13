@@ -107,7 +107,7 @@ const ListViewComponent = ({
       setResourceFilters(initialResourceFilters);
       lastInitialFiltersRef.current = initialResourceFilters;
     }
-  }, [initialResourceFilters]);  
+  }, [initialResourceFilters]);
 
   // Add useEffect to notify parent of resource data changes
   useEffect(() => {

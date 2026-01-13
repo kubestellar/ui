@@ -41,7 +41,6 @@ declare global {
 
       console.log('[MSW] worker started');
     } catch (err) {
-       
       console.warn('[MSW] failed to start', err);
     }
   }
