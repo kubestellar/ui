@@ -333,7 +333,7 @@
     "layout": {
       "logoAlt": "KubeStellar",
       "tagline": "Nahtloses Multi-Cluster-Management",
-      "taglineEmphasis": "Built for the Future.",
+      "taglineEmphasis": "Gebaut für die Zukunft.",
       "fullscreen": "Vollbildmodus umschalten",
       "welcomeBack": "Willkommen zurück",
       "accessDashboard": "Auf Ihr Dashboard zugreifen",
@@ -1980,9 +1980,9 @@
   },
   "importClusters": {
     "title": "Cluster importieren",
-    "description": "Verbinden Sie Ihrenn Kubernetes-Cluster mit der Plattform",
+    "description": "Verbinden Sie Ihren Kubernetes-Cluster mit der Plattform",
     "tabs": {
-      "quickConnect": "Quick Connect",
+      "quickConnect": "Schnellverbindung",
       "kubeconfig": "Kubeconfig",
       "apiUrl": "API/URL"
     },
@@ -1996,10 +1996,10 @@
       "selected": "Datei \"{{filename}}\" ausgewählt. Upload-Funktion wird noch implementiert."
     },
     "icons": {
-      "quickConnect": "Quick Connect",
-      "kubeconfig": "kubeconfig",
-      "apiUrl": "API URL",
-      "ariaLabel": "Import"
+      "quickConnect": "Schnellverbindung",
+      "kubeconfig": "Kubeconfig",
+      "apiUrl": "API/URL",
+      "ariaLabel": "Importieren"
     }
   },
   "groupPanel": {
@@ -2086,14 +2086,14 @@
   },
   "commandPalette": {
     "ariaLabel": "Befehls-Palette öffnen",
-    "title": "Command Palette (Ctrl+K)",
+    "title": "Befehlspalette (Strg+K)",
     "badge": "K",
     "searchPlaceholder": "Befehle suchen...",
     "noCommandsFound": "Keine Befehle gefunden. Versuchen Sie es mit einem anderen Suchbegriff.",
     "footer": {
       "navigate": "Navigieren",
       "select": "Auswählen",
-      "shortcut": "Ctrl+K"
+      "shortcut": "Strg+K"
     },
     "kbd": {
       "esc": "ESC",
@@ -2102,15 +2102,15 @@
     },
     "commands": {
       "home": {
-        "title": "Home",
+        "title": "Startseite",
         "description": "Zum Dashboard"
       },
       "plugin": {
-        "title": "Plugin Manager",
+        "title": "Plugin-Manager",
         "description": "KubeStellar-Plugins verwalten und überwachen"
       },
       "managedClusters": {
-        "title": "Managed Clusters",
+        "title": "Verwaltete Cluster",
         "description": "Kubernetes-Cluster verwalten"
       },
       "Grafana": {
@@ -2130,15 +2130,15 @@
         "description": "Binding Policies verwalten"
       },
       "userManagement": {
-        "title": "User Management",
+        "title": "Benutzerverwaltung",
         "description": "Systembenutzer und Berechtigungen verwalten"
       },
       "wdsTreeview": {
-        "title": "WDS Treeview",
+        "title": "WDS-Baumansicht",
         "description": "Workload-Verteilung visualisieren"
       },
       "wecsTreeview": {
-        "title": "WECS Treeview",
+        "title": "WECS-Baumansicht",
         "description": "Struktur der bereitgestellten Workloads visualisieren"
       },
       "documentation": {
@@ -2151,7 +2151,7 @@
         "infoMessage": "Sie wurden erfolgreich abgemeldet."
       },
       "metricsDashboard": {
-        "title": "Metrics Dashboard",
+        "title": "Metrik-Dashboard",
         "description": "Systemleistung und Metriken überwachen"
       },
       "galaxyMarketplace": {
@@ -2169,20 +2169,20 @@
   },
   "menu": {
     "catalogs": {
-      "main": "Main",
-      "management": "Management",
+      "main": "Hauptmenü",
+      "management": "Verwaltung",
       "plugins": "Plugins",
       "admin": "Administration"
     },
     "items": {
-      "home": "Home",
-      "managedClusters": "Managed Clusters",
+      "home": "Startseite",
+      "managedClusters": "Verwaltete Cluster",
       "Grafana": "Grafana Dashboard",
-      "stagedWorkloads": "Staged Workloads",
+      "stagedWorkloads": "Workloads in Bearbeitung",
       "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Bereitgestellte Workloads",
-      "resourceExplorer": "Object Explorer",
-      "pluginManager": "Plugin Manager",
+      "resourceExplorer": "Objekt-Explorer",
+      "pluginManager": "Plugin-Manager",
       "userManagement": "Benutzerverwaltung",
       "metricsDashboard": "Metrik-Dashboard",
       "galaxyMarketplace": "Galaxy Marketplace"
@@ -2451,7 +2451,7 @@
         "success": "Plugin erfolgreich gelöscht",
         "error": "Plugin konnte nicht gelöscht werden"
       },
-      "quickActions": "Quick Actions",
+      "quickActions": "Schnellaktionen",
       "uploadNewPlugin": "Neues Plugin hochladen",
       "reviewPlugins": "Plugins prüfen",
       "searchPlugins": "Plugins suchen...",
@@ -2591,7 +2591,7 @@
       "premiumPlugins": "Premium-Plugins entdecken",
       "enhanceWorkflow": "Optimieren Sie Ihren Workflow mit leistungsstarken Plugins, die speziell für Kubernetes- und Cloud-native-Umgebungen entwickelt wurden.",
       "exploreMarketplace": "Marketplace erkunden",
-      "suggestedCategories": ["Monitoring", "Security", "Development", "Deployment", "Storage"],
+      "suggestedCategories": ["Überwachung", "Sicherheit", "Entwicklung", "Bereitstellung", "Speicher"],
       "noPluginsFound": "Keine Plugins gefunden",
       "tryAdjustingSearch": "Passen Sie Ihre Suchbegriffe an oder durchsuchen Sie alle Plugins",
       "noMatchingFilters": "Es gibt keine Plugins, die Ihren aktuellen Filtern entsprechen.",
