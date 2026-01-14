@@ -5,7 +5,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ClusterSkeleton from '../components/skeleton/ClusterSkeleton';
 import {
   Activity,
-  Server,
+  Network,
   AlertTriangle,
   X,
   RefreshCcw,
@@ -537,11 +537,11 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                       text: isDark ? 'text-purple-400' : 'text-purple-600',
                       icon: <FileText size={16} />,
                     }
-                  : item.type === 'cluster'
+                    : item.type === 'cluster'
                     ? {
                         bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
                         text: isDark ? 'text-blue-400' : 'text-blue-600',
-                        icon: <Server size={16} />,
+                        icon: <Network size={16} />,
                       }
                     : {
                         bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
@@ -923,7 +923,7 @@ const K8sInfo = () => {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
             <div className="mb-2 flex items-center">
-              <Server size={16} className="mr-2 text-blue-500" />
+              <Network size={16} className="mr-2 text-blue-500" />
               <span className="font-medium text-gray-800 dark:text-gray-200">
                 {t('clusters.dashboard.guide.clusterStats')}
               </span>
@@ -1010,7 +1010,7 @@ const K8sInfo = () => {
         <StatCard
           title={t('clusters.dashboard.stats.totalClusters')}
           value={stats.totalClusters}
-          icon={Server}
+          icon={Network}
           iconColor="blue"
           link={'/its'}
         />
@@ -1384,7 +1384,7 @@ const K8sInfo = () => {
                         <div
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${statusBg} ${statusColor} transition-colors`}
                         >
-                          <Server size={18} />
+                          <Network size={18} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="truncate font-medium text-gray-900 transition-colors dark:text-gray-100">
@@ -1450,7 +1450,7 @@ const K8sInfo = () => {
           ) : (
             <div className="flex h-full flex-col items-center justify-center p-8 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700">
-                <Server size={28} className="text-gray-400 transition-colors dark:text-gray-500" />
+                <Network size={28} className="text-gray-400 transition-colors dark:text-gray-500" />
               </div>
               <p className="mb-4 text-gray-500 transition-colors dark:text-gray-400">
                 {t('clusters.dashboard.noManagedClusters')}
