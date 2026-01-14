@@ -1743,7 +1743,7 @@
       }
     },
     "title": "विज़ुअलाइज़ेशन",
-    "controls": "View Controls",
+    "controls": "दृश्य नियंत्रण",
     "zoom": "ज़ूम",
     "searchResources": "संसाधन खोजें"
   },
@@ -2086,14 +2086,14 @@
   },
   "commandPalette": {
     "ariaLabel": "Command palette खोलें",
-    "title": "Command Palette (Ctrl+K)",
+    "title": "कमांड पैलेट (Ctrl+K)",
     "badge": "K",
     "searchPlaceholder": "कमांड्स खोजें...",
     "noCommandsFound": "कोई कमांड्स नहीं मिले। अलग खोज शब्द आज़माएं।",
     "footer": {
       "navigate": "नेविगेट करें",
       "select": "चुनें",
-      "shortcut": "Ctrl+K"
+      "shortcut": "कमांड्स"
     },
     "kbd": {
       "esc": "ESC",
@@ -2278,7 +2278,7 @@
       }
     },
     "marketplace": {
-      "title": "KubeStellar Galaxy Marketplace",
+      "title": "प्लगइन मार्केटप्लेस",
       "subtitle": "अपने KubeStellar अनुभव को बेहतर बनाने के लिए प्लगइन्स खोजें और इंस्टॉल करें",
       "browse": "उपलब्ध प्लगइन्स देखें",
       "featured": "विशेष प्लगइन्स",
@@ -2306,7 +2306,7 @@
     }
   },
   "marketplace": {
-    "title": "KubeStellar Galaxy Marketplace",
+    "title": "मार्केटप्लेस",
     "subtitle": "अपने KubeStellar अनुभव को बेहतर बनाने के लिए प्लगइन्स खोजें और इंस्टॉल करें",
     "searchPlaceholder": "प्लगइन्स, लेखकों, श्रेणियों को खोजें...",
     "filters": "फ़िल्टर",
