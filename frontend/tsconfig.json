@@ -19,6 +19,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
 
     /* Include Jest and testing-library types */
     "types": ["jest", "node", "@testing-library/jest-dom", "@playwright/test"]
