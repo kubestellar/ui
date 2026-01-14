@@ -42,6 +42,7 @@ import UnifiedSkeleton from './skeleton/UnifiedSkeleton';
 import ListViewSkeleton from './skeleton/ListViewSkeleton';
 import { isEqual } from 'lodash';
 import { useTranslation } from 'react-i18next';
+import { useTreeViewEdges } from './treeView/TreeViewEdges';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import WecsDetailsPanel from './wecs_details/WecsDetailsPanel';
@@ -316,12 +317,12 @@ const getLayoutedElements = (
     const dagreNode = dagreGraph.node(node.id);
     return dagreNode
       ? {
-          ...node,
-          position: {
-            x: dagreNode.x - NODE_WIDTH / 2 + 50,
-            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
-          },
-        }
+        ...node,
+        position: {
+          x: dagreNode.x - NODE_WIDTH / 2 + 50,
+          y: dagreNode.y - NODE_HEIGHT / 2 + 50,
+        },
+      }
       : node;
   });
 
@@ -606,6 +607,16 @@ const WecsTreeview = () => {
       );
     }
   }, [edgeType]);
+
+  const { updateEdgeStyles } = useTreeViewEdges({ theme: theme as 'light' | 'dark' });
+
+  // Update edge styles when theme changes
+  useEffect(() => {
+    setEdges(currentEdges => {
+      if (currentEdges.length === 0) return currentEdges;
+      return updateEdgeStyles(currentEdges);
+    });
+  }, [theme, updateEdgeStyles]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
