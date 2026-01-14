@@ -854,6 +854,10 @@
     "nodeLabel": {
       "labels": "लेबल्स:",
       "noLabels": "कोई लेबल्स नहीं"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     }
   },
   "wecsDetailsPanel": {
@@ -976,6 +980,10 @@
       "square": "वर्गाकार",
       "fullscreen": "पूर्ण स्क्रीन में जाएं",
       "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
+    },
+    "hideControls": {
+      "hide": "Hide Controls",
+      "show": "Show Controls"
     }
   },
   "quickConnect": {
@@ -2101,10 +2109,6 @@
         "title": "Plugin Manager",
         "description": "KubeStellar plugins प्रबंधित और निगरानी करें"
       },
-      "grafana": {
-        "title": "ग्राफाना डैशबोर्ड",
-        "description": "ग्राफाना डैशबोर्ड खोलें"
-      },
       "workloads": {
         "title": "वर्कलोड्स",
         "description": "क्लस्टर्स में वर्कलोड्स प्रबंधित करें"
@@ -2146,10 +2150,13 @@
         "title": "प्रबंधित क्लस्टर",
         "description": "कुबेरनेट्स क्लस्टर प्रबंधित करें"
       },
-
       "metricsDashboard": {
         "title": "मेट्रिक्स डैशबोर्ड",
         "description": "सिस्टम प्रदर्शन और मेट्रिक्स मॉनिटर करें"
+      },
+      "Grafana": {
+        "title": "Grafana Dashboard",
+        "description": "Grafana Dashboard"
       }
     },
     "sections": {
@@ -2169,7 +2176,6 @@
     },
     "items": {
       "home": "होम",
-      "grafana": "ग्राफाना डैशबोर्ड",
       "stagedWorkloads": "स्टेज्ड वर्कलोड्स",
       "bindingPolicies": "बाइंडिंग नीतियाँ",
       "deployedWorkloads": "परिनियोजित वर्कलोड्स",
@@ -2178,7 +2184,8 @@
       "metricsDashboard": "मेट्रिक्स डैशबोर्ड",
       "galaxyMarketplace": "गैलेक्सी मार्केटप्लेस",
       "managedClusters": "प्रबंधित क्लस्टर",
-      "resourceExplorer": "ऑब्जेक्ट एक्सप्लोरर"
+      "resourceExplorer": "ऑब्जेक्ट एक्सप्लोरर",
+      "Grafana": "Grafana Dashboard"
     }
   },
   "plugins": {
@@ -2583,7 +2590,13 @@
       "premiumPlugins": "प्रीमियम प्लगइन्स खोजें",
       "enhanceWorkflow": "Kubernetes और cloud-native वातावरण के लिए विशेष रूप से डिज़ाइन किए गए शक्तिशाली प्लगइन्स के साथ अपना कार्यप्रवाह बेहतर बनाएं।",
       "exploreMarketplace": "मार्केटप्लेस खोजें",
-      "suggestedCategories": ["निगरानी", "सुरक्षा", "विकास", "तैनाती", "संग्रहण"],
+      "suggestedCategories": [
+        "निगरानी",
+        "सुरक्षा",
+        "विकास",
+        "तैनाती",
+        "संग्रहण"
+      ],
       "noPluginsFound": "कोई प्लगइन्स नहीं मिले",
       "tryAdjustingSearch": "अपने खोज शब्दों को समायोजित करने का प्रयास करें या सभी प्लगइन्स देखें",
       "noMatchingFilters": "कोई प्लगइन्स आपके वर्तमान फ़िल्टर्स से मेल नहीं खाते",
@@ -2643,7 +2656,8 @@
       "maxFileSize": "अधिकतम फ़ाइल आकार: 50MB",
       "mustContain": "plugin.yml फ़ाइल होनी चाहिए",
       "validStructure": "मान्य प्लगइन संरचना आवश्यक"
-    }
+    },
+    "docSection": "Documentation"
   },
   "notFoundPage": {
     "logoAlt": "क्यूबस्टेलर लोगो",
