@@ -316,12 +316,12 @@ const getLayoutedElements = (
     const dagreNode = dagreGraph.node(node.id);
     return dagreNode
       ? {
-          ...node,
-          position: {
-            x: dagreNode.x - NODE_WIDTH / 2 + 50,
-            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
-          },
-        }
+        ...node,
+        position: {
+          x: dagreNode.x - NODE_WIDTH / 2 + 50,
+          y: dagreNode.y - NODE_HEIGHT / 2 + 50,
+        },
+      }
       : node;
   });
 
@@ -594,6 +594,34 @@ const WecsTreeview = () => {
   useEffect(() => {
     updateNodeStyles();
   }, [updateNodeStyles]);
+
+  const updateEdgeStyles = useCallback(() => {
+    setEdges(currentEdges => {
+      if (currentEdges.length === 0) return currentEdges;
+
+      return currentEdges.map(edge => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: theme === 'dark' ? 'url(#edge-gradient-dark)' : 'url(#edge-gradient-light)',
+          filter:
+            theme === 'dark'
+              ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+              : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+        },
+        markerEnd: edge.markerEnd
+          ? {
+            ...edge.markerEnd,
+            color: theme === 'dark' ? '#64748b' : '#94a3b8',
+          }
+          : undefined,
+      }));
+    });
+  }, [theme]);
+
+  useEffect(() => {
+    updateEdgeStyles();
+  }, [updateEdgeStyles]);
 
   // Update edge types when edgeType changes
   useEffect(() => {
