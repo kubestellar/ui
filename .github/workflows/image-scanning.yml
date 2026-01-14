@@ -1,0 +1,89 @@
+# Container Image Vulnerability Scanning with Trivy
+# Scans container images for known vulnerabilities
+name: Container Image Scanning
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - '**/Dockerfile*'
+      - 'go.mod'
+      - 'go.sum'
+      - 'package.json'
+      - '.github/workflows/image-scanning.yml'
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - '**/Dockerfile*'
+      - 'go.mod'
+      - 'go.sum'
+      - 'package.json'
+  schedule:
+    # Weekly scan
+    - cron: '0 8 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/dev' }}
+
+jobs:
+  scan-frontend:
+    name: Scan frontend image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: |
+          docker build -f frontend/Dockerfile -t local/frontend:${{ github.sha }} .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'local/frontend:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results-frontend.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results-frontend.sarif'
+          category: 'frontend'
+
+  scan-backend:
+    name: Scan backend image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: |
+          docker build -f backend/Dockerfile -t local/backend:${{ github.sha }} backend
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'local/backend:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results-backend.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results-backend.sarif'
+          category: 'backend'

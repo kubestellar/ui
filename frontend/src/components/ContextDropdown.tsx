@@ -12,6 +12,9 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { useTranslation } from 'react-i18next'; // Add translation hook import
@@ -20,6 +23,8 @@ import useTheme from '../stores/themeStore';
 import { api } from '../lib/api';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CheckIcon from '@mui/icons-material/Check';
 import { useContextCreationWebSocket } from '../hooks/useWebSocket';
 import CancelButton from './common/CancelButton';
 
@@ -45,6 +50,8 @@ const ContextDropdown = ({
   const [creationError, setCreationError] = useState('');
   const [creationSuccess, setCreationSuccess] = useState('');
   const [messages, setMessages] = useState<string[]>([]);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   useEffect(() => {
     api
@@ -58,23 +65,34 @@ const ContextDropdown = ({
       .catch(error => console.error(t('errors.fetchingContexts'), error));
   }, [t]);
 
-  const handleContextChange = (event: SelectChangeEvent<string>) => {
-    const newContext = event.target.value as string;
-    setSelectedContext(newContext);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-    // Notify parent component about the filter change
-    if (onContextFilter) onContextFilter(newContext);
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
-    // Show success toast with appropriate message
-    if (newContext === 'all') {
+  const handleMenuItemClick = (context: string) => {
+    if (context === '__create__') {
+      handleOpenCreateDialog();
+      handleClose();
+      return;
+    }
+
+    setSelectedContext(context);
+    if (onContextFilter) onContextFilter(context);
+
+    if (context === 'all') {
       toast.success(t('contexts.showingAllContexts'), {
         position: 'top-center',
       });
     } else {
-      toast.success(t('contexts.filteringByContext', { context: newContext }), {
+      toast.success(t('contexts.filteringByContext', { context: context }), {
         position: 'top-center',
       });
     }
+    handleClose();
   };
 
   // Get count for a specific context
@@ -215,78 +233,100 @@ const ContextDropdown = ({
         </Typography>
 
         <Box sx={{ position: 'relative', minWidth: 200 }}>
-          <Select
-            value={selectedContext}
-            onChange={handleContextChange}
+          <Button
+            id="context-filter-button"
+            aria-controls={open ? 'context-filter-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={open ? 'true' : undefined}
+            onClick={handleClick}
+            variant="outlined"
             sx={{
               width: '100%',
               height: '40px',
-              borderRadius: 1,
+              justifyContent: 'space-between',
+              textTransform: 'none',
+              borderColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
               color: theme === 'dark' ? '#FFFFFF' : '#121212',
-              backgroundColor: 'transparent',
-              border:
-                theme === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.23)'
-                  : '1px solid rgba(0, 0, 0, 0.23)',
-              '& .MuiSvgIcon-root': {
-                color: theme === 'dark' ? '#FFFFFF' : 'inherit',
-              },
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
+              '&:hover': {
                 borderColor: theme === 'dark' ? '#FFFFFF' : 'rgba(0, 0, 0, 0.87)',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme === 'dark' ? '#90CAF9' : '#1976D2',
+                backgroundColor: 'transparent',
               },
             }}
-            variant="outlined"
-            displayEmpty
-            renderValue={selected => (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <FilterListIcon
-                  fontSize="small"
+            startIcon={
+              <FilterListIcon
+                fontSize="small"
+                sx={{
+                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.54)',
+                }}
+              />
+            }
+            endIcon={<KeyboardArrowDownIcon />}
+          >
+            <Typography
+              component="span"
+              sx={{
+                flexGrow: 1,
+                textAlign: 'left',
+                mr: 1,
+                fontSize: '0.9rem',
+                fontWeight: 400,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                overflow: 'hidden',
+              }}
+            >
+              {selectedContext === 'all' ? (
+                t('contexts.allContexts')
+              ) : (
+                <Chip
+                  label={selectedContext}
+                  size="small"
                   sx={{
-                    color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.54)',
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+                    color: theme === 'dark' ? '#90CAF9' : '#1976d2',
+                    fontWeight: 500,
+                    height: '24px',
+                    cursor: 'pointer',
                   }}
+                  component="span" // Ensure Chip doesn't render as div inside span (button)
+                  clickable={false}
                 />
-                {selected === 'all' ? (
-                  <Typography sx={{ fontWeight: 400, fontSize: '0.9rem' }}>
-                    {t('contexts.allContexts')}
-                  </Typography>
-                ) : (
-                  <Chip
-                    label={selected}
-                    size="small"
-                    sx={{
-                      backgroundColor:
-                        theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : 'rgba(25, 118, 210, 0.08)',
-                      color: theme === 'dark' ? '#90CAF9' : '#1976d2',
-                      fontWeight: 500,
-                      height: '24px',
-                    }}
-                  />
-                )}
-              </Box>
-            )}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  maxHeight: 300,
-                  marginTop: 1,
-                  backgroundColor: theme === 'dark' ? '#333333' : '#FFFFFF',
-                  '& .MuiMenuItem-root': {
-                    color: theme === 'dark' ? '#FFFFFF' : 'inherit',
-                    fontSize: '0.9rem',
-                    padding: '8px 16px',
+              )}
+            </Typography>
+          </Button>
+
+          <Menu
+            id="context-filter-menu"
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            MenuListProps={{
+              'aria-labelledby': 'context-filter-button',
+              role: 'menu',
+            }}
+            PaperProps={{
+              sx: {
+                maxHeight: 300,
+                width: 200, // Match button width min
+                marginTop: 1,
+                backgroundColor: theme === 'dark' ? '#333333' : '#FFFFFF',
+                '& .MuiMenuItem-root': {
+                  color: theme === 'dark' ? '#FFFFFF' : 'inherit',
+                  fontSize: '0.9rem',
+                  padding: '8px 16px',
+                  '&:hover': {
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(144, 202, 249, 0.16)' : 'rgba(25, 118, 210, 0.08)',
                     '&:hover': {
                       backgroundColor:
-                        theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor:
-                        theme === 'dark' ? 'rgba(144, 202, 249, 0.16)' : 'rgba(25, 118, 210, 0.08)',
+                        theme === 'dark' ? 'rgba(144, 202, 249, 0.24)' : 'rgba(25, 118, 210, 0.12)',
                     },
                   },
                 },
@@ -294,7 +334,8 @@ const ContextDropdown = ({
             }}
           >
             <MenuItem
-              value="all"
+              onClick={() => handleMenuItemClick('all')}
+              selected={selectedContext === 'all'}
               sx={{
                 fontWeight: selectedContext === 'all' ? 500 : 400,
                 display: 'flex',
@@ -302,7 +343,10 @@ const ContextDropdown = ({
                 alignItems: 'center',
               }}
             >
-              <span>{t('contexts.allContexts')}</span>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {selectedContext === 'all' && <CheckIcon fontSize="small" sx={{ fontSize: 16 }} />}
+                <span>{t('contexts.allContexts')}</span>
+              </Box>
               <Chip
                 label={totalResourceCount.toString()}
                 size="small"
@@ -315,10 +359,12 @@ const ContextDropdown = ({
                 }}
               />
             </MenuItem>
+
             {contexts.map(context => (
               <MenuItem
                 key={context}
-                value={context}
+                onClick={() => handleMenuItemClick(context)}
+                selected={selectedContext === context}
                 sx={{
                   fontWeight: selectedContext === context ? 500 : 400,
                   display: 'flex',
@@ -326,7 +372,10 @@ const ContextDropdown = ({
                   alignItems: 'center',
                 }}
               >
-                <span>{context}</span>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {selectedContext === context && <CheckIcon fontSize="small" sx={{ fontSize: 16 }} />}
+                    <span>{context}</span>
+                  </Box>
                 <Chip
                   label={getContextCount(context).toString()}
                   size="small"
@@ -354,26 +403,22 @@ const ContextDropdown = ({
               </MenuItem>
             ))}
 
-            <Box
-              sx={{ borderTop: `1px solid ${theme === 'dark' ? '#333' : '#e0e0e0'}`, mt: 1, pt: 1 }}
+            <MenuItem
+              onClick={() => handleMenuItemClick('__create__')}
+              sx={{
+                borderTop: `1px solid ${theme === 'dark' ? '#333' : '#e0e0e0'}`,
+                mt: 1,
+                pt: 1,
+                color: theme === 'dark' ? '#90caf9' : '#1976d2',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
             >
-              <MenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  handleOpenCreateDialog();
-                }}
-                sx={{
-                  color: theme === 'dark' ? '#90caf9' : '#1976d2',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <AddIcon fontSize="small" />
-                <span>{t('contexts.createContext')}</span>
-              </MenuItem>
-            </Box>
-          </Select>
+              <AddIcon fontSize="small" />
+              <span>{t('contexts.createContext')}</span>
+            </MenuItem>
+          </Menu>
         </Box>
       </Box>
 
