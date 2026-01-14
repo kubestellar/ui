@@ -537,7 +537,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                       text: isDark ? 'text-purple-400' : 'text-purple-600',
                       icon: <FileText size={16} />,
                     }
-                    : item.type === 'cluster'
+                  : item.type === 'cluster'
                     ? {
                         bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
                         text: isDark ? 'text-blue-400' : 'text-blue-600',
