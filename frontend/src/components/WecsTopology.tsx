@@ -316,12 +316,12 @@ const getLayoutedElements = (
     const dagreNode = dagreGraph.node(node.id);
     return dagreNode
       ? {
-        ...node,
-        position: {
-          x: dagreNode.x - NODE_WIDTH / 2 + 50,
-          y: dagreNode.y - NODE_HEIGHT / 2 + 50,
-        },
-      }
+          ...node,
+          position: {
+            x: dagreNode.x - NODE_WIDTH / 2 + 50,
+            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
+          },
+        }
       : node;
   });
 
@@ -611,9 +611,9 @@ const WecsTreeview = () => {
         },
         markerEnd: edge.markerEnd
           ? {
-            ...edge.markerEnd,
-            color: theme === 'dark' ? '#64748b' : '#94a3b8',
-          }
+              ...edge.markerEnd,
+              color: theme === 'dark' ? '#64748b' : '#94a3b8',
+            }
           : undefined,
       }));
     });
