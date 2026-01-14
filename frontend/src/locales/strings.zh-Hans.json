@@ -261,11 +261,7 @@
       },
       "afterInstallation": {
         "title": "安装后：",
-        "steps": [
-          "通过检查集群状态验证安装",
-          "查看入门文档",
-          "开始管理您的 KubeStellar 环境"
-        ]
+        "steps": ["通过检查集群状态验证安装", "查看入门文档", "开始管理您的 KubeStellar 环境"]
       },
       "buttons": {
         "backPrerequisites": "上一步：前提条件",
@@ -1022,21 +1018,11 @@
     "approaches": {
       "automated": {
         "title": "自动化方式（新功能）",
-        "features": [
-          "一键设置流程",
-          "无需手动执行命令",
-          "流线化体验",
-          "减少出错机会"
-        ]
+        "features": ["一键设置流程", "无需手动执行命令", "流线化体验", "减少出错机会"]
       },
       "manual": {
         "title": "手动方式（传统）",
-        "features": [
-          "手动复制并运行命令",
-          "需要多个 CLI 步骤",
-          "更复杂的流程",
-          "需要命令行知识"
-        ]
+        "features": ["手动复制并运行命令", "需要多个 CLI 步骤", "更复杂的流程", "需要命令行知识"]
       }
     },
     "buttons": {
@@ -2591,13 +2577,7 @@
       "premiumPlugins": "发现高级插件",
       "enhanceWorkflow": "使用专为 Kubernetes 和云原生环境设计的强大插件增强您的工作流程。",
       "exploreMarketplace": "探索市场",
-      "suggestedCategories": [
-        "监控",
-        "安全",
-        "开发",
-        "部署",
-        "存储"
-      ],
+      "suggestedCategories": ["监控", "安全", "开发", "部署", "存储"],
       "noPluginsFound": "未找到插件",
       "tryAdjustingSearch": "尝试调整您的搜索词或浏览所有插件",
       "noMatchingFilters": "没有符合您当前筛选条件的插件",

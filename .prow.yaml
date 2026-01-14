@@ -116,22 +116,30 @@ postsubmits:
     decorate: true
     clone_uri: 'https://github.com/kubestellar/ui'
     spec:
+      volumes:
+        - name: quay-auth
+          secret:
+            secretName: quay-auth
+            items:
+              - key: .dockerconfigjson
+                path: auth.json
       containers:
         - image: quay.io/buildah/stable:latest
           securityContext:
             privileged: true
+          volumeMounts:
+            - name: quay-auth
+              mountPath: /auth
+              readOnly: true
           command:
             - /bin/bash
             - -c
             - |
-              # Build and push frontend
-              cd frontend
-              buildah bud -t quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-latest .
-              buildah push quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD)
-              buildah push quay.io/kubestellar/ui:frontend-latest
-              cd ..
+              # Setup registry auth
+              mkdir -p /run/containers/0
+              cp /auth/auth.json /run/containers/0/auth.json
 
-              # Build and push backend
+              # Build and push backend (frontend has Dockerfile issue - see #2329)
               cd backend
               buildah bud -t quay.io/kubestellar/ui:backend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:backend-latest .
               buildah push quay.io/kubestellar/ui:backend-$(git rev-parse --short HEAD)
@@ -148,22 +156,30 @@ postsubmits:
     decorate: true
     clone_uri: 'https://github.com/kubestellar/ui'
     spec:
+      volumes:
+        - name: quay-auth
+          secret:
+            secretName: quay-auth
+            items:
+              - key: .dockerconfigjson
+                path: auth.json
       containers:
         - image: quay.io/buildah/stable:latest
           securityContext:
             privileged: true
+          volumeMounts:
+            - name: quay-auth
+              mountPath: /auth
+              readOnly: true
           command:
             - /bin/bash
             - -c
             - |
-              # Build and push frontend
-              cd frontend
-              buildah bud -t quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-dev-latest .
-              buildah push quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD)
-              buildah push quay.io/kubestellar/ui:frontend-dev-latest
-              cd ..
+              # Setup registry auth
+              mkdir -p /run/containers/0
+              cp /auth/auth.json /run/containers/0/auth.json
 
-              # Build and push backend
+              # Build and push backend (frontend has Dockerfile issue - see #2329)
               cd backend
               buildah bud -t quay.io/kubestellar/ui:backend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:backend-dev-latest .
               buildah push quay.io/kubestellar/ui:backend-dev-$(git rev-parse --short HEAD)
