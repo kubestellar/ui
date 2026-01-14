@@ -27,7 +27,9 @@ jobs:
 
       - name: Run locale sync check
         working-directory: frontend
-        run: npm run local-sync-check
+        # Don't fail the workflow on sync issues - just report them
+        # The script creates GitHub issues for tracking
+        run: npm run local-sync-check || echo "Locale sync issues found - see created issues"
 
       - name: Add native speaker warning to locale-sync issues
         run: bash scripts/add-locale-warning.sh
