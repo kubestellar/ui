@@ -81,10 +81,7 @@ export const useTreeViewEdges = ({ theme }: TreeViewEdgesProps) => {
         style: {
           ...style,
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          filter:
-            theme === 'dark'
-              ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-              : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+          // Note: drop-shadow removed from default edges for performance (issue #2269)
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -127,10 +124,12 @@ export const useTreeViewEdges = ({ theme }: TreeViewEdgesProps) => {
           style: {
             ...style,
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            filter:
-              theme === 'dark'
-                ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+            // Apply subtle drop-shadow only to highlighted/active edges for performance (issue #2269)
+            filter: isHighlighted
+              ? theme === 'dark'
+                ? 'drop-shadow(0 1px 2px rgba(59, 130, 246, 0.4))'
+                : 'drop-shadow(0 1px 2px rgba(59, 130, 246, 0.3))'
+              : 'none',
             animation: isHighlighted ? 'edge-pulse 2s ease-in-out infinite' : 'none',
           },
           markerEnd: {

@@ -254,9 +254,9 @@ const getTimeAgo = (timestamp: string | undefined, t: (key: string) => string): 
   return diffDays === 0
     ? t('treeView.timeAgo.today')
     : t(`treeView.timeAgo.days${diffDays === 1 ? '.one' : ''}`).replace(
-        '{{count}}',
-        diffDays.toString()
-      );
+      '{{count}}',
+      diffDays.toString()
+    );
 };
 
 export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeViewNodesProps) => {
@@ -343,25 +343,25 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
             color: theme === 'dark' ? '#fff' : '#000',
             ...(hasHighlightedLabel
               ? {
-                  boxShadow: `0 0 0 2px ${theme === 'dark' ? '#41dc8e' : '#41dc8e'}`,
-                  backgroundColor:
-                    theme === 'dark' ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)',
-                  zIndex: 1000,
-                  opacity: 1,
-                  transition: 'all 0.2s ease-in-out',
-                }
+                boxShadow: `0 0 0 2px ${theme === 'dark' ? '#41dc8e' : '#41dc8e'}`,
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)',
+                zIndex: 1000,
+                opacity: 1,
+                transition: 'all 0.2s ease-in-out',
+              }
               : {
-                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
-                  border: '1px solid rgba(0, 0, 0, 0)',
-                  backgroundColor:
-                    theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
-                  transition: 'all 0.2s ease-in-out',
-                  ...(highlightedLabels
-                    ? {
-                        opacity: 0.5,
-                      }
-                    : {}),
-                }),
+                color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+                border: '1px solid rgba(0, 0, 0, 0)',
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
+                transition: 'all 0.2s ease-in-out',
+                ...(highlightedLabels
+                  ? {
+                    opacity: 0.5,
+                  }
+                  : {}),
+              }),
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
@@ -390,30 +390,30 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           backdropFilter: 'blur(10px)',
           ...(hasHighlightedLabel
             ? {
-                boxShadow:
-                  theme === 'dark'
-                    ? '0 4px 20px rgba(59, 130, 246, 0.4), 0 0 0 2px rgba(59, 130, 246, 0.6)'
-                    : '0 4px 20px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.5)',
-                zIndex: 1000,
-                opacity: 1,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: 'translateY(-2px) scale(1.02)',
-              }
+              boxShadow:
+                theme === 'dark'
+                  ? '0 4px 20px rgba(59, 130, 246, 0.4), 0 0 0 2px rgba(59, 130, 246, 0.6)'
+                  : '0 4px 20px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.5)',
+              zIndex: 1000,
+              opacity: 1,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: 'translateY(-2px) scale(1.02)',
+            }
             : highlightedLabels
               ? {
-                  boxShadow: 'none',
-                  zIndex: 0,
-                  opacity: 0.6,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  filter: 'blur(0.5px)',
-                }
+                boxShadow: 'none',
+                zIndex: 0,
+                opacity: 0.6,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                filter: 'blur(0.5px)',
+              }
               : {
-                  boxShadow:
-                    theme === 'dark'
-                      ? '0 4px 20px rgba(0, 0, 0, 0.3)'
-                      : '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                }),
+                boxShadow:
+                  theme === 'dark'
+                    ? '0 4px 20px rgba(0, 0, 0, 0.3)'
+                    : '0 4px 20px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }),
         };
       }
 
@@ -435,10 +435,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
             strokeWidth: 2,
             opacity: 0.8,
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            filter:
-              theme === 'dark'
-                ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+            // Note: drop-shadow removed from default edges for performance (issue #2269)
             strokeLinecap: 'round' as const,
             strokeLinejoin: 'round' as const,
           },
