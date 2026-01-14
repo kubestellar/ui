@@ -356,7 +356,15 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
         setIsLoading(false);
       }
     }
-  }, [clustersLoading, bpLoading, clusterData, bindingPoliciesData, userLoading, userActivities]);
+  }, [
+    clustersLoading,
+    bpLoading,
+    clusterData,
+    bindingPoliciesData,
+    userLoading,
+    userActivities,
+    deletedActivities,
+  ]);
 
   useEffect(() => {
     processData();
