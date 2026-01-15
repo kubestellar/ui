@@ -982,14 +982,14 @@ const K8sInfo = () => {
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
           <Link
             to="/its"
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-all duration-200 hover:bg-indigo-700 hover:text-cyan-200 hover:shadow-lg hover:scale-110"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-all duration-200 hover:scale-110 hover:bg-indigo-700 hover:text-cyan-200 hover:shadow-lg"
           >
             <Layers size={16} />
             <span>{t('clusters.title')}</span>
           </Link>
           <Link
             to="/resources"
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 hover:shadow-lg hover:scale-110 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 shadow-sm transition-all duration-200 hover:scale-110 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             <ClipboardList size={16} />
             <span>{t('menu.items.resourceExplorer')}</span>
