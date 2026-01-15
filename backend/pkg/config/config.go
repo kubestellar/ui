@@ -15,7 +15,7 @@ type Config struct {
 
 func LoadConfig() *Config {
 	return &Config{
-		DatabaseURL:     GetEnv("DATABASE_URL", "postgres://authuser:authpass123@localhost:5400/authdb?sslmode=disable"),
+		DatabaseURL:     GetEnv("DATABASE_URL", "postgres://authuser:authpass123@localhost:5400/authdbui?sslmode=disable"),
 		JWTSecret:       GetEnv("JWT_SECRET", "your-secret-key-here"),
 		Port:            GetEnv("PORT", "5400"),
 		GinMode:         GetEnv("GIN_MODE", "debug"),
