@@ -20,17 +20,10 @@ on:
       - ".github/spellcheck/**"
       - ".github/workflows/spellcheck.yml"
 
+permissions:
+  contents: read
+
 jobs:
   spellcheck:
-    name: Run Spellcheck
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Markdown Spellcheck
-        uses: rojopolis/spellcheck-github-actions@v0
-        with:
-          config_path: .github/spellcheck/.spellcheck.yml
-          task_name: Markdown
-
+    uses: kubestellar/infra/.github/workflows/reusable-spellcheck.yml@main
+    secrets: inherit
