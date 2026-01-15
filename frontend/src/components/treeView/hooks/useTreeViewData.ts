@@ -5,7 +5,6 @@ import { useLocation } from 'react-router-dom';
 import * as dagre from 'dagre';
 import { isEqual } from 'lodash';
 import useTheme from '../../../stores/themeStore';
-import useZoomStore from '../../../stores/zoomStore';
 import {
   NamespaceResource,
   CustomNode,
@@ -13,7 +12,7 @@ import {
   ResourceItem,
   ResourceDataChangeEvent,
 } from '../types';
-import { useTreeViewNodes } from '../TreeViewNodes';
+import { useTreeViewNodes, TREE_VIEW_NODE_WIDTH, TREE_VIEW_NODE_HEIGHT } from '../TreeViewNodes';
 import { useTreeViewEdges } from '../TreeViewEdges';
 
 interface UseTreeViewDataProps {
@@ -124,15 +123,15 @@ export const useTreeViewData = ({
 
   const getLayoutedElements = useCallback(
     (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
-      const { currentZoom } = useZoomStore.getState();
-      const scaleFactor = Math.max(0.5, Math.min(2.0, currentZoom));
+      const NODE_WIDTH = TREE_VIEW_NODE_WIDTH;
+      const NODE_HEIGHT = TREE_VIEW_NODE_HEIGHT;
 
       const dagreGraph = new dagre.graphlib.Graph();
       dagreGraph.setDefaultEdgeLabel(() => ({}));
       dagreGraph.setGraph({
         rankdir: direction,
-        nodesep: 50 * scaleFactor, // Increased from 30
-        ranksep: 130 * scaleFactor, // Increased from 60
+        nodesep: 50,
+        ranksep: 130,
       });
 
       const nodeMap = new Map<string, CustomNode>();
@@ -147,8 +146,8 @@ export const useTreeViewData = ({
         const cachedNode = nodeMap.get(node.id);
         if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
           dagreGraph.setNode(node.id, {
-            width: 146 * scaleFactor,
-            height: 30 * scaleFactor, // Match the actual node height from zoom store
+            width: NODE_WIDTH,
+            height: NODE_HEIGHT,
           });
           newNodes.push(node);
         } else {
@@ -168,8 +167,8 @@ export const useTreeViewData = ({
           ? {
               ...node,
               position: {
-                x: dagreNode.x - 73 * scaleFactor + 50 * scaleFactor,
-                y: dagreNode.y - 15 * scaleFactor + 50 * scaleFactor, // This is correct: 30/2 = 15
+                x: dagreNode.x - NODE_WIDTH / 2 + 50,
+                y: dagreNode.y - NODE_HEIGHT / 2 + 50,
               },
             }
           : node;
@@ -177,7 +176,6 @@ export const useTreeViewData = ({
 
       return { nodes: layoutedNodes, edges };
     },
-    // Include dependencies for useZoomStore.getState() and any other external values
     [prevNodes]
   );
 

@@ -179,10 +179,10 @@ export const NodeLabel = memo<NodeLabelProps>(
         margin: '-12px -16px',
         padding: '12px 16px',
         borderRadius: '16px',
-        minWidth: `${Math.max(200, iconSize + 150)}px`, // Minimum width based on zoom
-        maxWidth: `${Math.max(320, iconSize + 250)}px`, // Maximum width to prevent excessive stretching
+        minWidth: '200px',
+        maxWidth: '320px',
         width: 'calc(100% + 32px)',
-        minHeight: `${Math.max(48, iconSize + 24)}px`, // Minimum height for consistency
+        minHeight: '48px',
         background:
           theme === 'dark'
             ? hasHighlightedLabel
@@ -217,16 +217,7 @@ export const NodeLabel = memo<NodeLabelProps>(
         overflow: 'hidden', // Prevent any content from escaping
         overflowWrap: 'break-word' as const, // Handle any edge cases
       }),
-      [
-        theme,
-        hasHighlightedLabel,
-        hasLabels,
-        statusStyle,
-        isHovered,
-        status,
-        prefersReducedMotion,
-        iconSize,
-      ]
+      [theme, hasHighlightedLabel, hasLabels, statusStyle, isHovered, status, prefersReducedMotion]
     );
 
     const labelTooltipContent = hasLabels ? (
@@ -418,8 +409,8 @@ export const NodeLabel = memo<NodeLabelProps>(
               {/* Icon section with status indicator - improved responsiveness */}
               <div
                 style={{
-                  width: `${Math.max(70, Math.min(90, iconSize + 50))}px`,
-                  minWidth: `${Math.max(70, Math.min(90, iconSize + 50))}px`,
+                  width: '80px',
+                  minWidth: '80px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -480,8 +471,8 @@ export const NodeLabel = memo<NodeLabelProps>(
                         : 'none',
                     backgroundSize: '200% 200%',
                     flex: 1,
-                    minWidth: 0, // Allow shrinking
-                    maxWidth: `${Math.max(30, 60 - iconSize / 2)}px`, // Dynamic max width
+                    minWidth: 0,
+                    maxWidth: '40px',
                   }}
                 >
                   {dynamicText}
@@ -496,8 +487,8 @@ export const NodeLabel = memo<NodeLabelProps>(
                   justifyContent: 'center',
                   gap: '2px',
                   flex: 1,
-                  minWidth: 0, // Allows flex child to shrink below content size
-                  maxWidth: `${Math.max(120, 200 - iconSize)}px`, // Responsive max width
+                  minWidth: 0,
+                  maxWidth: '140px',
                 }}
               >
                 <Tooltip
