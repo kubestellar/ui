@@ -1,15 +1,14 @@
 import {
   FaHome,
-  FaServer,
   FaLayerGroup,
   FaLink,
   FaRocket,
   FaSearch,
-  FaStore,
   FaPuzzlePiece,
   FaUsersCog,
+  FaCubes,
 } from 'react-icons/fa';
-import { SiGrafana } from 'react-icons/si';
+import { SiGrafana, SiKubernetes } from 'react-icons/si';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
 import { useAdminCheck } from '../../hooks/useAuth';
@@ -42,7 +41,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/its',
-          icon: FaServer,
+          icon: SiKubernetes,
           label: t('menu.items.managedClusters'),
         },
         {
@@ -60,7 +59,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/wecs/treeview',
-          icon: FaRocket,
+          icon: FaCubes,
           label: t('menu.items.deployedWorkloads'),
         },
         {
@@ -85,7 +84,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/plugins/marketplace',
-          icon: FaStore,
+          icon: FaRocket,
           label: t('menu.items.galaxyMarketplace', 'Galaxy Marketplace'),
         },
         {
