@@ -183,8 +183,6 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
     };
   }, [clusterName, onComplete, t]);
 
-
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Processing':
@@ -268,7 +266,8 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
           zIndex: 10,
           pt: 2,
           pb: 2,
-          backgroundColor: theme === 'dark' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.95)',
+          backgroundColor:
+            theme === 'dark' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.95)',
           backdropFilter: 'blur(8px)',
           borderBottom: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
           boxShadow:
@@ -452,7 +451,11 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
             }}
           >
             {currentStatus && (
-              <span role="img" aria-label={currentStatus.toLowerCase()} style={{ fontSize: '0.85rem' }}>
+              <span
+                role="img"
+                aria-label={currentStatus.toLowerCase()}
+                style={{ fontSize: '0.85rem' }}
+              >
                 {getStatusIcon(currentStatus)}
               </span>
             )}
