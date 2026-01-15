@@ -79,11 +79,11 @@ describe('ContextDropdown Keyboard Navigation', () => {
     // 1 Down -> context1
     // 2 Downs -> context2
     // 3 Downs -> Create Context
-    
+
     await user.keyboard('{ArrowDown}'); // context1
     await user.keyboard('{ArrowDown}'); // context2
     await user.keyboard('{ArrowDown}'); // Create Context
-    
+
     await user.keyboard('{Enter}');
 
     // 5. Verify Create Dialog (title)
@@ -103,31 +103,31 @@ describe('ContextDropdown Keyboard Navigation', () => {
       />
     );
 
-     await waitFor(() => {
+    await waitFor(() => {
       expect(screen.getByText('contexts.allContexts')).toBeInTheDocument();
     });
 
-     const trigger = screen.getByRole('button', { name: /contexts.allContexts/i });
-     await user.click(trigger);
+    const trigger = screen.getByRole('button', { name: /contexts.allContexts/i });
+    await user.click(trigger);
 
-     const menu = await screen.findByRole('menu');
-     expect(menu).toBeVisible();
+    const menu = await screen.findByRole('menu');
+    expect(menu).toBeVisible();
 
-     // Navigate to context1 (Item 1)
-     // Start: All (Item 0)
-     // 1 Down -> context1
-     await user.keyboard('{ArrowDown}'); // Focus context1
-     await user.keyboard('{Enter}');
+    // Navigate to context1 (Item 1)
+    // Start: All (Item 0)
+    // 1 Down -> context1
+    await user.keyboard('{ArrowDown}'); // Focus context1
+    await user.keyboard('{Enter}');
 
-     expect(mockOnContextFilter).toHaveBeenCalledWith('context1');
-     // Menu should close
-     await waitFor(() => {
-         const hasExpanded = trigger.hasAttribute('aria-expanded');
-         if (hasExpanded) {
-             expect(trigger).toHaveAttribute('aria-expanded', 'false');
-         } else {
-             expect(trigger).not.toHaveAttribute('aria-expanded');
-         }
-     });
+    expect(mockOnContextFilter).toHaveBeenCalledWith('context1');
+    // Menu should close
+    await waitFor(() => {
+      const hasExpanded = trigger.hasAttribute('aria-expanded');
+      if (hasExpanded) {
+        expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      } else {
+        expect(trigger).not.toHaveAttribute('aria-expanded');
+      }
+    });
   });
 });
