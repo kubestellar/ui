@@ -2192,7 +2192,13 @@
       "premiumPlugins": "Descubra Plugins Premium",
       "enhanceWorkflow": "Melhore seu fluxo de trabalho com plugins poderosos projetados especificamente para Kubernetes e ambientes nativos da nuvem.",
       "exploreMarketplace": "Explorar Marketplace",
-      "suggestedCategories": ["Monitoramento", "Segurança", "Desenvolvimento", "Implantação", "Armazenamento"],
+      "suggestedCategories": [
+        "Monitoramento",
+        "Segurança",
+        "Desenvolvimento",
+        "Implantação",
+        "Armazenamento"
+      ],
       "noPluginsFound": "Nenhum plugin encontrado",
       "tryAdjustingSearch": "Tente ajustar seus termos de busca ou navegue por todos os plugins",
       "noMatchingFilters": "Nenhum plugin corresponde aos seus filtros atuais",
