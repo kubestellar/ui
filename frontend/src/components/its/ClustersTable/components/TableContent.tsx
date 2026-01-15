@@ -182,8 +182,12 @@ const TableContent: React.FC<TableContentProps> = ({
                         height: 48,
                         borderRadius: '50%',
                         backgroundColor: cluster.available
-                          ? isDark ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.1)'
-                          : isDark ? 'rgba(244, 67, 54, 0.15)' : 'rgba(244, 67, 54, 0.1)',
+                          ? isDark
+                            ? 'rgba(76, 175, 80, 0.15)'
+                            : 'rgba(76, 175, 80, 0.1)'
+                          : isDark
+                            ? 'rgba(244, 67, 54, 0.15)'
+                            : 'rgba(244, 67, 54, 0.1)',
                         border: `2px solid ${cluster.available ? colors.success : colors.error}`,
                         transition: 'all 0.2s ease',
                       }}
