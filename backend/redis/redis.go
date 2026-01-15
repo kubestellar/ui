@@ -15,7 +15,14 @@ import (
 var ctx = context.Background()
 var rdb *redis.Client
 
-const filePathKey = "filepath"
+const (
+	filePathKey = "filepath"
+
+	objectExplorerResourceKindsKey = "object_explorer_resource_kinds"
+	objectExplorerNamespacesKey    = "object_explorer_namespaces"
+)
+
+const ObjectExplorerCacheTTL = 5 * time.Minute
 
 // SetNamespaceCache sets a namespace data cache in Redis
 func SetNamespaceCache(key string, value string, expiration time.Duration) error {
@@ -482,4 +489,28 @@ func DeleteAllBindingPolicies() error {
 // ClearBindingPolicyCache clears the entire binding policy cache
 func ClearBindingPolicyCache() error {
 	return DeleteAllBindingPolicies()
+}
+
+// Cache helpers for Object Explorer filters
+func CacheObjectExplorerResourceKinds(value interface{}) error {
+	return SetJSONValue(objectExplorerResourceKindsKey, value, ObjectExplorerCacheTTL)
+}
+
+func CacheObjectExplorerNamespaces(value interface{}) error {
+	return SetJSONValue(objectExplorerNamespacesKey, value, ObjectExplorerCacheTTL)
+}
+
+func GetObjectExplorerResourceKinds(dest interface{}) (bool, error) {
+	return GetJSONValue(objectExplorerResourceKindsKey, dest)
+}
+
+func GetObjectExplorerNamespaces(dest interface{}) (bool, error) {
+	return GetJSONValue(objectExplorerNamespacesKey, dest)
+}
+
+// ClearObjectExplorerCaches removes the cached resource kinds and namespaces
+func ClearObjectExplorerCaches() {
+	if err := rdb.Del(ctx, objectExplorerResourceKindsKey, objectExplorerNamespacesKey).Err(); err != nil {
+		log.LogError("failed to clear object explorer cache", zap.Error(err))
+	}
 }

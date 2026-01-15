@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kubestellar/ui/backend/redis"
 	"github.com/kubestellar/ui/backend/telemetry"
 
 	"github.com/gin-gonic/gin"
@@ -245,6 +246,7 @@ func CreateResource(c *gin.Context) {
 		return
 	}
 	// Return all created resources
+	redis.ClearObjectExplorerCaches()
 	c.JSON(http.StatusCreated, gin.H{"resources": results})
 }
 
@@ -463,6 +465,7 @@ func UpdateResource(c *gin.Context) {
 		return
 	}
 
+	redis.ClearObjectExplorerCaches()
 	c.JSON(http.StatusOK, result)
 }
 
@@ -502,6 +505,7 @@ func DeleteResource(c *gin.Context) {
 		return
 	}
 
+	redis.ClearObjectExplorerCaches()
 	c.JSON(http.StatusOK, gin.H{"message": "Deleted successfully"})
 }
 
@@ -539,6 +543,7 @@ func UploadYAMLFile(c *gin.Context) {
 		return
 	}
 
+	redis.ClearObjectExplorerCaches()
 	c.JSON(http.StatusCreated, gin.H{"resources": results})
 }
 
@@ -1214,6 +1219,14 @@ func LogWorkloads(c *gin.Context) {
 
 // GetResourceKinds returns a list of all available resource kinds in the cluster
 func GetResourceKinds(c *gin.Context) {
+	var cachedResourceKinds []map[string]interface{}
+	if cacheHit, err := redis.GetObjectExplorerResourceKinds(&cachedResourceKinds); err != nil {
+		log.Printf("failed to read resource kinds cache: %v", err)
+	} else if cacheHit {
+		c.JSON(http.StatusOK, cachedResourceKinds)
+		return
+	}
+
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
 		cookieContext = "wds1"
@@ -1263,11 +1276,23 @@ func GetResourceKinds(c *gin.Context) {
 		}
 	}
 
+	if err := redis.CacheObjectExplorerResourceKinds(resourceKinds); err != nil {
+		log.Printf("failed to cache resource kinds: %v", err)
+	}
+
 	c.JSON(http.StatusOK, resourceKinds)
 }
 
 // GetNamespaces returns a list of all namespaces in the cluster
 func GetNamespaces(c *gin.Context) {
+	var cachedNamespaces []map[string]interface{}
+	if cacheHit, err := redis.GetObjectExplorerNamespaces(&cachedNamespaces); err != nil {
+		log.Printf("failed to read namespaces cache: %v", err)
+	} else if cacheHit {
+		c.JSON(http.StatusOK, cachedNamespaces)
+		return
+	}
+
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
 		cookieContext = "wds1"
@@ -1294,6 +1319,10 @@ func GetNamespaces(c *gin.Context) {
 			"labels":    ns.Labels,
 		}
 		namespaceList = append(namespaceList, namespaceInfo)
+	}
+
+	if err := redis.CacheObjectExplorerNamespaces(namespaceList); err != nil {
+		log.Printf("failed to cache namespaces: %v", err)
 	}
 
 	c.JSON(http.StatusOK, namespaceList)
