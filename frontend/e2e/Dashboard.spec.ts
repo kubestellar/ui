@@ -6,6 +6,10 @@ test.describe('Dashboard Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
+    // Capture console logs
+    page.on('console', msg => console.log(`[Browser Console] ${msg.text()}`));
+    page.on('pageerror', err => console.log(`[Browser Error] ${err.message}`));
+
     // Apply MSW scenario first
     await page.evaluate(() => {
       window.__msw?.applyScenarioByName('dashboard');
@@ -305,5 +309,5 @@ test.describe('Dashboard Page', () => {
     });
   });
 
-  test.describe('Error Handling', () => {});
+  test.describe('Error Handling', () => { });
 });

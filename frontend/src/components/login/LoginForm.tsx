@@ -24,10 +24,6 @@ const LoginForm = () => {
   const { mutate: login, isPending } = useLogin();
 
   useEffect(() => {
-    console.log(
-      `[LoginForm] Component mounted at ${performance.now() - renderStartTime.current}ms`
-    );
-
     // First attempt to migrate any old base64 passwords to the new encrypted format
     migratePassword().then(() => {
       const loadSavedCredentials = async () => {
@@ -52,9 +48,6 @@ const LoginForm = () => {
             setUsername(savedUsername);
             setPassword(passwordToUse);
             setRememberMe(true);
-            console.log(
-              `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
-            );
           } catch (error) {
             if (error instanceof Error && error.message === 'Credentials have expired') {
               toast.error('Saved credentials have expired. Please log in again.');
@@ -63,10 +56,6 @@ const LoginForm = () => {
               error.message === 'Too many decryption attempts. Please try again later.'
             ) {
               toast.error(error.message);
-            } else {
-              console.error(
-                `[LoginForm] Error with stored credentials at ${performance.now() - renderStartTime.current}ms`
-              );
             }
             // We don't need to manually remove credentials as the decryptData function
             // will handle this for expired credentials
@@ -88,16 +77,10 @@ const LoginForm = () => {
 
       if (from) {
         localStorage.setItem('redirectAfterLogin', from);
-        console.log(
-          `[LoginForm] Stored redirect path "${from}" at ${performance.now() - renderStartTime.current}ms`
-        );
       }
 
       if (errorMessage) {
         toast.error(errorMessage, { id: 'auth-redirect-error' });
-        console.log(
-          `[LoginForm] Displayed error message "${errorMessage}" at ${performance.now() - renderStartTime.current}ms`
-        );
         navigate(location.pathname, { replace: true, state: {} });
       }
 
@@ -116,9 +99,6 @@ const LoginForm = () => {
         } else {
           toast.success(infoMessage, { id: 'auth-redirect-info' });
         }
-        console.log(
-          `[LoginForm] Displayed info message "${infoMessage}" at ${performance.now() - renderStartTime.current}ms`
-        );
         navigate(location.pathname, { replace: true, state: {} });
       }
     }
@@ -126,9 +106,6 @@ const LoginForm = () => {
     const tokenRemovalTime = localStorage.getItem('tokenRemovalTime');
     if (tokenRemovalTime) {
       localStorage.removeItem('tokenRemovalTime');
-      console.log(
-        `[LoginForm] Cleared token removal time at ${performance.now() - renderStartTime.current}ms`
-      );
     }
   }, [location, navigate]);
 
@@ -154,15 +131,9 @@ const LoginForm = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      console.log(
-        `[LoginForm] Form validation failed at ${performance.now() - renderStartTime.current}ms`
-      );
       return;
     }
 
-    console.log(
-      `[LoginForm] Form submission started at ${performance.now() - renderStartTime.current}ms`
-    );
     toast.dismiss('login-error');
     toast.loading(t('login.form.signingIn'), { id: 'auth-loading' });
 
@@ -190,9 +161,8 @@ const LoginForm = () => {
               setErrors(prev => ({ ...prev, username: '' }));
             }}
             placeholder={t('login.form.username')}
-            className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-4 ${
-              errors.username ? 'border-red-400' : 'border-blue-300/20'
-            } [&:-webkit-autofill]:!-webkit-text-fill-color-white rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all duration-200 
+            className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-4 ${errors.username ? 'border-red-400' : 'border-blue-300/20'
+              } [&:-webkit-autofill]:!-webkit-text-fill-color-white rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all duration-200 
             [-webkit-text-fill-color:white] focus:border-blue-400 focus:outline-none
             focus:ring-1
             focus:ring-blue-400/30
@@ -234,9 +204,8 @@ const LoginForm = () => {
               setErrors(prev => ({ ...prev, password: '' }));
             }}
             placeholder={t('login.form.password')}
-            className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-12 ${
-              errors.password ? 'border-red-400' : 'border-blue-300/20'
-            } [&:-webkit-autofill]:!-webkit-text-fill-color-white [-ms-reveal]:hidden rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all 
+            className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-12 ${errors.password ? 'border-red-400' : 'border-blue-300/20'
+              } [&:-webkit-autofill]:!-webkit-text-fill-color-white [-ms-reveal]:hidden rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all 
             duration-200 [-webkit-text-fill-color:white] focus:border-blue-400
             focus:outline-none
             focus:ring-1
