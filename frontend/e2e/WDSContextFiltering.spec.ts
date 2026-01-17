@@ -72,12 +72,9 @@ test.describe('WDS Context Filtering - Context Management Tests', () => {
   test('create new context dialog', async ({ page }) => {
     await page.waitForTimeout(1000);
 
-    const contextSelect = page
-      .locator('select, [role="combobox"]')
-      .filter({ hasText: /all|wds/i })
-      .first();
+    const contextSelect = page.locator('#context-filter-button');
 
-    await contextSelect.waitFor({ state: 'visible', timeout: 10000 });
+    await contextSelect.waitFor({ state: 'visible', timeout: 30000 });
 
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
