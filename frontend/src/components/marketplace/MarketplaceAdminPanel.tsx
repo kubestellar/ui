@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -453,9 +454,21 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
     }
   };
 
+  // Lock body scroll when panel is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <>
       <AnimatePresence>
         <motion.div
@@ -550,6 +563,7 @@ export const MarketplaceAdminPanel: React.FC<MarketplaceAdminPanelProps> = ({
         plugin={selectedPlugin}
         onDeleteSuccess={handleDeleteSuccess}
       />
-    </>
+    </>,
+    document.body
   );
 };
