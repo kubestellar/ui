@@ -103,6 +103,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   // Connect to WebSocket
   useEffect(() => {
     isUnmountedRef.current = false;
+
     const connectWebSocket = () => {
       if (isUnmountedRef.current) return null;
       try {
