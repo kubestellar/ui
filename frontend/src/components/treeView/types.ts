@@ -2,8 +2,14 @@ import React from 'react';
 import { Position, MarkerType } from 'reactflow';
 
 // Base interfaces
+export interface NodeLabelProps {
+  label: string;
+  resourceData?: ResourceItem;
+  [key: string]: unknown;
+}
+
 export interface NodeData {
-  label: JSX.Element;
+  label: React.ReactElement<NodeLabelProps>;
 }
 
 export interface BaseNode {

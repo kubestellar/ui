@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 
 interface PublicRouteProps {
-  children: JSX.Element;
+  children: React.ReactNode;
 }
 
 const PublicRoute = ({ children }: PublicRouteProps) => {

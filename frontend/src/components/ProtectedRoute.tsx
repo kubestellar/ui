@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import LoadingFallback from './LoadingFallback';
 
 interface ProtectedRouteProps {
-  children: JSX.Element;
+  children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {

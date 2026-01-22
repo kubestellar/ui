@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -875,7 +875,10 @@ const CommandListItem: React.FC<CommandListItemProps> = ({
             background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(243, 244, 246, 0.7)',
           }}
         >
-          <command.icon className="text-base" style={{ color: getIconColor(command.type) }} />
+          {React.createElement(command.icon, {
+            className: 'text-base',
+            style: { color: getIconColor(command.type) },
+          })}
         </div>
         <div className="min-w-0 flex-1">
           <div

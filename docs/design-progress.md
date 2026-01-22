@@ -374,7 +374,7 @@ Key highlights:
 - Fully responsive across devices (desktop, tablet, mobile)  
 - Enabled real-time testing of user flow and functionality  
 
-Contributers: 
+Contributors: 
 - [Saumya Kumar](https://github.com/oksaumya)
 - [Mahi Monga](https://github.com/mahimonga)
 - [Naman](https://github.com/naman9271)

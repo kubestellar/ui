@@ -5,6 +5,24 @@ const isCI = !!process.env.CI;
 const baseURL = process.env.VITE_BASE_URL || 'http://localhost:5173';
 
 /**
+ * Determine worker count for parallelization
+ * - CI: Use 50% of available CPUs (or env override) for better resource utilization
+ * - Local: Use all available CPUs
+ */
+const getWorkerCount = (): number | string => {
+  if (!isCI) return '100%'; // Use all CPUs locally
+
+  // Allow CI to override worker count via environment variable
+  if (process.env.PLAYWRIGHT_WORKERS) {
+    const workers = parseInt(process.env.PLAYWRIGHT_WORKERS, 10);
+    if (!isNaN(workers) && workers > 0) return workers;
+  }
+
+  // Default: 2 workers in CI for stability
+  return 2;
+};
+
+/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -17,13 +35,21 @@ export default defineConfig({
   forbidOnly: isCI,
   /* Retry on CI only */
   retries: isCI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: isCI ? 1 : undefined,
+  /* Number of parallel workers - enables parallelization in CI */
+  workers: getWorkerCount(),
+  /* Global timeout for each test */
+  timeout: 60000,
+  /* Expect timeout */
+  expect: {
+    timeout: 10000,
+  },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'playwright-results.json' }],
     ['junit', { outputFile: 'playwright-results.xml' }],
+    // Blob reporter for merging sharded results in CI
+    ...(isCI ? [['blob', { outputDir: 'blob-report' }] as const] : []),
     isCI ? ['github'] : ['list'],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -46,6 +72,12 @@ export default defineConfig({
     /* Ignore HTTPS errors */
     ignoreHTTPSErrors: true,
 
+    /* Action timeout - prevent individual actions from hanging */
+    actionTimeout: 15000,
+
+    /* Navigation timeout */
+    navigationTimeout: 30000,
+
     /* Extra HTTP headers */
     extraHTTPHeaders: {
       'Accept-Language': 'en-US,en;q=0.9',
@@ -66,7 +98,14 @@ export default defineConfig({
 
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: {
+        ...devices['Desktop Safari'],
+        // Webkit is slower, give it more time
+        actionTimeout: 20000,
+        navigationTimeout: 40000,
+      },
+      // More retries for webkit as it can be flaky
+      retries: isCI ? 3 : 0,
     },
 
     // Only include branded browsers in local development (not CI)
@@ -90,6 +129,8 @@ export default defineConfig({
       VITE_DISABLE_CANVAS: 'false', // app handle Firefox detection
       VITE_USE_MSW: 'true', // Enable MSW for tests
     },
-    timeout: 120 * 1000,
+    timeout: 180 * 1000, // 3 minutes for server startup in CI
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
 });

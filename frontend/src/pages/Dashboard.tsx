@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo, useCallback, Suspense, lazy } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useK8sQueries } from '../hooks/queries/useK8sQueries';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ClusterSkeleton from '../components/skeleton/ClusterSkeleton';
 import {
   Activity,
-  Server,
+  Network,
   AlertTriangle,
   X,
   RefreshCcw,
@@ -18,8 +18,6 @@ import {
   Clock,
   Cpu,
   HardDrive,
-  ChevronUp,
-  ChevronDown,
   BarChart3,
   ClipboardList,
   Shield,
@@ -35,6 +33,7 @@ import {
   useUserActivityQuery,
   useDeletedUsersActivityQuery,
 } from '../hooks/queries/useUserActivityQuery.ts';
+import StatCard from '../components/dashboard/StatCard.tsx';
 
 // Lazy load the ClusterDetailDialog component
 const ClusterDetailDialog = lazy(
@@ -116,7 +115,7 @@ const OptimizedProgressBar = ({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
-          {Icon && <Icon size={14} className="mr-2 text-gray-500" />}
+          {Icon && React.createElement(Icon, { size: 14, className: 'mr-2 text-gray-500' })}
           {label}
           {tooltip && (
             <>
@@ -240,202 +239,6 @@ const itemAnimationVariant: Variants = {
   exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
 };
 
-// Enhanced modern stat component with advanced UI
-const StatCard = ({
-  title,
-  value,
-  icon: Icon,
-  change,
-  iconColor,
-  isContext = false,
-  link,
-}: {
-  title: string;
-  value: number | string;
-  icon: React.ElementType;
-  change?: number;
-  iconColor: string;
-  isContext?: boolean;
-  link?: string;
-}) => {
-  // Determine if change is positive, negative or neutral
-  const isPositive = typeof change === 'number' && change > 0;
-  const isNegative = typeof change === 'number' && change < 0;
-
-  // Get colors for gradient based on the icon color type
-  const getGradient = () => {
-    if (iconColor.includes('blue')) {
-      return 'bg-gradient-to-br from-blue-500/10 to-indigo-600/5 dark:from-blue-900/20 dark:to-indigo-900/10';
-    } else if (iconColor.includes('green')) {
-      return 'bg-gradient-to-br from-emerald-500/10 to-green-600/5 dark:from-emerald-900/20 dark:to-green-900/10';
-    } else if (iconColor.includes('purple')) {
-      return 'bg-gradient-to-br from-violet-500/10 to-purple-600/5 dark:from-violet-900/20 dark:to-purple-900/10';
-    } else if (iconColor.includes('amber')) {
-      return 'bg-gradient-to-br from-amber-500/10 to-orange-600/5 dark:from-amber-900/20 dark:to-orange-900/10';
-    } else {
-      return 'bg-gradient-to-br from-gray-500/5 to-gray-600/5 dark:from-gray-800/20 dark:to-gray-900/10';
-    }
-  };
-
-  // Get colors for the icon container
-  const getIconGradient = () => {
-    if (iconColor.includes('blue')) {
-      return 'bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500';
-    } else if (iconColor.includes('green')) {
-      return 'bg-gradient-to-br from-emerald-500 to-green-600 dark:from-emerald-400 dark:to-green-500';
-    } else if (iconColor.includes('purple')) {
-      return 'bg-gradient-to-br from-violet-500 to-purple-600 dark:from-violet-400 dark:to-purple-500';
-    } else if (iconColor.includes('amber')) {
-      return 'bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-400 dark:to-orange-500';
-    } else {
-      return 'bg-gradient-to-br from-gray-500 to-gray-600 dark:from-gray-400 dark:to-gray-500';
-    }
-  };
-
-  interface CardLinkWrapperProps {
-    children: React.ReactNode;
-    link?: string;
-  }
-
-  const CardLinkWrapper: React.FC<CardLinkWrapperProps> = ({ children, link }) => {
-    return link ? (
-      <Link to={link} className="block h-full w-full">
-        {children}
-      </Link>
-    ) : (
-      <div className="block h-full w-full cursor-default">{children}</div>
-    );
-  };
-
-  // Get indicator component based on card type
-  const getIndicator = () => {
-    if (title === 'Total Clusters') {
-      return (
-        <div className="flex h-10 items-end space-x-1">
-          {[0.4, 0.7, 1, 0.6, 0.8].map((height, i) => (
-            <motion.div
-              key={i}
-              className="w-1.5 rounded-t bg-blue-500/70 dark:bg-blue-400/70"
-              initial={{ height: 0 }}
-              animate={{ height: `${height * 40}px` }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-            ></motion.div>
-          ))}
-        </div>
-      );
-    }
-
-    if (title === 'Active Clusters') {
-      return (
-        <div className="flex h-10 w-10 items-center justify-center">
-          <div className="flex -space-x-1.5">
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="h-5 w-5 rounded-full border-2 border-white bg-emerald-500/80 dark:border-gray-800 dark:bg-emerald-400/80"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: i * 0.1, duration: 0.3 }}
-              ></motion.div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (title === 'Binding Policies') {
-      return (
-        <div className="relative flex h-10 w-10 items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-purple-100 dark:bg-purple-900/30"></div>
-          <FileText
-            size={60}
-            className="scale-[0.65] transform text-purple-600/80 dark:text-purple-400/80"
-          />
-        </div>
-      );
-    }
-
-    if (title === 'Current Context') {
-      return (
-        <div className="relative flex h-10 w-10 items-center justify-center">
-          <div className="absolute inset-0 rounded-full border-2 border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"></div>
-          <div className="absolute inset-0 rounded-full border-2 border-dashed border-amber-500/40 dark:border-amber-400/40"></div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/30 dark:from-amber-400/20 dark:to-amber-500/30">
-            <Activity size={16} className="text-amber-600 dark:text-amber-400" />
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  return (
-    <CardLinkWrapper link={link}>
-      <motion.div
-        className={`flex flex-col rounded-xl border border-gray-100 p-6 shadow-sm transition-all duration-300 dark:border-gray-700 ${getGradient()} relative overflow-hidden`}
-        whileHover={{
-          y: -4,
-          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)',
-          transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] },
-        }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        variants={itemAnimationVariant}
-      >
-        {/* Decorative background elements for visual interest without animation loops */}
-        <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br from-white/5 to-white/10 dark:from-gray-700/10 dark:to-gray-700/20"></div>
-        <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-gradient-to-tl from-white/5 to-white/0 dark:from-gray-700/5 dark:to-transparent"></div>
-
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className={`rounded-xl p-2.5 ${getIconGradient()} mr-3 text-white shadow-lg`}>
-              <Icon size={18} />
-            </div>
-            <span className="text-sm font-medium text-gray-700 transition-colors dark:text-gray-300">
-              {title}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-1 flex items-end justify-between">
-          <div className="min-w-0 flex-grow">
-            <div className="flex items-center">
-              <h3 className="truncate text-3xl font-bold text-gray-900 transition-colors dark:text-gray-50">
-                {value}
-              </h3>
-              {isContext && (
-                <div className="ml-2 h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
-              )}
-            </div>
-            {change !== undefined && (
-              <div className="mt-2.5 flex w-fit items-center rounded-full bg-gray-50 px-3 py-1 dark:bg-gray-800/50">
-                {isPositive && <ChevronUp size={16} className="mr-1.5 text-emerald-500" />}
-                {isNegative && <ChevronDown size={16} className="mr-1.5 text-red-500" />}
-                <span
-                  className={
-                    isPositive
-                      ? 'text-sm font-medium text-emerald-500'
-                      : isNegative
-                        ? 'text-sm font-medium text-red-500'
-                        : 'text-sm font-medium text-gray-500 dark:text-gray-400'
-                  }
-                >
-                  {Math.abs(change)}% {isPositive ? 'increase' : isNegative ? 'decrease' : 'change'}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Static visual indicators that don't use infinite animation loops */}
-          {getIndicator()}
-        </div>
-      </motion.div>
-    </CardLinkWrapper>
-  );
-};
-
 // Enhanced overview card component
 const OverviewCard = ({
   title,
@@ -459,7 +262,7 @@ const OverviewCard = ({
       <div className="flex items-center justify-between border-b px-5 pb-3 pt-5 dark:border-gray-700">
         <div className="flex items-center">
           <div className={`mr-3 rounded-lg p-2 ${iconColor} transition-colors`}>
-            <Icon size={18} />
+            {React.createElement(Icon, { size: 18 })}
           </div>
           <h2 className="text-lg font-semibold text-gray-900 transition-colors dark:text-gray-100">
             {title}
@@ -553,7 +356,15 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
         setIsLoading(false);
       }
     }
-  }, [clustersLoading, bpLoading, clusterData, bindingPoliciesData, userLoading, userActivities]);
+  }, [
+    clustersLoading,
+    bpLoading,
+    clusterData,
+    bindingPoliciesData,
+    userLoading,
+    userActivities,
+    deletedActivities,
+  ]);
 
   useEffect(() => {
     processData();
@@ -738,7 +549,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                     ? {
                         bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
                         text: isDark ? 'text-blue-400' : 'text-blue-600',
-                        icon: <Server size={16} />,
+                        icon: <Network size={16} />,
                       }
                     : {
                         bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
@@ -1120,7 +931,7 @@ const K8sInfo = () => {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
             <div className="mb-2 flex items-center">
-              <Server size={16} className="mr-2 text-blue-500" />
+              <Network size={16} className="mr-2 text-blue-500" />
               <span className="font-medium text-gray-800 dark:text-gray-200">
                 {t('clusters.dashboard.guide.clusterStats')}
               </span>
@@ -1179,14 +990,14 @@ const K8sInfo = () => {
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
           <Link
             to="/its"
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-all duration-200 hover:scale-110 hover:bg-indigo-700 hover:text-cyan-200 hover:shadow-lg"
           >
             <Layers size={16} />
             <span>{t('clusters.title')}</span>
           </Link>
           <Link
             to="/resources"
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 shadow-sm transition-all duration-200 hover:scale-110 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             <ClipboardList size={16} />
             <span>{t('menu.items.resourceExplorer')}</span>
@@ -1207,29 +1018,29 @@ const K8sInfo = () => {
         <StatCard
           title={t('clusters.dashboard.stats.totalClusters')}
           value={stats.totalClusters}
-          icon={Server}
-          iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+          icon={Network}
+          iconColor="blue"
           link={'/its'}
         />
         <StatCard
           title={t('clusters.dashboard.stats.activeClusters')}
           value={stats.activeClusters}
           icon={CircleCheck}
-          iconColor="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+          iconColor="green"
           link={'/its'}
         />
         <StatCard
           title={t('clusters.dashboard.stats.bindingPolicies')}
           value={stats.totalBindingPolicies}
           icon={FileText}
-          iconColor="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+          iconColor="purple"
           link={'/bp/manage'}
         />
         <StatCard
           title={t('clusters.dashboard.stats.currentContext')}
           value={currentContext || t('clusters.dashboard.stats.none')}
           icon={Activity}
-          iconColor="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+          iconColor="amber"
           isContext={true}
         />
       </motion.div>
@@ -1581,7 +1392,7 @@ const K8sInfo = () => {
                         <div
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${statusBg} ${statusColor} transition-colors`}
                         >
-                          <Server size={18} />
+                          <Network size={18} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="truncate font-medium text-gray-900 transition-colors dark:text-gray-100">
@@ -1647,7 +1458,7 @@ const K8sInfo = () => {
           ) : (
             <div className="flex h-full flex-col items-center justify-center p-8 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700">
-                <Server size={28} className="text-gray-400 transition-colors dark:text-gray-500" />
+                <Network size={28} className="text-gray-400 transition-colors dark:text-gray-500" />
               </div>
               <p className="mb-4 text-gray-500 transition-colors dark:text-gray-400">
                 {t('clusters.dashboard.noManagedClusters')}

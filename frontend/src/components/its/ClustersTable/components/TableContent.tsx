@@ -8,14 +8,15 @@ import {
   Checkbox,
   Paper,
   Fade,
+  Box,
 } from '@mui/material';
+import DeviceHubIcon from '@mui/icons-material/DeviceHub';
 import { useTranslation } from 'react-i18next';
 import { ColorTheme, ManagedClusterInfo } from '../types';
 import StatusBadge from './StatusBadge';
 import LabelChip from './LabelChip';
 import { ActionButton } from './ActionMenu';
 import EmptyState from './EmptyState';
-import ClusterVisualization from './ClusterVisualization';
 
 interface TableContentProps {
   clusters: ManagedClusterInfo[];
@@ -172,11 +173,32 @@ const TableContent: React.FC<TableContentProps> = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-4">
-                    <ClusterVisualization
-                      available={!!cluster.available}
-                      isDark={isDark}
-                      colors={colors}
-                    />
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        backgroundColor: cluster.available
+                          ? isDark
+                            ? 'rgba(76, 175, 80, 0.15)'
+                            : 'rgba(76, 175, 80, 0.1)'
+                          : isDark
+                            ? 'rgba(244, 67, 54, 0.15)'
+                            : 'rgba(244, 67, 54, 0.1)',
+                        border: `2px solid ${cluster.available ? colors.success : colors.error}`,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <DeviceHubIcon
+                        sx={{
+                          fontSize: 24,
+                          color: cluster.available ? colors.success : colors.error,
+                        }}
+                      />
+                    </Box>
                     <div className="text-base font-medium">{cluster.name}</div>
                   </div>
                 </TableCell>

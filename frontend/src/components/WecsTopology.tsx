@@ -44,7 +44,6 @@ import { isEqual } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
-import useZoomStore from '../stores/zoomStore';
 import WecsDetailsPanel from './wecs_details/WecsDetailsPanel';
 import { FlowCanvas } from './wds_topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
@@ -53,43 +52,6 @@ import { api } from '../lib/api';
 import useEdgeTypeStore from '../stores/edgeTypeStore';
 
 // Updated Interfaces
-export interface NodeData {
-  label: JSX.Element;
-  isDeploymentOrJobPod?: boolean;
-}
-
-export interface BaseNode {
-  id: string;
-  data: NodeData;
-  position: { x: number; y: number };
-  style?: React.CSSProperties;
-}
-
-export interface CustomNode extends BaseNode {
-  sourcePosition?: Position;
-  targetPosition?: Position;
-  collapsed?: boolean;
-  showMenu?: boolean;
-}
-
-export interface BaseEdge {
-  id: string;
-  source: string;
-  target: string;
-}
-
-export interface CustomEdge extends BaseEdge {
-  type?: string;
-  animated?: boolean;
-  style?: React.CSSProperties;
-  markerEnd?: {
-    type: MarkerType;
-    width?: number;
-    height?: number;
-    color?: string;
-  };
-}
-
 export interface ResourceItem {
   apiVersion: string;
   kind: string;
@@ -132,6 +94,49 @@ export interface ResourceItem {
     resources?: string[];
   }>;
   [key: string]: unknown; // Add index signature to make compatible with TreeViewComponent
+}
+
+export interface NodeLabelProps {
+  label: string;
+  resourceData?: ResourceItem;
+  [key: string]: unknown;
+}
+
+export interface NodeData {
+  label: React.ReactElement<NodeLabelProps>;
+  isDeploymentOrJobPod?: boolean;
+}
+
+export interface BaseNode {
+  id: string;
+  data: NodeData;
+  position: { x: number; y: number };
+  style?: React.CSSProperties;
+}
+
+export interface CustomNode extends BaseNode {
+  sourcePosition?: Position;
+  targetPosition?: Position;
+  collapsed?: boolean;
+  showMenu?: boolean;
+}
+
+export interface BaseEdge {
+  id: string;
+  source: string;
+  target: string;
+}
+
+export interface CustomEdge extends BaseEdge {
+  type?: string;
+  animated?: boolean;
+  style?: React.CSSProperties;
+  markerEnd?: {
+    type: MarkerType;
+    width?: number;
+    height?: number;
+    color?: string;
+  };
 }
 
 export interface WecsResource {
@@ -258,15 +263,18 @@ const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
   direction = 'LR',
-  prevNodes: React.MutableRefObject<CustomNode[]>,
-  currentZoom: number
+  prevNodes: React.MutableRefObject<CustomNode[]>
 ) => {
-  const scaleFactor = Math.max(0.5, Math.min(2.0, currentZoom));
-  const NODE_WIDTH = 146 * scaleFactor;
-  const NODE_HEIGHT = 30 * scaleFactor;
-  const NODE_SEP = 40 * scaleFactor;
-  const RANK_SEP = 100 * scaleFactor;
-  const CHILD_SPACING = NODE_HEIGHT + 30 * scaleFactor;
+  // Use fixed layout values - let ReactFlow handle zoom visually
+  const NODE_WIDTH = 146;
+  const NODE_HEIGHT = 30;
+  const NODE_SEP = 60;
+  const RANK_SEP = 150;
+  const CHILD_SPACING = NODE_HEIGHT + 30;
+
+  if (nodes.length === 0) {
+    return { nodes: [], edges: [] };
+  }
 
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
@@ -276,8 +284,11 @@ const getLayoutedElements = (
   const nodeMap = new Map<string, CustomNode>();
   const newNodes: CustomNode[] = [];
 
-  const shouldRecalculate = true;
-  if (!shouldRecalculate && Math.abs(nodes.length - prevNodes.current.length) <= 5) {
+  // recalculate only if node count changes significantly or if this is first render
+  const shouldRecalculate =
+    prevNodes.current.length === 0 || Math.abs(nodes.length - prevNodes.current.length) > 5;
+
+  if (!shouldRecalculate) {
     prevNodes.current.forEach(node => nodeMap.set(node.id, node));
   }
 
@@ -291,11 +302,15 @@ const getLayoutedElements = (
     }
   });
 
-  edges.forEach(edge => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
+  if (shouldRecalculate) {
+    edges.forEach(edge => {
+      dagreGraph.setEdge(edge.source, edge.target);
+    });
 
-  dagre.layout(dagreGraph);
+    dagre.layout(dagreGraph);
+  } else {
+    return { nodes: prevNodes.current, edges };
+  }
 
   const layoutedNodes = newNodes.map(node => {
     const dagreNode = dagreGraph.node(node.id);
@@ -303,8 +318,8 @@ const getLayoutedElements = (
       ? {
           ...node,
           position: {
-            x: dagreNode.x - NODE_WIDTH / 2 + 50 * scaleFactor,
-            y: dagreNode.y - NODE_HEIGHT / 2 + 50 * scaleFactor,
+            x: dagreNode.x - NODE_WIDTH / 2 + 50,
+            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
           },
         }
       : node;
@@ -525,7 +540,6 @@ const getLayoutedElements = (
 const WecsTreeview = () => {
   const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
-  const { currentZoom, getScaledNodeStyle } = useZoomStore();
   const { edgeType } = useEdgeTypeStore();
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
@@ -540,7 +554,6 @@ const WecsTreeview = () => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
-  const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
   const prevNodes = useRef<CustomNode[]>([]);
   const renderStartTime = useRef<number>(0);
@@ -556,43 +569,43 @@ const WecsTreeview = () => {
     renderStartTime.current = performance.now();
   }, []);
 
-  // Add effect to update node styles when theme or zoom changes
   const updateNodeStyles = useCallback(() => {
-    if (nodes.length > 0) {
-      setNodes(currentNodes => {
-        return currentNodes.map(node => {
-          return {
-            ...node,
-            style: {
-              ...getScaledNodeStyle(currentZoom),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
-              color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
-              border: '1px solid rgba(0, 0, 0, 0)',
-              transition: 'all 0.2s ease-in-out',
-            },
-          };
-        });
-      });
+    setNodes(currentNodes => {
+      if (currentNodes.length === 0) return currentNodes;
 
-      // Update edge styles for the current theme
-      setEdges(currentEdges => {
-        return currentEdges.map(edge => ({
-          ...edge,
+      return currentNodes.map(node => {
+        return {
+          ...node,
           style: {
-            ...edge.style,
-            stroke: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+            ...node.style,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
+            color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+            border: '1px solid rgba(0, 0, 0, 0)',
+            transition: 'all 0.2s ease-in-out',
           },
-        }));
+        };
       });
-    }
-  }, [nodes.length, currentZoom, theme, getScaledNodeStyle]);
+    });
+  }, [theme]);
 
   useEffect(() => {
     updateNodeStyles();
   }, [updateNodeStyles]);
+
+  // Update edge types when edgeType changes
+  useEffect(() => {
+    if (edges.length > 0) {
+      setEdges(currentEdges =>
+        currentEdges.map(edge => ({
+          ...edge,
+          type: edgeType,
+        }))
+      );
+    }
+  }, [edgeType]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -744,6 +757,21 @@ const WecsTreeview = () => {
         ].includes(parentType);
       }
 
+      // Fixed node styles
+      const nodeStyle = {
+        padding: '2px 12px',
+        fontSize: '6px',
+        width: '146px',
+        height: '30px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
+        color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
+        border: '1px solid rgba(0, 0, 0, 0)',
+        transition: 'all 0.2s ease-in-out',
+      };
+
       const node =
         cachedNode ||
         ({
@@ -791,31 +819,13 @@ const WecsTreeview = () => {
             isDeploymentOrJobPod,
           },
           position: { x: 0, y: 0 },
-          style: {
-            ...getScaledNodeStyle(currentZoom),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
-            color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
-            border: '1px solid rgba(0, 0, 0, 0)',
-            transition: 'all 0.2s ease-in-out',
-          },
+          style: nodeStyle,
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
         } as CustomNode);
 
       if (cachedNode) {
-        node.style = {
-          ...getScaledNodeStyle(currentZoom),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: theme === 'dark' ? 'rgba(51, 51, 51, 0)' : 'rgba(255, 255, 255, 0)',
-          color: theme === 'dark' ? 'rgba(255, 255, 255, 0)' : 'rgba(0, 0, 0, 0)',
-          border: '1px solid rgba(0, 0, 0, 0)',
-          transition: 'all 0.2s ease-in-out',
-        };
+        node.style = nodeStyle;
       }
 
       if (!cachedNode) nodeCache.current.set(id, node);
@@ -824,40 +834,39 @@ const WecsTreeview = () => {
       if (parent && stateRef.current.isExpanded) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
-        const cachedEdge = edgeCache.current.get(edgeId);
-        if (!cachedEdge) {
-          const edge = {
-            id: edgeId,
-            source: parent,
-            target: id,
-            type: edgeType,
+        const edge = {
+          id: edgeId,
+          source: parent,
+          target: id,
+          type: edgeType,
+          animated: true,
+          style: {
+            stroke: theme === 'dark' ? 'url(#edge-gradient-dark)' : 'url(#edge-gradient-light)',
+            strokeWidth: 2,
+            opacity: 0.8,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            filter:
+              theme === 'dark'
+                ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+            strokeLinecap: 'round' as const,
+            strokeLinejoin: 'round' as const,
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 12,
+            height: 12,
+            color: theme === 'dark' ? '#64748b' : '#94a3b8',
+          },
+          data: {
+            status: 'default' as 'default' | 'active' | 'success' | 'warning' | 'error',
             animated: true,
-            style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: theme === 'dark' ? '#ccc' : '#a3a3a3',
-            },
-          };
-          newEdges.push(edge);
-          edgeCache.current.set(edgeId, edge);
-        } else {
-          // Update cached edge styles for the current theme
-          const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
-            type: cachedEdge.markerEnd?.type || MarkerType.ArrowClosed,
-            color: theme === 'dark' ? '#ccc' : '#a3a3a3',
-          };
-
-          const updatedEdge = {
-            ...cachedEdge,
-            style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
-            markerEnd,
-            type: edgeType,
-          };
-          newEdges.push(updatedEdge);
-        }
+          },
+        };
+        newEdges.push(edge);
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, currentZoom, getScaledNodeStyle, edgeType]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, edgeType]
   );
 
   const transformDataToTree = useCallback(
@@ -868,11 +877,11 @@ const WecsTreeview = () => {
         setIsTransforming(false);
         return;
       }
+
       const clusterTimestampMap = await fetchAllClusterTimestamps(data);
 
-      // Clear caches when theme changes to ensure proper styling
+      // Clear node cache to ensure fresh nodes with updated styles
       nodeCache.current.clear();
-      edgeCache.current.clear();
       edgeIdCounter.current = 0;
 
       const newNodes: CustomNode[] = [];
@@ -1270,23 +1279,30 @@ const WecsTreeview = () => {
         newNodes,
         newEdges,
         'LR',
-        prevNodes,
-        currentZoom
+        prevNodes
       );
-      if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
-      if (!isEqual(edges, layoutedEdges)) setEdges(layoutedEdges);
+
+      if (!isEqual(nodes, layoutedNodes)) {
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+      } else if (!isEqual(edges, layoutedEdges)) {
+        setEdges(layoutedEdges);
+      }
+
       prevNodes.current = layoutedNodes;
       setIsTransforming(false);
     },
-    [createNode, nodes, edges, fetchAllClusterTimestamps, currentZoom, edgeType]
+    [createNode, fetchAllClusterTimestamps]
   );
 
   // Memoize the data processing to avoid unnecessary re-renders
   const memoizedWecsData = useMemo(() => wecsData, [wecsData]);
 
-  // Memoize node and edge rendering to prevent unnecessary re-renders
-  const memoizedNodes = useMemo(() => nodes, [nodes]);
-  const memoizedEdges = useMemo(() => edges, [edges]);
+  // Memoize node rendering to prevent unnecessary re-renders
+  const memoizedNodes = useMemo(() => {
+    if (nodes.length === 0) return [];
+    return nodes;
+  }, [nodes]);
 
   useEffect(() => {
     if (memoizedWecsData !== null && !isEqual(memoizedWecsData, prevWecsData.current)) {
@@ -1621,7 +1637,7 @@ const WecsTreeview = () => {
               <ReactFlowProvider>
                 <FlowCanvas
                   nodes={memoizedNodes}
-                  edges={memoizedEdges}
+                  edges={edges}
                   renderStartTime={renderStartTime}
                   theme={theme}
                 />

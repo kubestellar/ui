@@ -26,6 +26,16 @@
   - frontend/tsconfig*.json
   - frontend/prettier.config.js
   - frontend/postcss.config.js
+  - frontend/playwright.config.ts
+
+# Add 'tests' label for test-related files
+'tests':
+  - frontend/e2e/**
+  - frontend/tests/**
+  - frontend/playwright.config.ts
+  - frontend/playwright.global-setup.ts
+  - frontend/jest.config.ts
+  - frontend/jest.setup.ts
 
 # Add 'documentation' label for documentation-related files
 'documentation':
@@ -43,6 +53,10 @@
   - frontend/.dockerignore
   - backend/Dockerfile
   - backend/.dockerignore
+
+# Add 'helm' label for Helm chart files
+'helm':
+  - chart/**
 
 # Add 'other' label as a fallback for any other files
 'other':

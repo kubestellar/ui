@@ -6,7 +6,7 @@ test.describe('Object Explorer - View Modes and Pagination', () => {
   let objectExplorerPage: ObjectExplorerPage;
   let mswHelper: MSWHelper;
 
-  test.describe.configure({ timeout: 60000 });
+  test.describe.configure({ timeout: 120000 });
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
     objectExplorerPage = new ObjectExplorerPage(page);

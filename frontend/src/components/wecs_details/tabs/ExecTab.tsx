@@ -29,7 +29,7 @@ interface ExecTabProps {
   selectedContainer: string;
   loadingContainers: boolean;
   isTerminalMaximized: boolean;
-  execTerminalRef: React.RefObject<HTMLDivElement>;
+  execTerminalRef: React.RefObject<HTMLDivElement | null>;
   execTerminalKey: string;
   handleContainerChange: (event: SelectChangeEvent<string>) => void;
   setIsContainerSelectActive: (active: boolean) => void;
