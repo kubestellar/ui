@@ -1,9 +1,12 @@
+export type PermissionValue = 'read' | 'write' | null;
+export type PermissionsMap = Record<string, PermissionValue>;
+
 // User data type
 export interface User {
   id?: number;
   username: string;
   is_admin: boolean;
-  permissions: Record<string, string>;
+  permissions: PermissionsMap;
   created_at?: string;
   updated_at?: string;
 }
@@ -25,7 +28,7 @@ export interface PermissionComponent {
 
 // Permission level type
 export interface PermissionLevel {
-  id: string;
+  id: Exclude<PermissionValue, null>;
   name: string;
 }
 
@@ -59,13 +62,14 @@ export interface UserFormModalProps {
   setConfirmPassword: (confirmPassword: string) => void;
   isAdmin: boolean;
   setIsAdmin: (isAdmin: boolean) => void;
-  permissions: Record<string, string>;
-  setPermissionChange: (component: string, permission: string) => void;
+  permissions: PermissionsMap;
+  setPermissionChange: (component: string, permission: PermissionValue) => void;
   permissionComponents: PermissionComponent[];
   permissionLevels: PermissionLevel[];
   submitLabel: string;
   showPasswordFields?: boolean;
   passwordOptional?: boolean;
+  existingUsernames?: string[]; // For checking username availability (only needed for add mode)
   isDark: boolean;
   themeStyles: ThemeStyles;
 }
