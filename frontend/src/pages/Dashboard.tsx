@@ -5,7 +5,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ClusterSkeleton from '../components/skeleton/ClusterSkeleton';
 import {
   Activity,
-  Server,
+  Network,
   AlertTriangle,
   X,
   RefreshCcw,
@@ -356,7 +356,15 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
         setIsLoading(false);
       }
     }
-  }, [clustersLoading, bpLoading, clusterData, bindingPoliciesData, userLoading, userActivities]);
+  }, [
+    clustersLoading,
+    bpLoading,
+    clusterData,
+    bindingPoliciesData,
+    userLoading,
+    userActivities,
+    deletedActivities,
+  ]);
 
   useEffect(() => {
     processData();
@@ -541,7 +549,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                     ? {
                         bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
                         text: isDark ? 'text-blue-400' : 'text-blue-600',
-                        icon: <Server size={16} />,
+                        icon: <Network size={16} />,
                       }
                     : {
                         bg: isDark ? 'bg-teal-900/30' : 'bg-teal-100',
@@ -923,7 +931,7 @@ const K8sInfo = () => {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
             <div className="mb-2 flex items-center">
-              <Server size={16} className="mr-2 text-blue-500" />
+              <Network size={16} className="mr-2 text-blue-500" />
               <span className="font-medium text-gray-800 dark:text-gray-200">
                 {t('clusters.dashboard.guide.clusterStats')}
               </span>
@@ -982,14 +990,14 @@ const K8sInfo = () => {
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
           <Link
             to="/its"
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow-sm transition-all duration-200 hover:scale-110 hover:bg-indigo-700 hover:text-cyan-200 hover:shadow-lg"
           >
             <Layers size={16} />
             <span>{t('clusters.title')}</span>
           </Link>
           <Link
             to="/resources"
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 shadow-sm transition-all duration-200 hover:scale-110 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             <ClipboardList size={16} />
             <span>{t('menu.items.resourceExplorer')}</span>
@@ -1010,7 +1018,7 @@ const K8sInfo = () => {
         <StatCard
           title={t('clusters.dashboard.stats.totalClusters')}
           value={stats.totalClusters}
-          icon={Server}
+          icon={Network}
           iconColor="blue"
           link={'/its'}
         />
@@ -1384,7 +1392,7 @@ const K8sInfo = () => {
                         <div
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${statusBg} ${statusColor} transition-colors`}
                         >
-                          <Server size={18} />
+                          <Network size={18} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="truncate font-medium text-gray-900 transition-colors dark:text-gray-100">
@@ -1450,7 +1458,7 @@ const K8sInfo = () => {
           ) : (
             <div className="flex h-full flex-col items-center justify-center p-8 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700">
-                <Server size={28} className="text-gray-400 transition-colors dark:text-gray-500" />
+                <Network size={28} className="text-gray-400 transition-colors dark:text-gray-500" />
               </div>
               <p className="mb-4 text-gray-500 transition-colors dark:text-gray-400">
                 {t('clusters.dashboard.noManagedClusters')}
