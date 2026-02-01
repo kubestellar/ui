@@ -259,82 +259,97 @@ func getClusterConfigFromLocal(clusterName string) ([]byte, error) {
 func approveClusterCSRs(clientset *kubernetes.Clientset, clusterName string) error {
 	LogOnboardingEvent(clusterName, "Searching", "Looking for Certificate Signing Requests for cluster")
 
-	// List all CSRs
-	csrList, err := clientset.CertificatesV1().CertificateSigningRequests().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		LogOnboardingEvent(clusterName, "Error", "Failed to list CSRs: "+err.Error())
-		return fmt.Errorf("failed to list CSRs: %w", err)
-	}
+	// Wait up to 5 minutes for CSRs to appear
+	timeout := time.After(5 * time.Minute)
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 
-	// Check if there are any pending CSRs for our cluster
-	pendingCSRs := []string{}
-
-	for _, csr := range csrList.Items {
-		if strings.Contains(csr.Name, clusterName) && !isCSRApproved(csr) {
-			pendingCSRs = append(pendingCSRs, csr.Name)
-			LogOnboardingEvent(clusterName, "Found", fmt.Sprintf("Found pending CSR: %s", csr.Name))
-		}
-	}
-
-	if len(pendingCSRs) == 0 {
-		LogOnboardingEvent(clusterName, "Info", "No pending CSRs found for this cluster")
-
-		// Wait briefly and check again
-		LogOnboardingEvent(clusterName, "Waiting", "Waiting 30 seconds for CSRs to appear")
-		time.Sleep(30 * time.Second)
-
-		// Check again
+	// Initial check
+	checkAndApprove := func() (bool, error) {
+		// List all CSRs
 		csrList, err := clientset.CertificatesV1().CertificateSigningRequests().List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
-			LogOnboardingEvent(clusterName, "Error", "Failed to list CSRs after waiting: "+err.Error())
-			return fmt.Errorf("failed to list CSRs after waiting: %w", err)
+			LogOnboardingEvent(clusterName, "Error", "Failed to list CSRs: "+err.Error())
+			return false, fmt.Errorf("failed to list CSRs: %w", err)
 		}
+
+		// Check if there are any pending CSRs for our cluster
+		pendingCSRs := []string{}
 
 		for _, csr := range csrList.Items {
 			if strings.Contains(csr.Name, clusterName) && !isCSRApproved(csr) {
 				pendingCSRs = append(pendingCSRs, csr.Name)
-				LogOnboardingEvent(clusterName, "Found", fmt.Sprintf("Found pending CSR after waiting: %s", csr.Name))
+				LogOnboardingEvent(clusterName, "Found", fmt.Sprintf("Found pending CSR: %s", csr.Name))
 			}
 		}
-	}
 
-	// If we found pending CSRs, approve them directly using kubectl
-	if len(pendingCSRs) > 0 {
-		LogOnboardingEvent(clusterName, "Approving", fmt.Sprintf("Approving %d CSRs", len(pendingCSRs)))
+		if len(pendingCSRs) > 0 {
+			LogOnboardingEvent(clusterName, "Approving", fmt.Sprintf("Approving %d CSRs", len(pendingCSRs)))
 
-		// Method 1: Use kubectl directly (more reliable based on your experience)
-		approveCmd := exec.Command("kubectl", append([]string{"--context", "its1", "certificate", "approve"}, pendingCSRs...)...)
-		output, err := approveCmd.CombinedOutput()
-		if err != nil {
-			LogOnboardingEvent(clusterName, "Error", fmt.Sprintf("Failed to approve CSRs using kubectl: %v, %s", err, string(output)))
-			telemetry.InstrumentKubectlCommand(approveCmd, "approve-csr", "its1")
+			// Method 1: Use kubectl directly (more reliable based on your experience)
+			approveCmd := exec.Command("kubectl", append([]string{"--context", "its1", "certificate", "approve"}, pendingCSRs...)...)
+			output, err := approveCmd.CombinedOutput()
+			if err != nil {
+				LogOnboardingEvent(clusterName, "Error", fmt.Sprintf("Failed to approve CSRs using kubectl: %v, %s", err, string(output)))
+				telemetry.InstrumentKubectlCommand(approveCmd, "approve-csr", "its1")
 
-			// Method 2: Fall back to SDK approach if kubectl fails
-			LogOnboardingEvent(clusterName, "Fallback", "Falling back to SDK approach for CSR approval")
-			for _, csrName := range pendingCSRs {
-				approvalPatch := []byte(`{"status":{"conditions":[{"type":"Approved","status":"True","reason":"ApprovedByAPI","message":"Approved via KubeStellar API"}]}}`)
+				// Method 2: Fall back to SDK approach if kubectl fails
+				LogOnboardingEvent(clusterName, "Fallback", "Falling back to SDK approach for CSR approval")
+				for _, csrName := range pendingCSRs {
+					approvalPatch := []byte(`{"status":{"conditions":[{"type":"Approved","status":"True","reason":"ApprovedByAPI","message":"Approved via KubeStellar API"}]}}`)
 
-				_, err := clientset.CertificatesV1().CertificateSigningRequests().Patch(
-					context.TODO(),
-					csrName,
-					types.MergePatchType,
-					approvalPatch,
-					metav1.PatchOptions{},
-				)
-				if err != nil {
-					LogOnboardingEvent(clusterName, "Error", fmt.Sprintf("Failed to approve CSR %s: %v", csrName, err))
-					return fmt.Errorf("failed to approve CSR %s: %w", csrName, err)
+					_, err := clientset.CertificatesV1().CertificateSigningRequests().Patch(
+						context.TODO(),
+						csrName,
+						types.MergePatchType,
+						approvalPatch,
+						metav1.PatchOptions{},
+					)
+					if err != nil {
+						LogOnboardingEvent(clusterName, "Error", fmt.Sprintf("Failed to approve CSR %s: %v", csrName, err))
+						return false, fmt.Errorf("failed to approve CSR %s: %w", csrName, err)
+					}
+
+					LogOnboardingEvent(clusterName, "Approved", fmt.Sprintf("Successfully approved CSR %s", csrName))
 				}
-
-				LogOnboardingEvent(clusterName, "Approved", fmt.Sprintf("Successfully approved CSR %s", csrName))
+			} else {
+				LogOnboardingEvent(clusterName, "Approved", fmt.Sprintf("Successfully approved CSRs using kubectl: %s", string(output)))
 			}
-		} else {
-			LogOnboardingEvent(clusterName, "Approved", fmt.Sprintf("Successfully approved CSRs using kubectl: %s", string(output)))
+			return true, nil
 		}
-	} else {
-		LogOnboardingEvent(clusterName, "Warning", "No CSRs found to approve. Will proceed and check status later.")
+		return false, nil
 	}
 
+	// Try immediately
+	approved, err := checkAndApprove()
+	if err != nil {
+		return err
+	}
+	if approved {
+		goto Accepted
+	}
+
+	LogOnboardingEvent(clusterName, "Waiting", "Waiting for CSRs to appear...")
+
+	for {
+		select {
+		case <-timeout:
+			LogOnboardingEvent(clusterName, "Warning", "No CSRs found to approve within timeout. Will proceed and check status later.")
+			goto Accepted
+		case <-ticker.C:
+			approved, err := checkAndApprove()
+			if err != nil {
+				// Log error but keep retrying?
+				log.Printf("Error checking CSRs: %v", err)
+			}
+			if approved {
+				goto Accepted
+			}
+			LogOnboardingEvent(clusterName, "Waiting", "Waiting for CSRs to appear...")
+		}
+	}
+
+Accepted:
 	// Also try using clusteradm to accept the cluster (with skip-approve-check)
 	acceptCmd := exec.Command("clusteradm", "--context", "its1", "accept", "--clusters", clusterName, "--skip-approve-check")
 	acceptOutput, acceptErr := acceptCmd.CombinedOutput()
