@@ -3,8 +3,18 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
+
+func init() {
+	// Load .env file from the backend root directory
+	// This allows the LLM package to access environment variables
+	godotenv.Load("../.env")
+}
 
 type GeminiRequest struct {
 	Contents []struct {
@@ -16,7 +26,10 @@ type GeminiRequest struct {
 }
 
 func AskGemini(context string, question string) (string, error) {
-	apiKey := "AIzaSyDCzCBTVeFXNN4TS4ZCyyIITorgn0z0nig"
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		return "", fmt.Errorf("GEMINI_API_KEY environment variable is not set")
+	}
 	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey
 
 	systemPrompt := `You are a helpful AI assistant embedded in the Kubestellar UI.
