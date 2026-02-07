@@ -73,7 +73,6 @@ export const useTreeViewData = ({
   const { createNode, clearNodeCache, updateNodeStyles } = useTreeViewNodes({
     onNodeSelect,
     onMenuOpen,
-    isExpanded,
   });
 
   const theme = useTheme(state => state.theme);

@@ -831,7 +831,7 @@ const WecsTreeview = () => {
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      if (parent && stateRef.current.isExpanded) {
+      if (parent) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const edge = {
@@ -841,7 +841,7 @@ const WecsTreeview = () => {
           type: edgeType,
           animated: true,
           style: {
-            stroke: theme === 'dark' ? 'url(#edge-gradient-dark)' : 'url(#edge-gradient-light)',
+            stroke: theme === 'dark' ? '#94a3b8' : '#64748b',
             strokeWidth: 2,
             opacity: 0.8,
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',

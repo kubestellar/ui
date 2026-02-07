@@ -45,7 +45,6 @@ interface TreeViewNodesProps {
     groupItems?: ResourceItem[];
   }) => void;
   onMenuOpen: (event: React.MouseEvent, nodeId: string) => void;
-  isExpanded: boolean;
 }
 
 // TreeView node dimensions
@@ -259,7 +258,7 @@ const getTimeAgo = (timestamp: string | undefined, t: (key: string) => string): 
       );
 };
 
-export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeViewNodesProps) => {
+export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen }: TreeViewNodesProps) => {
   const theme = useTheme(state => state.theme);
   const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
@@ -421,7 +420,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
       newNodes.push(node);
 
       // Add direct edge from parent to node if it's a parent-child relationship
-      if (parent && isExpanded) {
+      if (parent) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const edge = {
@@ -431,7 +430,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           type: edgeType,
           animated: true,
           style: {
-            stroke: theme === 'dark' ? 'url(#edge-gradient-dark)' : 'url(#edge-gradient-light)',
+            stroke: theme === 'dark' ? '#94a3b8' : '#64748b',
             strokeWidth: 2,
             opacity: 0.8,
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -456,7 +455,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         newEdges.push(edge);
       }
     },
-    [theme, isExpanded, highlightedLabels, onNodeSelect, onMenuOpen, edgeType]
+    [theme, highlightedLabels, onNodeSelect, onMenuOpen, edgeType]
   );
 
   const clearNodeCache = useCallback(() => {
