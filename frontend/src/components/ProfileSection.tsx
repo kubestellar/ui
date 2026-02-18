@@ -670,7 +670,10 @@ const ProfileSection = () => {
                   >
                     <div className="grid grid-cols-1 gap-1">
                       <button
-                        onClick={() => setShowChangePasswordModal(true)}
+                        onClick={() => {
+                          setShowChangePasswordModal(true);
+                          setShowUserMenu(false);
+                        }}
                         className="py-3\ group flex w-full items-center rounded-lg px-4 text-sm font-medium transition-colors duration-150"
                         style={{
                           color: styles.helpButton.color,
