@@ -112,7 +112,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
 
   return (
     <motion.header
-      className="fixed left-0 right-0 top-0 z-[3] flex w-full justify-between gap-4 px-4 py-3 xl:gap-0 xl:px-6 xl:py-4"
+      className={`fixed left-0 right-0 top-0 flex w-full justify-between gap-4 px-4 py-3 xl:gap-0 xl:px-6 xl:py-4 ${isMobileMenuOpen ? 'z-[40]' : 'z-[3]'}`}
       style={getHeaderStyle()}
       animate={{ y: scrollDirection === 'down' && scrolled ? -100 : 0 }}
       transition={{ duration: 0.3 }}
@@ -120,17 +120,16 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
       <div
         className={`flex items-center gap-3 transition-all duration-300 ${scrolled ? 'scale-[0.97]' : ''}`}
       >
-        <div className="mr-1 w-auto p-0 xl:hidden">
+        <div className={`mr-1 w-auto p-0 xl:hidden ${isMobileMenuOpen ? 'relative z-[50]' : ''}`}>
           <motion.div
-            className="tooltip tooltip-bottom relative"
+            className={`tooltip tooltip-bottom relative ${isMobileMenuOpen ? 'tooltip-open before:z-[51] after:z-[51]' : ''}`}
             initial="rest"
             whileHover="hover"
             whileTap="tap"
-            data-tip={t('header.menu')}
           >
             <motion.button
               onClick={toggleMobileMenu}
-              className="btn btn-circle relative transition-all duration-300"
+              className={`btn btn-circle relative transition-all duration-300 ${isMobileMenuOpen ? 'z-[50]' : ''}`}
               style={getButtonStyle()}
               aria-label={t('header.menu')}
               animate={isMobileMenuOpen ? 'open' : 'closed'}
