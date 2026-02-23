@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { api } from '../../../lib/api';
 import {
   CustomNode,
   CustomEdge,
   DeleteNodeDetails,
   ContextMenuState,
   ResourceItem,
+  kindToPluralMapLowercase,
 } from '../types';
-import { kindToPluralMap } from '../types';
 
 // Define the tab configuration - this can be easily modified if tabs are reordered
 const TAB_CONFIG = {
@@ -74,11 +74,11 @@ export const useTreeViewActions = ({
   const handleDeleteNode = useCallback(
     async (namespace: string, nodeType: string, nodeName: string, nodeId: string) => {
       try {
-        const plural = kindToPluralMap[nodeType.toLowerCase()] || nodeType.toLowerCase() + 's';
-        const url = `/api/wds/${plural}/${nodeName}`;
-        const params = namespace ? { namespace } : {};
+        const plural = kindToPluralMapLowercase[nodeType.toLowerCase()] || nodeType.toLowerCase() + 's';
+        const url = `/api/${plural}/${namespace}/${nodeName}`;
 
-        await axios.delete(url, { params });
+        console.log('Delete request:', { namespace, nodeType, nodeName, nodeId, plural, url });
+        await api.delete(url);
 
         // Remove the node and its descendants from the graph
         const nodesToDelete = [nodeId, ...getDescendantEdges(nodeId, edges).map(e => e.target)];

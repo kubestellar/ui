@@ -244,3 +244,8 @@ export const kindToPluralMap: Record<string, string> = {
   StorageClass: 'storageclasses',
   VolumeAttachment: 'volumeattachments',
 };
+
+// Create a lowercase version of the map for case-insensitive lookups
+export const kindToPluralMapLowercase: Record<string, string> = Object.fromEntries(
+  Object.entries(kindToPluralMap).map(([key, value]) => [key.toLowerCase(), value])
+);

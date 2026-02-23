@@ -560,6 +560,7 @@ const WecsTreeview = () => {
   const panelRef = useRef<HTMLDivElement>(null);
   const prevWecsData = useRef<WecsCluster[] | null>(null);
   const stateRef = useRef({ isCollapsed, isExpanded });
+  const prevThemeRef = useRef<string>(theme);
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -606,6 +607,30 @@ const WecsTreeview = () => {
       );
     }
   }, [edgeType]);
+
+  // Update edge styles when theme changes
+  useEffect(() => {
+    if (edges.length > 0 && prevThemeRef.current !== theme) {
+      setEdges(currentEdges =>
+        currentEdges.map(edge => ({
+          ...edge,
+          style: {
+            ...edge.style,
+            stroke: theme === 'dark' ? 'url(#edge-gradient-dark)' : 'url(#edge-gradient-light)',
+            filter:
+              theme === 'dark'
+                ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                : 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+          },
+          markerEnd: {
+            ...edge.markerEnd,
+            color: theme === 'dark' ? '#64748b' : '#94a3b8',
+          },
+        }))
+      );
+    }
+    prevThemeRef.current = theme;
+  }, [theme, edges.length]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

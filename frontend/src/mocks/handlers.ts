@@ -7,20 +7,20 @@ import { http, HttpResponse, HttpHandler } from 'msw';
  */
 
 export const statusReady: HttpHandler = http.get(
-  'http://localhost:4000/api/kubestellar/status',
+  '/api/kubestellar/status',
   () => HttpResponse.json({ allReady: true })
 );
 
 export const statusNotReady: HttpHandler = http.get(
-  'http://localhost:4000/api/kubestellar/status',
+  '/api/kubestellar/status',
   () => HttpResponse.json({ allReady: false })
 );
 
-export const health: HttpHandler = http.get('http://localhost:4000/health', () =>
+export const health: HttpHandler = http.get('/health', () =>
   HttpResponse.json({ status: 'ok' })
 );
 
-export const prerequisites: HttpHandler = http.get('http://localhost:4000/api/prerequisites', () =>
+export const prerequisites: HttpHandler = http.get('/api/prerequisites', () =>
   HttpResponse.json({
     status: 'ok',
     prerequisites: [
@@ -34,7 +34,7 @@ export const prerequisites: HttpHandler = http.get('http://localhost:4000/api/pr
   })
 );
 
-export const login: HttpHandler = http.post('http://localhost:4000/login', async ({ request }) => {
+export const login: HttpHandler = http.post('/login', async ({ request }) => {
   type LoginRequest = {
     username: string;
     password: string;
@@ -69,7 +69,7 @@ export const login: HttpHandler = http.post('http://localhost:4000/login', async
   );
 });
 
-export const clusters: HttpHandler = http.get('http://localhost:4000/api/new/clusters', () =>
+export const clusters: HttpHandler = http.get('/api/new/clusters', () =>
   HttpResponse.json({
     clusters: [
       {
@@ -187,7 +187,7 @@ export const clusters: HttpHandler = http.get('http://localhost:4000/api/new/clu
 
 // Additional ITS API handlers for complete MSW coverage
 export const updateClusterLabelsSuccess: HttpHandler = http.patch(
-  'http://localhost:4000/api/managedclusters/labels',
+  '/api/managedclusters/labels',
   () =>
     HttpResponse.json({
       success: true,
@@ -196,7 +196,7 @@ export const updateClusterLabelsSuccess: HttpHandler = http.patch(
 );
 
 export const importClusterSuccess: HttpHandler = http.post(
-  'http://localhost:4000/clusters/import',
+  '/clusters/import',
   () =>
     HttpResponse.json({
       success: true,
@@ -205,12 +205,12 @@ export const importClusterSuccess: HttpHandler = http.post(
 );
 
 export const importClusterError: HttpHandler = http.post(
-  'http://localhost:4000/clusters/import',
+  '/clusters/import',
   () => HttpResponse.json({ error: 'Invalid cluster configuration' }, { status: 400 })
 );
 
 export const detachClusterSuccess: HttpHandler = http.post(
-  'http://localhost:4000/clusters/detach',
+  '/clusters/detach',
   () =>
     HttpResponse.json({
       success: true,
@@ -220,7 +220,7 @@ export const detachClusterSuccess: HttpHandler = http.post(
 
 // Paginated clusters for testing pagination
 export const clustersPaginated: HttpHandler = http.get(
-  'http://localhost:4000/api/new/clusters',
+  '/api/new/clusters',
   ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1');
@@ -255,7 +255,7 @@ export const clustersPaginated: HttpHandler = http.get(
 
 // Delayed response for loading state testing
 export const clustersDelayed: HttpHandler = http.get(
-  'http://localhost:4000/api/new/clusters',
+  '/api/new/clusters',
   async () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
     return HttpResponse.json({
@@ -275,11 +275,11 @@ export const clustersDelayed: HttpHandler = http.get(
   }
 );
 
-export const bindingPolicies: HttpHandler = http.get('http://localhost:4000/api/bp', () =>
+export const bindingPolicies: HttpHandler = http.get('/api/bp', () =>
   HttpResponse.json({ bindingPolicies: [], count: 0 })
 );
 
-export const workloads: HttpHandler = http.get('http://localhost:4000/api/wds/workloads', () =>
+export const workloads: HttpHandler = http.get('/api/wds/workloads', () =>
   HttpResponse.json([
     {
       name: 'kubernetes',
@@ -307,7 +307,7 @@ export const workloadsRel: HttpHandler = http.get('/api/wds/workloads', () =>
   ])
 );
 
-export const me: HttpHandler = http.get('http://localhost:4000/api/me', () =>
+export const me: HttpHandler = http.get('/api/me', () =>
   HttpResponse.json({
     is_admin: true,
     permissions: {
@@ -321,7 +321,7 @@ export const me: HttpHandler = http.get('http://localhost:4000/api/me', () =>
 );
 
 // K8s Info endpoint - provides contexts, clusters, and current context
-export const k8sInfo: HttpHandler = http.get('http://localhost:4000/api/clusters', () =>
+export const k8sInfo: HttpHandler = http.get('/api/clusters', () =>
   HttpResponse.json({
     contexts: [
       { name: 'its1-kubeflex', current: true },
@@ -335,7 +335,7 @@ export const k8sInfo: HttpHandler = http.get('http://localhost:4000/api/clusters
 
 // Cluster resource metrics endpoint
 export const clusterMetrics: HttpHandler = http.get(
-  'http://localhost:4000/api/metrics/cluster-resources',
+  '/api/metrics/cluster-resources',
   () =>
     HttpResponse.json({
       overallCPU: 45.2,
@@ -361,7 +361,7 @@ export const clusterMetrics: HttpHandler = http.get(
 
 // Pod health metrics endpoint
 export const podHealth: HttpHandler = http.get(
-  'http://localhost:4000/api/metrics/pod-health',
+  '/api/metrics/pod-health',
   ({ request }) => {
     const url = new URL(request.url);
     const context = url.searchParams.get('context');
@@ -451,7 +451,7 @@ const mockUsers: MockUser[] = [
   },
 ];
 
-export const userActivities: HttpHandler = http.get('http://localhost:4000/api/admin/users', () =>
+export const userActivities: HttpHandler = http.get('/api/admin/users', () =>
   HttpResponse.json({
     users: mockUsers,
   })
@@ -773,7 +773,7 @@ const wecsTreeData = [
   },
 ];
 
-export const wecsTreeView: HttpHandler = http.get('http://localhost:4000/api/wecs/treeview', () =>
+export const wecsTreeView: HttpHandler = http.get('/api/wecs/treeview', () =>
   HttpResponse.json(wecsTreeData)
 );
 
@@ -782,7 +782,7 @@ export const wecsTreeViewRel: HttpHandler = http.get('/api/wecs/treeview', () =>
 );
 
 export const createUser: HttpHandler = http.post(
-  'http://localhost:4000/api/admin/users',
+  '/api/admin/users',
   async ({ request }) => {
     const body = (await request.json()) as {
       username: string;
@@ -815,7 +815,7 @@ export const createUser: HttpHandler = http.post(
 );
 
 export const updateUser: HttpHandler = http.put(
-  'http://localhost:4000/api/admin/users/:username',
+  '/api/admin/users/:username',
   async ({ params, request }) => {
     const { username } = params;
     const body = (await request.json()) as {
@@ -851,7 +851,7 @@ export const updateUser: HttpHandler = http.put(
 );
 
 export const updateUserPermissions: HttpHandler = http.put(
-  'http://localhost:4000/api/admin/users/:username/permissions',
+  '/api/admin/users/:username/permissions',
   async ({ params, request }) => {
     const { username } = params;
     const body = (await request.json()) as {
@@ -877,7 +877,7 @@ export const updateUserPermissions: HttpHandler = http.put(
 );
 
 export const getUserPermissions: HttpHandler = http.get(
-  'http://localhost:4000/api/admin/users/:username/permissions',
+  '/api/admin/users/:username/permissions',
   ({ params }) => {
     const { username } = params;
     const user = mockUsers.find(u => u.username === username);
@@ -893,7 +893,7 @@ export const getUserPermissions: HttpHandler = http.get(
 );
 
 export const deleteUser: HttpHandler = http.delete(
-  'http://localhost:4000/api/admin/users/:username',
+  '/api/admin/users/:username',
   ({ params }) => {
     const { username } = params;
     const userIndex = mockUsers.findIndex(u => u.username === username);
@@ -917,7 +917,7 @@ export const deleteUser: HttpHandler = http.delete(
 );
 
 export const deletedUserActivities: HttpHandler = http.get(
-  'http://localhost:4000/api/admin/users/deleted',
+  '/api/admin/users/deleted',
   () =>
     HttpResponse.json({
       deleted_users: [
@@ -935,7 +935,7 @@ export const deletedUserActivities: HttpHandler = http.get(
 
 // Cluster details endpoint for specific cluster
 export const clusterDetails: HttpHandler = http.get(
-  'http://localhost:4000/api/clusters/:clusterName',
+  '/api/clusters/:clusterName',
   ({ params }) => {
     const { clusterName } = params;
 
@@ -990,7 +990,7 @@ export const clusterDetails: HttpHandler = http.get(
 );
 
 // Cluster status endpoint
-export const clusterStatus: HttpHandler = http.get('http://localhost:4000/clusters/status', () =>
+export const clusterStatus: HttpHandler = http.get('/clusters/status', () =>
   HttpResponse.json([
     { name: 'cluster1', status: 'Active', message: 'Cluster is running normally' },
     { name: 'cluster2', status: 'Active', message: 'Cluster is running normally' },
@@ -998,7 +998,7 @@ export const clusterStatus: HttpHandler = http.get('http://localhost:4000/cluste
 );
 
 // Workload status endpoint
-export const workloadStatus: HttpHandler = http.get('http://localhost:4000/api/wds/status', () =>
+export const workloadStatus: HttpHandler = http.get('/api/wds/status', () =>
   HttpResponse.json([
     {
       name: 'kubernetes-service',
@@ -1025,7 +1025,7 @@ export const workloadStatusRel: HttpHandler = http.get('/api/wds/status', () =>
 
 // Workload logs endpoint
 export const workloadLogs: HttpHandler = http.get(
-  'http://localhost:4000/api/wds/logs',
+  '/api/wds/logs',
   ({ request }) => {
     const url = new URL(request.url);
     const name = url.searchParams.get('name');
@@ -1045,7 +1045,7 @@ export const workloadLogs: HttpHandler = http.get(
 
 // Workload details endpoint
 export const workloadDetails: HttpHandler = http.get(
-  'http://localhost:4000/api/wds/:name',
+  '/api/wds/:name',
   ({ params, request }) => {
     const { name } = params;
     const url = new URL(request.url);
@@ -1072,7 +1072,7 @@ export const workloadDetails: HttpHandler = http.get(
 );
 
 // Context endpoints (absolute and relative)
-export const wdsGetContextAbs: HttpHandler = http.get('http://localhost:4000/wds/get/context', () =>
+export const wdsGetContextAbs: HttpHandler = http.get('/wds/get/context', () =>
   HttpResponse.json({
     'ui-wds-context': 'wds1',
     'system-context': 'wds1',
@@ -1098,7 +1098,7 @@ export const wdsGetContextMultiple: HttpHandler = http.get('/wds/get/context', (
 );
 
 export const wdsGetContextAbsMultiple: HttpHandler = http.get(
-  'http://localhost:4000/wds/get/context',
+  '/wds/get/context',
   () =>
     HttpResponse.json({
       'ui-wds-context': 'wds1',
@@ -1109,7 +1109,7 @@ export const wdsGetContextAbsMultiple: HttpHandler = http.get(
 
 // Context creation success handler (WebSocket will be mocked in Playwright)
 export const wdsCreateContext: HttpHandler = http.get(
-  'http://localhost:4000/api/wds/context',
+  '/api/wds/context',
   ({ request }) => {
     const url = new URL(request.url);
     const contextName = url.searchParams.get('context');
@@ -1135,7 +1135,7 @@ export const statusReadyRel: HttpHandler = http.get('/api/kubestellar/status', (
 
 // ITS Page - Import cluster
 export const importCluster: HttpHandler = http.post(
-  'http://localhost:4000/clusters/import',
+  '/clusters/import',
   async ({ request }) => {
     const body = (await request.json()) as {
       clusterName: string;
@@ -1154,7 +1154,7 @@ export const importCluster: HttpHandler = http.post(
 
 // ITS Page - Onboard cluster
 export const onboardCluster: HttpHandler = http.post(
-  'http://localhost:4000/clusters/onboard',
+  '/clusters/onboard',
   async ({ request }) => {
     const url = new URL(request.url);
     const clusterNameFromQuery = url.searchParams.get('name');
@@ -1183,7 +1183,7 @@ export const onboardCluster: HttpHandler = http.post(
 
 // ITS Page - Generate onboard command
 export const generateOnboardCommand: HttpHandler = http.post(
-  'http://localhost:4000/clusters/manual/generateCommand',
+  '/clusters/manual/generateCommand',
   async ({ request }) => {
     const body = (await request.json()) as { clusterName: string };
 
@@ -1201,7 +1201,7 @@ export const generateOnboardCommand: HttpHandler = http.post(
 
 // ITS Page - Update cluster labels
 export const updateClusterLabels: HttpHandler = http.patch(
-  'http://localhost:4000/api/managedclusters/labels',
+  '/api/managedclusters/labels',
   async ({ request }) => {
     const body = (await request.json()) as {
       contextName: string;
@@ -1224,7 +1224,7 @@ export const updateClusterLabels: HttpHandler = http.patch(
 
 // ITS Page - Detach cluster
 export const detachCluster: HttpHandler = http.post(
-  'http://localhost:4000/clusters/detach',
+  '/clusters/detach',
   async ({ request }) => {
     const body = (await request.json()) as { clusterName: string };
 
@@ -1242,7 +1242,7 @@ export const detachCluster: HttpHandler = http.post(
 
 // Object Explorer - Get resource kinds
 export const getResourceKinds: HttpHandler = http.get(
-  'http://localhost:4000/api/resources/kinds',
+  '/api/resources/kinds',
   () =>
     HttpResponse.json([
       { kind: 'Pod', name: 'pods', group: '', version: 'v1', namespaced: true },
@@ -1266,7 +1266,7 @@ export const getResourceKinds: HttpHandler = http.get(
 
 // Object Explorer - Get namespaces
 export const getNamespaces: HttpHandler = http.get(
-  'http://localhost:4000/api/resources/namespaces',
+  '/api/resources/namespaces',
   () =>
     HttpResponse.json([
       { name: 'default', createdAt: '2024-01-01T00:00:00Z', status: 'Active' },
@@ -1279,7 +1279,7 @@ export const getNamespaces: HttpHandler = http.get(
 
 // Object Explorer - Get pods
 export const getPods: HttpHandler = http.get(
-  'http://localhost:4000/api/pods/:namespace',
+  '/api/pods/:namespace',
   ({ params }) => {
     const { namespace } = params;
     return HttpResponse.json({
@@ -1317,7 +1317,7 @@ export const getPods: HttpHandler = http.get(
 
 // Object Explorer - Get deployments
 export const getDeployments: HttpHandler = http.get(
-  'http://localhost:4000/api/deployments/:namespace',
+  '/api/deployments/:namespace',
   ({ params }) => {
     const { namespace } = params;
     return HttpResponse.json({
@@ -1355,7 +1355,7 @@ export const getDeployments: HttpHandler = http.get(
 
 // Object Explorer - Get services
 export const getServices: HttpHandler = http.get(
-  'http://localhost:4000/api/services/:namespace',
+  '/api/services/:namespace',
   ({ params }) => {
     const { namespace } = params;
     return HttpResponse.json({
@@ -1380,7 +1380,7 @@ export const getServices: HttpHandler = http.get(
 
 // Object Explorer - Get cluster-scoped resources (namespaces)
 export const getClusterNamespaces: HttpHandler = http.get(
-  'http://localhost:4000/api/cluster/namespaces',
+  '/api/cluster/namespaces',
   () =>
     HttpResponse.json({
       items: [

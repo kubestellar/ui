@@ -77,7 +77,16 @@ export const useTreeViewData = ({
   });
 
   const theme = useTheme(state => state.theme);
-  const { getDescendantEdges } = useTreeViewEdges({ theme: theme as 'light' | 'dark' });
+  const { getDescendantEdges, updateEdgeStyles: updateEdgeStylesFromHook } = useTreeViewEdges({ theme: theme as 'light' | 'dark' });
+
+  // Wrapper function to update edge styles when theme changes
+  const updateEdgeStyles = useCallback(
+    (currentEdges: CustomEdge[]) => {
+      const styledEdges = updateEdgeStylesFromHook(currentEdges);
+      setEdges(styledEdges);
+    },
+    [updateEdgeStylesFromHook]
+  );
 
   // Component mount effect
   useEffect(() => {
@@ -398,6 +407,8 @@ export const useTreeViewData = ({
   return {
     nodes,
     edges,
+    setNodes,
+    setEdges,
     isLoading,
     viewMode,
     setViewMode,
@@ -406,6 +417,7 @@ export const useTreeViewData = ({
     renderStartTime,
     handleResourceDataChange,
     updateNodeStyles,
+    updateEdgeStyles,
     getDescendantEdges,
   };
 };
