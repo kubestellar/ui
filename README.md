@@ -2,7 +2,7 @@
   <img alt="KubeStellar Logo" width="250px" src="frontend/public/Kubestellar-logo.png" />
 </p>
 
-<h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud</h2>
+<h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud Systems</h2>
 
 <p align="center">
   <strong>
