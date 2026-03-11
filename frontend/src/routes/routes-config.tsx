@@ -78,7 +78,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'its',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'clusters', level: 'read' }}>
                 <Suspense fallback={<LoadingFallback message="Loading ITS..." size="small" />}>
                   <ITSLazy />
                 </Suspense>
@@ -88,7 +88,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'workloads/manage',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'workloads', level: 'read' }}>
                 <Suspense
                   fallback={<LoadingFallback message="Loading Workloads..." size="medium" />}
                 >
@@ -100,7 +100,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'bp/manage',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'binding-policies', level: 'read' }}>
                 <Suspense
                   fallback={<LoadingFallback message="Loading Binding Policies..." size="medium" />}
                 >
@@ -112,7 +112,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'wds/treeview',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'workloads', level: 'read' }}>
                 <Suspense
                   fallback={<LoadingFallback message="Loading Tree View..." size="medium" />}
                 >
@@ -124,7 +124,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'wecs/treeview',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'workloads', level: 'read' }}>
                 <Suspense
                   fallback={<LoadingFallback message="Loading WECS Tree View..." size="medium" />}
                 >
@@ -136,7 +136,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'plugins/manage',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'plugins', level: 'read' }}>
                 <Suspense
                   fallback={<LoadingFallback message="Loading Plugin Manager..." size="medium" />}
                 >
@@ -149,7 +149,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'plugins/marketplace',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'plugins', level: 'read' }}>
                 <Suspense
                   fallback={
                     <LoadingFallback message="Loading Galaxy Marketplace..." size="medium" />
@@ -163,7 +163,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'admin/users',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <UserManagement />
               </ProtectedRoute>
             ),
@@ -171,7 +171,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'grafana',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'system', level: 'read' }}>
                 <Suspense fallback={<LoadingFallback message="Loading Grafana..." size="medium" />}>
                   <GrafanaDashboardPageLazy />
                 </Suspense>
@@ -181,7 +181,7 @@ export const useRoutesConfig = (): RouteObject[] => {
           {
             path: 'resources',
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={{ component: 'resources', level: 'read' }}>
                 <Suspense fallback={<LoadingFallback message="Loading objects..." size="medium" />}>
                   <ObjectFilterPageLazy />
                 </Suspense>
