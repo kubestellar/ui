@@ -2,7 +2,7 @@
   <img alt="KubeStellar Logo" width="250px" src="frontend/public/Kubestellar-logo.png" />
 </p>
 
-<h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud</h2>
+<h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud Systems</h2>
 
 <p align="center">
   <strong>
@@ -472,3 +472,5 @@ There are several ways to communicate with us:
     <img src="https://contrib.rocks/image?repo=kubestellar/ui" alt="Contributors" />
   </a>
 </p>
+
+<!-- CI Test: 2026-01-13T03:02:53Z -->

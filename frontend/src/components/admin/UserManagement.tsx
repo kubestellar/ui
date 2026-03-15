@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import useTheme from '../../stores/themeStore';
 import getThemeStyles from '../../lib/theme-utils';
@@ -18,7 +19,14 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 // Import modular components and types
-import { User, PermissionComponent, PermissionLevel, UserFilter } from './UserTypes';
+import {
+  User,
+  PermissionComponent,
+  PermissionLevel,
+  UserFilter,
+  PermissionsMap,
+  PermissionValue,
+} from './UserTypes';
 import UserFormModal from './UserFormModal';
 import DeleteUserModal from './DeleteUserModal';
 import UserList from './UserList';
@@ -142,6 +150,36 @@ const CustomDropdown = ({
   );
 };
 
+const extractApiErrorMessage = (error: unknown, fallbackMessage: string): string => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as {
+      details?: string;
+      error?: string;
+      message?: string;
+    };
+
+    return data?.details || data?.error || data?.message || error.message || fallbackMessage;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+};
+
+const sanitizePermissions = (permissions: PermissionsMap): Record<string, string> => {
+  return Object.entries(permissions).reduce(
+    (acc, [component, value]) => {
+      if (value) {
+        acc[component] = value;
+      }
+      return acc;
+    },
+    {} as Record<string, string>
+  );
+};
+
 const UserManagement = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -177,21 +215,28 @@ const UserManagement = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUserAdmin, setIsUserAdmin] = useState(false);
-  const [userPermissions, setUserPermissions] = useState<Record<string, string>>({});
+  const [userPermissions, setUserPermissions] = useState<PermissionsMap>({});
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Permissions components that can be managed
-  const permissionComponents: PermissionComponent[] = [
-    { id: 'users', name: t('admin.users.permissions.users') },
-    { id: 'resources', name: t('admin.users.permissions.resources') },
-    { id: 'system', name: t('admin.users.permissions.system') },
-    { id: 'dashboard', name: t('admin.users.permissions.dashboard') },
-  ];
+  const permissionComponents: PermissionComponent[] = useMemo(
+    () => [
+      { id: 'users', name: t('admin.users.permissions.users') },
+      { id: 'resources', name: t('admin.users.permissions.resources') },
+      { id: 'system', name: t('admin.users.permissions.system') },
+      { id: 'dashboard', name: t('admin.users.permissions.dashboard') },
+    ],
+    [t]
+  );
 
   // Available permission levels
-  const permissionLevels: PermissionLevel[] = [
-    { id: 'read', name: t('admin.users.permissions.levels.read') },
-    { id: 'write', name: t('admin.users.permissions.levels.write') },
-  ];
+  const permissionLevels: PermissionLevel[] = useMemo(
+    () => [
+      { id: 'read', name: t('admin.users.permissions.levels.read') },
+      { id: 'write', name: t('admin.users.permissions.levels.write') },
+    ],
+    [t]
+  );
 
   // Function to fetch users wrapped in useCallback
   const fetchUsers = useCallback(async () => {
@@ -239,7 +284,7 @@ const UserManagement = () => {
           Object.keys(user.permissions || {}).some(
             key =>
               key.toLowerCase().includes(lowerSearchTerm) ||
-              user.permissions[key].toLowerCase().includes(lowerSearchTerm)
+              (user.permissions[key]?.toLowerCase().includes(lowerSearchTerm) ?? false)
           )
       );
     }
@@ -314,6 +359,8 @@ const UserManagement = () => {
   };
 
   const handleAddUser = async () => {
+    setFormError(null);
+
     if (!username || (!passwordOptional && !password)) {
       toast.error(t('admin.users.errors.missingFields'));
       return;
@@ -325,8 +372,8 @@ const UserManagement = () => {
     }
 
     try {
-      // If user is admin, set all permissions to write
-      const finalPermissions = { ...userPermissions };
+      const finalPermissions = sanitizePermissions(userPermissions);
+
       if (isUserAdmin) {
         permissionComponents.forEach(component => {
           finalPermissions[component.id] = 'write';
@@ -341,12 +388,15 @@ const UserManagement = () => {
       toast.success(t('admin.users.success.userAdded'));
       fetchUsers();
     } catch (error) {
+      const errorMessage = extractApiErrorMessage(error, t('admin.users.errors.addFailed'));
       console.error('Error adding user:', error);
-      toast.error(t('admin.users.errors.addFailed'));
+      setFormError(errorMessage);
     }
   };
 
   const handleEditUser = async () => {
+    setFormError(null);
+
     if (!currentUser || !username) {
       toast.error(t('admin.users.errors.missingFields'));
       return;
@@ -358,8 +408,8 @@ const UserManagement = () => {
     }
 
     try {
-      // If user is admin, set all permissions to write
-      const finalPermissions = { ...userPermissions };
+      const finalPermissions = sanitizePermissions(userPermissions);
+
       if (isUserAdmin) {
         permissionComponents.forEach(component => {
           finalPermissions[component.id] = 'write';
@@ -382,8 +432,9 @@ const UserManagement = () => {
       toast.success(t('admin.users.success.userUpdated'));
       fetchUsers();
     } catch (error) {
+      const errorMessage = extractApiErrorMessage(error, t('admin.users.errors.updateFailed'));
       console.error('Error updating user:', error);
-      toast.error(t('admin.users.errors.updateFailed'));
+      setFormError(errorMessage);
     }
   };
 
@@ -426,6 +477,7 @@ const UserManagement = () => {
     setUserPermissions(user.permissions || {});
     setPassword('');
     setConfirmPassword('');
+    setFormError(null);
     setShowEditModal(true);
   };
 
@@ -441,6 +493,7 @@ const UserManagement = () => {
     setIsUserAdmin(false);
     setUserPermissions({});
     setCurrentUser(null);
+    setFormError(null);
   };
 
   const closeModals = () => {
@@ -450,12 +503,24 @@ const UserManagement = () => {
     resetForm();
   };
 
-  const handlePermissionChange = (component: string, permission: string) => {
-    setUserPermissions(prev => ({
-      ...prev,
-      [component]: permission,
-    }));
-  };
+  const handlePermissionChange = useCallback((component: string, permission: PermissionValue) => {
+    setUserPermissions(prev => {
+      if (prev[component] === permission) {
+        return prev;
+      }
+
+      if (!permission) {
+        const rest = { ...prev };
+        delete rest[component];
+        return rest;
+      }
+
+      return {
+        ...prev,
+        [component]: permission,
+      };
+    });
+  }, []);
 
   // Filter handling functions
   const toggleFilters = () => {
@@ -996,6 +1061,7 @@ const UserManagement = () => {
         isOpen={showAddModal}
         onClose={closeModals}
         onSubmit={handleAddUser}
+        formError={formError ?? undefined}
         username={username}
         setUsername={setUsername}
         password={password}
@@ -1009,6 +1075,7 @@ const UserManagement = () => {
         permissionComponents={permissionComponents}
         permissionLevels={permissionLevels}
         submitLabel={t('admin.users.actions.add')}
+        existingUsernames={users.map(u => u.username)}
         isDark={isDark}
         themeStyles={themeStyles}
       />
@@ -1019,6 +1086,7 @@ const UserManagement = () => {
         isOpen={showEditModal}
         onClose={closeModals}
         onSubmit={handleEditUser}
+        formError={formError ?? undefined}
         username={username}
         setUsername={setUsername}
         password={password}
@@ -1034,6 +1102,7 @@ const UserManagement = () => {
         submitLabel={t('admin.users.actions.update')}
         showPasswordFields={true}
         passwordOptional={passwordOptional}
+        existingUsernames={users.map(u => u.username).filter(u => u !== currentUser?.username)}
         isDark={isDark}
         themeStyles={themeStyles}
       />
