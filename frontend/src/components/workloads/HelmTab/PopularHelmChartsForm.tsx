@@ -144,9 +144,9 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                 },
                 paper: {
                   sx: {
-                    backgroundColor: theme === 'dark' ? '#19212c' : '#fff', // FIX: color of dropdown
+                    backgroundColor: theme === 'dark' ? '#1e1e1e' : '#fff',
                     color: theme === 'dark' ? '#d4d4d4' : '#333',
-                    zIndex: 2, // FIX: dropdown over other components
+                    zIndex: 2,
                     '& .MuiAutocomplete-option': {
                       '&:hover': {
                         backgroundColor: theme === 'dark' ? '#333' : 'rgba(25, 118, 210, 0.08)',
