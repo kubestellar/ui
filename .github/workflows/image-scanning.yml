@@ -46,7 +46,7 @@ jobs:
           docker build -f frontend/Dockerfile -t local/frontend:${{ github.sha }} .
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           image-ref: 'local/frontend:${{ github.sha }}'
           format: 'sarif'
@@ -73,7 +73,7 @@ jobs:
           docker build -f backend/Dockerfile -t local/backend:${{ github.sha }} backend
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           image-ref: 'local/backend:${{ github.sha }}'
           format: 'sarif'
