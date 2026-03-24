@@ -782,4 +782,4 @@ When adding new tests:
 - [ ] Includes screenshots/videos for debugging
 - [ ] Documentation updated if needed
 
-Happy testing! 🎭
+Good luck, tester! 🎭
