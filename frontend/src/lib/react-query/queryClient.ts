@@ -19,20 +19,20 @@ const queryCache = new QueryCache({
       if (status === 401) {
         // Only show authentication toast if user is not already on login page
         if (!isOnLoginPage()) {
-          toast.error('Authentication required. Please log in again.');
+          toast.error('Authentication required. Please log in again.', { id: 'query-error-401' });
         }
       } else if (status === 403) {
-        toast.error("Access denied. You don't have permission for this action.");
+        toast.error("Access denied. You don't have permission for this action.", { id: 'query-error-403' });
       } else if (status && status >= 500) {
-        toast.error('Server error. Please try again later.');
+        toast.error('Server error. Please try again later.', { id: 'query-error-500' });
       } else {
-        toast.error('An error occurred while fetching data');
+        toast.error('An error occurred while fetching data', { id: `query-error-${status || 'unknown'}` });
       }
     } else if (error instanceof Error) {
       // Don't show raw error messages, use generic message instead
-      toast.error('An error occurred while fetching data');
+      toast.error('An error occurred while fetching data', { id: 'query-error-generic' });
     } else {
-      toast.error('An error occurred while fetching data');
+      toast.error('An error occurred while fetching data', { id: 'query-error-unknown' });
     }
   },
 });
@@ -53,20 +53,20 @@ const mutationCache = new MutationCache({
       if (status === 401) {
         // Only show authentication toast if user is not already on login page
         if (!isOnLoginPage()) {
-          toast.error('Authentication required. Please log in again.');
+          toast.error('Authentication required. Please log in again.', { id: 'mutation-error-401' });
         }
       } else if (status === 403) {
-        toast.error("Access denied. You don't have permission for this action.");
+        toast.error("Access denied. You don't have permission for this action.", { id: 'mutation-error-403' });
       } else if (status && status >= 500) {
-        toast.error('Server error. Please try again later.');
+        toast.error('Server error. Please try again later.', { id: 'mutation-error-500' });
       } else {
-        toast.error('An error occurred while updating data');
+        toast.error('An error occurred while updating data', { id: `mutation-error-${status || 'unknown'}` });
       }
     } else if (error instanceof Error) {
       // Don't show raw error messages, use generic message instead
-      toast.error('An error occurred while updating data');
+      toast.error('An error occurred while updating data', { id: 'mutation-error-generic' });
     } else {
-      toast.error('An error occurred while updating data');
+      toast.error('An error occurred while updating data', { id: 'mutation-error-unknown' });
     }
   },
 });
