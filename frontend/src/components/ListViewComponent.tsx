@@ -107,7 +107,7 @@ const ListViewComponent = ({
       setResourceFilters(initialResourceFilters);
       lastInitialFiltersRef.current = initialResourceFilters;
     }
-  }, [initialResourceFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialResourceFilters]);
 
   // Add useEffect to notify parent of resource data changes
   useEffect(() => {
