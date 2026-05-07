@@ -858,7 +858,8 @@
     "nodeLabel": {
       "labels": "Labels:",
       "noLabels": "No labels"
-    }
+    },
+    "refresh": "Refresh"
   },
   "wecsDetailsPanel": {
     "common": {
@@ -984,7 +985,8 @@
       "title": "Confirm Resource Deletion",
       "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
       "confirm": "Yes, Delete"
-    }
+    },
+    "refresh": "Refresh"
   },
   "quickConnect": {
     "title": "One-Click Cluster Setup",

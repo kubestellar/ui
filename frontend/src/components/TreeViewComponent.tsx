@@ -14,6 +14,7 @@ import { useTreeViewActions } from './treeView/hooks/useTreeViewActions';
 import { ResourceItem as TreeResourceItem, CustomNode, CustomEdge } from './treeView/types';
 import { ObjectFilter } from './ObjectFilters';
 import { ResourceItem as ListResourceItem } from './ListViewComponent';
+import { REFRESH_ANIMATION_DURATION } from './refreshConfig';
 
 // Re-export types for other components to import
 export type { ResourceItem as TreeResourceItem, CustomNode, CustomEdge } from './treeView/types';
@@ -43,8 +44,11 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   const [filteredContext, setFilteredContext] = useState<string>('all');
   const [allResources] = useState<ListResourceItem[]>([]);
   const [resourceFilters, setResourceFilters] = useState<ObjectFilter>({});
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Node selection handler
   const handleNodeSelect = useCallback(
@@ -80,6 +84,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     handleResourceDataChange,
     updateNodeStyles,
     getDescendantEdges,
+    refreshTree,
   } = useTreeViewData({
     filteredContext,
     isCollapsed,
@@ -88,6 +93,31 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     onMenuOpen: handleMenuOpen || (() => {}),
   });
 
+  /**
+   * Handles topology refresh by incrementing the refreshKey to force
+   * ReactFlowProvider remount and calling refreshTree to rebuild nodes/edges.
+   * This ensures a complete visual refresh of the React Flow canvas.
+   * Includes debouncing to prevent rapid clicking.
+   */
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    setRefreshKey(k => k + 1);
+
+    try {
+      await refreshTree();
+    } catch (error) {
+      console.error('Failed to refresh tree view:', error);
+    } finally {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      refreshTimeoutRef.current = setTimeout(() => {
+        setIsRefreshing(false);
+      }, REFRESH_ANIMATION_DURATION);
+    }
+  }, [refreshTree, isRefreshing]);
   // Actions management hook
   const {
     contextMenu,
@@ -177,6 +207,15 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
     }
   }, [theme, nodes.length, updateNodeStyles, nodes]);
 
+  // Cleanup refresh timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Notify parent component of view mode changes
   useEffect(() => {
     if (props.onViewModeChange) {
@@ -211,6 +250,8 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onCreateWorkload={handleCreateWorkloadClick}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
         >
           <ContextDropdown
             onContextFilter={handleContextFilter}
@@ -254,6 +295,7 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
             onResourceFiltersChange={handleResourceFiltersChange}
             onToggleFullscreen={handleToggleFullscreen}
             isFullscreen={isFullscreen}
+            refreshKey={refreshKey}
           />
 
           <TreeViewContextMenu

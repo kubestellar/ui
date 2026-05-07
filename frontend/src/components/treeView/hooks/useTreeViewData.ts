@@ -407,5 +407,15 @@ export const useTreeViewData = ({
     handleResourceDataChange,
     updateNodeStyles,
     getDescendantEdges,
+    refreshTree: () => {
+      try {
+        setIsTransforming(true);
+        transformDataToTree(namespaceData as NamespaceResource[]);
+      } catch (err) {
+        console.error('Error during refreshTree:', err);
+        setIsTransforming(false);
+        throw err;
+      }
+    },
   };
 };

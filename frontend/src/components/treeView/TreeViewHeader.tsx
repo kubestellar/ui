@@ -1,18 +1,21 @@
 import { memo } from 'react';
 import { Box, Typography, IconButton, Button } from '@mui/material';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../../stores/themeStore';
+import { getRefreshButtonSx } from '../refreshConfig';
 
 interface TreeViewHeaderProps {
   viewMode: 'tiles' | 'list';
   onViewModeChange: (mode: 'tiles' | 'list') => void;
   onCreateWorkload: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   children?: React.ReactNode;
 }
 
 const TreeViewHeader = memo<TreeViewHeaderProps>(
-  ({ viewMode, onViewModeChange, onCreateWorkload, children }) => {
+  ({ viewMode, onViewModeChange, onCreateWorkload, onRefresh, isRefreshing = false, children }) => {
     const { t } = useTranslation();
     const theme = useTheme(state => state.theme);
 
@@ -119,12 +122,22 @@ const TreeViewHeader = memo<TreeViewHeaderProps>(
           >
             {t('treeView.createWorkload')}
           </Button>
+          {onRefresh && (
+            <IconButton
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              sx={getRefreshButtonSx(theme === 'dark' ? 'dark' : 'light', isRefreshing)}
+              title={t('treeView.refresh')}
+              aria-label={t('treeView.refresh')}
+            >
+              <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+            </IconButton>
+          )}
         </Box>
       </Box>
     );
   }
 );
-
 TreeViewHeader.displayName = 'TreeViewHeader';
 
 export default TreeViewHeader;
