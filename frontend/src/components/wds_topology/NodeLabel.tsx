@@ -214,7 +214,7 @@ export const NodeLabel = memo<NodeLabelProps>(
           !prefersReducedMotion && (isHovered || (statusStyle.pulse && status === 'Running'))
             ? 'transform'
             : 'auto',
-        overflow: 'hidden', // Prevent any content from escaping
+        overflow: isHovered ? 'visible' : 'hidden', // Visible on hover to prevent clipping during scale transform
         overflowWrap: 'break-word' as const, // Handle any edge cases
       }),
       [theme, hasHighlightedLabel, hasLabels, statusStyle, isHovered, status, prefersReducedMotion]
@@ -264,8 +264,8 @@ export const NodeLabel = memo<NodeLabelProps>(
                 height: '24px',
                 background:
                   highlightedLabels &&
-                  highlightedLabels.key === key &&
-                  highlightedLabels.value === value
+                    highlightedLabels.key === key &&
+                    highlightedLabels.value === value
                     ? 'linear-gradient(135deg, #3b82f6, #6366f1)'
                     : theme === 'dark'
                       ? 'linear-gradient(135deg, #475569, #64748b)'
