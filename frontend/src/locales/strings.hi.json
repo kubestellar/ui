@@ -613,6 +613,10 @@
       "noClusterSelected": "कोई क्लस्टर चयनित नहीं"
     },
     "dashboard": {
+      "awsSupport": {
+        "title": "AWS Support",
+        "description": "Full AWS cloud provider support is currently in Alpha. Some features may be limited."
+      },
       "title": "डैशबोर्ड",
       "lastUpdatedJustNow": "अंतिम बार अपडेट किया गया: अभी",
       "status": "स्थिति: इष्टतम",

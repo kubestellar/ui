@@ -40,6 +40,8 @@ const ClusterDetailDialog = lazy(
   () => import('../components/its/ClustersTable/dialogs/ClusterDetailDialog')
 );
 
+import AWSSupportBanner from '../components/dashboard/AWSSupportBanner';
+
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
   // Memoize the color calculation to avoid recalculating on every render
@@ -1501,6 +1503,7 @@ const K8sInfo = () => {
 
       <AnimatePresence mode="wait">
         <motion.div key="dashboard-content" variants={pageAnimationVariant}>
+          <AWSSupportBanner />
           {renderClusterStats()}
           {renderHealthOverview()}
 

@@ -613,6 +613,10 @@
       "noClusterSelected": "No cluster selected"
     },
     "dashboard": {
+      "awsSupport": {
+        "title": "AWS Support",
+        "description": "Full AWS cloud provider support is currently in Alpha. Some features may be limited."
+      },
       "title": "Dashboard",
       "lastUpdatedJustNow": "Last updated: just now",
       "status": "Status: Optimal",
