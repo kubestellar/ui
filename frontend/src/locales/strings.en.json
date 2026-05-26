@@ -1871,6 +1871,14 @@
       "available": "Available",
       "completed": "Completed",
       "error": "Error"
+    },
+    "steps": {
+      "initializing": "Initializing connection...",
+      "processing": "Running kubectl commands...",
+      "verifying": "Verifying cluster status...",
+      "available": "Cluster available, finalizing...",
+      "completed": "Onboarding completed successfully!",
+      "error": "An error occurred"
     }
   },
   "newAppDialog": {

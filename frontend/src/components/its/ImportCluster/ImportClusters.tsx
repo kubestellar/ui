@@ -1027,7 +1027,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   setManualCommand={setManualCommand}
                   setManualLoading={setManualLoading}
                   setShowLogs={setShowLogs}
-                  showLogs={onboardingStatus === 'processing'}
+                  showLogs={
+                    onboardingStatus === 'processing' ||
+                    (onboardingStatus === 'success' && !manualCommand)
+                  }
                   onboardingStatus={onboardingStatus}
                   setOnboardingStatus={setOnboardingStatus}
                   onboardingError={onboardingError}

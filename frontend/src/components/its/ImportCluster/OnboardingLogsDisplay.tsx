@@ -1,4 +1,4 @@
-import { Box, LinearProgress, Paper, Typography } from '@mui/material';
+import { Box, CircularProgress, LinearProgress, Paper, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +27,56 @@ interface OnboardingLogsDisplayProps {
   setOnboardingError: (error: string | null) => void;
 }
 
+// Helper function to get the left border color based on log status
+const getLogBorderColor = (status: string, theme: string): string => {
+  switch (status) {
+    case 'Processing':
+      return theme === 'dark' ? '#ffb347' : '#f59e0b'; // Amber/orange
+    case 'Verifying':
+      return theme === 'dark' ? '#61dafb' : '#0ea5e9'; // Blue
+    case 'Available':
+    case 'Completed':
+      return theme === 'dark' ? '#4ade80' : '#22c55e'; // Green
+    case 'Error':
+    case 'Failed':
+      return theme === 'dark' ? '#f87171' : '#dc2626'; // Red
+    default:
+      return theme === 'dark' ? '#6b7280' : '#9ca3af'; // Gray
+  }
+};
+
+// Helper function to get the background color for log entries based on status
+const getLogBackgroundColor = (status: string, theme: string): string => {
+  switch (status) {
+    case 'Error':
+    case 'Failed':
+      return theme === 'dark' ? 'rgba(248, 113, 113, 0.1)' : 'rgba(220, 38, 38, 0.08)';
+    case 'Completed':
+      return theme === 'dark' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(34, 197, 94, 0.08)';
+    default:
+      return 'transparent';
+  }
+};
+
+// Helper function to get current step text based on status
+const getCurrentStepText = (status: string, t: (key: string) => string): string => {
+  switch (status) {
+    case 'Processing':
+      return t('onboardingLogs.steps.processing');
+    case 'Verifying':
+      return t('onboardingLogs.steps.verifying');
+    case 'Available':
+      return t('onboardingLogs.steps.available');
+    case 'Completed':
+      return t('onboardingLogs.steps.completed');
+    case 'Error':
+    case 'Failed':
+      return t('onboardingLogs.steps.error');
+    default:
+      return t('onboardingLogs.steps.initializing');
+  }
+};
+
 const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   clusterName,
   onComplete,
@@ -53,6 +103,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   // Connect to WebSocket
   useEffect(() => {
     isUnmountedRef.current = false;
+
     const connectWebSocket = () => {
       if (isUnmountedRef.current) return null;
       try {
@@ -136,15 +187,16 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Processing':
-        return theme === 'dark' ? '#ffb347' : '#ff9d00';
+        return theme === 'dark' ? '#ffb347' : '#f59e0b';
       case 'Verifying':
-        return theme === 'dark' ? '#61dafb' : '#0090e0';
+        return theme === 'dark' ? '#61dafb' : '#0ea5e9';
       case 'Available':
-        return theme === 'dark' ? '#67c073' : '#00a845';
+        return theme === 'dark' ? '#4ade80' : '#22c55e';
       case 'Completed':
-        return theme === 'dark' ? '#67c073' : '#00a845';
+        return theme === 'dark' ? '#4ade80' : '#22c55e';
       case 'Error':
-        return theme === 'dark' ? '#ff6b6b' : '#e53935';
+      case 'Failed':
+        return theme === 'dark' ? '#f87171' : '#dc2626';
       default:
         return colors.textSecondary;
     }
@@ -161,6 +213,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
       case 'Completed':
         return '🎉';
       case 'Error':
+      case 'Failed':
         return '❌';
       default:
         return '•';
@@ -172,9 +225,8 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
     try {
       const date = new Date(timestamp);
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    } catch (error) {
+    } catch {
       return '';
-      console.error('Error formatting timestamp:', error);
     }
   };
 
@@ -191,13 +243,23 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
         return 75;
       case 'Completed':
         return 100;
+      case 'Error':
+      case 'Failed':
+        return getProgress(); // Keep previous progress on error
       default:
         return 5;
     }
   };
 
+  // Get current status for display
+  const currentStatus = logs.length > 0 ? logs[logs.length - 1].status : null;
+  const isCompleted = currentStatus === 'Completed';
+  const isError = currentStatus === 'Error' || currentStatus === 'Failed';
+  const isProcessing = connected && !isCompleted && !isError;
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+      {/* Sticky Status Header */}
       <Box
         sx={{
           position: 'sticky',
@@ -205,35 +267,63 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
           zIndex: 10,
           pt: 2,
           pb: 2,
-          backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
-          borderBottom: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+          backgroundColor:
+            theme === 'dark' ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.95)',
+          backdropFilter: 'blur(8px)',
+          borderBottom: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
           boxShadow:
-            theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.05)',
-          borderTopLeftRadius: theme === 'dark' ? 8 : 10,
-          borderTopRightRadius: theme === 'dark' ? 8 : 10,
+            theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.08)',
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
           mx: -2.5,
           px: 2.5,
         }}
       >
+        {/* Header Row */}
         <Box
-          sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}
+          sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, alignItems: 'center' }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
-                color: theme === 'dark' ? colors.primaryLight : colors.primary,
+                bgcolor: isCompleted
+                  ? theme === 'dark'
+                    ? 'rgba(74, 222, 128, 0.15)'
+                    : 'rgba(34, 197, 94, 0.1)'
+                  : isError
+                    ? theme === 'dark'
+                      ? 'rgba(248, 113, 113, 0.15)'
+                      : 'rgba(220, 38, 38, 0.1)'
+                    : theme === 'dark'
+                      ? 'rgba(47, 134, 255, 0.15)'
+                      : 'rgba(47, 134, 255, 0.1)',
+                color: isCompleted
+                  ? theme === 'dark'
+                    ? '#4ade80'
+                    : '#22c55e'
+                  : isError
+                    ? theme === 'dark'
+                      ? '#f87171'
+                      : '#dc2626'
+                    : theme === 'dark'
+                      ? colors.primaryLight
+                      : colors.primary,
+                fontSize: '1.1rem',
               }}
             >
-              {logs.length > 0 && logs[logs.length - 1].status === 'Completed' ? (
+              {isCompleted ? (
                 <span role="img" aria-label="completed">
                   ✓
+                </span>
+              ) : isError ? (
+                <span role="img" aria-label="error">
+                  ✕
                 </span>
               ) : (
                 <span role="img" aria-label="loading">
@@ -241,93 +331,149 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
                 </span>
               )}
             </Box>
-            <Typography
-              variant="subtitle2"
-              color={theme === 'dark' ? colors.white : colors.text}
-              sx={{ fontWeight: 600 }}
-            >
-              {t('onboardingLogs.onboarding')}: {clusterName}
-            </Typography>
+            <Box>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: theme === 'dark' ? colors.white : colors.text,
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                }}
+              >
+                {t('onboardingLogs.onboarding')}: {clusterName}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: colors.textSecondary,
+                  fontSize: '0.75rem',
+                }}
+              >
+                {logs.length} {logs.length === 1 ? 'log entry' : 'log entries'}
+              </Typography>
+            </Box>
           </Box>
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
-              borderRadius: '12px',
-              px: 1.5,
-              py: 0.5,
-              border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+              gap: 1,
+              backgroundColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+              borderRadius: '16px',
+              px: 2,
+              py: 0.75,
+              border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
             }}
           >
             <Typography
               variant="caption"
-              color={
-                logs.length > 0 && logs[logs.length - 1].status === 'Completed'
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                color: isCompleted
                   ? theme === 'dark'
-                    ? colors.success
-                    : '#00a845'
-                  : colors.textSecondary
-              }
-              sx={{ fontWeight: 600 }}
+                    ? '#4ade80'
+                    : '#22c55e'
+                  : isError
+                    ? theme === 'dark'
+                      ? '#f87171'
+                      : '#dc2626'
+                    : colors.textSecondary,
+              }}
             >
               {getProgress()}% {t('onboardingLogs.complete')}
             </Typography>
           </Box>
         </Box>
+
+        {/* Progress Bar */}
         <LinearProgress
           variant="determinate"
           value={getProgress()}
           sx={{
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
             '& .MuiLinearProgress-bar': {
-              backgroundColor:
-                logs.length > 0 && logs[logs.length - 1].status === 'Completed'
-                  ? colors.success
+              backgroundColor: isCompleted
+                ? theme === 'dark'
+                  ? '#4ade80'
+                  : '#22c55e'
+                : isError
+                  ? theme === 'dark'
+                    ? '#f87171'
+                    : '#dc2626'
                   : colors.primary,
-              borderRadius: 3,
+              borderRadius: 4,
+              transition: 'transform 0.4s ease',
             },
           }}
         />
-        {logs.length > 0 && (
+
+        {/* Current Step Indicator - Always visible sticky line */}
+        <Box
+          sx={{
+            mt: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            minHeight: 32,
+          }}
+        >
+          {isProcessing && (
+            <CircularProgress
+              size={14}
+              thickness={5}
+              sx={{
+                color: currentStatus ? getStatusColor(currentStatus) : colors.primary,
+              }}
+            />
+          )}
           <Box
             sx={{
-              mt: 1,
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
+              gap: 0.75,
+              color: currentStatus ? getStatusColor(currentStatus) : colors.textSecondary,
+              backgroundColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+              borderRadius: '16px',
+              px: 1.5,
+              py: 0.5,
+              border: `1px solid ${
+                currentStatus
+                  ? `${getStatusColor(currentStatus)}33`
+                  : theme === 'dark'
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(0, 0, 0, 0.08)'
+              }`,
             }}
           >
-            <Box
+            {currentStatus && (
+              <span
+                role="img"
+                aria-label={currentStatus.toLowerCase()}
+                style={{ fontSize: '0.85rem' }}
+              >
+                {getStatusIcon(currentStatus)}
+              </span>
+            )}
+            <Typography
+              variant="caption"
               sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.5,
-                color: getStatusColor(logs[logs.length - 1].status),
-                backgroundColor:
-                  theme === 'dark' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.7)',
-                borderRadius: '12px',
-                px: 1,
-                py: 0.25,
-                border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+                fontWeight: 600,
+                fontSize: '0.78rem',
+                color: currentStatus ? getStatusColor(currentStatus) : colors.textSecondary,
               }}
             >
-              <span role="img" aria-label={logs[logs.length - 1].status.toLowerCase()}>
-                {getStatusIcon(logs[logs.length - 1].status)}
-              </span>
-              <Typography
-                variant="caption"
-                sx={{
-                  fontWeight: 600,
-                  color: getStatusColor(logs[logs.length - 1].status),
-                }}
-              >
-                {logs[logs.length - 1].status}
-              </Typography>
-            </Box>
+              {currentStatus
+                ? getCurrentStepText(currentStatus, t)
+                : t('onboardingLogs.connecting')}
+            </Typography>
+          </Box>
+          {logs.length > 0 && (
             <Typography
               variant="caption"
               sx={{
@@ -336,135 +482,278 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
                 flex: 1,
                 textAlign: 'center',
                 fontStyle: 'italic',
+                maxWidth: '50%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {logs[logs.length - 1].message}
             </Typography>
-          </Box>
-        )}
+          )}
+        </Box>
       </Box>
 
+      {/* Terminal Log Container */}
       <Paper
         elevation={0}
         sx={{
           flex: 1,
-          backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.9)',
-          borderRadius: 2,
-          p: 2,
-          mt: 2,
+          backgroundColor: theme === 'dark' ? '#0d1117' : '#1e1e1e',
+          borderRadius: '0 0 12px 12px',
+          p: 0,
+          mt: 0,
           overflowY: 'auto',
-          fontFamily: 'monospace',
-          fontSize: '0.875rem',
-          color: '#eee',
-          border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.2)'}`,
+          fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
+          fontSize: '0.8rem',
+          lineHeight: 1.7,
+          color: theme === 'dark' ? '#e6edf3' : '#d4d4d4',
+          border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)'}`,
+          borderTop: 'none',
           boxShadow:
-            theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.15)',
+            theme === 'dark'
+              ? 'inset 0 2px 8px rgba(0, 0, 0, 0.3)'
+              : 'inset 0 2px 8px rgba(0, 0, 0, 0.2)',
+          minHeight: '200px',
+          maxHeight: '350px',
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: '10px',
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: theme === 'dark' ? '#161b22' : '#2d2d2d',
+            borderRadius: '0 0 12px 0',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: theme === 'dark' ? '#30363d' : '#4a4a4a',
+            borderRadius: '5px',
+            border: `2px solid ${theme === 'dark' ? '#161b22' : '#2d2d2d'}`,
+            '&:hover': {
+              backgroundColor: theme === 'dark' ? '#484f58' : '#5a5a5a',
+            },
+          },
         }}
       >
-        {!connected && !logs.length && !error && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              color: '#61dafb',
-              animation: 'pulse 1.5s infinite',
-              '@keyframes pulse': {
-                '0%': { opacity: 0.6 },
-                '50%': { opacity: 1 },
-                '100%': { opacity: 0.6 },
-              },
-            }}
-          >
-            <span role="img" aria-label="connecting">
-              ⏳
-            </span>{' '}
-            {t('onboardingLogs.connecting')}
-          </Box>
-        )}
-
-        {error && (
-          <Box sx={{ color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span role="img" aria-label="error">
-              ⚠️
-            </span>{' '}
-            {error}
-          </Box>
-        )}
-
-        {logs.map((log, index) => (
-          <Box
-            key={index}
-            sx={{
-              mb: 1.5,
-              display: 'flex',
-              opacity: logs.length > 5 && index < logs.length - 5 ? 0.7 : 1,
-              animation: index === logs.length - 1 ? 'fadeIn 0.3s ease-out' : 'none',
-              '@keyframes fadeIn': {
-                from: { opacity: 0, transform: 'translateY(5px)' },
-                to: { opacity: 1, transform: 'translateY(0)' },
-              },
-            }}
-          >
+        {/* Terminal Header Bar */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 2,
+            py: 1,
+            borderBottom: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)'}`,
+            backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 0.75 }}>
             <Box
               sx={{
-                color: '#888',
-                mr: 1.5,
-                minWidth: '80px',
-                fontSize: '0.75rem',
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: '#ff5f56',
+              }}
+            />
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: '#ffbd2e',
+              }}
+            />
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: '#27ca40',
+              }}
+            />
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              color: theme === 'dark' ? '#8b949e' : '#808080',
+              fontSize: '0.7rem',
+              ml: 1,
+              fontFamily: 'inherit',
+            }}
+          >
+            onboarding-logs — {clusterName}
+          </Typography>
+        </Box>
+
+        {/* Log Content Area */}
+        <Box sx={{ p: 2 }}>
+          {/* Connecting State */}
+          {!connected && !logs.length && !error && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                color: '#61dafb',
+                py: 1,
               }}
             >
-              {formatTime(log.timestamp)}
+              <CircularProgress size={16} thickness={4} sx={{ color: 'inherit' }} />
+              <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
+                {t('onboardingLogs.connecting')}
+              </Typography>
             </Box>
+          )}
+
+          {/* Error State */}
+          {error && (
             <Box
               sx={{
-                color: getStatusColor(log.status),
-                fontWeight: 600,
-                minWidth: '120px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
+                py: 1.5,
+                px: 1.5,
+                borderLeft: '3px solid #f87171',
+                backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                borderRadius: '0 6px 6px 0',
               }}
             >
-              <span role="img" aria-label={log.status.toLowerCase()}>
-                {getStatusIcon(log.status)}
+              <span role="img" aria-label="error">
+                ⚠️
               </span>
-              {log.status}
+              <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit', color: '#f87171' }}>
+                {error}
+              </Typography>
             </Box>
+          )}
+
+          {/* Log Entries */}
+          {logs.map((log, index) => (
+            <Box
+              key={index}
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                py: 1,
+                px: 1.5,
+                mb: 0.5,
+                borderLeft: `3px solid ${getLogBorderColor(log.status, theme)}`,
+                backgroundColor: getLogBackgroundColor(log.status, theme),
+                borderRadius: '0 6px 6px 0',
+                opacity: logs.length > 5 && index < logs.length - 5 ? 0.6 : 1,
+                transition: 'all 0.2s ease',
+                animation: index === logs.length - 1 ? 'slideIn 0.3s ease-out' : 'none',
+                '@keyframes slideIn': {
+                  from: {
+                    opacity: 0,
+                    transform: 'translateX(-10px)',
+                  },
+                  to: {
+                    opacity: 1,
+                    transform: 'translateX(0)',
+                  },
+                },
+                '&:hover': {
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.05)',
+                },
+              }}
+            >
+              {/* Timestamp */}
+              <Typography
+                component="span"
+                sx={{
+                  color: theme === 'dark' ? '#6e7681' : '#6a737d',
+                  minWidth: '75px',
+                  fontSize: '0.75rem',
+                  fontFamily: 'inherit',
+                  flexShrink: 0,
+                }}
+              >
+                {formatTime(log.timestamp)}
+              </Typography>
+
+              {/* Status Badge */}
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  minWidth: '110px',
+                  flexShrink: 0,
+                }}
+              >
+                <span
+                  role="img"
+                  aria-label={log.status.toLowerCase()}
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  {getStatusIcon(log.status)}
+                </span>
+                <Typography
+                  component="span"
+                  sx={{
+                    color: getStatusColor(log.status),
+                    fontWeight: 600,
+                    fontSize: '0.78rem',
+                    fontFamily: 'inherit',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {log.status}
+                </Typography>
+              </Box>
+
+              {/* Message */}
+              <Typography
+                component="span"
+                sx={{
+                  flex: 1,
+                  wordBreak: 'break-word',
+                  color:
+                    log.status === 'Error' || log.status === 'Failed'
+                      ? theme === 'dark'
+                        ? '#fca5a5'
+                        : '#fca5a5'
+                      : theme === 'dark'
+                        ? '#e6edf3'
+                        : '#d4d4d4',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                }}
+              >
+                {log.message}
+              </Typography>
+            </Box>
+          ))}
+
+          {/* Auto-scroll anchor */}
+          <div ref={logsEndRef} />
+
+          {/* Blinking cursor when processing */}
+          {connected && logs.length > 0 && !isCompleted && !isError && (
             <Box
               sx={{
-                flex: 1,
-                wordBreak: 'break-word',
+                display: 'flex',
+                alignItems: 'center',
+                mt: 1,
+                pl: 1.5,
+                color: '#61dafb',
+                '&::after': {
+                  content: '"▋"',
+                  animation: 'blink 1s step-end infinite',
+                },
+                '@keyframes blink': {
+                  '0%': { opacity: 1 },
+                  '50%': { opacity: 0 },
+                  '100%': { opacity: 1 },
+                },
               }}
-            >
-              {log.message}
-            </Box>
-          </Box>
-        ))}
-
-        {/* Auto-scroll anchor */}
-        <div ref={logsEndRef} />
-
-        {connected && logs.length > 0 && logs[logs.length - 1].status !== 'Completed' && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              mt: 1,
-              color: '#61dafb',
-              '&::after': {
-                content: '"|"',
-                ml: 0.5,
-                animation: 'blink 1.2s step-end infinite',
-              },
-              '@keyframes blink': {
-                '0%': { opacity: 1 },
-                '50%': { opacity: 0 },
-                '100%': { opacity: 1 },
-              },
-            }}
-          ></Box>
-        )}
+            />
+          )}
+        </Box>
       </Paper>
     </Box>
   );

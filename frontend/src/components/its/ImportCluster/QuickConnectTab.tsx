@@ -679,7 +679,9 @@ const SuccessView: React.FC<{
                 variant="contained"
                 component="a"
                 href="/its"
-                onClick={() => {
+                onClick={e => {
+                  e.preventDefault();
+                  window.location.href = '/its';
                   onCancel();
                 }}
                 sx={{
