@@ -120,8 +120,8 @@ export const HelmTab = ({
       const uniqueReleaseName = `${selectedChart}-${timestamp}`;
 
       const requestBody = {
-        repoName: 'bitnami',
-        repoURL: 'https://charts.bitnami.com/bitnami',
+        repoName: 'bitnamicharts',
+        repoURL: 'oci://registry-1.docker.io/bitnamicharts',
         chartName: selectedChart,
         releaseName: uniqueReleaseName, // Use unique release name to prevent conflicts
         namespace: selectedChart,
@@ -145,8 +145,13 @@ export const HelmTab = ({
       if (err.response) {
         if (err.response.status === 500) {
           const errorMessage = (err.response.data as { error?: string })?.error || 'Unknown error';
-          // More specific error handling for release name conflicts
-          if (errorMessage.includes('cannot re-use a name')) {
+          
+          // Check for repository connection issues
+          if (errorMessage.includes('Failed to connect to Helm repository') || 
+              errorMessage.includes('repository appears to be unreachable') ||
+              errorMessage.includes('cannot be reached')) {
+            toast.error('Repository Error: Unable to reach the Helm repository. Please try again later or contact support.');
+          } else if (errorMessage.includes('cannot re-use a name')) {
             toast.error('Release name already exists. Please try again with a different name.');
           } else {
             toast.error(t('workloads.helm.messages.deployFailureReuse'));
@@ -154,6 +159,9 @@ export const HelmTab = ({
         } else if (err.response.status === 400) {
           toast.error(t('workloads.helm.messages.deployFailure'));
         }
+      } else {
+        // Network error or no response
+        toast.error('Network error: Unable to connect to the deployment service.');
       }
     } finally {
       setPopularLoading(false);

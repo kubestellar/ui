@@ -940,8 +940,13 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		}
 	}
 
-	// Only add repo if it doesn't exist
-	if !repoExists {
+
+	// Check if this is an OCI registry (starts with "oci://")
+	isOCI := strings.HasPrefix(req.RepoURL, "oci://")
+
+	// Only add repo if it doesn't exist AND it's not an OCI registry
+	// OCI registries don't need to be added via "helm repo add"
+	if !repoExists && !isOCI {
 		log.LogInfo("Adding Helm repository",
 			zap.String("repo_name", req.RepoName),
 			zap.String("repo_url", req.RepoURL))
@@ -954,8 +959,21 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 				zap.String("repo_url", req.RepoURL),
 				zap.String("output", string(out)),
 				zap.Error(err))
-			return nil, fmt.Errorf("failed to add helm repository: %v, output: %s", err, string(out))
+			
+			// Enhanced error message for users
+			errorMsg := fmt.Sprintf("Failed to connect to Helm repository '%s' at %s. ", req.RepoName, req.RepoURL)
+			outputStr := string(out)
+			if strings.Contains(outputStr, "connection reset") || strings.Contains(outputStr, "cannot be reached") {
+				errorMsg += "The repository appears to be unreachable. Please verify the repository URL is correct and accessible."
+			}
+			errorMsg += fmt.Sprintf(" Details: %v", err)
+			
+			return nil, fmt.Errorf(errorMsg)
 		}
+	} else if isOCI {
+		log.LogInfo("Using OCI registry (no repo add required)",
+			zap.String("repo_name", req.RepoName),
+			zap.String("repo_url", req.RepoURL))
 	} else {
 		log.LogDebug("Helm repository already exists",
 			zap.String("repo_name", req.RepoName),
@@ -984,21 +1002,78 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 	log.LogInfo("Locating and loading Helm chart",
 		zap.String("chart_name", req.ChartName),
-		zap.String("repo_name", req.RepoName))
+		zap.String("repo_name", req.RepoName),
+		zap.Bool("is_oci", isOCI))
 
 	go func() {
-		chartPath, err := install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
-		if err != nil {
-			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "locate_chart", "500").Inc()
-			log.LogError("Failed to locate Helm chart",
-				zap.String("chart_name", req.ChartName),
-				zap.String("repo_name", req.RepoName),
-				zap.Error(err))
-			chartChan <- chartResult{nil, fmt.Errorf("failed to locate chart: %v", err)}
-			return
+		var chartPath string
+		var err error
+		
+		if isOCI {
+			// For OCI registries, use helm pull command to download the chart
+			chartRef := fmt.Sprintf("%s/%s", req.RepoURL, req.ChartName)
+			log.LogInfo("Pulling OCI chart using Helm CLI", zap.String("chart_ref", chartRef))
+			
+			// Create temporary directory for the chart
+			tmpDir, err := os.MkdirTemp("", "helm-chart-*")
+			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "create_temp_dir", "500").Inc()
+				log.LogError("Failed to create temp directory", zap.Error(err))
+				chartChan <- chartResult{nil, fmt.Errorf("failed to create temp directory: %v", err)}
+				return
+			}
+			defer os.RemoveAll(tmpDir)
+			
+			// Use helm pull to download the OCI chart
+			pullCmd := exec.Command("helm", "pull", chartRef, "--untar", "--untardir", tmpDir)
+			pullCmd.Env = os.Environ()
+			
+			var stdout, stderr bytes.Buffer
+			pullCmd.Stdout = &stdout
+			pullCmd.Stderr = &stderr
+			
+			if err := pullCmd.Run(); err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "helm_pull_oci", "500").Inc()
+				log.LogError("Failed to pull OCI chart",
+					zap.String("chart_ref", chartRef),
+					zap.String("stdout", stdout.String()),
+					zap.String("stderr", stderr.String()),
+					zap.Error(err))
+				chartChan <- chartResult{nil, fmt.Errorf("failed to pull OCI chart: %v (stderr: %s)", err, stderr.String())}
+				return
+			}
+			
+			log.LogDebug("OCI chart pulled successfully",
+				zap.String("chart_ref", chartRef),
+				zap.String("temp_dir", tmpDir))
+			
+			// Find the extracted chart directory
+			entries, err := os.ReadDir(tmpDir)
+			if err != nil || len(entries) == 0 {
+				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "read_chart_dir", "500").Inc()
+				log.LogError("Failed to read extracted chart directory", zap.Error(err))
+				chartChan <- chartResult{nil, fmt.Errorf("failed to read extracted chart: %v", err)}
+				return
+			}
+			
+			// The chart should be in the first directory
+			chartPath = filepath.Join(tmpDir, entries[0].Name())
+			log.LogDebug("OCI chart extracted", zap.String("chart_path", chartPath))
+		} else {
+			// For HTTP repositories, use the standard LocateChart method
+			chartPath, err = install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
+			if err != nil {
+				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "locate_chart", "500").Inc()
+				log.LogError("Failed to locate Helm chart",
+					zap.String("chart_name", req.ChartName),
+					zap.String("repo_name", req.RepoName),
+					zap.Error(err))
+				chartChan <- chartResult{nil, fmt.Errorf("failed to locate chart: %v", err)}
+				return
+			}
+			log.LogDebug("Chart located", zap.String("chart_path", chartPath))
 		}
 
-		log.LogDebug("Chart located", zap.String("chart_path", chartPath))
 		chartObj, err := loader.Load(chartPath)
 		if err != nil {
 			log.LogError("Failed to load Helm chart",
@@ -1007,6 +1082,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		}
 		chartChan <- chartResult{chartObj, err}
 	}()
+
 
 	// Get chart result
 	chartRes := <-chartChan

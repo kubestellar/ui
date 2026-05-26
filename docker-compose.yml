@@ -34,7 +34,7 @@ services:
       dockerfile: Dockerfile
     network_mode: host
     volumes:
-      - ~/.kube:/root/.kube:ro
+      - ~/.kube:/root/.kube
       - ./backend/postgresql/migrations:/app/postgresql/migrations:ro
       - ./backend/plugins:/app/plugins
     depends_on:
