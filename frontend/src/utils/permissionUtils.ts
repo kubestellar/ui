@@ -40,7 +40,7 @@ export function hasAllPermissions(
   userPermissions: PermissionsMap,
   requirements: PermissionRequirement[]
 ): boolean {
-  return requirements.every((req) => hasPermission(userPermissions, req.component, req.level));
+  return requirements.every(req => hasPermission(userPermissions, req.component, req.level));
 }
 
 /**
@@ -53,5 +53,5 @@ export function hasAnyPermission(
   userPermissions: PermissionsMap,
   requirements: PermissionRequirement[]
 ): boolean {
-  return requirements.some((req) => hasPermission(userPermissions, req.component, req.level));
+  return requirements.some(req => hasPermission(userPermissions, req.component, req.level));
 }
